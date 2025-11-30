@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Établissements{% endblock %}
+
+{% block main_content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800">Liste des établissements</h2>
+            <span class="text-sm text-gray-500">{{ organizations|length }} établissement(s)</span>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Établissement</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contact</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écrans</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Commission</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for org in organizations %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-store text-primary-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">{{ org.name }}</p>
+                                <p class="text-sm text-gray-500">{{ org.created_at.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-gray-800">{{ org.email }}</p>
+                        <p class="text-sm text-gray-500">{{ org.phone or '-' }}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-semibold text-gray-800">{{ org.screens|length }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-mono text-gray-800">{{ org.commission_rate }}%</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if org.is_active %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            Actif
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                            Suspendu
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('admin.organization_detail', org_id=org.id) }}" 
+                               class="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form action="{{ url_for('admin.toggle_organization', org_id=org.id) }}" method="POST" class="inline">
+                                <button type="submit" 
+                                        class="p-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition"
+                                        title="{% if org.is_active %}Suspendre{% else %}Activer{% endif %}">
+                                    <i class="fas fa-{% if org.is_active %}ban{% else %}check{% endif %}"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        Aucun établissement inscrit
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

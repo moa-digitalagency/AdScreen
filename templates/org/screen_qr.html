@@ -1,0 +1,66 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}QR Code - {{ screen.name }}{% endblock %}
+
+{% block main_content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-arrow-left mr-2"></i>Retour à {{ screen.name }}
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ screen.name }}</h2>
+        <p class="text-gray-500 mb-8">Scannez ce QR code pour réserver un espace publicitaire</p>
+
+        <div class="inline-block bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
+            <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code" class="w-64 h-64">
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 mb-8">
+            <p class="text-sm text-gray-500 mb-2">Lien de réservation</p>
+            <div class="flex items-center gap-2">
+                <input type="text" value="{{ booking_url }}" readonly
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono">
+                <button onclick="navigator.clipboard.writeText('{{ booking_url }}')" 
+                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 text-left">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Résolution</p>
+                <p class="font-mono font-medium">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Orientation</p>
+                <p class="font-medium capitalize">{{ screen.orientation }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Types</p>
+                <p class="font-medium">
+                    {% if screen.accepts_images %}Image{% endif %}
+                    {% if screen.accepts_images and screen.accepts_videos %}, {% endif %}
+                    {% if screen.accepts_videos %}Vidéo{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-8 flex items-center justify-center gap-4">
+            <a href="data:image/png;base64,{{ qr_image }}" download="qr-{{ screen.name }}.png"
+               class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
+                <i class="fas fa-download"></i>
+                Télécharger le QR
+            </a>
+            <button onclick="window.print()" 
+                class="inline-flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+                <i class="fas fa-print"></i>
+                Imprimer
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

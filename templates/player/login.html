@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdScreen Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-4">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 text-white mb-4">
+                <i class="fas fa-tv text-3xl text-blue-400"></i>
+                <span class="text-2xl font-bold">AdScreen</span>
+            </div>
+            <p class="text-gray-400">Mode Player</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-2xl p-8 shadow-2xl">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                <div class="mb-4 px-4 py-3 rounded-lg {% if category == 'error' %}bg-red-500/20 text-red-400{% else %}bg-blue-500/20 text-blue-400{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label for="screen_code" class="block text-sm font-medium text-gray-300 mb-2">Code écran</label>
+                    <input type="text" id="screen_code" name="screen_code" required
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Entrez le code de l'écran">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="••••••••">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-play"></i>
+                    Connexion
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-6 text-center">
+            <div class="bg-gray-800/50 rounded-lg p-4 text-gray-400 text-sm">
+                <i class="fas fa-expand mr-2"></i>
+                Recommandé: Passez en mode plein écran (F11) après connexion
+            </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="{{ url_for('auth.index') }}" class="text-gray-500 hover:text-gray-400 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i>
+                Retour au site
+            </a>
+        </div>
+    </div>
+</body>
+</html>

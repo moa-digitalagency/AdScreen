@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Écran indisponible{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div class="max-w-md w-full text-center">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-tv text-gray-400 text-3xl"></i>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Écran indisponible</h1>
+        <p class="text-gray-500 mb-6">
+            Cet écran n'est actuellement pas disponible pour les réservations.
+        </p>
+        
+        <a href="{{ url_for('auth.index') }}" 
+           class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
+            <i class="fas fa-home"></i>
+            Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}

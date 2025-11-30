@@ -1,0 +1,93 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Périodes - {{ screen.name }}{% endblock %}
+
+{% block main_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-arrow-left mr-2"></i>Retour à {{ screen.name }}
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Périodes de la journée</h2>
+        <p class="text-gray-500 mb-6">Configurez les tranches horaires et leurs multiplicateurs de prix.</p>
+
+        <form method="POST">
+            <div id="periods-container" class="space-y-4 mb-6">
+                {% for period in screen.time_periods %}
+                <div class="period-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                    <input type="text" name="period_name[]" value="{{ period.name }}" placeholder="Nom"
+                        class="w-32 px-3 py-2 border border-gray-300 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <input type="number" name="period_start[]" value="{{ period.start_hour }}" min="0" max="23"
+                            class="w-16 px-3 py-2 border border-gray-300 rounded-lg">
+                        <span class="text-gray-500">h</span>
+                    </div>
+                    <span class="text-gray-400">à</span>
+                    <div class="flex items-center gap-2">
+                        <input type="number" name="period_end[]" value="{{ period.end_hour }}" min="0" max="23"
+                            class="w-16 px-3 py-2 border border-gray-300 rounded-lg">
+                        <span class="text-gray-500">h</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">x</span>
+                        <input type="number" name="period_multiplier[]" value="{{ period.price_multiplier }}" min="0.1" max="5" step="0.1"
+                            class="w-20 px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="addPeriod()" class="mb-6 text-primary-600 hover:text-primary-700 font-medium">
+                <i class="fas fa-plus mr-2"></i>Ajouter une période
+            </button>
+
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+                <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium">
+                    Annuler
+                </a>
+                <button type="submit" class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addPeriod() {
+    const container = document.getElementById('periods-container');
+    const row = document.createElement('div');
+    row.className = 'period-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg';
+    row.innerHTML = `
+        <input type="text" name="period_name[]" placeholder="Nom"
+            class="w-32 px-3 py-2 border border-gray-300 rounded-lg">
+        <div class="flex items-center gap-2">
+            <input type="number" name="period_start[]" value="0" min="0" max="23"
+                class="w-16 px-3 py-2 border border-gray-300 rounded-lg">
+            <span class="text-gray-500">h</span>
+        </div>
+        <span class="text-gray-400">à</span>
+        <div class="flex items-center gap-2">
+            <input type="number" name="period_end[]" value="0" min="0" max="23"
+                class="w-16 px-3 py-2 border border-gray-300 rounded-lg">
+            <span class="text-gray-500">h</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-gray-500">x</span>
+            <input type="number" name="period_multiplier[]" value="1.0" min="0.1" max="5" step="0.1"
+                class="w-20 px-3 py-2 border border-gray-300 rounded-lg">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-2">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(row);
+}
+</script>
+{% endblock %}

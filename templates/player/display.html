@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ screen.name }} - AdScreen Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            cursor: none;
+        }
+        
+        #player {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #content {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        
+        body:hover #controls {
+            opacity: 1;
+        }
+        
+        .control-btn {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        #status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        body:hover #status {
+            opacity: 1;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-playing { background: #22c55e; }
+        .status-paused { background: #eab308; }
+        .status-offline { background: #ef4444; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        body:hover #info {
+            opacity: 1;
+        }
+        
+        #startScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: sans-serif;
+            z-index: 200;
+        }
+        
+        #startScreen.hidden {
+            display: none;
+        }
+        
+        #startBtn {
+            background: #3b82f6;
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        #startBtn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 150;
+        }
+        
+        .loading.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+            <polyline points="17,2 12,7 7,2"/>
+        </svg>
+        <h1 style="font-size: 28px; margin-top: 20px;">{{ screen.name }}</h1>
+        <p style="color: rgba(255,255,255,0.6); margin-top: 8px;">{{ screen.resolution_width }}x{{ screen.resolution_height }} - {{ screen.orientation }}</p>
+        <button id="startBtn" onclick="startPlayer()">
+            ▶ Lancer la playlist
+        </button>
+        <p style="color: rgba(255,255,255,0.4); margin-top: 30px; font-size: 12px;">
+            Appuyez sur F11 pour le mode plein écran
+        </p>
+    </div>
+
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="player">
+        <img id="imageContent" style="display: none;" />
+        <video id="videoContent" style="display: none;" muted></video>
+    </div>
+
+    <div id="status">
+        <span class="status-dot status-playing" id="statusDot"></span>
+        <span id="statusText">En ligne</span>
+    </div>
+
+    <div id="info">
+        <div id="currentInfo">En attente...</div>
+        <div id="nextInfo" style="color: rgba(255,255,255,0.5); margin-top: 4px;"></div>
+    </div>
+
+    <div id="controls">
+        <button class="control-btn" onclick="togglePause()">
+            <span id="pauseIcon">⏸</span> Pause
+        </button>
+        <button class="control-btn" onclick="toggleFullscreen()">
+            ⛶ Plein écran
+        </button>
+        <button class="control-btn" onclick="logout()">
+            ⏻ Déconnecter
+        </button>
+    </div>
+
+    <script>
+        let playlist = [];
+        let currentIndex = 0;
+        let isPaused = false;
+        let isPlaying = false;
+        let heartbeatInterval;
+        let playTimeout;
+
+        async function fetchPlaylist() {
+            try {
+                const response = await fetch('/player/api/playlist');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+                
+                playlist = data.playlist;
+                console.log('Playlist loaded:', playlist.length, 'items');
+            } catch (error) {
+                console.error('Failed to fetch playlist:', error);
+            }
+        }
+
+        async function logPlay(item) {
+            try {
+                await fetch('/player/api/log-play', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content_id: item.id,
+                        content_type: item.type,
+                        category: item.category,
+                        duration: item.duration,
+                        booking_id: item.booking_id
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to log play:', error);
+            }
+        }
+
+        async function sendHeartbeat() {
+            const status = isPaused ? 'paused' : 'playing';
+            try {
+                await fetch('/player/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                
+                document.getElementById('statusDot').className = 'status-dot status-' + status;
+                document.getElementById('statusText').textContent = isPaused ? 'En pause' : 'En lecture';
+            } catch (error) {
+                document.getElementById('statusDot').className = 'status-dot status-offline';
+                document.getElementById('statusText').textContent = 'Hors ligne';
+            }
+        }
+
+        function playNext() {
+            if (isPaused || playlist.length === 0) return;
+            
+            const item = playlist[currentIndex];
+            const imageEl = document.getElementById('imageContent');
+            const videoEl = document.getElementById('videoContent');
+            
+            const categoryLabels = {
+                'paid': '💰 Publicité',
+                'internal': '📢 Promo',
+                'filler': '🎬 Démo'
+            };
+            
+            document.getElementById('currentInfo').textContent = 
+                `${categoryLabels[item.category] || item.category} - ${item.duration}s`;
+            
+            const nextIndex = (currentIndex + 1) % playlist.length;
+            const nextItem = playlist[nextIndex];
+            document.getElementById('nextInfo').textContent = 
+                `Suivant: ${categoryLabels[nextItem.category] || nextItem.category}`;
+            
+            if (item.type === 'image') {
+                videoEl.style.display = 'none';
+                videoEl.pause();
+                imageEl.style.display = 'block';
+                imageEl.src = item.url;
+                imageEl.id = 'content';
+                
+                logPlay(item);
+                
+                playTimeout = setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % playlist.length;
+                    playNext();
+                }, item.duration * 1000);
+                
+            } else if (item.type === 'video') {
+                imageEl.style.display = 'none';
+                videoEl.style.display = 'block';
+                videoEl.src = item.url;
+                videoEl.id = 'content';
+                
+                videoEl.onloadeddata = () => {
+                    videoEl.play();
+                    logPlay(item);
+                };
+                
+                videoEl.onended = () => {
+                    currentIndex = (currentIndex + 1) % playlist.length;
+                    playNext();
+                };
+                
+                playTimeout = setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % playlist.length;
+                    playNext();
+                }, (item.duration + 1) * 1000);
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseIcon').textContent = isPaused ? '▶' : '⏸';
+            
+            if (isPaused) {
+                clearTimeout(playTimeout);
+                const videoEl = document.getElementById('videoContent');
+                if (videoEl.style.display !== 'none') {
+                    videoEl.pause();
+                }
+            } else {
+                playNext();
+            }
+            
+            sendHeartbeat();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function logout() {
+            window.location.href = '/player/logout';
+        }
+
+        async function startPlayer() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            
+            await fetchPlaylist();
+            
+            document.getElementById('loading').classList.add('hidden');
+            
+            if (playlist.length > 0) {
+                isPlaying = true;
+                playNext();
+                
+                heartbeatInterval = setInterval(sendHeartbeat, 30000);
+                sendHeartbeat();
+                
+                setInterval(fetchPlaylist, 60000);
+            } else {
+                document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
+                document.getElementById('nextInfo').textContent = 'La playlist est vide';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'p') {
+                togglePause();
+            } else if (e.key === 'f' || e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+            }
+        });
+    </script>
+</body>
+</html>

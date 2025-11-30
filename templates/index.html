@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<div class="min-h-screen gradient-bg">
+    <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-tv text-white text-2xl"></i>
+                <span class="text-white text-xl font-bold">AdScreen</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('auth.login') }}" class="text-white hover:text-white/80 font-medium">Connexion</a>
+                <a href="{{ url_for('auth.register') }}" class="bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-white/90 transition">
+                    Inscription
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-20">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                Monétisez vos écrans publicitaires
+            </h1>
+            <p class="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+                Plateforme SaaS de location d'espaces publicitaires sur écrans. 
+                Simple, automatisé et rentable pour les établissements.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('auth.register') }}" class="bg-white text-primary-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/90 transition shadow-lg">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Commencer gratuitement
+                </a>
+                <a href="{{ url_for('player.login') }}" class="bg-white/10 backdrop-blur text-white border border-white/30 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition">
+                    <i class="fas fa-play mr-2"></i>
+                    Mode Player
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-16">
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-qrcode text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-3">QR Code Unique</h3>
+                <p class="text-white/80">
+                    Chaque écran a son propre QR code. Les annonceurs scannent et réservent instantanément.
+                </p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-3">Validation Facile</h3>
+                <p class="text-white/80">
+                    Validez ou refusez les contenus depuis votre tableau de bord. Gardez le contrôle total.
+                </p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-line text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-3">Statistiques Temps Réel</h3>
+                <p class="text-white/80">
+                    Suivez vos revenus, le nombre de diffusions et l'uptime de vos écrans en direct.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-16">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-white text-center mb-12">Comment ça marche ?</h2>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">1</div>
+                    <h4 class="font-semibold text-white mb-2">Créez vos écrans</h4>
+                    <p class="text-white/70 text-sm">Configurez résolution, tarifs et périodes</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">2</div>
+                    <h4 class="font-semibold text-white mb-2">Partagez le QR</h4>
+                    <p class="text-white/70 text-sm">Affichez-le près de l'écran</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">3</div>
+                    <h4 class="font-semibold text-white mb-2">Recevez les pubs</h4>
+                    <p class="text-white/70 text-sm">Les annonceurs uploadent leur contenu</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-white text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 font-bold text-xl">4</div>
+                    <h4 class="font-semibold text-white mb-2">Diffusez & Gagnez</h4>
+                    <p class="text-white/70 text-sm">Validez et laissez le player diffuser</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="container mx-auto px-6 py-8 border-t border-white/10">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-tv text-white"></i>
+                <span class="text-white font-semibold">AdScreen</span>
+            </div>
+            <p class="text-white/60 text-sm">
+                © 2024 AdScreen. Tous droits réservés.
+            </p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

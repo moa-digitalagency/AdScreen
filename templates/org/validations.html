@@ -1,0 +1,141 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Validations{% endblock %}
+
+{% block main_content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="p-6 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-800">Contenus en attente de validation</h2>
+        <p class="text-gray-500 text-sm mt-1">{{ contents|length }} contenu(s) à valider</p>
+    </div>
+
+    {% if contents %}
+    <div class="divide-y divide-gray-100">
+        {% for content in contents %}
+        <div class="p-6 flex items-start gap-6">
+            <div class="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                {% if content.content_type == 'image' %}
+                <img src="/{{ content.file_path }}" alt="Preview" class="w-full h-full object-cover">
+                {% else %}
+                <video src="/{{ content.file_path }}" class="w-full h-full object-cover" muted></video>
+                {% endif %}
+            </div>
+            
+            <div class="flex-1">
+                <div class="flex items-start justify-between mb-2">
+                    <div>
+                        <h3 class="font-medium text-gray-800">{{ content.original_filename }}</h3>
+                        <p class="text-sm text-gray-500">{{ content.screen.name }}</p>
+                    </div>
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+                        En attente
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Client</p>
+                        <p class="text-sm font-medium">{{ content.client_name or 'Anonyme' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Email</p>
+                        <p class="text-sm font-medium">{{ content.client_email or '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Type</p>
+                        <p class="text-sm font-medium capitalize">{{ content.content_type }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Résolution</p>
+                        <p class="text-sm font-medium font-mono">{{ content.width }}x{{ content.height }}</p>
+                    </div>
+                </div>
+
+                {% if content.booking %}
+                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-sm text-gray-600">{{ content.booking.num_plays }} diffusions</span>
+                            <span class="text-gray-400 mx-2">•</span>
+                            <span class="text-sm text-gray-600">{{ content.booking.slot_duration }}s</span>
+                        </div>
+                        <span class="font-semibold text-gray-800">{{ "%.2f"|format(content.booking.total_price) }}€</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="flex items-center gap-3">
+                    <form action="{{ url_for('org.approve_content', content_id=content.id) }}" method="POST" class="inline">
+                        <button type="submit" class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-check"></i>
+                            Approuver
+                        </button>
+                    </form>
+                    
+                    <button onclick="showRejectModal({{ content.id }})" 
+                        class="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-times"></i>
+                        Refuser
+                    </button>
+                    
+                    <a href="/{{ content.file_path }}" target="_blank" 
+                       class="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition">
+                        <i class="fas fa-eye"></i>
+                        Voir
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Tout est validé!</h3>
+        <p class="text-gray-500">Aucun contenu en attente de validation.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Refuser le contenu</h3>
+        <form id="rejectForm" method="POST">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Motif du refus</label>
+                <select name="reason" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="Contenu non conforme aux règles">Contenu non conforme aux règles</option>
+                    <option value="Qualité insuffisante">Qualité insuffisante</option>
+                    <option value="Résolution incorrecte">Résolution incorrecte</option>
+                    <option value="Contenu inapproprié">Contenu inapproprié</option>
+                    <option value="Autre">Autre</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="hideRejectModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Annuler
+                </button>
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                    Confirmer le refus
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showRejectModal(contentId) {
+    document.getElementById('rejectForm').action = `/org/validation/${contentId}/reject`;
+    document.getElementById('rejectModal').classList.remove('hidden');
+    document.getElementById('rejectModal').classList.add('flex');
+}
+
+function hideRejectModal() {
+    document.getElementById('rejectModal').classList.add('hidden');
+    document.getElementById('rejectModal').classList.remove('flex');
+}
+</script>
+{% endblock %}

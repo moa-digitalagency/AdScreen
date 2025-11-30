@@ -1,0 +1,110 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}{% if screen %}Modifier {{ screen.name }}{% else %}Nouvel écran{% endif %}{% endblock %}
+
+{% block main_content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('org.screens') }}" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-arrow-left mr-2"></i>Retour aux écrans
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <form method="POST" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'écran</label>
+                    <input type="text" id="name" name="name" required
+                        value="{{ screen.name if screen else '' }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                        placeholder="Ex: Écran principal bar">
+                </div>
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Emplacement</label>
+                    <input type="text" id="location" name="location"
+                        value="{{ screen.location if screen else '' }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                        placeholder="Ex: Entrée du restaurant">
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <label for="resolution_width" class="block text-sm font-medium text-gray-700 mb-2">Largeur (px)</label>
+                    <input type="number" id="resolution_width" name="resolution_width" required min="640"
+                        value="{{ screen.resolution_width if screen else 1920 }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="resolution_height" class="block text-sm font-medium text-gray-700 mb-2">Hauteur (px)</label>
+                    <input type="number" id="resolution_height" name="resolution_height" required min="480"
+                        value="{{ screen.resolution_height if screen else 1080 }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="orientation" class="block text-sm font-medium text-gray-700 mb-2">Orientation</label>
+                    <select id="orientation" name="orientation"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                        <option value="landscape" {% if screen and screen.orientation == 'landscape' %}selected{% endif %}>Paysage</option>
+                        <option value="portrait" {% if screen and screen.orientation == 'portrait' %}selected{% endif %}>Portrait</option>
+                        <option value="square" {% if screen and screen.orientation == 'square' %}selected{% endif %}>Carré</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Types de contenu acceptés</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" name="accepts_images" value="1"
+                                {% if not screen or screen.accepts_images %}checked{% endif %}
+                                class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-image text-blue-500"></i>
+                                Images (JPG, PNG, GIF)
+                            </span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" name="accepts_videos" value="1"
+                                {% if not screen or screen.accepts_videos %}checked{% endif %}
+                                class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-video text-purple-500"></i>
+                                Vidéos (MP4, WebM)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label for="max_file_size" class="block text-sm font-medium text-gray-700 mb-2">Taille max fichier (Mo)</label>
+                    <input type="number" id="max_file_size" name="max_file_size" min="1" max="100"
+                        value="{{ screen.max_file_size_mb if screen else 50 }}"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Mot de passe Player
+                    {% if screen %}<span class="text-gray-400 font-normal">(laisser vide pour ne pas changer)</span>{% endif %}
+                </label>
+                <input type="password" id="password" name="password" {% if not screen %}required{% endif %}
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    placeholder="Mot de passe pour accéder au mode player">
+                <p class="text-xs text-gray-500 mt-1">Ce mot de passe sera utilisé pour connecter l'écran au player</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+                <a href="{{ url_for('org.screens') }}" class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium">
+                    Annuler
+                </a>
+                <button type="submit" class="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
+                    {% if screen %}Enregistrer{% else %}Créer l'écran{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

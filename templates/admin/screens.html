@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Tous les écrans{% endblock %}
+
+{% block main_content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-800">Liste des écrans</h2>
+            <span class="text-sm text-gray-500">{{ screens|length }} écran(s)</span>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Établissement</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Résolution</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Types</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Heartbeat</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for screen in screens %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tv text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">{{ screen.name }}</p>
+                                <p class="text-sm text-gray-500">{{ screen.location or '-' }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <a href="{{ url_for('admin.organization_detail', org_id=screen.organization.id) }}" 
+                           class="text-primary-600 hover:underline">
+                            {{ screen.organization.name }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-mono text-gray-800">{{ screen.resolution_width }}x{{ screen.resolution_height }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-1">
+                            {% if screen.accepts_images %}
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Image</span>
+                            {% endif %}
+                            {% if screen.accepts_videos %}
+                            <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Vidéo</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1">
+                            <span class="status-dot status-{{ screen.status }}"></span>
+                            <span class="text-sm capitalize">{{ screen.status }}</span>
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        {% if screen.last_heartbeat %}
+                        {{ screen.last_heartbeat.strftime('%d/%m %H:%M') }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        Aucun écran enregistré
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}{{ screen.name }}{% endblock %}
+
+{% block main_content %}
+<div class="mb-6">
+    <a href="{{ url_for('org.screens') }}" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-arrow-left mr-2"></i>Retour aux écrans
+    </a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6 mb-8">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-tv text-purple-600 text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">{{ screen.name }}</h2>
+                    <p class="text-gray-500">{{ screen.location or 'Emplacement non défini' }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="status-dot status-{{ screen.status }}"></span>
+                <span class="text-sm capitalize">{{ screen.status }}</span>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-500 mb-1">Résolution</p>
+                <p class="font-mono text-lg font-semibold text-gray-800">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-500 mb-1">Orientation</p>
+                <p class="text-lg font-semibold text-gray-800 capitalize">{{ screen.orientation }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-500 mb-1">Code unique</p>
+                <p class="font-mono text-sm text-gray-800">{{ screen.unique_code[:12] }}...</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ url_for('org.edit_screen', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <i class="fas fa-edit text-gray-600"></i>
+                Modifier
+            </a>
+            <a href="{{ url_for('org.screen_slots', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <i class="fas fa-clock text-gray-600"></i>
+                Créneaux
+            </a>
+            <a href="{{ url_for('org.screen_periods', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <i class="fas fa-sun text-gray-600"></i>
+                Périodes
+            </a>
+            <a href="{{ url_for('org.screen_fillers', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <i class="fas fa-images text-gray-600"></i>
+                Fillers
+            </a>
+            <a href="{{ url_for('org.screen_internal', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <i class="fas fa-bullhorn text-gray-600"></i>
+                Internes
+            </a>
+            <a href="{{ url_for('screen.generate_qr', screen_id=screen.id) }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+                <i class="fas fa-qrcode"></i>
+                QR Code
+            </a>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Statistiques</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500">Revenus totaux</span>
+                    <span class="font-semibold text-green-600">{{ "%.2f"|format(revenue) }}€</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500">Cette semaine</span>
+                    <span class="font-semibold text-gray-800">{{ "%.2f"|format(weekly_revenue) }}€</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500">Diffusions</span>
+                    <span class="font-semibold text-gray-800">{{ total_plays }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-500">En attente</span>
+                    <span class="font-semibold text-yellow-600">{{ pending_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Actions rapides</h3>
+            <div class="space-y-2">
+                <form action="{{ url_for('screen.toggle_screen', screen_id=screen.id) }}" method="POST">
+                    <button type="submit" class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition flex items-center gap-3">
+                        <i class="fas fa-{% if screen.is_active %}pause{% else %}play{% endif %} text-gray-600 w-5"></i>
+                        <span>{% if screen.is_active %}Désactiver{% else %}Activer{% endif %} l'écran</span>
+                    </button>
+                </form>
+                <form action="{{ url_for('screen.delete_screen', screen_id=screen.id) }}" method="POST" 
+                      onsubmit="return confirm('Supprimer cet écran ? Cette action est irréversible.')">
+                    <button type="submit" class="w-full text-left px-4 py-3 border border-red-200 rounded-lg hover:bg-red-50 transition flex items-center gap-3 text-red-600">
+                        <i class="fas fa-trash w-5"></i>
+                        <span>Supprimer l'écran</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Créneaux configurés</h3>
+        <div class="space-y-2">
+            {% for slot in screen.time_slots %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div class="flex items-center gap-3">
+                    <span class="px-2 py-1 bg-{% if slot.content_type == 'image' %}blue{% else %}purple{% endif %}-100 text-{% if slot.content_type == 'image' %}blue{% else %}purple{% endif %}-700 rounded text-xs font-medium capitalize">
+                        {{ slot.content_type }}
+                    </span>
+                    <span class="font-mono text-gray-800">{{ slot.duration_seconds }}s</span>
+                </div>
+                <span class="font-semibold text-gray-800">{{ "%.2f"|format(slot.price_per_play) }}€</span>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Aucun créneau configuré</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Périodes journée</h3>
+        <div class="space-y-2">
+            {% for period in screen.time_periods %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                    <span class="font-medium text-gray-800">{{ period.name }}</span>
+                    <span class="text-gray-500 text-sm ml-2">{{ period.start_hour }}h - {{ period.end_hour }}h</span>
+                </div>
+                <span class="font-mono text-gray-800">x{{ period.price_multiplier }}</span>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Aucune période configurée</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

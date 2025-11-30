@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Réservation confirmée{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check text-green-600 text-3xl"></i>
+            </div>
+            
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Réservation envoyée!</h1>
+            <p class="text-gray-500 mb-6">Votre contenu est en attente de validation par l'établissement.</p>
+            
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-500">Écran</span>
+                    <span class="font-medium text-gray-800">{{ screen.name }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-500">Type</span>
+                    <span class="font-medium text-gray-800 capitalize">{{ content.content_type }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-500">Diffusions</span>
+                    <span class="font-medium text-gray-800">{{ booking.num_plays }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-500">Durée</span>
+                    <span class="font-medium text-gray-800">{{ booking.slot_duration }}s</span>
+                </div>
+                <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
+                    <span class="text-gray-600 font-medium">Total</span>
+                    <span class="text-xl font-bold text-primary-600">{{ "%.2f"|format(booking.total_price) }}€</span>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clock text-yellow-600"></i>
+                    <div class="text-left">
+                        <p class="font-medium text-yellow-800">En attente de validation</p>
+                        <p class="text-sm text-yellow-600">L'établissement va examiner votre contenu.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-6">
+                Vous recevrez un email à <strong>{{ content.client_email }}</strong> 
+                lorsque votre contenu sera validé ou refusé.
+            </p>
+            
+            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
+               class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium">
+                <i class="fas fa-arrow-left"></i>
+                Faire une autre réservation
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

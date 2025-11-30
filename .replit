@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["openssl", "postgresql"]
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "postgresql", "tcl", "tk", "zlib", "ffmpeg"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -28,3 +28,14 @@ author = "agent"
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
+
+[agent]
+integrations = ["python_database:1.0.0"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 38837
+externalPort = 3000
