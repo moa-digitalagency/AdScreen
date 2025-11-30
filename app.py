@@ -56,3 +56,32 @@ with app.app_context():
 def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
+
+
+@app.context_processor
+def inject_now():
+    from datetime import datetime
+    return {'now': datetime.now}
+
+
+@app.context_processor
+def inject_site_settings():
+    from models import SiteSetting
+    return {
+        'site_settings': {
+            'platform_name': SiteSetting.get('platform_name', 'AdScreen'),
+            'site_description': SiteSetting.get('site_description', ''),
+            'support_email': SiteSetting.get('support_email', ''),
+            'admin_whatsapp_number': SiteSetting.get('admin_whatsapp_number', ''),
+            'facebook_url': SiteSetting.get('facebook_url', ''),
+            'instagram_url': SiteSetting.get('instagram_url', ''),
+            'twitter_url': SiteSetting.get('twitter_url', ''),
+            'linkedin_url': SiteSetting.get('linkedin_url', ''),
+            'youtube_url': SiteSetting.get('youtube_url', ''),
+            'contact_phone': SiteSetting.get('contact_phone', ''),
+            'contact_address': SiteSetting.get('contact_address', ''),
+            'head_code': SiteSetting.get('head_code', ''),
+            'og_image': SiteSetting.get('og_image', ''),
+            'favicon': SiteSetting.get('favicon', ''),
+        }
+    }

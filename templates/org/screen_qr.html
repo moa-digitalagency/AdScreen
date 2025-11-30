@@ -3,34 +3,69 @@
 {% block page_title %}QR Code - {{ screen.name }}{% endblock %}
 
 {% block main_content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-4xl mx-auto">
     <div class="mb-6">
         <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-arrow-left mr-2"></i>Retour à {{ screen.name }}
         </a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ screen.name }}</h2>
-        <p class="text-gray-500 mb-8">Scannez ce QR code pour réserver un espace publicitaire</p>
-
-        <div class="inline-block bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
-            <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code" class="w-64 h-64">
-        </div>
-
-        <div class="bg-gray-50 rounded-lg p-4 mb-8">
-            <p class="text-sm text-gray-500 mb-2">Lien de réservation</p>
-            <div class="flex items-center gap-2">
-                <input type="text" value="{{ booking_url }}" readonly
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono">
-                <button onclick="navigator.clipboard.writeText('{{ booking_url }}')" 
-                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
-                    <i class="fas fa-copy"></i>
-                </button>
+    <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">QR Code Simple</h3>
+            <div class="flex justify-center mb-4">
+                <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
+                    <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code Simple" class="w-48 h-48">
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <a href="data:image/png;base64,{{ qr_image }}" download="qr-simple-{{ screen.name }}.png"
+                   class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition text-sm">
+                    <i class="fas fa-download"></i>
+                    Télécharger
+                </a>
             </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-4 text-left">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">QR Code Complet</h3>
+            <div class="flex justify-center mb-4">
+                <div class="bg-white p-2 rounded-xl shadow-md border border-gray-200">
+                    <img src="data:image/png;base64,{{ enhanced_qr_image }}" alt="QR Code Complet" class="max-w-full h-auto" style="max-height: 300px;">
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 text-center mb-4">
+                Inclut: {{ screen.organization.name }} | {{ screen.name }} | {{ screen.resolution_width }}x{{ screen.resolution_height }}
+            </p>
+            <div class="flex justify-center">
+                <a href="data:image/png;base64,{{ enhanced_qr_image }}" download="qr-complet-{{ screen.name }}.png"
+                   class="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition text-sm">
+                    <i class="fas fa-download"></i>
+                    Télécharger
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Lien de réservation</h3>
+        <div class="flex items-center gap-2">
+            <input type="text" value="{{ booking_url }}" readonly
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono">
+            <button onclick="navigator.clipboard.writeText('{{ booking_url }}'); this.innerHTML='<i class=\'fas fa-check\'></i> Copié!'; setTimeout(() => this.innerHTML='<i class=\'fas fa-copy\'></i> Copier', 2000);" 
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition whitespace-nowrap">
+                <i class="fas fa-copy"></i> Copier
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Informations de l'écran</h3>
+        <div class="grid md:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-xs text-gray-500 mb-1">Établissement</p>
+                <p class="font-medium">{{ screen.organization.name }}</p>
+            </div>
             <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-xs text-gray-500 mb-1">Résolution</p>
                 <p class="font-mono font-medium">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
@@ -40,27 +75,28 @@
                 <p class="font-medium capitalize">{{ screen.orientation }}</p>
             </div>
             <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-xs text-gray-500 mb-1">Types</p>
+                <p class="text-xs text-gray-500 mb-1">Types acceptés</p>
                 <p class="font-medium">
-                    {% if screen.accepts_images %}Image{% endif %}
-                    {% if screen.accepts_images and screen.accepts_videos %}, {% endif %}
-                    {% if screen.accepts_videos %}Vidéo{% endif %}
+                    {% if screen.accepts_images %}<i class="fas fa-image text-blue-500 mr-1"></i>{% endif %}
+                    {% if screen.accepts_videos %}<i class="fas fa-video text-purple-500"></i>{% endif %}
                 </p>
             </div>
         </div>
+    </div>
 
-        <div class="mt-8 flex items-center justify-center gap-4">
-            <a href="data:image/png;base64,{{ qr_image }}" download="qr-{{ screen.name }}.png"
-               class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
-                <i class="fas fa-download"></i>
-                Télécharger le QR
-            </a>
-            <button onclick="window.print()" 
-                class="inline-flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
-                <i class="fas fa-print"></i>
-                Imprimer
-            </button>
-        </div>
+    <div class="mt-6 flex items-center justify-center gap-4">
+        <button onclick="window.print()" 
+            class="inline-flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+            <i class="fas fa-print"></i>
+            Imprimer
+        </button>
     </div>
 </div>
+
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+}
+</style>
 {% endblock %}

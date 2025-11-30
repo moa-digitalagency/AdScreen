@@ -19,6 +19,7 @@ class Screen(db.Model):
     accepts_videos = db.Column(db.Boolean, default=True)
     max_file_size_mb = db.Column(db.Integer, default=50)
     is_active = db.Column(db.Boolean, default=True)
+    is_featured = db.Column(db.Boolean, default=False)
     unique_code = db.Column(db.String(32), unique=True)
     password_hash = db.Column(db.String(256))
     last_heartbeat = db.Column(db.DateTime)

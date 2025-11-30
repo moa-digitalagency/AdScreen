@@ -142,6 +142,40 @@ Les tables sont créées automatiquement au démarrage.
 Les overlays permettent aux établissements d'afficher des messages superposés sur leurs écrans:
 
 - **Type bandeau**: Texte défilant (ticker)
-- **Type image**: Image fixe
+- **Type image**: Image fixe avec positionnement en coins
 - **Positions**: Header (haut), Body (centre), Footer (bas)
+- **Position coin**: top-left, top-right, bottom-left, bottom-right (pour images)
 - **Personnalisation**: Couleurs, taille de police, vitesse de défilement
+- **Fréquence de passage**: Heure, jour, semaine, mois, ou périodes (matin, midi, après-midi, soir, nuit)
+- **Limite de passages**: Nombre maximum de passages par unité de fréquence
+
+## 🌟 Écrans en vedette
+
+- Les super-admins peuvent marquer des écrans comme "en vedette"
+- Les écrans en vedette apparaissent sur la page d'accueil
+- Bouton de mise en vedette dans l'administration des écrans
+
+## 📱 QR Codes personnalisés
+
+Deux types de QR codes disponibles pour chaque écran:
+- **QR Code simple**: Code basique noir/blanc
+- **QR Code complet**: Inclut nom de l'établissement, nom de l'écran, résolution, et plateforme
+
+## ⚙️ Paramètres du site avancés
+
+### SEO
+- Titre et description du site
+- Mots-clés meta
+- Image OG et favicon personnalisables
+- Google Analytics ID
+
+### Réseaux sociaux
+- Facebook, Instagram, Twitter, LinkedIn, YouTube
+- WhatsApp pour contact direct
+
+### Code personnalisé
+- Injection de code dans le `<head>` (scripts, pixels tracking, etc.)
+
+### Contact
+- Téléphone, adresse
+- Numéro WhatsApp admin

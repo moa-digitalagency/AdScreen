@@ -20,7 +20,8 @@
                     <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Résolution</th>
                     <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Types</th>
                     <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Heartbeat</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Vedette</th>
+                    <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -28,8 +29,13 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-tv text-purple-600"></i>
+                            <div class="w-10 h-10 {% if screen.is_featured %}bg-yellow-100{% else %}bg-purple-100{% endif %} rounded-lg flex items-center justify-center relative">
+                                <i class="fas fa-tv {% if screen.is_featured %}text-yellow-600{% else %}text-purple-600{% endif %}"></i>
+                                {% if screen.is_featured %}
+                                <span class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-star text-white text-xs"></i>
+                                </span>
+                                {% endif %}
                             </div>
                             <div>
                                 <p class="font-medium text-gray-800">{{ screen.name }}</p>
@@ -62,17 +68,27 @@
                             <span class="text-sm capitalize">{{ screen.status }}</span>
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-500">
-                        {% if screen.last_heartbeat %}
-                        {{ screen.last_heartbeat.strftime('%d/%m %H:%M') }}
+                    <td class="px-6 py-4">
+                        {% if screen.is_featured %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
+                            <i class="fas fa-star"></i>
+                            En vedette
+                        </span>
                         {% else %}
-                        -
+                        <span class="text-gray-400 text-xs">-</span>
                         {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <form action="{{ url_for('admin.toggle_featured', screen_id=screen.id) }}" method="POST" class="inline">
+                            <button type="submit" class="{% if screen.is_featured %}text-yellow-600 hover:text-yellow-700{% else %}text-gray-400 hover:text-yellow-500{% endif %} transition" title="{% if screen.is_featured %}Retirer de la vedette{% else %}Mettre en vedette{% endif %}">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                         Aucun écran enregistré
                     </td>
                 </tr>

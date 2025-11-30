@@ -4,7 +4,7 @@
 
 {% block main_content %}
 <div class="max-w-4xl">
-    <form method="POST" action="{{ url_for('admin.settings') }}">
+    <form method="POST" action="{{ url_for('admin.settings') }}" enctype="multipart/form-data">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -32,15 +32,110 @@
                     <input type="text" name="meta_keywords" value="{{ seo_settings.meta_keywords }}" 
                            class="input-field" placeholder="écran publicitaire, location, publicité">
                 </div>
-                <div>
-                    <label class="label">Image de partage (URL)</label>
-                    <input type="url" name="og_image" value="{{ seo_settings.og_image }}" 
-                           class="input-field" placeholder="https://...">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Image OG (partage réseaux sociaux)</label>
+                        <input type="file" name="og_image_file" accept="image/*" class="input-field">
+                        {% if seo_settings.og_image %}
+                        <p class="text-xs text-gray-500 mt-1">Image actuelle: {{ seo_settings.og_image }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="label">Favicon / Logo du site</label>
+                        <input type="file" name="favicon_file" accept="image/*,.ico,.svg" class="input-field">
+                        {% if platform_settings.favicon %}
+                        <p class="text-xs text-gray-500 mt-1">Favicon actuel: {{ platform_settings.favicon }}</p>
+                        {% endif %}
+                    </div>
                 </div>
                 <div>
                     <label class="label">Google Analytics ID</label>
                     <input type="text" name="google_analytics_id" value="{{ seo_settings.google_analytics_id }}" 
                            class="input-field" placeholder="G-XXXXXXXXXX">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-code text-indigo-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Code personnalisé</h2>
+                    <p class="text-sm text-gray-500">Ajoutez du code dans le head du site (scripts, styles, pixels)</p>
+                </div>
+            </div>
+            
+            <div>
+                <label class="label">Code Head (HTML/JS/CSS)</label>
+                <textarea name="head_code" rows="6" class="input-field font-mono text-sm" 
+                          placeholder="<!-- Ajoutez vos scripts, pixels de tracking, etc. -->">{{ platform_settings.head_code }}</textarea>
+                <p class="text-xs text-gray-500 mt-1">Ce code sera injecté dans le &lt;head&gt; de toutes les pages publiques.</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-share-alt text-pink-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Réseaux sociaux</h2>
+                    <p class="text-sm text-gray-500">Liens vers vos pages sur les réseaux sociaux</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="label"><i class="fab fa-facebook text-blue-600 mr-2"></i>Facebook</label>
+                    <input type="url" name="facebook_url" value="{{ platform_settings.facebook_url }}" 
+                           class="input-field" placeholder="https://facebook.com/...">
+                </div>
+                <div>
+                    <label class="label"><i class="fab fa-instagram text-pink-600 mr-2"></i>Instagram</label>
+                    <input type="url" name="instagram_url" value="{{ platform_settings.instagram_url }}" 
+                           class="input-field" placeholder="https://instagram.com/...">
+                </div>
+                <div>
+                    <label class="label"><i class="fab fa-twitter text-blue-400 mr-2"></i>Twitter/X</label>
+                    <input type="url" name="twitter_url" value="{{ platform_settings.twitter_url }}" 
+                           class="input-field" placeholder="https://twitter.com/...">
+                </div>
+                <div>
+                    <label class="label"><i class="fab fa-linkedin text-blue-700 mr-2"></i>LinkedIn</label>
+                    <input type="url" name="linkedin_url" value="{{ platform_settings.linkedin_url }}" 
+                           class="input-field" placeholder="https://linkedin.com/...">
+                </div>
+                <div>
+                    <label class="label"><i class="fab fa-youtube text-red-600 mr-2"></i>YouTube</label>
+                    <input type="url" name="youtube_url" value="{{ platform_settings.youtube_url }}" 
+                           class="input-field" placeholder="https://youtube.com/...">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-address-card text-cyan-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Informations de contact</h2>
+                    <p class="text-sm text-gray-500">Coordonnées affichées sur le site</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="label">Téléphone de contact</label>
+                    <input type="tel" name="contact_phone" value="{{ platform_settings.contact_phone }}" 
+                           class="input-field" placeholder="+33 1 23 45 67 89">
+                </div>
+                <div>
+                    <label class="label">Adresse</label>
+                    <input type="text" name="contact_address" value="{{ platform_settings.contact_address }}" 
+                           class="input-field" placeholder="123 Rue Exemple, 75000 Paris">
                 </div>
             </div>
         </div>

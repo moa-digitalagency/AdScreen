@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AdScreen{% endblock %} - Location Écrans Publicitaires</title>
+    {% if site_settings.favicon %}
+    <link rel="icon" href="{{ site_settings.favicon }}">
+    <link rel="apple-touch-icon" href="{{ site_settings.favicon }}">
+    {% else %}
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.svg') }}">
+    {% endif %}
+    {% if site_settings.og_image %}
+    <meta property="og:image" content="{{ site_settings.og_image }}">
+    {% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="{{ url_for('static', filename='css/tailwind.config.js') }}"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% if site_settings.head_code %}{{ site_settings.head_code|safe }}{% endif %}
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50 font-sans antialiased">

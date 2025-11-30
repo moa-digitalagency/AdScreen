@@ -1,10 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app import db
-from models import Screen
-import qrcode
-import io
-import base64
+from models import Screen, SiteSetting
+from services.qr_service import generate_enhanced_qr_base64, generate_qr_base64
 
 screen_bp = Blueprint('screen', __name__)
 
@@ -18,28 +16,17 @@ def generate_qr(screen_id):
     ).first_or_404()
     
     booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+    platform_name = SiteSetting.get('platform_name', 'AdScreen')
     
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(booking_url)
-    qr.make(fit=True)
-    
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    buffer.seek(0)
-    
-    img_base64 = base64.b64encode(buffer.getvalue()).decode()
+    enhanced_qr = generate_enhanced_qr_base64(screen, booking_url, platform_name)
+    simple_qr = generate_qr_base64(booking_url)
     
     return render_template('org/screen_qr.html',
         screen=screen,
-        qr_image=img_base64,
-        booking_url=booking_url
+        qr_image=simple_qr,
+        enhanced_qr_image=enhanced_qr,
+        booking_url=booking_url,
+        platform_name=platform_name
     )
 
 

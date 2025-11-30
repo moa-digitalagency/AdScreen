@@ -357,6 +357,60 @@
         </div>
     </section>
 
+    {% if featured_screens %}
+    <section class="py-16 sm:py-20 lg:py-24 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="section-badge inline-flex mb-3">
+                    <i class="fas fa-star text-emerald-500"></i>
+                    Écrans en vedette
+                </div>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">
+                    Découvrez nos écrans disponibles
+                </h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Réservez un créneau publicitaire sur l'un de nos écrans partenaires
+                </p>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for screen in featured_screens %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow group">
+                    <div class="relative">
+                        <div class="h-32 bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+                            <i class="fas fa-tv text-white text-4xl opacity-30"></i>
+                        </div>
+                        <div class="absolute top-3 right-3">
+                            <span class="px-2 py-1 bg-white/90 text-emerald-600 text-xs font-medium rounded-full">
+                                {{ screen.resolution_width }}x{{ screen.resolution_height }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 transition">{{ screen.name }}</h3>
+                        <p class="text-sm text-gray-500 mb-3">
+                            <i class="fas fa-building mr-1"></i>{{ screen.organization.name }}
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                <span class="flex items-center gap-1">
+                                    <i class="fas fa-map-marker-alt text-emerald-500"></i>
+                                    {{ screen.location or 'Non renseigné' }}
+                                </span>
+                            </div>
+                            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
+                               class="text-emerald-600 hover:text-emerald-700 font-medium text-sm">
+                                Réserver <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     <section class="py-16 sm:py-20 lg:py-24">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="cta-section text-center px-4 sm:px-8 lg:px-12 py-10 sm:py-14" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
@@ -388,34 +442,67 @@
                         <div class="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-500 rounded-lg flex items-center justify-center">
                             <i class="fas fa-tv text-white text-sm"></i>
                         </div>
-                        <span class="text-lg font-bold text-white">AdScreen</span>
+                        <span class="text-lg font-bold text-white">{{ site_settings.platform_name or 'AdScreen' }}</span>
                     </div>
                     <p class="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
-                        La plateforme SaaS de référence pour la location d'espaces publicitaires sur écrans.
+                        {{ site_settings.site_description or 'La plateforme SaaS de référence pour la location d\'espaces publicitaires sur écrans.' }}
                     </p>
                     <div class="flex gap-3">
-                        <a href="#" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
+                        {% if site_settings.facebook_url %}
+                        <a href="{{ site_settings.facebook_url }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.instagram_url %}
+                        <a href="{{ site_settings.instagram_url }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.twitter_url %}
+                        <a href="{{ site_settings.twitter_url }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
                             <i class="fab fa-twitter"></i>
                         </a>
-                        <a href="#" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
+                        {% endif %}
+                        {% if site_settings.linkedin_url %}
+                        <a href="{{ site_settings.linkedin_url }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
+                        {% endif %}
+                        {% if site_settings.youtube_url %}
+                        <a href="{{ site_settings.youtube_url }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.admin_whatsapp_number %}
+                        <a href="https://wa.me/{{ site_settings.admin_whatsapp_number }}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition text-sm">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div>
                     <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Produit</h4>
                     <ul class="space-y-2 sm:space-y-3">
                         <li><a href="#fonctionnalites" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Fonctionnalités</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">API</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Intégrations</a></li>
+                        <li><a href="#comment-ca-marche" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Comment ça marche</a></li>
+                        <li><a href="#avantages" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Avantages</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Contact</h4>
                     <ul class="space-y-2 sm:space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Centre d'aide</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Documentation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Contact</a></li>
+                        {% if site_settings.support_email %}
+                        <li><a href="mailto:{{ site_settings.support_email }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm"><i class="fas fa-envelope mr-1"></i>{{ site_settings.support_email }}</a></li>
+                        {% endif %}
+                        {% if site_settings.contact_phone %}
+                        <li><a href="tel:{{ site_settings.contact_phone }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm"><i class="fas fa-phone mr-1"></i>{{ site_settings.contact_phone }}</a></li>
+                        {% endif %}
+                        {% if site_settings.admin_whatsapp_number %}
+                        <li><a href="https://wa.me/{{ site_settings.admin_whatsapp_number }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm"><i class="fab fa-whatsapp mr-1"></i>WhatsApp</a></li>
+                        {% endif %}
+                        {% if site_settings.contact_address %}
+                        <li><span class="text-gray-400 text-xs sm:text-sm"><i class="fas fa-map-marker-alt mr-1"></i>{{ site_settings.contact_address }}</span></li>
+                        {% endif %}
                     </ul>
                 </div>
                 <div>
@@ -430,7 +517,7 @@
             <div class="divider opacity-20 mb-6 sm:mb-8"></div>
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <p class="text-gray-500 text-xs sm:text-sm">
-                    © 2024 AdScreen. Tous droits réservés.
+                    © {{ now.year if now else '2024' }} {{ site_settings.platform_name or 'AdScreen' }}. Tous droits réservés.
                 </p>
                 <div class="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
                     <span>Fait avec</span>

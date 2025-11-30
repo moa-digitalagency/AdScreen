@@ -369,6 +369,10 @@ def parse_float_safe(value, default=0.0):
 @login_required
 @superadmin_required
 def settings():
+    import os
+    import secrets
+    from werkzeug.utils import secure_filename
+    
     if request.method == 'POST':
         min_rate = parse_float_safe(request.form.get('min_commission_rate'), 5.0)
         max_rate = parse_float_safe(request.form.get('max_commission_rate'), 30.0)
@@ -386,16 +390,45 @@ def settings():
             'site_title': 'seo',
             'site_description': 'seo',
             'meta_keywords': 'seo',
-            'og_image': 'seo',
             'google_analytics_id': 'seo',
             'platform_name': 'platform',
             'support_email': 'platform',
             'admin_whatsapp_number': 'platform',
+            'head_code': 'platform',
+            'facebook_url': 'social',
+            'instagram_url': 'social',
+            'twitter_url': 'social',
+            'linkedin_url': 'social',
+            'youtube_url': 'social',
+            'contact_phone': 'contact',
+            'contact_address': 'contact',
         }
         
         for key, category in string_settings.items():
             value = request.form.get(key, '')
             SiteSetting.set(key, value, 'string', category)
+        
+        if 'og_image_file' in request.files:
+            file = request.files['og_image_file']
+            if file.filename:
+                filename = secure_filename(file.filename)
+                new_filename = f"og_{secrets.token_hex(8)}_{filename}"
+                upload_path = os.path.join('static', 'uploads', 'site')
+                os.makedirs(upload_path, exist_ok=True)
+                file_path = os.path.join(upload_path, new_filename)
+                file.save(file_path)
+                SiteSetting.set('og_image', '/' + file_path, 'string', 'seo')
+        
+        if 'favicon_file' in request.files:
+            file = request.files['favicon_file']
+            if file.filename:
+                filename = secure_filename(file.filename)
+                new_filename = f"favicon_{secrets.token_hex(4)}_{filename}"
+                upload_path = os.path.join('static', 'uploads', 'site')
+                os.makedirs(upload_path, exist_ok=True)
+                file_path = os.path.join(upload_path, new_filename)
+                file.save(file_path)
+                SiteSetting.set('favicon', '/' + file_path, 'string', 'platform')
         
         SiteSetting.set('min_commission_rate', min_rate, 'float', 'platform')
         SiteSetting.set('max_commission_rate', max_rate, 'float', 'platform')
@@ -410,11 +443,33 @@ def settings():
     seo_settings = SiteSetting.get_seo_settings()
     platform_settings = SiteSetting.get_platform_settings()
     platform_settings['admin_whatsapp_number'] = SiteSetting.get('admin_whatsapp_number', '')
+    platform_settings['head_code'] = SiteSetting.get('head_code', '')
+    platform_settings['favicon'] = SiteSetting.get('favicon', '')
+    platform_settings['facebook_url'] = SiteSetting.get('facebook_url', '')
+    platform_settings['instagram_url'] = SiteSetting.get('instagram_url', '')
+    platform_settings['twitter_url'] = SiteSetting.get('twitter_url', '')
+    platform_settings['linkedin_url'] = SiteSetting.get('linkedin_url', '')
+    platform_settings['youtube_url'] = SiteSetting.get('youtube_url', '')
+    platform_settings['contact_phone'] = SiteSetting.get('contact_phone', '')
+    platform_settings['contact_address'] = SiteSetting.get('contact_address', '')
     
     return render_template('admin/settings.html',
         seo_settings=seo_settings,
         platform_settings=platform_settings
     )
+
+
+@admin_bp.route('/screen/<int:screen_id>/toggle-featured', methods=['POST'])
+@login_required
+@superadmin_required
+def toggle_featured(screen_id):
+    screen = Screen.query.get_or_404(screen_id)
+    screen.is_featured = not screen.is_featured
+    db.session.commit()
+    
+    status = "mis en vedette" if screen.is_featured else "retiré de la vedette"
+    flash(f'Écran {status}.', 'success')
+    return redirect(request.referrer or url_for('admin.screens'))
 
 
 @admin_bp.route('/registration-requests')

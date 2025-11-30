@@ -14,7 +14,35 @@ def index():
             return redirect(url_for('admin.dashboard'))
         else:
             return redirect(url_for('org.dashboard'))
-    return render_template('index.html')
+    
+    from models import Screen
+    featured_screens = Screen.query.filter_by(is_featured=True, is_active=True).join(
+        Organization
+    ).filter(Organization.is_active == True).limit(6).all()
+    
+    return render_template('index.html', featured_screens=featured_screens)
+
+
+@auth_bp.route('/contact', methods=['POST'])
+def contact():
+    name = request.form.get('name', '')
+    email = request.form.get('email', '')
+    message = request.form.get('message', '')
+    
+    admin_whatsapp = SiteSetting.get('admin_whatsapp_number', '')
+    if admin_whatsapp:
+        whatsapp_message = f"""Nouveau message de contact AdScreen:
+
+Nom: {name}
+Email: {email}
+Message: {message}"""
+        
+        encoded_message = urllib.parse.quote(whatsapp_message)
+        whatsapp_url = f"https://wa.me/{admin_whatsapp}?text={encoded_message}"
+        return redirect(whatsapp_url)
+    
+    flash('Message envoyé avec succès!', 'success')
+    return redirect(url_for('auth.index'))
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
