@@ -1,0 +1,173 @@
+SPECIFICATIONS COMPLETES - SaaS LOCATION ECRANS PUBLICITAIRES SELF-SERVICE
+===========================================================================
+
+DESCRIPTION GENERALE
+--------------------
+SaaS permettant aux etablissements (bars, restos, centres commerciaux, etc.) de monétiser 
+leurs ecrans publicitaires (TV, totems, ecrans geants) via un systeme de location 
+self-service. Les clients (annonceurs) accedent via lien/QR code, choisissent des 
+creaneaux, uploadent du contenu adapte a la resolution/orientation, payent et recoivent 
+des rapports. Workflow : Superadmin -> Etablissement -> Ecran/Client.
+
+ROLES UTILISATEURS
+------------------
+1. SUPERADMIN (SaaS)
+   - Creer/gere/suspendre comptes etablissements
+   - Plans tarifaires SaaS (abonnements + commissions 5-15%)
+   - Stats globales : ecrans actifs, revenus totaux, uptime moyen
+   - Supervision : liste noire contenus, audit logs, suspension etablissements
+   - Marketplace future : reservations inter-etablissements
+
+2. ETABLISSEMENT
+   - Creer/configurer ecrans (nom, localisation, resolution WxH, orientation P/T/C)
+   - Types contenu : image/video/les deux + formats/poids max
+   - Slots timings : 5s/10s/15s/30s/etc par type contenu + prix par diffusion
+   - Periodes journee : matin/midi/apres-midi/soir/nuit + coefficients prix
+   - Contenus fillers/demo (image/video aleatoire pour espaces libres)
+   - Contenus internes prioritaires (promos etablissement)
+   - Validation/refus contenus clients (file attente)
+   - Stats : revenus/ecran/periode, uptime, pauses detectees
+   - Vue realtime : etat ecrans (online/play/pause/offline)
+
+3. ANNONCEUR (CLIENT PUBLIC via lien/QR)
+   - Interface publique par ecran : affiche specs (resolution, timings, prix, dispos)
+   - Choix : type contenu, duree slot, periode journee, nb diffusions desirees
+   - Upload fichier avec validation stricte :
+     * Image : verif resolution min/max, ratio exact (REJET si deformation)
+     * Video : extraction duree (ffmpeg), REJET si > slot choisi
+   - Calcul realtime disponibilite playlist + prix total dynamique
+   - Paiement -> Statut "En attente validation etablissement"
+   - Notifications email :
+     * Validation/refus + motif
+     * Rapport quotidien : passages effectues (date/heure/nb)
+     * Estimation prochaines diffusions
+
+4. ECRAN (PLAYER)
+   - Page web fullscreen HTML/JS (pas d'app native)
+   - Login ecran (identifiant/mot de passe unique par ecran)
+   - Recup playlist JSON via API/WebSocket (contenus valides + fillers)
+   - Bouton "Lancer playlist" + recommandation fullscreen browser
+   - Loop automatique : contenus payants > internes > fillers
+   - Ping heartbeat : etablissement voit online/play/pause
+   - Pause >3s = notification auto + recalcul planification
+
+FONCTIONNALITES DETAILLEES
+--------------------------
+
+1. CONFIGURATION ETABLISSEMENT
+   - Creation ecran : nom, localisation GPS, resolution (1920x1080 etc), 
+     orientation (portrait/paysage carree), types contenu accepts
+   - Slots : par type contenu x duree -> prix (ex: image 10s = 0.50€)
+   - Periodes : 5 tranches journee avec multiplicateurs prix
+   - Generation lien/QR code PAR ECRAN (unique, trackable)
+   - Upload fillers : 3-5 images/videos demo par ecran
+   - Priorites playlist : Payant (100%) > Interne (80%) > Filler (20%)
+   - Contenus internes : l'etablissement programme ses propres diffusions
+
+2. WORKFLOW CLIENT
+   - Scan QR/acces lien -> Page ecran specifique (responsive mobile)
+   - Affichage : photo ecran, specs techniques, grille dispos (calendrier)
+   - Selection : slot + periode + nb passages -> prix calcule realtime
+   - Upload + validation auto (taille/format/duree/resolution)
+   - Paiement (Stripe/Paypal) -> file validation etablissement
+   - Dashboard client (post-paiement) : statut, historique, rapports
+
+3. GESTION PLAYLIST & DIFFUSION
+   - Algorithme : loop par minute configurable, remplissage intelligent
+   - Tracking : chaque passage logue (timestamp, contenu ID, ecran ID)
+   - Recalcul dynamique : si pause/offline, decalage auto diffusions
+   - Uptime : pourcentage temps play vs total periode
+   - Alertes : pause>3s, offline>5min, contenu rejete
+
+4. VALIDATION & MODERATION
+   - File par ecran : En attente / Valide / Refuse (motif obligatoire)
+   - Regles auto : format, taille, duree, resolution/ratio exact
+   - Liste noire globale (superadmin) : mots-clés, IP abuseurs
+   - Preview contenu avant validation (player integre dashboard)
+
+5. STATISTIQUES & RAPPORTS
+   ETABLISSEMENT :
+   - Revenus : par ecran/jour/semaine/mois, top contenus
+   - Technique : uptime 95%, nb pauses, temps validation moyen
+   - Heatmap : pics diffusion par periode journee
+   SUPERADMIN :
+   - Aggregation : ecrans actifs/pays, CA total/commissions
+   - Performance : croissance utilisateurs, churn etablissements
+   CLIENT :
+   - Rapport PDF/email : passages exacts, estimations futures
+
+6. NOTIFICATIONS & COMMUNICATION
+   - Email templates : validation, refus, rapports quotidiens
+   - Push dashboard : nouvel ecran online, nouvelle commande
+   - SMS optionnel (Twilio) pour urgences (pause detectee)
+
+SECURITE & TECHNIQUE
+--------------------
+- Auth : JWT Flask-Login (superadmin/etablissement), sessions ecran
+- Uploads : stockage S3/Cloudinary, CDN diffusion, watermark auto
+- API REST + WebSocket (Flask-SocketIO) pour realtime
+- Base : PostgreSQL (models SQLAlchemy)
+- Validations : Pillow (images), ffmpeg-python (videos)
+- QR : qrcode[pil], liens uniques expirable
+- Paiements : Stripe webhooks
+- Logs : audit trails, erreurs, diffusions
+
+ARCHITECTURE FLASK
+------------------
+project/
+  app/
+    __init__.py          # Flask factory
+    config.py
+    extensions.py        # SQLAlchemy, Flask-Login, SocketIO, Celery
+    
+    routes/
+      auth_routes.py     # login/register
+      admin_routes.py    # superadmin
+      org_routes.py      # etablissement dashboard
+      screen_routes.py   # config ecrans/playlist
+      booking_routes.py  # API publique clients
+      player_routes.py   # APIs ecran player
+      
+    models/
+      User.py           # roles: superadmin/org/screen
+      Organization.py
+      Screen.py
+      TimeSlot.py
+      Content.py
+      Booking.py
+      PlaylistItem.py
+      StatLog.py
+      
+    services/
+      playlist_service.py
+      validation_service.py
+      pricing_service.py
+      notification_service.py
+      qr_service.py
+      
+    utils/
+      video_utils.py     # ffmpeg duree/resolution
+      image_utils.py     # Pillow ratio/resolution
+      scheduler.py       # Celery tasks rapports
+
+FICHES TECHNIQUES CRITIQUES
+---------------------------
+- RESOLUTION : STOCKAGE FICHIER ORIGINAL + VERSION PRE-CROPEE EXACTE RESOLUTION
+- VIDEO DUREE : ffmpeg -i file.mp4 2>&1 | grep Duration
+- RATIO : width/height compare exact (tolérance 1px)
+- PLAYLIST : JSON {id, type, file_url, duration, priority, schedule}
+- DISPO REALTIME : query playlist actuelle + forecasting conflits
+
+PRIORITES MVP
+-------------
+1. Auth + CRUD etablissement/ecrans
+2. Config slots + lien/QR generation
+3. Upload client + validation stricte
+4. Player basique (login + loop simple)
+5. Dashboard etablissement (validation/stats)
+6. Notifications email de base
+7. Paiements Stripe
+8. Realtime WebSocket etats ecrans
+9. Stats avancees + rapports
+
+Ce document est la reference complete pour coder le projet.
