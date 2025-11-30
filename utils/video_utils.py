@@ -116,9 +116,6 @@ def validate_video(file_path, target_width, target_height, max_duration):
     if duration > max_duration + 1:
         return False, width, height, duration, f"La vidéo est trop longue ({duration:.1f}s). Maximum autorisé: {max_duration}s"
     
-    if width != target_width or height != target_height:
-        return False, width, height, duration, f"La résolution de la vidéo ({width}x{height}) doit être exactement {target_width}x{target_height}"
-    
     return True, width, height, duration, None
 
 

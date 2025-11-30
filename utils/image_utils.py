@@ -4,12 +4,12 @@ import os
 
 def validate_image(file_path, target_width, target_height, tolerance=1):
     """
-    Validate an image file against screen resolution requirements.
+    Validate an image file.
     
     Args:
         file_path: Path to the image file
-        target_width: Expected width (screen resolution)
-        target_height: Expected height (screen resolution)
+        target_width: Expected width (screen resolution) - not enforced, content adapts
+        target_height: Expected height (screen resolution) - not enforced, content adapts
         tolerance: Pixel tolerance for ratio comparison
     
     Returns:
@@ -18,10 +18,6 @@ def validate_image(file_path, target_width, target_height, tolerance=1):
     try:
         with Image.open(file_path) as img:
             width, height = img.size
-            
-            if width != target_width or height != target_height:
-                return False, width, height, f"La résolution de l'image ({width}x{height}) doit être exactement {target_width}x{target_height}"
-            
             return True, width, height, None
             
     except Exception as e:
