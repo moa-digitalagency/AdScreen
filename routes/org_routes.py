@@ -711,7 +711,11 @@ def stats():
         Booking.end_date,
         Booking.num_plays,
         func.count(StatLog.id).label('play_count')
-    ).join(Screen).outerjoin(Booking).outerjoin(
+    ).select_from(Content).join(
+        Screen, Content.screen_id == Screen.id
+    ).outerjoin(
+        Booking, Booking.content_id == Content.id
+    ).outerjoin(
         StatLog, StatLog.content_id == Content.id
     ).filter(
         Screen.organization_id == org.id
