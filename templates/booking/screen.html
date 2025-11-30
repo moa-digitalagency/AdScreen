@@ -214,45 +214,21 @@
                 <div id="contentPreviewSection" class="hidden mt-6">
                     <div class="bg-gray-900 rounded-xl p-4 relative">
                         <div class="text-center text-white/60 text-xs mb-3">
-                            <i class="fas fa-tv mr-1"></i> Aperçu sur l'écran
+                            <i class="fas fa-tv mr-1"></i> Aperçu sur l'écran ({{ screen.resolution_width }}x{{ screen.resolution_height }})
                         </div>
-                        <div id="screenSimulator" class="mx-auto bg-black rounded-lg overflow-hidden flex items-center justify-center" style="width: 280px; height: 158px;">
+                        <div id="screenSimulator" class="mx-auto bg-black rounded-lg overflow-hidden flex items-center justify-center" 
+                             style="width: {% if screen.orientation == 'portrait' %}180px{% else %}320px{% endif %}; height: {% if screen.orientation == 'portrait' %}320px{% else %}180px{% endif %};">
                             <img id="previewImage" class="max-w-full max-h-full object-contain">
                             <video id="previewVideo" class="max-w-full max-h-full object-contain hidden" controls muted></video>
                         </div>
                         <p id="fileName" class="text-white/80 text-sm text-center mt-3"></p>
-                    </div>
-                    
-                    <div class="mt-4 p-4 bg-gray-50 rounded-xl">
-                        <p class="text-sm font-medium text-gray-700 mb-3">
-                            <i class="fas fa-sync-alt mr-1 text-primary-500"></i>
-                            Orientation du contenu
-                        </p>
-                        <div class="flex gap-3">
-                            <label class="flex-1 relative">
-                                <input type="radio" name="content_orientation" value="horizontal" checked
-                                    class="sr-only orientation-radio" onchange="updateOrientation()">
-                                <div class="orientation-option flex items-center justify-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition">
-                                    <i class="fas fa-arrows-alt-h text-gray-600"></i>
-                                    <span class="font-medium text-gray-700">Horizontal</span>
-                                </div>
-                            </label>
-                            <label class="flex-1 relative">
-                                <input type="radio" name="content_orientation" value="vertical"
-                                    class="sr-only orientation-radio" onchange="updateOrientation()">
-                                <div class="orientation-option flex items-center justify-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition">
-                                    <i class="fas fa-arrows-alt-v text-gray-600"></i>
-                                    <span class="font-medium text-gray-700">Vertical</span>
-                                </div>
-                            </label>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2 text-center">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Choisissez l'orientation qui correspond à votre contenu
+                        <p class="text-center text-emerald-400/80 text-xs mt-2">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Le contenu s'adaptera automatiquement sans déformation
                         </p>
                     </div>
                     
-                    <button type="button" onclick="changeFile()" class="mt-3 w-full py-2 text-sm text-gray-600 hover:text-primary-600 transition">
+                    <button type="button" onclick="changeFile()" class="mt-4 w-full py-2 text-sm text-gray-600 hover:text-primary-600 transition border border-gray-200 rounded-lg hover:border-primary-300">
                         <i class="fas fa-redo mr-1"></i> Changer le fichier
                     </button>
                 </div>
@@ -366,8 +342,6 @@ function previewFile(input) {
             previewImage.classList.add('hidden');
             previewVideo.src = URL.createObjectURL(file);
         }
-        
-        updateOrientation();
     }
 }
 
@@ -377,30 +351,6 @@ function changeFile() {
     document.getElementById('fileInput').value = '';
     document.getElementById('previewImage').src = '';
     document.getElementById('previewVideo').src = '';
-}
-
-function updateOrientation() {
-    const orientation = document.querySelector('input[name="content_orientation"]:checked')?.value || 'horizontal';
-    const simulator = document.getElementById('screenSimulator');
-    
-    if (orientation === 'vertical') {
-        simulator.style.width = '158px';
-        simulator.style.height = '280px';
-    } else {
-        simulator.style.width = '280px';
-        simulator.style.height = '158px';
-    }
-    
-    document.querySelectorAll('.orientation-radio').forEach(input => {
-        const option = input.nextElementSibling;
-        if (input.checked) {
-            option.classList.add('border-primary-500', 'bg-primary-50');
-            option.classList.remove('border-gray-200');
-        } else {
-            option.classList.remove('border-primary-500', 'bg-primary-50');
-            option.classList.add('border-gray-200');
-        }
-    });
 }
 
 document.addEventListener('DOMContentLoaded', updatePrice);

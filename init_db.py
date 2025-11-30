@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🗄️ Script d'initialisation de la base de données AdScreen
+🗄️ Script d'initialisation de la base de données Shabaka AdScreen
 📌 Crée toutes les tables définies dans les modèles SQLAlchemy.
 """
 import sys
@@ -63,12 +63,12 @@ def init_database(drop_existing=False):
 
 def main():
     print("""
-    ╔═══════════════════════════════════════════════════════╗
-    ║  🖥️  AdScreen - Initialisation Base de Données  🗄️   ║
-    ╚═══════════════════════════════════════════════════════╝
+    ╔════════════════════════════════════════════════════════════════╗
+    ║  🖥️  Shabaka AdScreen - Initialisation Base de Données  🗄️   ║
+    ╚════════════════════════════════════════════════════════════════╝
     """)
     
-    parser = argparse.ArgumentParser(description='🗄️ Initialise la base de données AdScreen')
+    parser = argparse.ArgumentParser(description='🗄️ Initialise la base de données Shabaka AdScreen')
     parser.add_argument(
         '--drop',
         action='store_true',

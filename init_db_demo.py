@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-🎮 Script de création des données de démonstration AdScreen
+🎮 Script de création des données de démonstration Shabaka AdScreen
 📌 Crée des comptes et données exemple pour tester l'application.
 """
 import sys
@@ -22,7 +22,7 @@ def create_demo_data():
     with app.app_context():
         db.create_all()
         
-        existing_admin = User.query.filter_by(email='admin@adscreen.com').first()
+        existing_admin = User.query.filter_by(email='admin@shabaka-adscreen.com').first()
         if existing_admin:
             logger.warning("⚠️  Les données de démonstration existent déjà.")
             logger.info("💡 Utilisez --force pour les recréer.")
@@ -31,7 +31,7 @@ def create_demo_data():
         logger.info("👑 Création du superadmin...")
         superadmin = User(
             username='Super Admin',
-            email='admin@adscreen.com',
+            email='admin@shabaka-adscreen.com',
             role='superadmin'
         )
         superadmin.set_password('admin123')
@@ -231,15 +231,15 @@ def create_demo_data():
         logger.info("⚙️  Configuration des paramètres du site...")
         
         site_settings = [
-            ('platform_name', 'AdScreen', 'string', 'platform'),
-            ('support_email', 'support@adscreen.com', 'string', 'platform'),
+            ('platform_name', 'Shabaka AdScreen', 'string', 'platform'),
+            ('support_email', 'support@shabaka-adscreen.com', 'string', 'platform'),
             ('admin_whatsapp_number', '33612345678', 'string', 'platform'),
             ('default_commission_rate', '10.0', 'float', 'platform'),
             ('min_commission_rate', '5.0', 'float', 'platform'),
             ('max_commission_rate', '30.0', 'float', 'platform'),
             ('maintenance_mode', 'false', 'boolean', 'platform'),
-            ('site_title', 'AdScreen - Location Écrans Publicitaires', 'string', 'seo'),
-            ('site_description', 'Plateforme SaaS de location d\'espaces publicitaires sur écrans', 'string', 'seo'),
+            ('site_title', 'Shabaka AdScreen - Location Écrans Publicitaires', 'string', 'seo'),
+            ('site_description', 'Un Produit de Shabaka InnovLab - Plateforme de location d\'espaces publicitaires sur écrans', 'string', 'seo'),
         ]
         
         for key, value, value_type, category in site_settings:
@@ -284,7 +284,7 @@ def create_demo_data():
     ════════════════════════════════════════════════════════════════
     
     👑 SUPERADMIN:
-       📧 Email: admin@adscreen.com
+       📧 Email: admin@shabaka-adscreen.com
        🔑 Mot de passe: admin123
     
     🏢 ÉTABLISSEMENTS:
@@ -331,14 +331,14 @@ def clear_demo_data():
 
 def main():
     print("""
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║  🎮 AdScreen - Création des Données de Démonstration 🎭      ║
-    ╚═══════════════════════════════════════════════════════════════╝
+    ╔════════════════════════════════════════════════════════════════════╗
+    ║  🎮 Shabaka AdScreen - Création des Données de Démonstration 🎭   ║
+    ╚════════════════════════════════════════════════════════════════════╝
     """)
     
     import argparse
     
-    parser = argparse.ArgumentParser(description='🎮 Crée les données de démonstration AdScreen')
+    parser = argparse.ArgumentParser(description='🎮 Crée les données de démonstration Shabaka AdScreen')
     parser.add_argument(
         '--force',
         action='store_true',
