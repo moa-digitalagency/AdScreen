@@ -21,11 +21,15 @@
                 <i class="fas fa-tv w-5"></i>
                 <span>Mes écrans</span>
             </a>
+            <a href="{{ url_for('org.contents') }}" 
+               class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition {% if request.endpoint == 'org.contents' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
+                <i class="fas fa-photo-video w-5"></i>
+                <span>Contenus</span>
+            </a>
             <a href="{{ url_for('org.validations') }}" 
                class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition {% if request.endpoint == 'org.validations' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
                 <i class="fas fa-check-circle w-5"></i>
                 <span>Validations</span>
-                {% set pending_count = current_user.organization.screens|sum(attribute='contents')|selectattr('status', 'equalto', 'pending')|list|length %}
             </a>
             <a href="{{ url_for('org.stats') }}" 
                class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition {% if request.endpoint == 'org.stats' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">

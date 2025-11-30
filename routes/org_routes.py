@@ -577,6 +577,93 @@ def delete_overlay(screen_id, overlay_id):
     return redirect(url_for('org.screen_overlays', screen_id=screen_id))
 
 
+@org_bp.route('/contents')
+@login_required
+@org_required
+def contents():
+    org = current_user.organization
+    
+    all_contents = Content.query.join(Screen).filter(
+        Screen.organization_id == org.id
+    ).order_by(Content.created_at.desc()).all()
+    
+    all_internals = InternalContent.query.join(Screen).filter(
+        Screen.organization_id == org.id
+    ).order_by(InternalContent.created_at.desc()).all()
+    
+    all_fillers = Filler.query.join(Screen).filter(
+        Screen.organization_id == org.id
+    ).order_by(Filler.created_at.desc()).all()
+    
+    screens = Screen.query.filter_by(organization_id=org.id).all()
+    
+    return render_template('org/contents.html',
+        contents=all_contents,
+        internals=all_internals,
+        fillers=all_fillers,
+        screens=screens
+    )
+
+
+
+
+@org_bp.route('/screen/<int:screen_id>/filler/<int:filler_id>/toggle', methods=['POST'])
+@login_required
+@org_required
+def toggle_filler(screen_id, filler_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    filler = Filler.query.filter_by(id=filler_id, screen_id=screen_id).first_or_404()
+    filler.is_active = not filler.is_active
+    db.session.commit()
+    
+    status = 'activé' if filler.is_active else 'désactivé'
+    flash(f'Filler {status}!', 'success')
+    return redirect(request.referrer or url_for('org.screen_fillers', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/internal/<int:internal_id>/toggle', methods=['POST'])
+@login_required
+@org_required
+def toggle_screen_internal(screen_id, internal_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    internal = InternalContent.query.filter_by(id=internal_id, screen_id=screen_id).first_or_404()
+    internal.is_active = not internal.is_active
+    db.session.commit()
+    
+    status = 'activé' if internal.is_active else 'désactivé'
+    flash(f'Contenu interne {status}!', 'success')
+    return redirect(request.referrer or url_for('org.screen_internal', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/internal/<int:internal_id>/delete', methods=['POST'])
+@login_required
+@org_required
+def delete_screen_internal(screen_id, internal_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    internal = InternalContent.query.filter_by(id=internal_id, screen_id=screen_id).first_or_404()
+    
+    if internal.file_path and os.path.exists(internal.file_path):
+        os.remove(internal.file_path)
+    
+    db.session.delete(internal)
+    db.session.commit()
+    
+    flash('Contenu interne supprimé.', 'success')
+    return redirect(request.referrer or url_for('org.screen_internal', screen_id=screen_id))
+
+
 @org_bp.route('/stats')
 @login_required
 @org_required

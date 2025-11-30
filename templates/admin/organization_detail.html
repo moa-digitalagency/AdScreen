@@ -21,7 +21,7 @@
                     <p class="text-gray-500">Inscrit le {{ org.created_at.strftime('%d/%m/%Y') }}</p>
                 </div>
             </div>
-            <div>
+            <div class="flex items-center gap-3">
                 {% if org.is_active %}
                 <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                     <span class="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -33,6 +33,15 @@
                     Suspendu
                 </span>
                 {% endif %}
+                <a href="{{ url_for('admin.organization_edit', org_id=org.id) }}" class="btn-secondary">
+                    <i class="fas fa-edit mr-2"></i>Modifier
+                </a>
+                <form action="{{ url_for('admin.toggle_organization', org_id=org.id) }}" method="POST" class="inline">
+                    <button type="submit" class="{% if org.is_active %}btn-warning{% else %}btn-primary{% endif %}">
+                        <i class="fas fa-{% if org.is_active %}ban{% else %}check{% endif %} mr-2"></i>
+                        {% if org.is_active %}Suspendre{% else %}Activer{% endif %}
+                    </button>
+                </form>
             </div>
         </div>
 

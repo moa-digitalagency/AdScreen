@@ -152,6 +152,139 @@ def toggle_organization(org_id):
     return redirect(url_for('admin.organizations'))
 
 
+@admin_bp.route('/organization/new', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def organization_new():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        org_email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        commission_rate = parse_float_safe(request.form.get('commission_rate'), 
+            SiteSetting.get('default_commission_rate', 10.0))
+        
+        username = request.form.get('username', '').strip()
+        manager_email = request.form.get('manager_email', '').strip() or org_email
+        password = request.form.get('password', '')
+        
+        if not name or not org_email:
+            flash('Le nom et l\'email sont obligatoires.', 'error')
+            return render_template('admin/organization_form.html', org=None)
+        
+        if not username or not password or len(password) < 6:
+            flash('Le nom d\'utilisateur et un mot de passe (min 6 caractères) sont obligatoires.', 'error')
+            return render_template('admin/organization_form.html', org=None)
+        
+        if Organization.query.filter_by(email=org_email).first():
+            flash('Un établissement avec cet email existe déjà.', 'error')
+            return render_template('admin/organization_form.html', org=None)
+        
+        if User.query.filter_by(email=manager_email).first():
+            flash('Cet email gestionnaire est déjà utilisé.', 'error')
+            return render_template('admin/organization_form.html', org=None)
+        
+        if User.query.filter_by(username=username).first():
+            flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
+            return render_template('admin/organization_form.html', org=None)
+        
+        try:
+            org = Organization(
+                name=name,
+                email=org_email,
+                phone=phone,
+                address=address,
+                commission_rate=commission_rate,
+                commission_set_by=current_user.id,
+                commission_updated_at=datetime.utcnow()
+            )
+            db.session.add(org)
+            db.session.flush()
+            
+            user = User(
+                username=username,
+                email=manager_email,
+                role='org',
+                organization_id=org.id,
+                is_active=True
+            )
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            
+            flash(f'Établissement "{name}" créé avec succès!', 'success')
+            return redirect(url_for('admin.organizations'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la création: {str(e)}', 'error')
+            return render_template('admin/organization_form.html', org=None)
+    
+    return render_template('admin/organization_form.html', org=None)
+
+
+@admin_bp.route('/organization/<int:org_id>/edit', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def organization_edit(org_id):
+    org = Organization.query.get_or_404(org_id)
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
+        
+        if not name or not email:
+            flash('Le nom et l\'email sont obligatoires.', 'error')
+            return render_template('admin/organization_form.html', org=org)
+        
+        existing = Organization.query.filter(
+            Organization.email == email,
+            Organization.id != org_id
+        ).first()
+        if existing:
+            flash('Un autre établissement avec cet email existe déjà.', 'error')
+            return render_template('admin/organization_form.html', org=org)
+        
+        org.name = name
+        org.email = email
+        org.phone = phone
+        org.address = address
+        db.session.commit()
+        
+        flash(f'Établissement "{name}" mis à jour!', 'success')
+        return redirect(url_for('admin.organization_detail', org_id=org_id))
+    
+    return render_template('admin/organization_form.html', org=org)
+
+
+@admin_bp.route('/organization/<int:org_id>/delete', methods=['POST'])
+@login_required
+@superadmin_required
+def organization_delete(org_id):
+    org = Organization.query.get_or_404(org_id)
+    
+    active_bookings = Booking.query.join(Screen).filter(
+        Screen.organization_id == org_id,
+        Booking.status.in_(['confirmed', 'pending'])
+    ).count()
+    
+    if active_bookings > 0:
+        flash(f'Impossible de supprimer: {active_bookings} réservation(s) active(s).', 'error')
+        return redirect(url_for('admin.organization_detail', org_id=org_id))
+    
+    org_users = User.query.filter_by(organization_id=org_id).all()
+    for user in org_users:
+        db.session.delete(user)
+    
+    org_name = org.name
+    db.session.delete(org)
+    db.session.commit()
+    
+    flash(f'Établissement "{org_name}" supprimé.', 'success')
+    return redirect(url_for('admin.organizations'))
+
+
 @admin_bp.route('/organization/<int:org_id>/commission', methods=['POST'])
 @login_required
 @superadmin_required

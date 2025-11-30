@@ -44,14 +44,28 @@
             <div class="p-4 flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-800">{{ filler.filename[:20] }}...</p>
-                    <p class="text-xs text-gray-500 capitalize">{{ filler.content_type }}</p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-xs text-gray-500 capitalize">{{ filler.content_type }}</p>
+                        {% if filler.is_active %}
+                        <span class="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">Actif</span>
+                        {% else %}
+                        <span class="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">Inactif</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <form action="{{ url_for('org.delete_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST">
-                    <button type="submit" class="text-red-500 hover:text-red-700 p-2"
-                        onclick="return confirm('Supprimer ce filler ?')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </form>
+                <div class="flex items-center gap-1">
+                    <form action="{{ url_for('org.toggle_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST">
+                        <button type="submit" class="{% if filler.is_active %}text-yellow-500 hover:text-yellow-700{% else %}text-green-500 hover:text-green-700{% endif %} p-2" title="{% if filler.is_active %}Désactiver{% else %}Activer{% endif %}">
+                            <i class="fas fa-{% if filler.is_active %}pause{% else %}play{% endif %}"></i>
+                        </button>
+                    </form>
+                    <form action="{{ url_for('org.delete_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST">
+                        <button type="submit" class="text-red-500 hover:text-red-700 p-2"
+                            onclick="return confirm('Supprimer ce filler ?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         {% else %}

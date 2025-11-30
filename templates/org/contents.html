@@ -1,0 +1,223 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Gestion des Contenus{% endblock %}
+
+{% block main_content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-photo-video text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">Tous les contenus</h2>
+                <p class="text-gray-500">Gérez les publicités, contenus internes et fillers de vos écrans</p>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-purple-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-purple-700">{{ contents|length }}</p>
+                <p class="text-sm text-purple-600">Publicités clients</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-blue-700">{{ internals|length }}</p>
+                <p class="text-sm text-blue-600">Contenus internes</p>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4">
+                <p class="text-2xl font-bold text-green-700">{{ fillers|length }}</p>
+                <p class="text-sm text-green-600">Fillers/Démos</p>
+            </div>
+        </div>
+    </div>
+
+    {% if contents %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">Publicités clients</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for content in contents %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-{% if content.content_type == 'video' %}video{% else %}image{% endif %} text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ content.original_filename or content.filename }}</p>
+                                    <p class="text-sm text-gray-500">{{ content.content_type }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="text-gray-800">{{ content.client_name or '-' }}</p>
+                            <p class="text-sm text-gray-500">{{ content.client_email or '-' }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-gray-800">{{ content.screen.name }}</td>
+                        <td class="px-6 py-4">
+                            {% if content.status == 'approved' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approuvé</span>
+                            {% elif content.status == 'pending' %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">En attente</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Rejeté</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ content.created_at.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if internals %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">Contenus internes</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Priorité</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for internal in internals %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-{% if internal.content_type == 'video' %}video{% else %}image{% endif %} text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ internal.name }}</p>
+                                    <p class="text-sm text-gray-500">{{ internal.content_type }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-800">{{ internal.screen.name }}</td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono text-gray-800">{{ internal.priority }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if internal.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Actif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <form action="{{ url_for('org.toggle_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{% if internal.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                        <i class="fas fa-{% if internal.is_active %}pause{% else %}play{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('org.delete_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce contenu ?')">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if fillers %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">Fillers / Démos</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Durée</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for filler in fillers %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-{% if filler.content_type == 'video' %}video{% else %}image{% endif %} text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ filler.filename }}</p>
+                                    <p class="text-sm text-gray-500">{{ filler.content_type }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-800">{{ filler.screen.name }}</td>
+                        <td class="px-6 py-4 text-gray-800">
+                            {% if filler.duration_seconds %}{{ "%.1f"|format(filler.duration_seconds) }}s{% else %}-{% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if filler.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Actif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <form action="{{ url_for('org.toggle_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{% if filler.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                        <i class="fas fa-{% if filler.is_active %}pause{% else %}play{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('org.delete_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce filler ?')">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not contents and not internals and not fillers %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-photo-video text-gray-400 text-2xl"></i>
+        </div>
+        <p class="text-gray-500 mb-2">Aucun contenu</p>
+        <p class="text-gray-400 text-sm">Ajoutez des contenus depuis la page de chaque écran</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

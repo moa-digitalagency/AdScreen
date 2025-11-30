@@ -6,8 +6,13 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-100">
     <div class="p-6 border-b border-gray-100">
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-800">Liste des établissements</h2>
-            <span class="text-sm text-gray-500">{{ organizations|length }} établissement(s)</span>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800">Liste des établissements</h2>
+                <span class="text-sm text-gray-500">{{ organizations|length }} établissement(s)</span>
+            </div>
+            <a href="{{ url_for('admin.organization_new') }}" class="btn-primary">
+                <i class="fas fa-plus mr-2"></i>Nouvel établissement
+            </a>
         </div>
     </div>
 
@@ -63,14 +68,27 @@
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2">
                             <a href="{{ url_for('admin.organization_detail', org_id=org.id) }}" 
-                               class="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition">
+                               class="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                               title="Voir">
                                 <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('admin.organization_edit', org_id=org.id) }}" 
+                               class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                               title="Modifier">
+                                <i class="fas fa-edit"></i>
                             </a>
                             <form action="{{ url_for('admin.toggle_organization', org_id=org.id) }}" method="POST" class="inline">
                                 <button type="submit" 
                                         class="p-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition"
                                         title="{% if org.is_active %}Suspendre{% else %}Activer{% endif %}">
                                     <i class="fas fa-{% if org.is_active %}ban{% else %}check{% endif %}"></i>
+                                </button>
+                            </form>
+                            <form action="{{ url_for('admin.organization_delete', org_id=org.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cet établissement ? Cette action est irréversible.')">
+                                <button type="submit" 
+                                        class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                        title="Supprimer">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                         </div>
