@@ -4,44 +4,42 @@
 
 {% block content %}
 <div class="min-h-screen bg-white">
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
-        <div class="container mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
                 <div class="logo">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-tv text-white"></i>
+                    <div class="w-9 h-9 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tv text-white text-sm"></i>
                     </div>
-                    <span>AdScreen</span>
+                    <span class="text-lg">AdScreen</span>
                 </div>
                 <div class="hidden md:flex items-center gap-1">
-                    <a href="#fonctionnalites" class="nav-link">Fonctionnalités</a>
-                    <a href="#comment-ca-marche" class="nav-link">Comment ça marche</a>
-                    <a href="#avantages" class="nav-link">Avantages</a>
-                    <a href="#tarifs" class="nav-link">Tarifs</a>
+                    <a href="#fonctionnalites" class="nav-link text-sm">Fonctionnalités</a>
+                    <a href="#comment-ca-marche" class="nav-link text-sm">Comment ça marche</a>
+                    <a href="#avantages" class="nav-link text-sm">Avantages</a>
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="{{ url_for('auth.login') }}" class="btn-ghost hidden sm:inline-flex">Connexion</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn-primary hidden sm:inline-flex">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="{{ url_for('auth.login') }}" class="btn-ghost text-sm hidden sm:inline-flex">Connexion</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn-primary text-sm py-2 px-4 hidden sm:inline-flex">
                         Commencer
-                        <i class="fas fa-arrow-right text-sm"></i>
+                        <i class="fas fa-arrow-right text-xs"></i>
                     </a>
                     <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition">
-                        <i class="fas fa-bars text-xl"></i>
+                        <i class="fas fa-bars text-lg"></i>
                     </button>
                 </div>
             </div>
             
-            <div data-mobile-menu class="hidden md:hidden border-t border-gray-100 py-4 mt-4">
-                <div class="flex flex-col gap-2">
-                    <a href="#fonctionnalites" class="nav-link block py-2">Fonctionnalités</a>
-                    <a href="#comment-ca-marche" class="nav-link block py-2">Comment ça marche</a>
-                    <a href="#avantages" class="nav-link block py-2">Avantages</a>
-                    <a href="#tarifs" class="nav-link block py-2">Tarifs</a>
-                    <div class="border-t border-gray-100 pt-4 mt-2">
-                        <a href="{{ url_for('auth.login') }}" class="btn-ghost block text-center mb-2">Connexion</a>
-                        <a href="{{ url_for('auth.register') }}" class="btn-primary block text-center">
+            <div data-mobile-menu class="hidden md:hidden border-t border-gray-100 py-4">
+                <div class="flex flex-col gap-1">
+                    <a href="#fonctionnalites" class="nav-link block py-2 px-2">Fonctionnalités</a>
+                    <a href="#comment-ca-marche" class="nav-link block py-2 px-2">Comment ça marche</a>
+                    <a href="#avantages" class="nav-link block py-2 px-2">Avantages</a>
+                    <div class="border-t border-gray-100 pt-3 mt-2 flex flex-col gap-2">
+                        <a href="{{ url_for('auth.login') }}" class="btn-ghost block text-center text-sm">Connexion</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn-primary block text-center text-sm">
                             Commencer
-                            <i class="fas fa-arrow-right text-sm"></i>
+                            <i class="fas fa-arrow-right text-xs ml-1"></i>
                         </a>
                     </div>
                 </div>
@@ -49,299 +47,289 @@
         </div>
     </nav>
 
-    <section class="pt-32 pb-20 relative overflow-hidden">
-        <div class="blob blob-green w-96 h-96 -top-48 -left-48"></div>
-        <div class="blob blob-mint w-80 h-80 top-20 right-0"></div>
+    <section class="pt-24 sm:pt-28 pb-16 sm:pb-20 relative overflow-hidden">
+        <div class="blob blob-green w-64 sm:w-96 h-64 sm:h-96 -top-32 -left-32 opacity-30"></div>
+        <div class="blob blob-mint w-48 sm:w-80 h-48 sm:h-80 top-20 right-0 opacity-30"></div>
         
-        <div class="container mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
-                <div class="animate-fade-in-up">
-                    <div class="section-badge">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="animate-fade-in-up text-center lg:text-left">
+                    <div class="section-badge inline-flex mb-4">
                         <i class="fas fa-sparkles text-emerald-500"></i>
                         Plateforme SaaS
                     </div>
-                    <h1 class="section-title mb-6">
-                        Monétisez vos<br>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        Monétisez vos<br class="hidden sm:block">
                         <span class="gradient-text">écrans publicitaires</span>
                     </h1>
-                    <p class="section-subtitle mb-8 max-w-lg">
-                        Transformez vos écrans en source de revenus. Location d'espaces publicitaires simple, automatisée et rentable pour les établissements.
+                    <p class="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0">
+                        Transformez vos écrans en source de revenus. Location d'espaces publicitaires simple, automatisée et rentable.
                     </p>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-12">
-                        <a href="{{ url_for('auth.register') }}" class="btn-primary text-lg">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-10 justify-center lg:justify-start">
+                        <a href="{{ url_for('auth.register') }}" class="btn-primary justify-center">
                             <i class="fas fa-rocket"></i>
                             Commencer gratuitement
                         </a>
-                        <a href="#comment-ca-marche" class="btn-secondary text-lg">
+                        <a href="#comment-ca-marche" class="btn-secondary justify-center">
                             <i class="fas fa-play-circle"></i>
                             Voir la démo
                         </a>
                     </div>
-                    <div class="flex items-center gap-8">
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">500+</div>
-                            <div class="text-sm text-gray-500">Écrans actifs</div>
+                    <div class="flex items-center justify-center lg:justify-start gap-6 sm:gap-8">
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl font-bold text-gray-900">500+</div>
+                            <div class="text-xs sm:text-sm text-gray-500">Écrans actifs</div>
                         </div>
-                        <div class="w-px h-10 bg-gray-200"></div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">98%</div>
-                            <div class="text-sm text-gray-500">Satisfaction</div>
+                        <div class="w-px h-8 sm:h-10 bg-gray-200"></div>
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl font-bold text-gray-900">98%</div>
+                            <div class="text-xs sm:text-sm text-gray-500">Satisfaction</div>
                         </div>
-                        <div class="w-px h-10 bg-gray-200"></div>
-                        <div>
-                            <div class="text-2xl font-bold text-gray-900">24/7</div>
-                            <div class="text-sm text-gray-500">Diffusion</div>
+                        <div class="w-px h-8 sm:h-10 bg-gray-200"></div>
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl font-bold text-gray-900">24/7</div>
+                            <div class="text-xs sm:text-sm text-gray-500">Diffusion</div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="hero-image-container animate-fade-in-up animate-delay-200">
+                <div class="hero-image-container animate-fade-in-up animate-delay-200 hidden lg:block">
                     <div class="hero-image-blob animate-float"></div>
                     <div class="relative z-10">
-                        <div class="bg-white rounded-2xl shadow-2xl p-6 mb-4">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        <div class="bg-white rounded-2xl shadow-2xl p-5">
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
                             </div>
-                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6">
-                                <div class="flex items-center justify-between mb-6">
+                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-5">
+                                <div class="flex items-center justify-between mb-5">
                                     <div>
-                                        <div class="text-sm text-gray-500 mb-1">Revenus du mois</div>
-                                        <div class="text-3xl font-bold text-gray-900">2,450 €</div>
+                                        <div class="text-xs text-gray-500 mb-1">Revenus du mois</div>
+                                        <div class="text-2xl font-bold text-gray-900">2,450 €</div>
                                     </div>
-                                    <div class="badge badge-success">
+                                    <div class="badge badge-success text-xs">
                                         <i class="fas fa-arrow-up mr-1"></i>+23%
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-3 gap-4">
-                                    <div class="bg-white rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-emerald-600">12</div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div class="bg-white rounded-lg p-2.5 text-center">
+                                        <div class="text-base font-bold text-emerald-600">12</div>
                                         <div class="text-xs text-gray-500">Écrans</div>
                                     </div>
-                                    <div class="bg-white rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-emerald-600">48</div>
+                                    <div class="bg-white rounded-lg p-2.5 text-center">
+                                        <div class="text-base font-bold text-emerald-600">48</div>
                                         <div class="text-xs text-gray-500">Réservations</div>
                                     </div>
-                                    <div class="bg-white rounded-lg p-3 text-center">
-                                        <div class="text-lg font-bold text-emerald-600">1.2k</div>
+                                    <div class="bg-white rounded-lg p-2.5 text-center">
+                                        <div class="text-base font-bold text-emerald-600">1.2k</div>
                                         <div class="text-xs text-gray-500">Diffusions</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="hero-stats-card floating-card absolute -left-8 bottom-20">
-                            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <i class="fas fa-chart-line text-emerald-600"></i>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-gray-900">Croissance</div>
-                                <div class="text-sm text-emerald-600">+45% ce mois</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="py-12 border-y border-gray-100">
-        <div class="container mx-auto px-6">
-            <p class="text-center text-sm text-gray-400 mb-8">Ils nous font confiance</p>
-            <div class="logo-cloud">
-                <div class="logo-cloud-item">
-                    <i class="fas fa-store mr-2"></i>Restaurants
+    <section class="py-8 sm:py-10 border-y border-gray-100 bg-gray-50/50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-xs sm:text-sm text-gray-400 mb-6">Ils nous font confiance</p>
+            <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-8 lg:gap-12">
+                <div class="logo-cloud-item text-sm">
+                    <i class="fas fa-store mr-1.5"></i>Restaurants
                 </div>
-                <div class="logo-cloud-item">
-                    <i class="fas fa-building mr-2"></i>Centres commerciaux
+                <div class="logo-cloud-item text-sm">
+                    <i class="fas fa-building mr-1.5"></i>Centres commerciaux
                 </div>
-                <div class="logo-cloud-item">
-                    <i class="fas fa-glass-martini-alt mr-2"></i>Bars & Cafés
+                <div class="logo-cloud-item text-sm hidden sm:flex">
+                    <i class="fas fa-glass-martini-alt mr-1.5"></i>Bars & Cafés
                 </div>
-                <div class="logo-cloud-item">
-                    <i class="fas fa-hotel mr-2"></i>Hôtels
+                <div class="logo-cloud-item text-sm hidden md:flex">
+                    <i class="fas fa-hotel mr-1.5"></i>Hôtels
                 </div>
-                <div class="logo-cloud-item">
-                    <i class="fas fa-dumbbell mr-2"></i>Salles de sport
+                <div class="logo-cloud-item text-sm hidden lg:flex">
+                    <i class="fas fa-dumbbell mr-1.5"></i>Salles de sport
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="fonctionnalites" class="py-24 relative">
-        <div class="container mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
+    <section id="fonctionnalites" class="py-16 sm:py-20 lg:py-24 relative">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                 <div>
-                    <div class="section-badge">
+                    <div class="section-badge inline-flex mb-3">
                         <i class="fas fa-cogs text-emerald-500"></i>
                         Fonctionnalités
                     </div>
-                    <h2 class="section-title mb-6">
-                        Comment nous aidons<br>nos partenaires
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">
+                        Comment nous aidons<br class="hidden sm:block">nos partenaires
                     </h2>
-                    <p class="section-subtitle mb-8">
+                    <p class="text-gray-600 mb-6 sm:mb-8">
                         Une solution complète pour gérer, monétiser et optimiser vos espaces publicitaires sur écran.
                     </p>
                     
-                    <div class="space-y-6">
+                    <div class="space-y-4 sm:space-y-5">
                         <div class="feature-list-item">
                             <div class="feature-list-icon">
-                                <i class="fas fa-broadcast-tower"></i>
+                                <i class="fas fa-broadcast-tower text-sm"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-1">Diffusion automatique</h4>
-                                <p class="text-gray-500 text-sm">Les contenus validés sont diffusés automatiquement selon les créneaux réservés.</p>
+                                <h4 class="font-semibold text-gray-900 mb-0.5">Diffusion automatique</h4>
+                                <p class="text-gray-500 text-sm">Les contenus validés sont diffusés selon les créneaux réservés.</p>
                             </div>
                         </div>
                         <div class="feature-list-item">
                             <div class="feature-list-icon">
-                                <i class="fas fa-chart-bar"></i>
+                                <i class="fas fa-chart-bar text-sm"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-1">Analytics avancés</h4>
-                                <p class="text-gray-500 text-sm">Suivez vos revenus, le nombre de diffusions et l'engagement en temps réel.</p>
+                                <h4 class="font-semibold text-gray-900 mb-0.5">Analytics avancés</h4>
+                                <p class="text-gray-500 text-sm">Suivez vos revenus et l'engagement en temps réel.</p>
                             </div>
                         </div>
                         <div class="feature-list-item">
                             <div class="feature-list-icon">
-                                <i class="fas fa-hand-holding-usd"></i>
+                                <i class="fas fa-hand-holding-usd text-sm"></i>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-gray-900 mb-1">Monétisation simple</h4>
-                                <p class="text-gray-500 text-sm">Définissez vos tarifs, les annonceurs paient directement en ligne.</p>
+                                <h4 class="font-semibold text-gray-900 mb-0.5">Monétisation simple</h4>
+                                <p class="text-gray-500 text-sm">Définissez vos tarifs, les annonceurs paient directement.</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="card hover-scale">
-                        <div class="feature-icon-circle mb-4">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="card hover-scale p-4 sm:p-5">
+                        <div class="feature-icon-circle w-10 h-10 sm:w-12 sm:h-12 mb-3 text-sm sm:text-base">
                             <i class="fas fa-qrcode"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">QR Code Unique</h4>
-                        <p class="text-sm text-gray-500">Chaque écran a son propre QR code pour réservation instantanée.</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">QR Code Unique</h4>
+                        <p class="text-xs sm:text-sm text-gray-500">Réservation instantanée par scan.</p>
                     </div>
-                    <div class="card hover-scale mt-8">
-                        <div class="feature-icon-circle mb-4">
+                    <div class="card hover-scale mt-4 sm:mt-6 p-4 sm:p-5">
+                        <div class="feature-icon-circle w-10 h-10 sm:w-12 sm:h-12 mb-3 text-sm sm:text-base">
                             <i class="fas fa-cloud-upload-alt"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Upload facile</h4>
-                        <p class="text-sm text-gray-500">Les annonceurs uploadent leurs contenus en quelques clics.</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Upload facile</h4>
+                        <p class="text-xs sm:text-sm text-gray-500">Contenus en quelques clics.</p>
                     </div>
-                    <div class="card hover-scale">
-                        <div class="feature-icon-circle mb-4">
+                    <div class="card hover-scale p-4 sm:p-5">
+                        <div class="feature-icon-circle w-10 h-10 sm:w-12 sm:h-12 mb-3 text-sm sm:text-base">
                             <i class="fas fa-check-double"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Validation rapide</h4>
-                        <p class="text-sm text-gray-500">Validez ou refusez les contenus depuis votre dashboard.</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Validation rapide</h4>
+                        <p class="text-xs sm:text-sm text-gray-500">Contrôle depuis le dashboard.</p>
                     </div>
-                    <div class="card hover-scale mt-8">
-                        <div class="feature-icon-circle mb-4">
+                    <div class="card hover-scale mt-4 sm:mt-6 p-4 sm:p-5">
+                        <div class="feature-icon-circle w-10 h-10 sm:w-12 sm:h-12 mb-3 text-sm sm:text-base">
                             <i class="fas fa-desktop"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Player web</h4>
-                        <p class="text-sm text-gray-500">Diffusion fullscreen automatique sur navigateur web.</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Player web</h4>
+                        <p class="text-xs sm:text-sm text-gray-500">Diffusion fullscreen auto.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="comment-ca-marche" class="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <div class="section-badge mx-auto">
+    <section id="comment-ca-marche" class="py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10 sm:mb-14">
+                <div class="section-badge mx-auto mb-3">
                     <i class="fas fa-route text-emerald-500"></i>
                     Processus
                 </div>
-                <h2 class="section-title mb-4">Comment ça marche ?</h2>
-                <p class="section-subtitle max-w-2xl mx-auto">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">Comment ça marche ?</h2>
+                <p class="text-gray-600 max-w-xl mx-auto text-sm sm:text-base">
                     En 4 étapes simples, transformez vos écrans en source de revenus
                 </p>
             </div>
             
-            <div class="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto">
                 <div class="text-center">
-                    <div class="number-badge w-12 h-12 text-lg mx-auto mb-6">1</div>
-                    <div class="card h-full">
-                        <div class="feature-icon-lg mx-auto mb-4">
+                    <div class="number-badge w-10 h-10 sm:w-11 sm:h-11 text-sm mx-auto mb-4">1</div>
+                    <div class="card h-full p-4 sm:p-5">
+                        <div class="feature-icon-lg w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 text-lg sm:text-xl">
                             <i class="fas fa-plus-circle"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Créez vos écrans</h4>
-                        <p class="text-sm text-gray-500">Configurez résolution, tarifs et périodes de diffusion</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Créez vos écrans</h4>
+                        <p class="text-xs text-gray-500 hidden sm:block">Configurez résolution et tarifs</p>
                     </div>
                 </div>
                 <div class="text-center">
-                    <div class="number-badge w-12 h-12 text-lg mx-auto mb-6">2</div>
-                    <div class="card h-full">
-                        <div class="feature-icon-lg mx-auto mb-4">
+                    <div class="number-badge w-10 h-10 sm:w-11 sm:h-11 text-sm mx-auto mb-4">2</div>
+                    <div class="card h-full p-4 sm:p-5">
+                        <div class="feature-icon-lg w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 text-lg sm:text-xl">
                             <i class="fas fa-qrcode"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Partagez le QR</h4>
-                        <p class="text-sm text-gray-500">Affichez-le près de l'écran pour les annonceurs</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Partagez le QR</h4>
+                        <p class="text-xs text-gray-500 hidden sm:block">Affichez-le près de l'écran</p>
                     </div>
                 </div>
                 <div class="text-center">
-                    <div class="number-badge w-12 h-12 text-lg mx-auto mb-6">3</div>
-                    <div class="card h-full">
-                        <div class="feature-icon-lg mx-auto mb-4">
+                    <div class="number-badge w-10 h-10 sm:w-11 sm:h-11 text-sm mx-auto mb-4">3</div>
+                    <div class="card h-full p-4 sm:p-5">
+                        <div class="feature-icon-lg w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 text-lg sm:text-xl">
                             <i class="fas fa-upload"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Recevez les pubs</h4>
-                        <p class="text-sm text-gray-500">Les annonceurs uploadent et paient en ligne</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Recevez les pubs</h4>
+                        <p class="text-xs text-gray-500 hidden sm:block">Les annonceurs uploadent</p>
                     </div>
                 </div>
                 <div class="text-center">
-                    <div class="number-badge w-12 h-12 text-lg mx-auto mb-6">4</div>
-                    <div class="card h-full">
-                        <div class="feature-icon-lg mx-auto mb-4">
+                    <div class="number-badge w-10 h-10 sm:w-11 sm:h-11 text-sm mx-auto mb-4">4</div>
+                    <div class="card h-full p-4 sm:p-5">
+                        <div class="feature-icon-lg w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 text-lg sm:text-xl">
                             <i class="fas fa-play"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2">Diffusez & Gagnez</h4>
-                        <p class="text-sm text-gray-500">Validez et laissez le player diffuser automatiquement</p>
+                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">Diffusez & Gagnez</h4>
+                        <p class="text-xs text-gray-500 hidden sm:block">Validez et gagnez</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="avantages" class="py-24">
-        <div class="container mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
+    <section id="avantages" class="py-16 sm:py-20 lg:py-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                 <div class="order-2 lg:order-1">
-                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-3xl p-8 relative">
-                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-emerald-200 rounded-full opacity-50 blur-2xl"></div>
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 relative">
+                        <div class="absolute -top-4 -right-4 w-16 sm:w-24 h-16 sm:h-24 bg-emerald-200 rounded-full opacity-50 blur-2xl"></div>
                         <div class="relative">
-                            <div class="bg-white rounded-2xl p-6 shadow-lg mb-4">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-euro-sign text-emerald-600 text-xl"></i>
+                            <div class="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-4">
+                                <div class="flex items-center gap-3 sm:gap-4 mb-4">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-euro-sign text-emerald-600 text-base sm:text-xl"></i>
                                     </div>
                                     <div>
-                                        <div class="text-sm text-gray-500">Revenus générés</div>
-                                        <div class="text-2xl font-bold text-gray-900">12,850 €</div>
+                                        <div class="text-xs sm:text-sm text-gray-500">Revenus générés</div>
+                                        <div class="text-xl sm:text-2xl font-bold text-gray-900">12,850 €</div>
                                     </div>
                                 </div>
                                 <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
                                     <div class="h-full w-3/4 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"></div>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white rounded-xl p-4 shadow-md">
-                                    <div class="flex items-center gap-2 text-emerald-600 mb-2">
-                                        <i class="fas fa-clock"></i>
-                                        <span class="text-sm font-medium">Temps réel</span>
+                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-md">
+                                    <div class="flex items-center gap-1.5 sm:gap-2 text-emerald-600 mb-1 sm:mb-2">
+                                        <i class="fas fa-clock text-xs sm:text-sm"></i>
+                                        <span class="text-xs font-medium">Temps réel</span>
                                     </div>
-                                    <div class="text-lg font-bold text-gray-900">Statistiques</div>
+                                    <div class="text-sm sm:text-lg font-bold text-gray-900">Statistiques</div>
                                 </div>
-                                <div class="bg-white rounded-xl p-4 shadow-md">
-                                    <div class="flex items-center gap-2 text-emerald-600 mb-2">
-                                        <i class="fas fa-shield-alt"></i>
-                                        <span class="text-sm font-medium">Sécurisé</span>
+                                <div class="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-md">
+                                    <div class="flex items-center gap-1.5 sm:gap-2 text-emerald-600 mb-1 sm:mb-2">
+                                        <i class="fas fa-shield-alt text-xs sm:text-sm"></i>
+                                        <span class="text-xs font-medium">Sécurisé</span>
                                     </div>
-                                    <div class="text-lg font-bold text-gray-900">Paiements</div>
+                                    <div class="text-sm sm:text-lg font-bold text-gray-900">Paiements</div>
                                 </div>
                             </div>
                         </div>
@@ -349,14 +337,14 @@
                 </div>
                 
                 <div class="order-1 lg:order-2">
-                    <div class="section-badge">
+                    <div class="section-badge inline-flex mb-3">
                         <i class="fas fa-gift text-emerald-500"></i>
                         Avantages
                     </div>
-                    <h2 class="section-title mb-6">
-                        Ce que vous<br>obtenez avec nous
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4 sm:mb-6">
+                        Ce que vous<br class="hidden sm:block">obtenez avec nous
                     </h2>
-                    <ul class="check-list space-y-4">
+                    <ul class="check-list space-y-2 sm:space-y-3 text-sm sm:text-base">
                         <li>Revenus passifs sans effort de prospection</li>
                         <li>Contrôle total sur les contenus diffusés</li>
                         <li>Tableau de bord intuitif et complet</li>
@@ -369,94 +357,21 @@
         </div>
     </section>
 
-    <section id="tarifs" class="py-24 bg-gradient-to-b from-white to-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-16">
-                <div class="section-badge mx-auto">
-                    <i class="fas fa-tag text-emerald-500"></i>
-                    Tarification
-                </div>
-                <h2 class="section-title mb-4">Choisissez votre formule</h2>
-                <p class="section-subtitle max-w-2xl mx-auto">
-                    Des plans flexibles adaptés à tous les établissements
-                </p>
-            </div>
-            
-            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div class="pricing-card">
-                    <div class="text-center mb-6">
-                        <div class="text-lg font-semibold text-gray-900 mb-2">Starter</div>
-                        <div class="text-4xl font-bold text-gray-900 mb-1">Gratuit</div>
-                        <div class="text-sm text-gray-500">Pour démarrer</div>
-                    </div>
-                    <ul class="check-list mb-8">
-                        <li>1 écran</li>
-                        <li>QR code unique</li>
-                        <li>Dashboard basique</li>
-                        <li>Support email</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn-secondary w-full justify-center">
-                        Commencer gratuitement
-                    </a>
-                </div>
-                
-                <div class="pricing-card featured">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <div class="badge badge-success px-4 py-1">Populaire</div>
-                    </div>
-                    <div class="text-center mb-6">
-                        <div class="text-lg font-semibold text-gray-900 mb-2">Pro</div>
-                        <div class="text-4xl font-bold text-gray-900 mb-1">29€<span class="text-lg font-normal text-gray-500">/mois</span></div>
-                        <div class="text-sm text-gray-500">Par établissement</div>
-                    </div>
-                    <ul class="check-list mb-8">
-                        <li>Jusqu'à 10 écrans</li>
-                        <li>Analytics avancés</li>
-                        <li>Contenus internes</li>
-                        <li>API d'intégration</li>
-                        <li>Support prioritaire</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn-primary w-full justify-center">
-                        Essai gratuit 14 jours
-                    </a>
-                </div>
-                
-                <div class="pricing-card">
-                    <div class="text-center mb-6">
-                        <div class="text-lg font-semibold text-gray-900 mb-2">Enterprise</div>
-                        <div class="text-4xl font-bold text-gray-900 mb-1">Sur mesure</div>
-                        <div class="text-sm text-gray-500">Pour les grands réseaux</div>
-                    </div>
-                    <ul class="check-list mb-8">
-                        <li>Écrans illimités</li>
-                        <li>Multi-établissements</li>
-                        <li>Marque blanche</li>
-                        <li>SLA garanti</li>
-                        <li>Account manager dédié</li>
-                    </ul>
-                    <a href="{{ url_for('auth.login') }}" class="btn-secondary w-full justify-center">
-                        Nous contacter
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="py-24">
-        <div class="container mx-auto px-6">
-            <div class="cta-section text-center">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+    <section class="py-16 sm:py-20 lg:py-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cta-section text-center px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
                     Prêt à monétiser vos écrans ?
                 </h2>
-                <p class="text-lg text-white/80 mb-8 max-w-xl mx-auto">
-                    Rejoignez des centaines d'établissements qui génèrent déjà des revenus avec leurs écrans publicitaires.
+                <p class="text-base sm:text-lg text-white/80 mb-6 sm:mb-8 max-w-xl mx-auto">
+                    Rejoignez des centaines d'établissements qui génèrent des revenus avec leurs écrans.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ url_for('auth.register') }}" class="btn-primary bg-white text-emerald-600 hover:bg-white/90">
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                    <a href="{{ url_for('auth.register') }}" class="btn-primary bg-white text-emerald-600 hover:bg-white/90 justify-center">
                         <i class="fas fa-rocket"></i>
                         Créer mon compte gratuit
                     </a>
-                    <a href="{{ url_for('player.login') }}" class="btn-secondary border-white/30 text-white hover:bg-white/10">
+                    <a href="{{ url_for('player.login') }}" class="btn-secondary border-white/30 text-white hover:bg-white/10 justify-center">
                         <i class="fas fa-play"></i>
                         Mode Player
                     </a>
@@ -465,64 +380,59 @@
         </div>
     </section>
 
-    <footer class="footer-dark py-16">
-        <div class="container mx-auto px-6">
-            <div class="grid md:grid-cols-4 gap-12 mb-12">
-                <div>
-                    <div class="flex items-center gap-2 mb-6">
-                        <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-tv text-white"></i>
+    <footer class="footer-dark py-12 sm:py-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 sm:mb-12">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4 sm:mb-6">
+                        <div class="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tv text-white text-sm"></i>
                         </div>
-                        <span class="text-xl font-bold text-white">AdScreen</span>
+                        <span class="text-lg font-bold text-white">AdScreen</span>
                     </div>
-                    <p class="text-gray-400 text-sm mb-6">
+                    <p class="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
                         La plateforme SaaS de référence pour la location d'espaces publicitaires sur écrans.
                     </p>
-                    <div class="flex gap-4">
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition">
+                    <div class="flex gap-3">
+                        <a href="#" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
                             <i class="fab fa-twitter"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition">
+                        <a href="#" class="w-8 h-8 sm:w-9 sm:h-9 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition text-sm">
                             <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-emerald-500 hover:text-white transition">
-                            <i class="fab fa-instagram"></i>
                         </a>
                     </div>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-4">Produit</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#fonctionnalites" class="text-gray-400 hover:text-emerald-400 transition text-sm">Fonctionnalités</a></li>
-                        <li><a href="#tarifs" class="text-gray-400 hover:text-emerald-400 transition text-sm">Tarifs</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">API</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Intégrations</a></li>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Produit</h4>
+                    <ul class="space-y-2 sm:space-y-3">
+                        <li><a href="#fonctionnalites" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Fonctionnalités</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">API</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Intégrations</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-4">Support</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Centre d'aide</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Documentation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Nous contacter</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Status</a></li>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
+                    <ul class="space-y-2 sm:space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Centre d'aide</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Contact</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-4">Légal</h4>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Conditions d'utilisation</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Politique de confidentialité</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-sm">Mentions légales</a></li>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Légal</h4>
+                    <ul class="space-y-2 sm:space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">CGU</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Confidentialité</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Mentions légales</a></li>
                     </ul>
                 </div>
             </div>
-            <div class="divider opacity-20 mb-8"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-gray-500 text-sm">
+            <div class="divider opacity-20 mb-6 sm:mb-8"></div>
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <p class="text-gray-500 text-xs sm:text-sm">
                     © 2024 AdScreen. Tous droits réservés.
                 </p>
-                <div class="flex items-center gap-2 text-gray-500 text-sm">
+                <div class="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
                     <span>Fait avec</span>
                     <i class="fas fa-heart text-emerald-500"></i>
                     <span>en France</span>

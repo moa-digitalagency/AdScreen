@@ -3,109 +3,152 @@
 {% block page_title %}Tableau de bord{% endblock %}
 
 {% block main_content %}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Établissements</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ total_orgs }}</p>
-                <p class="text-green-600 text-sm mt-1">{{ active_orgs }} actifs</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">Établissements</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ total_orgs }}</p>
+                <p class="text-green-600 text-xs sm:text-sm mt-1">{{ active_orgs }} actifs</p>
             </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-building text-blue-600 text-xl"></i>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-building text-blue-600 text-lg sm:text-xl"></i>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Écrans</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ total_screens }}</p>
-                <p class="text-green-600 text-sm mt-1">{{ online_screens }} en ligne</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">Écrans</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ total_screens }}</p>
+                <p class="text-green-600 text-xs sm:text-sm mt-1">{{ online_screens }} en ligne</p>
             </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-tv text-purple-600 text-xl"></i>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tv text-purple-600 text-lg sm:text-xl"></i>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Revenus totaux</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ "%.2f"|format(total_revenue) }}€</p>
-                <p class="text-gray-500 text-sm mt-1">Toutes périodes</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">CA Total</p>
+                <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ "%.2f"|format(total_revenue) }}€</p>
+                <p class="text-gray-500 text-xs sm:text-sm mt-1">Toutes périodes</p>
             </div>
-            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-euro-sign text-green-600 text-xl"></i>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-euro-sign text-green-600 text-lg sm:text-xl"></i>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 card-hover">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Cette semaine</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ "%.2f"|format(weekly_revenue) }}€</p>
-                <p class="text-gray-500 text-sm mt-1">7 derniers jours</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">Commission plateforme</p>
+                <p class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">{{ "%.2f"|format(total_platform_commission) }}€</p>
+                <p class="text-emerald-600 text-xs sm:text-sm mt-1">+{{ "%.2f"|format(weekly_commission) }}€ cette semaine</p>
             </div>
-            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-line text-yellow-600 text-xl"></i>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-percentage text-emerald-600 text-lg sm:text-xl"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="grid lg:grid-cols-2 gap-8">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Derniers établissements</h2>
-        <div class="space-y-4">
-            {% for org in recent_orgs %}
-            <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-store text-gray-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-800">{{ org.name }}</p>
-                        <p class="text-sm text-gray-500">{{ org.email }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="status-dot {% if org.is_active %}status-online{% else %}status-offline{% endif %}"></span>
-                    <a href="{{ url_for('admin.organization_detail', org_id=org.id) }}" class="text-primary-600 hover:underline text-sm">
-                        Voir
-                    </a>
-                </div>
-            </div>
-            {% else %}
-            <p class="text-gray-500 text-center py-8">Aucun établissement pour le moment</p>
-            {% endfor %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <p class="font-medium text-sm sm:text-base">CA Mensuel</p>
+            <i class="fas fa-chart-line opacity-50"></i>
+        </div>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(monthly_revenue) }}€</p>
+        <p class="text-blue-100 text-xs sm:text-sm mt-1">30 derniers jours</p>
+    </div>
+    
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 sm:p-6 text-white">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <p class="font-medium text-sm sm:text-base">CA Hebdomadaire</p>
+            <i class="fas fa-calendar-week opacity-50"></i>
+        </div>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(weekly_revenue) }}€</p>
+        <p class="text-purple-100 text-xs sm:text-sm mt-1">7 derniers jours</p>
+    </div>
+    
+    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 sm:p-6 text-white sm:col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <p class="font-medium text-sm sm:text-base">Taux moyen commission</p>
+            <i class="fas fa-percentage opacity-50"></i>
+        </div>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.1f"|format((total_platform_commission / total_revenue * 100) if total_revenue > 0 else 0) }}%</p>
+        <p class="text-emerald-100 text-xs sm:text-sm mt-1">Sur le CA total</p>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-4 sm:gap-6">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Top établissements</h2>
+            <a href="{{ url_for('admin.organizations') }}" class="text-primary-600 hover:underline text-xs sm:text-sm">Voir tous</a>
+        </div>
+        
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="w-full min-w-[500px]">
+                <thead>
+                    <tr class="text-left text-gray-500 text-xs border-b border-gray-100">
+                        <th class="pb-3 font-medium px-4 sm:px-0">Établissement</th>
+                        <th class="pb-3 font-medium">CA Brut</th>
+                        <th class="pb-3 font-medium">Commission</th>
+                        <th class="pb-3 font-medium">Taux</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for org, revenue in top_orgs %}
+                    <tr class="border-b border-gray-50">
+                        <td class="py-3 px-4 sm:px-0">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-store text-gray-600 text-sm"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-medium text-gray-800 text-sm truncate">{{ org.name }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ org.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 font-semibold text-gray-800 text-sm">{{ "%.2f"|format(revenue) }}€</td>
+                        <td class="py-3 text-emerald-600 font-medium text-sm">{{ "%.2f"|format(org.calculate_platform_commission(revenue)) }}€</td>
+                        <td class="py-3">
+                            <span class="badge badge-info text-xs">{{ org.commission_rate }}%</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500 text-sm">Aucune donnée disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Dernières réservations</h2>
-        <div class="space-y-4">
-            {% for booking in recent_bookings %}
-            <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-receipt text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium text-gray-800">{{ booking.screen.name }}</p>
-                        <p class="text-sm text-gray-500">{{ booking.num_plays }} diffusions</p>
-                    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Dernières réservations</h2>
+        <div class="space-y-3 sm:space-y-4">
+            {% for booking in recent_bookings[:6] %}
+            <div class="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 last:border-0">
+                <div class="min-w-0 flex-1">
+                    <p class="font-medium text-gray-800 text-sm truncate">{{ booking.screen.name }}</p>
+                    <p class="text-xs text-gray-500">{{ booking.num_plays }} diffusions</p>
                 </div>
-                <div class="text-right">
-                    <p class="font-semibold text-gray-800">{{ "%.2f"|format(booking.total_price) }}€</p>
-                    <p class="text-xs text-gray-500">{{ booking.created_at.strftime('%d/%m/%Y') }}</p>
+                <div class="text-right flex-shrink-0 ml-3">
+                    <p class="font-semibold text-gray-800 text-sm">{{ "%.2f"|format(booking.total_price) }}€</p>
+                    <p class="text-xs text-gray-500">{{ booking.created_at.strftime('%d/%m') }}</p>
                 </div>
             </div>
             {% else %}
-            <p class="text-gray-500 text-center py-8">Aucune réservation pour le moment</p>
+            <p class="text-gray-500 text-center py-6 sm:py-8 text-sm">Aucune réservation</p>
             {% endfor %}
         </div>
     </div>

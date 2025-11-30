@@ -11,6 +11,7 @@ from models.filler import Filler
 from models.internal_content import InternalContent
 from models.stat_log import StatLog
 from models.heartbeat_log import HeartbeatLog
+from models.site_setting import SiteSetting
 
 __all__ = [
     'db',
@@ -25,4 +26,5 @@ __all__ = [
     'InternalContent',
     'StatLog',
     'HeartbeatLog',
+    'SiteSetting',
 ]

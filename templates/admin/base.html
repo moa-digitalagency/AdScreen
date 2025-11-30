@@ -32,6 +32,11 @@
                 <i class="fas fa-chart-line w-5"></i>
                 <span>Statistiques</span>
             </a>
+            <a href="{{ url_for('admin.settings') }}" 
+               class="flex items-center gap-3 px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition {% if request.endpoint == 'admin.settings' %}bg-gray-800 text-white{% endif %}">
+                <i class="fas fa-cog w-5"></i>
+                <span>Paramètres</span>
+            </a>
         </nav>
 
         <div class="absolute bottom-0 w-full p-6 border-t border-gray-800">
