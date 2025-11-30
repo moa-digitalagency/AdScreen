@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
-    organization = db.relationship('Organization', back_populates='users')
+    organization = db.relationship('Organization', back_populates='users', foreign_keys=[organization_id])
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
