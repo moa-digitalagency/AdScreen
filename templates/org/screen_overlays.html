@@ -1,0 +1,177 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Overlays - {{ screen.name }}{% endblock %}
+
+{% block main_content %}
+<div class="mb-6">
+    <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-arrow-left mr-2"></i>Retour à l'écran
+    </a>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+            <i class="fas fa-layer-group text-purple-600 text-xl"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">Gestion des Overlays</h2>
+            <p class="text-gray-500">Ajoutez des messages ou images superposés sur votre écran</p>
+        </div>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+            <div class="text-sm text-blue-700">
+                <p class="font-medium mb-1">Types d'overlays disponibles</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>Bandeau défilant</strong>: Texte qui défile horizontalement (ticker)</li>
+                    <li><strong>Image fixe</strong>: Image positionnée sur une partie de l'écran</li>
+                </ul>
+                <p class="mt-2"><strong>Positions</strong>: Header (haut), Body (centre), Footer (bas)</p>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="label">Type d'overlay</label>
+                <select name="overlay_type" id="overlay_type" class="input-field" onchange="toggleOverlayType()">
+                    <option value="ticker">Bandeau défilant (Ticker)</option>
+                    <option value="image">Image fixe</option>
+                </select>
+            </div>
+            <div>
+                <label class="label">Position</label>
+                <select name="position" class="input-field">
+                    <option value="header">Header (Haut)</option>
+                    <option value="body">Body (Centre)</option>
+                    <option value="footer" selected>Footer (Bas)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="ticker_fields">
+            <div>
+                <label class="label">Message</label>
+                <textarea name="message" rows="3" class="input-field" 
+                    placeholder="Entrez votre message qui défilera sur l'écran..."></textarea>
+            </div>
+            
+            <div class="grid md:grid-cols-4 gap-4 mt-4">
+                <div>
+                    <label class="label">Couleur de fond</label>
+                    <input type="color" name="background_color" value="#1f2937" class="w-full h-12 rounded-lg border border-gray-300 cursor-pointer">
+                </div>
+                <div>
+                    <label class="label">Couleur du texte</label>
+                    <input type="color" name="text_color" value="#ffffff" class="w-full h-12 rounded-lg border border-gray-300 cursor-pointer">
+                </div>
+                <div>
+                    <label class="label">Taille police (px)</label>
+                    <input type="number" name="font_size" value="24" min="12" max="72" class="input-field">
+                </div>
+                <div>
+                    <label class="label">Vitesse défilement</label>
+                    <input type="number" name="scroll_speed" value="50" min="10" max="200" class="input-field">
+                    <p class="text-xs text-gray-500 mt-1">Plus élevé = plus rapide</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="image_fields" class="hidden">
+            <div>
+                <label class="label">Image à afficher</label>
+                <input type="file" name="image_file" accept="image/*" class="input-field">
+                <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, GIF</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <input type="checkbox" name="is_active" id="is_active" checked class="w-4 h-4 text-emerald-600 rounded border-gray-300">
+            <label for="is_active" class="text-sm text-gray-700">Activer immédiatement</label>
+        </div>
+
+        <button type="submit" class="btn-primary">
+            <i class="fas fa-plus mr-2"></i>
+            Ajouter l'overlay
+        </button>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h3 class="font-semibold text-gray-800 mb-4">Overlays existants</h3>
+    
+    {% if overlays %}
+    <div class="space-y-4">
+        {% for overlay in overlays %}
+        <div class="border border-gray-200 rounded-lg p-4 {% if overlay.is_active %}bg-green-50 border-green-200{% endif %}">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if overlay.overlay_type == 'ticker' %}bg-blue-100 text-blue-600{% else %}bg-purple-100 text-purple-600{% endif %}">
+                        <i class="fas {% if overlay.overlay_type == 'ticker' %}fa-align-left{% else %}fa-image{% endif %}"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-medium text-gray-800">
+                                {% if overlay.overlay_type == 'ticker' %}Bandeau défilant{% else %}Image fixe{% endif %}
+                            </span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full {% if overlay.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {% if overlay.is_active %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 capitalize">
+                                {{ overlay.position }}
+                            </span>
+                        </div>
+                        {% if overlay.overlay_type == 'ticker' and overlay.message %}
+                        <p class="text-gray-600 text-sm mb-2">{{ overlay.message[:100] }}{% if overlay.message|length > 100 %}...{% endif %}</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span><i class="fas fa-text-height mr-1"></i>{{ overlay.font_size }}px</span>
+                            <span><i class="fas fa-tachometer-alt mr-1"></i>{{ overlay.scroll_speed }}</span>
+                            <span class="flex items-center gap-1">
+                                <span class="w-4 h-4 rounded" style="background: {{ overlay.background_color }}"></span>
+                                <span class="w-4 h-4 rounded border" style="background: {{ overlay.text_color }}"></span>
+                            </span>
+                        </div>
+                        {% elif overlay.overlay_type == 'image' and overlay.image_path %}
+                        <img src="{{ url_for('static', filename=overlay.image_path.replace('static/', '')) }}" alt="Overlay" class="max-w-xs max-h-24 rounded mt-2">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <form action="{{ url_for('org.toggle_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
+                        <button type="submit" class="p-2 text-gray-600 hover:text-emerald-600 transition" title="{% if overlay.is_active %}Désactiver{% else %}Activer{% endif %}">
+                            <i class="fas {% if overlay.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                        </button>
+                    </form>
+                    <form action="{{ url_for('org.delete_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST" onsubmit="return confirm('Supprimer cet overlay ?')">
+                        <button type="submit" class="p-2 text-gray-600 hover:text-red-600 transition" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-layer-group text-gray-400 text-2xl"></i>
+        </div>
+        <p class="text-gray-500">Aucun overlay configuré</p>
+        <p class="text-gray-400 text-sm mt-1">Ajoutez un overlay pour afficher des messages sur votre écran</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleOverlayType() {
+    const type = document.getElementById('overlay_type').value;
+    document.getElementById('ticker_fields').classList.toggle('hidden', type !== 'ticker');
+    document.getElementById('image_fields').classList.toggle('hidden', type !== 'image');
+}
+</script>
+{% endblock %}

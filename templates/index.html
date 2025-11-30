@@ -20,7 +20,10 @@
                         <a href="#avantages" class="nav-link text-sm">Avantages</a>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
-                        <a href="{{ url_for('auth.login') }}" class="btn-ghost text-sm hidden sm:inline-flex">Connexion</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn-primary text-sm hidden sm:inline-flex">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Connexion
+                        </a>
                         <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition">
                             <i class="fas fa-bars text-lg"></i>
                         </button>
@@ -34,7 +37,10 @@
                     <a href="#comment-ca-marche" class="nav-link block py-2 px-2">Comment ça marche</a>
                     <a href="#avantages" class="nav-link block py-2 px-2">Avantages</a>
                     <div class="border-t border-gray-100 pt-3 mt-2 flex flex-col gap-2">
-                        <a href="{{ url_for('auth.login') }}" class="btn-ghost block text-center text-sm">Connexion</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn-primary block text-center text-sm">
+                            <i class="fas fa-sign-in-alt mr-1"></i>
+                            Connexion
+                        </a>
                     </div>
                 </div>
             </div>
@@ -357,11 +363,15 @@
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
                     Prêt à monétiser vos écrans ?
                 </h2>
-                <p class="text-base sm:text-lg text-white mb-6 sm:mb-8 max-w-xl mx-auto">
+                <p class="text-base sm:text-lg text-white/90 mb-6 sm:mb-8 max-w-xl mx-auto">
                     Rejoignez des centaines d'établissements qui génèrent des revenus avec leurs écrans.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                    <a href="{{ url_for('player.login') }}" class="btn-secondary border-white/30 text-white hover:bg-white/10 justify-center">
+                    <a href="{{ url_for('auth.register') }}" class="bg-white text-emerald-600 font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition inline-flex items-center gap-2 justify-center">
+                        <i class="fas fa-rocket"></i>
+                        Commencer maintenant
+                    </a>
+                    <a href="{{ url_for('player.login') }}" class="bg-white/20 text-white font-semibold px-6 py-3 rounded-full hover:bg-white/30 transition border border-white/30 inline-flex items-center gap-2 justify-center">
                         <i class="fas fa-play"></i>
                         Mode Player
                     </a>

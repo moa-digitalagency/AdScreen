@@ -485,6 +485,98 @@ def reject_content(content_id):
     return redirect(url_for('org.validations'))
 
 
+@org_bp.route('/screen/<int:screen_id>/overlays', methods=['GET', 'POST'])
+@login_required
+@org_required
+def screen_overlays(screen_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    if request.method == 'POST':
+        overlay_type = request.form.get('overlay_type', 'ticker')
+        message = request.form.get('message', '')
+        position = request.form.get('position', 'footer')
+        background_color = request.form.get('background_color', '#1f2937')
+        text_color = request.form.get('text_color', '#ffffff')
+        font_size = int(request.form.get('font_size', 24))
+        scroll_speed = int(request.form.get('scroll_speed', 50))
+        is_active = 'is_active' in request.form
+        
+        image_path = None
+        if overlay_type == 'image' and 'image_file' in request.files:
+            file = request.files['image_file']
+            if file.filename:
+                filename = secure_filename(file.filename)
+                new_filename = f"{secrets.token_hex(8)}_{filename}"
+                upload_path = os.path.join('static', 'uploads', 'overlays', str(screen_id))
+                os.makedirs(upload_path, exist_ok=True)
+                file_path = os.path.join(upload_path, new_filename)
+                file.save(file_path)
+                image_path = file_path
+        
+        overlay = ScreenOverlay(
+            screen_id=screen_id,
+            overlay_type=overlay_type,
+            message=message if overlay_type == 'ticker' else None,
+            image_path=image_path,
+            position=position,
+            background_color=background_color,
+            text_color=text_color,
+            font_size=font_size,
+            scroll_speed=scroll_speed,
+            is_active=is_active
+        )
+        db.session.add(overlay)
+        db.session.commit()
+        
+        flash('Overlay ajouté avec succès!', 'success')
+        return redirect(url_for('org.screen_overlays', screen_id=screen_id))
+    
+    overlays = ScreenOverlay.query.filter_by(screen_id=screen_id).order_by(ScreenOverlay.created_at.desc()).all()
+    return render_template('org/screen_overlays.html', screen=screen, overlays=overlays)
+
+
+@org_bp.route('/screen/<int:screen_id>/overlay/<int:overlay_id>/toggle', methods=['POST'])
+@login_required
+@org_required
+def toggle_overlay(screen_id, overlay_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    overlay = ScreenOverlay.query.filter_by(id=overlay_id, screen_id=screen_id).first_or_404()
+    overlay.is_active = not overlay.is_active
+    db.session.commit()
+    
+    status = 'activé' if overlay.is_active else 'désactivé'
+    flash(f'Overlay {status}!', 'success')
+    return redirect(url_for('org.screen_overlays', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/overlay/<int:overlay_id>/delete', methods=['POST'])
+@login_required
+@org_required
+def delete_overlay(screen_id, overlay_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    overlay = ScreenOverlay.query.filter_by(id=overlay_id, screen_id=screen_id).first_or_404()
+    
+    if overlay.image_path and os.path.exists(overlay.image_path):
+        os.remove(overlay.image_path)
+    
+    db.session.delete(overlay)
+    db.session.commit()
+    
+    flash('Overlay supprimé.', 'success')
+    return redirect(url_for('org.screen_overlays', screen_id=screen_id))
+
+
 @org_bp.route('/stats')
 @login_required
 @org_required

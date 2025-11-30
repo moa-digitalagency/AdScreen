@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-Script de création des données de démonstration.
-Crée des comptes et données exemple pour tester l'application.
+🎮 Script de création des données de démonstration AdScreen
+📌 Crée des comptes et données exemple pour tester l'application.
 """
 import sys
 import logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 def create_demo_data():
-    """Crée les données de démonstration."""
+    """🎭 Crée les données de démonstration."""
     from app import app, db
     from models import (
         User, Organization, Screen, TimeSlot, TimePeriod,
@@ -24,11 +24,11 @@ def create_demo_data():
         
         existing_admin = User.query.filter_by(email='admin@adscreen.com').first()
         if existing_admin:
-            logger.warning("Les données de démonstration existent déjà.")
-            logger.info("Utilisez --force pour les recréer.")
+            logger.warning("⚠️  Les données de démonstration existent déjà.")
+            logger.info("💡 Utilisez --force pour les recréer.")
             return True
         
-        logger.info("Création du superadmin...")
+        logger.info("👑 Création du superadmin...")
         superadmin = User(
             username='Super Admin',
             email='admin@adscreen.com',
@@ -37,7 +37,7 @@ def create_demo_data():
         superadmin.set_password('admin123')
         db.session.add(superadmin)
         
-        logger.info("Création des organisations...")
+        logger.info("🏢 Création des organisations...")
         
         org1 = Organization(
             name='Le Bistrot Parisien',
@@ -71,7 +71,7 @@ def create_demo_data():
         
         db.session.flush()
         
-        logger.info("Création des utilisateurs établissement...")
+        logger.info("👥 Création des utilisateurs établissement...")
         
         user1 = User(
             username='Restaurant Paris',
@@ -100,7 +100,7 @@ def create_demo_data():
         user3.set_password('demo123')
         db.session.add(user3)
         
-        logger.info("Création des écrans...")
+        logger.info("📺 Création des écrans...")
         
         screen1 = Screen(
             name='Écran Entrée',
@@ -184,7 +184,7 @@ def create_demo_data():
         
         db.session.flush()
         
-        logger.info("Création des créneaux horaires...")
+        logger.info("⏱️  Création des créneaux horaires...")
         
         for screen in [screen1, screen2, screen3, screen4, screen5]:
             slots = [
@@ -207,7 +207,7 @@ def create_demo_data():
                 )
                 db.session.add(slot)
         
-        logger.info("Création des périodes horaires...")
+        logger.info("🕐 Création des périodes horaires...")
         
         for screen in [screen1, screen2, screen3, screen4, screen5]:
             periods = [
@@ -228,7 +228,7 @@ def create_demo_data():
                 )
                 db.session.add(period)
         
-        logger.info("Configuration des paramètres du site...")
+        logger.info("⚙️  Configuration des paramètres du site...")
         
         site_settings = [
             ('platform_name', 'AdScreen', 'string', 'platform'),
@@ -245,7 +245,7 @@ def create_demo_data():
         for key, value, value_type, category in site_settings:
             SiteSetting.set(key, value, value_type, category)
         
-        logger.info("Création des overlays de démonstration...")
+        logger.info("🔲 Création des overlays de démonstration...")
         
         overlay1 = ScreenOverlay(
             screen_id=screen1.id,
@@ -275,79 +275,95 @@ def create_demo_data():
         
         db.session.commit()
         
-        logger.info("\n" + "="*50)
-        logger.info("DONNÉES DE DÉMONSTRATION CRÉÉES AVEC SUCCÈS")
-        logger.info("="*50)
-        logger.info("\nComptes créés :")
-        logger.info("-"*50)
-        logger.info("SUPERADMIN:")
-        logger.info("  Email: admin@adscreen.com")
-        logger.info("  Mot de passe: admin123")
-        logger.info("")
-        logger.info("ÉTABLISSEMENTS:")
-        logger.info("  1. Le Bistrot Parisien")
-        logger.info("     Email: manager@restaurant-paris.fr")
-        logger.info("     Mot de passe: demo123")
-        logger.info("")
-        logger.info("  2. Bar Le Central")
-        logger.info("     Email: manager@bar-lyon.fr")
-        logger.info("     Mot de passe: demo123")
-        logger.info("")
-        logger.info("  3. Centre Commercial Atlantis")
-        logger.info("     Email: manager@atlantis-mall.fr")
-        logger.info("     Mot de passe: demo123")
-        logger.info("")
-        logger.info("ÉCRANS (mot de passe player: screen123):")
-        logger.info("  - Le Bistrot Parisien: 2 écrans")
-        logger.info("  - Bar Le Central: 1 écran")
-        logger.info("  - Centre Commercial Atlantis: 2 écrans")
-        logger.info("-"*50)
+        print("""
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  🎉 DONNÉES DE DÉMONSTRATION CRÉÉES AVEC SUCCÈS! 🎉          ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    👤 COMPTES CRÉÉS:
+    ════════════════════════════════════════════════════════════════
+    
+    👑 SUPERADMIN:
+       📧 Email: admin@adscreen.com
+       🔑 Mot de passe: admin123
+    
+    🏢 ÉTABLISSEMENTS:
+    
+       1️⃣  Le Bistrot Parisien
+          📧 Email: manager@restaurant-paris.fr
+          🔑 Mot de passe: demo123
+    
+       2️⃣  Bar Le Central
+          📧 Email: manager@bar-lyon.fr
+          🔑 Mot de passe: demo123
+    
+       3️⃣  Centre Commercial Atlantis
+          📧 Email: manager@atlantis-mall.fr
+          🔑 Mot de passe: demo123
+    
+    📺 ÉCRANS (mot de passe player: screen123):
+       • Le Bistrot Parisien: 2 écrans
+       • Bar Le Central: 1 écran
+       • Centre Commercial Atlantis: 2 écrans
+    
+    🔲 OVERLAYS DE DÉMONSTRATION:
+       • Bandeau défilant sur Écran Entrée
+       • Bandeau défilant sur Totem Hall A
+    
+    ════════════════════════════════════════════════════════════════
+        """)
         
         return True
 
 
 def clear_demo_data():
-    """Supprime toutes les données de démonstration."""
+    """🗑️ Supprime toutes les données de démonstration."""
     from app import app, db
     
     with app.app_context():
-        logger.warning("Suppression de toutes les données...")
+        logger.warning("⚠️  Suppression de toutes les données...")
         db.drop_all()
         db.create_all()
-        logger.info("Base de données réinitialisée.")
+        logger.info("✅ Base de données réinitialisée.")
     
     return True
 
 
 def main():
+    print("""
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  🎮 AdScreen - Création des Données de Démonstration 🎭      ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    """)
+    
     import argparse
     
-    parser = argparse.ArgumentParser(description='Crée les données de démonstration AdScreen')
+    parser = argparse.ArgumentParser(description='🎮 Crée les données de démonstration AdScreen')
     parser.add_argument(
         '--force',
         action='store_true',
-        help='Force la recréation des données (supprime les existantes)'
+        help='🔄 Force la recréation des données (supprime les existantes)'
     )
     parser.add_argument(
         '--clear',
         action='store_true',
-        help='Supprime toutes les données sans en créer de nouvelles'
+        help='🗑️ Supprime toutes les données sans en créer de nouvelles'
     )
     
     args = parser.parse_args()
     
     try:
         if args.clear:
-            response = input("ATTENTION: Toutes les données seront supprimées. Continuer ? (oui/non) : ")
+            response = input("⚠️  ATTENTION: Toutes les données seront supprimées. Continuer ? (oui/non) : ")
             if response.lower() != 'oui':
-                logger.info("Opération annulée.")
+                logger.info("🚫 Opération annulée.")
                 return 0
             return 0 if clear_demo_data() else 1
         
         if args.force:
-            response = input("ATTENTION: Les données existantes seront supprimées. Continuer ? (oui/non) : ")
+            response = input("⚠️  ATTENTION: Les données existantes seront supprimées. Continuer ? (oui/non) : ")
             if response.lower() != 'oui':
-                logger.info("Opération annulée.")
+                logger.info("🚫 Opération annulée.")
                 return 0
             clear_demo_data()
         
@@ -355,7 +371,7 @@ def main():
         return 0 if success else 1
         
     except Exception as e:
-        logger.error(f"Erreur lors de la création des données : {e}")
+        logger.error(f"❌ Erreur lors de la création des données : {e}")
         import traceback
         traceback.print_exc()
         return 1

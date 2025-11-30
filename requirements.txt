@@ -1,0 +1,23 @@
+# AdScreen - Plateforme de Location d'Ecrans Publicitaires
+# Python Dependencies
+
+# Web Framework
+flask>=3.0.0
+flask-login>=0.6.3
+flask-sqlalchemy>=3.1.1
+gunicorn>=21.2.0
+werkzeug>=3.0.0
+
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# Security & Authentication
+pyjwt>=2.8.0
+
+# Image Processing & QR Code
+pillow>=10.0.0
+qrcode>=7.4.2
+
+# Validation
+email-validator>=2.1.0
