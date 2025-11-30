@@ -8,7 +8,7 @@
         <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-600"></i>
-                <span class="font-semibold text-gray-800">AdScreen</span>
+                <span class="font-semibold text-gray-800">Shabaka AdScreen</span>
             </div>
             <span class="text-sm text-gray-500">{{ screen.organization.name }}</span>
         </div>
@@ -193,7 +193,7 @@
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Votre contenu</h2>
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 transition">
+                <div id="uploadZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 transition">
                     <input type="file" name="file" id="fileInput" accept="image/*,video/*" required
                         class="hidden" onchange="previewFile(this)">
                     <label for="fileInput" class="cursor-pointer">
@@ -203,16 +203,58 @@
                             </div>
                             <p class="text-gray-600 font-medium mb-1">Cliquez pour uploader</p>
                             <p class="text-sm text-gray-500">ou glissez-déposez votre fichier</p>
-                            <p class="text-xs text-gray-400 mt-2">
-                                Résolution requise: {{ screen.resolution_width }}x{{ screen.resolution_height }} ({{ screen.orientation }})
+                            <p class="text-xs text-emerald-600 mt-3">
+                                <i class="fas fa-magic mr-1"></i>
+                                Votre contenu s'adaptera automatiquement à l'écran sans déformation
                             </p>
                         </div>
-                        <div id="filePreview" class="hidden">
-                            <img id="previewImage" class="max-h-48 mx-auto rounded-lg mb-4">
-                            <video id="previewVideo" class="max-h-48 mx-auto rounded-lg mb-4" controls></video>
-                            <p id="fileName" class="text-gray-800 font-medium"></p>
-                        </div>
                     </label>
+                </div>
+                
+                <div id="contentPreviewSection" class="hidden mt-6">
+                    <div class="bg-gray-900 rounded-xl p-4 relative">
+                        <div class="text-center text-white/60 text-xs mb-3">
+                            <i class="fas fa-tv mr-1"></i> Aperçu sur l'écran
+                        </div>
+                        <div id="screenSimulator" class="mx-auto bg-black rounded-lg overflow-hidden flex items-center justify-center" style="width: 280px; height: 158px;">
+                            <img id="previewImage" class="max-w-full max-h-full object-contain">
+                            <video id="previewVideo" class="max-w-full max-h-full object-contain hidden" controls muted></video>
+                        </div>
+                        <p id="fileName" class="text-white/80 text-sm text-center mt-3"></p>
+                    </div>
+                    
+                    <div class="mt-4 p-4 bg-gray-50 rounded-xl">
+                        <p class="text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-sync-alt mr-1 text-primary-500"></i>
+                            Orientation du contenu
+                        </p>
+                        <div class="flex gap-3">
+                            <label class="flex-1 relative">
+                                <input type="radio" name="content_orientation" value="horizontal" checked
+                                    class="sr-only orientation-radio" onchange="updateOrientation()">
+                                <div class="orientation-option flex items-center justify-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition">
+                                    <i class="fas fa-arrows-alt-h text-gray-600"></i>
+                                    <span class="font-medium text-gray-700">Horizontal</span>
+                                </div>
+                            </label>
+                            <label class="flex-1 relative">
+                                <input type="radio" name="content_orientation" value="vertical"
+                                    class="sr-only orientation-radio" onchange="updateOrientation()">
+                                <div class="orientation-option flex items-center justify-center gap-2 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition">
+                                    <i class="fas fa-arrows-alt-v text-gray-600"></i>
+                                    <span class="font-medium text-gray-700">Vertical</span>
+                                </div>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 text-center">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Choisissez l'orientation qui correspond à votre contenu
+                        </p>
+                    </div>
+                    
+                    <button type="button" onclick="changeFile()" class="mt-3 w-full py-2 text-sm text-gray-600 hover:text-primary-600 transition">
+                        <i class="fas fa-redo mr-1"></i> Changer le fichier
+                    </button>
                 </div>
             </div>
 
@@ -308,8 +350,8 @@ function changePlayCount(delta) {
 function previewFile(input) {
     const file = input.files[0];
     if (file) {
-        document.getElementById('uploadPlaceholder').classList.add('hidden');
-        document.getElementById('filePreview').classList.remove('hidden');
+        document.getElementById('uploadZone').classList.add('hidden');
+        document.getElementById('contentPreviewSection').classList.remove('hidden');
         document.getElementById('fileName').textContent = file.name;
         
         const previewImage = document.getElementById('previewImage');
@@ -324,7 +366,41 @@ function previewFile(input) {
             previewImage.classList.add('hidden');
             previewVideo.src = URL.createObjectURL(file);
         }
+        
+        updateOrientation();
     }
+}
+
+function changeFile() {
+    document.getElementById('uploadZone').classList.remove('hidden');
+    document.getElementById('contentPreviewSection').classList.add('hidden');
+    document.getElementById('fileInput').value = '';
+    document.getElementById('previewImage').src = '';
+    document.getElementById('previewVideo').src = '';
+}
+
+function updateOrientation() {
+    const orientation = document.querySelector('input[name="content_orientation"]:checked')?.value || 'horizontal';
+    const simulator = document.getElementById('screenSimulator');
+    
+    if (orientation === 'vertical') {
+        simulator.style.width = '158px';
+        simulator.style.height = '280px';
+    } else {
+        simulator.style.width = '280px';
+        simulator.style.height = '158px';
+    }
+    
+    document.querySelectorAll('.orientation-radio').forEach(input => {
+        const option = input.nextElementSibling;
+        if (input.checked) {
+            option.classList.add('border-primary-500', 'bg-primary-50');
+            option.classList.remove('border-gray-200');
+        } else {
+            option.classList.remove('border-primary-500', 'bg-primary-50');
+            option.classList.add('border-gray-200');
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', updatePrice);
