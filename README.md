@@ -31,9 +31,11 @@ cd adscreen
 ### 2. Installer les dépendances
 
 ```bash
-pip install -r requirements.txt
-# ou avec uv
+# Avec uv (recommandé)
 uv sync
+
+# Ou avec pip
+pip install flask flask-login flask-sqlalchemy gunicorn pillow psycopg2-binary pyjwt qrcode sqlalchemy werkzeug email-validator
 ```
 
 ### 3. Configuration
@@ -60,13 +62,13 @@ python init_db_demo.py
 ### Développement
 
 ```bash
-python main.py
+gunicorn --bind 0.0.0.0:5000 --reload main:app
 ```
 
 ### Production
 
 ```bash
-gunicorn --bind 0.0.0.0:5000 main:app
+gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
 ```
 
 L'application sera accessible sur `http://localhost:5000`
@@ -78,8 +80,11 @@ Après avoir exécuté `init_db_demo.py` :
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
 | Superadmin | admin@adscreen.com | admin123 |
-| Établissement | demo@restaurant-paris.fr | demo123 |
-| Établissement | contact@bar-lyon.fr | demo123 |
+| Établissement (Le Bistrot Parisien) | manager@restaurant-paris.fr | demo123 |
+| Établissement (Bar Le Central) | manager@bar-lyon.fr | demo123 |
+| Établissement (Centre Commercial Atlantis) | manager@atlantis-mall.fr | demo123 |
+
+Mot de passe player pour tous les écrans : `screen123`
 
 ## Structure du projet
 

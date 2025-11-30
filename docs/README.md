@@ -15,7 +15,7 @@ Bienvenue dans la documentation technique d'AdScreen, la plateforme SaaS de loca
 
 ```bash
 # Installer les dépendances
-pip install -r requirements.txt
+uv sync
 
 # Initialiser la base de données
 python init_db.py
@@ -24,7 +24,7 @@ python init_db.py
 python init_db_demo.py
 
 # Démarrer l'application
-python main.py
+gunicorn --bind 0.0.0.0:5000 --reload main:app
 ```
 
 ### Accès
