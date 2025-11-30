@@ -23,9 +23,21 @@ AdScreen est une plateforme SaaS permettant aux établissements (bars, restauran
 
 ```
 ├── app.py              # Configuration Flask et extensions
-├── models.py           # Modèles SQLAlchemy
 ├── main.py             # Point d'entrée
 ├── create_superadmin.py # Script création admin
+├── models/             # Modèles SQLAlchemy (un fichier par modèle)
+│   ├── __init__.py         # Export tous les modèles
+│   ├── user.py             # Utilisateurs (superadmin, org)
+│   ├── organization.py     # Établissements
+│   ├── screen.py           # Écrans publicitaires
+│   ├── time_slot.py        # Créneaux horaires
+│   ├── time_period.py      # Périodes de la journée
+│   ├── content.py          # Contenus uploadés
+│   ├── booking.py          # Réservations
+│   ├── filler.py           # Contenus de remplissage
+│   ├── internal_content.py # Contenus internes
+│   ├── stat_log.py         # Statistiques de lecture
+│   └── heartbeat_log.py    # Logs de connexion écrans
 ├── routes/
 │   ├── auth_routes.py      # Login/Register/Logout
 │   ├── admin_routes.py     # Dashboard superadmin
