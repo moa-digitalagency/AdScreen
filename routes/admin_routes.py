@@ -1,3 +1,4 @@
+import math
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from functools import wraps
@@ -156,7 +157,13 @@ def toggle_organization(org_id):
 @superadmin_required
 def update_commission(org_id):
     org = Organization.query.get_or_404(org_id)
-    commission = float(request.form.get('commission', 10))
+    
+    try:
+        commission_str = request.form.get('commission', '10').replace(',', '.')
+        commission = float(commission_str)
+    except (ValueError, TypeError):
+        flash('Valeur de commission invalide.', 'error')
+        return redirect(url_for('admin.organization_detail', org_id=org_id))
     
     min_rate = SiteSetting.get('min_commission_rate', 5.0)
     max_rate = SiteSetting.get('max_commission_rate', 30.0)
@@ -213,30 +220,55 @@ def stats():
     )
 
 
+def parse_float_safe(value, default=0.0):
+    if value is None or value == '':
+        return default
+    try:
+        result = float(str(value).replace(',', '.'))
+        if math.isnan(result) or math.isinf(result):
+            return default
+        return result
+    except (ValueError, TypeError):
+        return default
+
+
 @admin_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
 def settings():
     if request.method == 'POST':
-        settings_data = {
-            'site_title': ('string', 'seo'),
-            'site_description': ('string', 'seo'),
-            'meta_keywords': ('string', 'seo'),
-            'og_image': ('string', 'seo'),
-            'google_analytics_id': ('string', 'seo'),
-            'platform_name': ('string', 'platform'),
-            'support_email': ('string', 'platform'),
-            'default_commission_rate': ('float', 'platform'),
-            'min_commission_rate': ('float', 'platform'),
-            'max_commission_rate': ('float', 'platform'),
-            'maintenance_mode': ('boolean', 'platform'),
+        min_rate = parse_float_safe(request.form.get('min_commission_rate'), 5.0)
+        max_rate = parse_float_safe(request.form.get('max_commission_rate'), 30.0)
+        default_rate = parse_float_safe(request.form.get('default_commission_rate'), 10.0)
+        
+        min_rate = max(0, min(min_rate, 100))
+        max_rate = max(0, min(max_rate, 100))
+        default_rate = max(0, min(default_rate, 100))
+        
+        if min_rate > max_rate:
+            min_rate, max_rate = max_rate, min_rate
+        default_rate = max(min_rate, min(default_rate, max_rate))
+        
+        string_settings = {
+            'site_title': 'seo',
+            'site_description': 'seo',
+            'meta_keywords': 'seo',
+            'og_image': 'seo',
+            'google_analytics_id': 'seo',
+            'platform_name': 'platform',
+            'support_email': 'platform',
         }
         
-        for key, (value_type, category) in settings_data.items():
+        for key, category in string_settings.items():
             value = request.form.get(key, '')
-            if value_type == 'boolean':
-                value = 'true' if key in request.form else 'false'
-            SiteSetting.set(key, value, value_type, category)
+            SiteSetting.set(key, value, 'string', category)
+        
+        SiteSetting.set('min_commission_rate', min_rate, 'float', 'platform')
+        SiteSetting.set('max_commission_rate', max_rate, 'float', 'platform')
+        SiteSetting.set('default_commission_rate', default_rate, 'float', 'platform')
+        
+        maintenance = 'true' if 'maintenance_mode' in request.form else 'false'
+        SiteSetting.set('maintenance_mode', maintenance, 'boolean', 'platform')
         
         flash('Paramètres enregistrés avec succès.', 'success')
         return redirect(url_for('admin.settings'))
