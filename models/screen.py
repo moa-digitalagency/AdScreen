@@ -1,5 +1,6 @@
 from datetime import datetime
 import secrets
+import string
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -20,7 +21,7 @@ class Screen(db.Model):
     max_file_size_mb = db.Column(db.Integer, default=50)
     is_active = db.Column(db.Boolean, default=True)
     is_featured = db.Column(db.Boolean, default=False)
-    unique_code = db.Column(db.String(32), unique=True)
+    unique_code = db.Column(db.String(6), unique=True)
     password_hash = db.Column(db.String(256))
     last_heartbeat = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='offline')
@@ -38,10 +39,19 @@ class Screen(db.Model):
     stat_logs = db.relationship('StatLog', back_populates='screen', cascade='all, delete-orphan')
     overlays = db.relationship('ScreenOverlay', back_populates='screen', cascade='all, delete-orphan')
     
+    @staticmethod
+    def generate_unique_code():
+        chars = string.ascii_uppercase + string.digits
+        while True:
+            code = ''.join(secrets.choice(chars) for _ in range(6))
+            existing = Screen.query.filter_by(unique_code=code).first()
+            if not existing:
+                return code
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.unique_code:
-            self.unique_code = secrets.token_urlsafe(16)
+            self.unique_code = Screen.generate_unique_code()
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

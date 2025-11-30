@@ -699,8 +699,32 @@ def stats():
         Booking.payment_status == 'paid'
     ).group_by(TimePeriod.name).all()
     
+    ad_stats = db.session.query(
+        Content.id,
+        Content.client_name,
+        Content.original_filename,
+        Content.content_type,
+        Content.status,
+        Screen.name.label('screen_name'),
+        Booking.total_price,
+        Booking.start_date,
+        Booking.end_date,
+        Booking.plays_per_hour,
+        func.count(StatLog.id).label('play_count')
+    ).join(Screen).outerjoin(Booking).outerjoin(
+        StatLog, StatLog.content_id == Content.id
+    ).filter(
+        Screen.organization_id == org.id
+    ).group_by(
+        Content.id, Content.client_name, Content.original_filename, 
+        Content.content_type, Content.status, Content.created_at,
+        Screen.name, Booking.id, Booking.total_price, 
+        Booking.start_date, Booking.end_date, Booking.plays_per_hour
+    ).order_by(Content.created_at.desc()).all()
+    
     return render_template('org/stats.html',
         daily_revenue=daily_revenue,
         screen_stats=screen_stats,
-        period_stats=period_stats
+        period_stats=period_stats,
+        ad_stats=ad_stats
     )
