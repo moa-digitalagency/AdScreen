@@ -16,7 +16,7 @@ def create_demo_data():
     from app import app, db
     from models import (
         User, Organization, Screen, TimeSlot, TimePeriod,
-        Filler, InternalContent
+        Filler, InternalContent, SiteSetting, ScreenOverlay
     )
     
     with app.app_context():
@@ -227,6 +227,51 @@ def create_demo_data():
                     screen_id=screen.id
                 )
                 db.session.add(period)
+        
+        logger.info("Configuration des paramètres du site...")
+        
+        site_settings = [
+            ('platform_name', 'AdScreen', 'string', 'platform'),
+            ('support_email', 'support@adscreen.com', 'string', 'platform'),
+            ('admin_whatsapp_number', '33612345678', 'string', 'platform'),
+            ('default_commission_rate', '10.0', 'float', 'platform'),
+            ('min_commission_rate', '5.0', 'float', 'platform'),
+            ('max_commission_rate', '30.0', 'float', 'platform'),
+            ('maintenance_mode', 'false', 'boolean', 'platform'),
+            ('site_title', 'AdScreen - Location Écrans Publicitaires', 'string', 'seo'),
+            ('site_description', 'Plateforme SaaS de location d\'espaces publicitaires sur écrans', 'string', 'seo'),
+        ]
+        
+        for key, value, value_type, category in site_settings:
+            SiteSetting.set(key, value, value_type, category)
+        
+        logger.info("Création des overlays de démonstration...")
+        
+        overlay1 = ScreenOverlay(
+            screen_id=screen1.id,
+            overlay_type='ticker',
+            message='Bienvenue au Bistrot Parisien - Happy Hour de 17h à 19h!',
+            position='footer',
+            background_color='#1f2937',
+            text_color='#ffffff',
+            font_size=28,
+            scroll_speed=60,
+            is_active=True
+        )
+        db.session.add(overlay1)
+        
+        overlay2 = ScreenOverlay(
+            screen_id=screen4.id,
+            overlay_type='ticker',
+            message='Centre Commercial Atlantis - Soldes jusqu\'à -50% dans toutes les boutiques!',
+            position='header',
+            background_color='#059669',
+            text_color='#ffffff',
+            font_size=32,
+            scroll_speed=50,
+            is_active=True
+        )
+        db.session.add(overlay2)
         
         db.session.commit()
         

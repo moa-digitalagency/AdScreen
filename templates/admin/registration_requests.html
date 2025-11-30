@@ -1,0 +1,127 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Demandes d'inscription{% endblock %}
+
+{% block main_content %}
+<div class="max-w-6xl">
+    {% if pending_count > 0 %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-clock text-yellow-600"></i>
+            <span class="text-yellow-700 font-medium">{{ pending_count }} demande(s) en attente de traitement</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Demandeur</th>
+                        <th class="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Établissement</th>
+                        <th class="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th class="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        <th class="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for req in requests %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ req.name }}</div>
+                            <div class="text-sm text-gray-500">{{ req.email }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ req.org_name }}</div>
+                            <div class="text-sm text-gray-500">{{ req.address or 'Adresse non renseignée' }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-gray-900">{{ req.phone }}</div>
+                            {% if req.message %}
+                            <div class="text-sm text-gray-500 max-w-xs truncate" title="{{ req.message }}">{{ req.message }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ req.created_at.strftime('%d/%m/%Y %H:%M') }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if req.status == 'pending' %}
+                            <span class="badge badge-warning">En attente</span>
+                            {% elif req.status == 'approved' %}
+                            <span class="badge badge-success">Approuvé</span>
+                            {% else %}
+                            <span class="badge badge-error">Rejeté</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            {% if req.status == 'pending' %}
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="showApproveModal({{ req.id }}, '{{ req.org_name }}')" 
+                                    class="btn-sm btn-success">
+                                    <i class="fas fa-check mr-1"></i>Approuver
+                                </button>
+                                <form method="POST" action="{{ url_for('admin.reject_registration', request_id=req.id) }}" 
+                                    onsubmit="return confirm('Rejeter cette demande ?')" class="inline">
+                                    <button type="submit" class="btn-sm btn-error">
+                                        <i class="fas fa-times mr-1"></i>Rejeter
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <span class="text-sm text-gray-400">Traité le {{ req.processed_at.strftime('%d/%m/%Y') if req.processed_at else 'N/A' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                            <p>Aucune demande d'inscription</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="approveModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900">Approuver la demande</h3>
+            <p class="text-sm text-gray-500 mt-1" id="modalOrgName">Établissement</p>
+        </div>
+        <form id="approveForm" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="label">Commission de la plateforme (%)</label>
+                <input type="number" name="commission_rate" step="0.5" min="0" max="100" value="10"
+                    class="input-field" required>
+            </div>
+            <div>
+                <label class="label">Mot de passe du compte</label>
+                <input type="password" name="password" minlength="6"
+                    class="input-field" placeholder="Minimum 6 caractères" required>
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeApproveModal()" class="btn-secondary flex-1">Annuler</button>
+                <button type="submit" class="btn-primary flex-1">Créer le compte</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showApproveModal(requestId, orgName) {
+    document.getElementById('approveForm').action = '/admin/registration-request/' + requestId + '/approve';
+    document.getElementById('modalOrgName').textContent = orgName;
+    document.getElementById('approveModal').classList.remove('hidden');
+}
+
+function closeApproveModal() {
+    document.getElementById('approveModal').classList.add('hidden');
+}
+</script>
+{% endblock %}

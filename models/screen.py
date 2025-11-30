@@ -35,6 +35,7 @@ class Screen(db.Model):
     fillers = db.relationship('Filler', back_populates='screen', cascade='all, delete-orphan')
     internal_contents = db.relationship('InternalContent', back_populates='screen', cascade='all, delete-orphan')
     stat_logs = db.relationship('StatLog', back_populates='screen', cascade='all, delete-orphan')
+    overlays = db.relationship('ScreenOverlay', back_populates='screen', cascade='all, delete-orphan')
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

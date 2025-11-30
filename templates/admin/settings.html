@@ -113,6 +113,27 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fab fa-whatsapp text-green-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">WhatsApp Admin</h2>
+                    <p class="text-sm text-gray-500">Numéro pour recevoir les demandes d'inscription</p>
+                </div>
+            </div>
+            
+            <div class="grid gap-4">
+                <div>
+                    <label class="label">Numéro WhatsApp (format international)</label>
+                    <input type="text" name="admin_whatsapp_number" value="{{ platform_settings.admin_whatsapp_number }}" 
+                           class="input-field" placeholder="33612345678">
+                    <p class="text-xs text-gray-500 mt-1">Format sans + ni espaces (ex: 33612345678 pour +33 6 12 34 56 78)</p>
+                </div>
+            </div>
+        </div>
+
         <div class="flex justify-end">
             <button type="submit" class="btn-primary">
                 <i class="fas fa-save mr-2"></i>

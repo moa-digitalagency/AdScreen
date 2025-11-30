@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from models import User, Organization
+from models import User, Organization, SiteSetting, RegistrationRequest
+import urllib.parse
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -54,40 +55,53 @@ def register():
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
         org_name = request.form.get('org_name')
         phone = request.form.get('phone')
         address = request.form.get('address')
+        message = request.form.get('message', '')
         
-        if password != confirm_password:
-            flash('Les mots de passe ne correspondent pas.', 'error')
+        if not name or not email or not org_name or not phone:
+            flash('Veuillez remplir tous les champs obligatoires.', 'error')
             return render_template('auth/register.html')
         
-        if User.query.filter_by(email=email).first():
-            flash('Cet email est déjà utilisé.', 'error')
+        existing_request = RegistrationRequest.query.filter_by(email=email, status='pending').first()
+        if existing_request:
+            flash('Une demande est déjà en cours pour cet email.', 'warning')
             return render_template('auth/register.html')
         
-        org = Organization(
-            name=org_name,
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Cet email est déjà associé à un compte.', 'error')
+            return render_template('auth/register.html')
+        
+        reg_request = RegistrationRequest(
+            name=name,
             email=email,
+            org_name=org_name,
             phone=phone,
-            address=address
+            address=address,
+            message=message
         )
-        db.session.add(org)
-        db.session.flush()
-        
-        user = User(
-            username=name,
-            email=email,
-            role='org',
-            organization_id=org.id
-        )
-        user.set_password(password)
-        db.session.add(user)
+        db.session.add(reg_request)
         db.session.commit()
         
-        flash('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success')
+        admin_whatsapp = SiteSetting.get('admin_whatsapp_number', '')
+        if admin_whatsapp:
+            whatsapp_message = f"""Nouvelle demande d'inscription AdScreen:
+
+Nom: {name}
+Email: {email}
+Établissement: {org_name}
+Téléphone: {phone}
+Adresse: {address or 'Non renseignée'}
+Message: {message or 'Aucun'}
+
+Connectez-vous à l'admin pour valider cette demande."""
+            
+            encoded_message = urllib.parse.quote(whatsapp_message)
+            whatsapp_url = f"https://wa.me/{admin_whatsapp}?text={encoded_message}"
+        
+        flash('Votre demande a été envoyée avec succès! Nous vous contacterons bientôt via WhatsApp.', 'success')
         return redirect(url_for('auth.login'))
     
     return render_template('auth/register.html')

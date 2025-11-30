@@ -121,6 +121,43 @@
             opacity: 1;
         }
         
+        .overlay-header, .overlay-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            overflow: hidden;
+        }
+        
+        .overlay-header { top: 0; }
+        .overlay-footer { bottom: 0; }
+        
+        .overlay-ticker {
+            white-space: nowrap;
+            display: inline-block;
+            padding: 12px 0;
+            animation: ticker linear infinite;
+        }
+        
+        @keyframes ticker {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .overlay-image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .overlay-body {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+        }
+        
         #startScreen {
             position: fixed;
             inset: 0;
@@ -204,10 +241,14 @@
         <div class="spinner"></div>
     </div>
 
+    <div id="overlayHeader" class="overlay-header" style="display: none;"></div>
+    
     <div id="player">
         <img id="imageContent" style="display: none;" />
         <video id="videoContent" style="display: none;" muted></video>
     </div>
+    
+    <div id="overlayFooter" class="overlay-footer" style="display: none;"></div>
 
     <div id="status">
         <span class="status-dot status-playing" id="statusDot"></span>
@@ -233,6 +274,7 @@
 
     <script>
         let playlist = [];
+        let overlays = [];
         let currentIndex = 0;
         let isPaused = false;
         let isPlaying = false;
@@ -250,7 +292,10 @@
                 }
                 
                 playlist = data.playlist;
+                overlays = data.overlays || [];
                 console.log('Playlist loaded:', playlist.length, 'items');
+                console.log('Overlays loaded:', overlays.length, 'items');
+                renderOverlays();
             } catch (error) {
                 console.error('Failed to fetch playlist:', error);
             }
@@ -364,6 +409,37 @@
             }
             
             sendHeartbeat();
+        }
+
+        function renderOverlays() {
+            const headerEl = document.getElementById('overlayHeader');
+            const footerEl = document.getElementById('overlayFooter');
+            
+            headerEl.style.display = 'none';
+            footerEl.style.display = 'none';
+            headerEl.innerHTML = '';
+            footerEl.innerHTML = '';
+            
+            overlays.forEach(overlay => {
+                if (!overlay.is_active) return;
+                
+                const container = overlay.position === 'header' ? headerEl : footerEl;
+                container.style.display = 'block';
+                container.style.backgroundColor = overlay.background_color || '#000000';
+                
+                if (overlay.type === 'ticker') {
+                    const duration = Math.max(10, (overlay.message?.length || 50) / (overlay.scroll_speed / 10));
+                    container.innerHTML = `
+                        <div class="overlay-ticker" style="
+                            color: ${overlay.text_color || '#ffffff'};
+                            font-size: ${overlay.font_size || 24}px;
+                            animation-duration: ${duration}s;
+                        ">${overlay.message || ''}</div>
+                    `;
+                } else if (overlay.type === 'image' && overlay.image_path) {
+                    container.innerHTML = `<img src="/${overlay.image_path}" class="overlay-image" />`;
+                }
+            });
         }
 
         function toggleFullscreen() {

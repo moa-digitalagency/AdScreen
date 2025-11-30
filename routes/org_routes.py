@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
-from models import Screen, TimeSlot, TimePeriod, Content, Booking, Filler, InternalContent, StatLog
+from models import Screen, TimeSlot, TimePeriod, Content, Booking, Filler, InternalContent, StatLog, ScreenOverlay
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import os

@@ -12,6 +12,8 @@ from models.internal_content import InternalContent
 from models.stat_log import StatLog
 from models.heartbeat_log import HeartbeatLog
 from models.site_setting import SiteSetting
+from models.registration_request import RegistrationRequest
+from models.screen_overlay import ScreenOverlay
 
 __all__ = [
     'db',
@@ -27,4 +29,6 @@ __all__ = [
     'StatLog',
     'HeartbeatLog',
     'SiteSetting',
+    'RegistrationRequest',
+    'ScreenOverlay',
 ]

@@ -32,7 +32,8 @@ def init_database(drop_existing=False):
         
         from models import (
             User, Organization, Screen, TimeSlot, TimePeriod,
-            Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog
+            Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
+            SiteSetting, RegistrationRequest, ScreenOverlay
         )
         
         tables = [
@@ -47,6 +48,9 @@ def init_database(drop_existing=False):
             ('internal_contents', InternalContent),
             ('stat_logs', StatLog),
             ('heartbeat_logs', HeartbeatLog),
+            ('site_settings', SiteSetting),
+            ('registration_requests', RegistrationRequest),
+            ('screen_overlays', ScreenOverlay),
         ]
         
         logger.info("\nTables créées :")

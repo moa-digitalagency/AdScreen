@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
-from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting
+from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
@@ -257,6 +257,7 @@ def settings():
             'google_analytics_id': 'seo',
             'platform_name': 'platform',
             'support_email': 'platform',
+            'admin_whatsapp_number': 'platform',
         }
         
         for key, category in string_settings.items():
@@ -275,8 +276,91 @@ def settings():
     
     seo_settings = SiteSetting.get_seo_settings()
     platform_settings = SiteSetting.get_platform_settings()
+    platform_settings['admin_whatsapp_number'] = SiteSetting.get('admin_whatsapp_number', '')
     
     return render_template('admin/settings.html',
         seo_settings=seo_settings,
         platform_settings=platform_settings
     )
+
+
+@admin_bp.route('/registration-requests')
+@login_required
+@superadmin_required
+def registration_requests():
+    requests = RegistrationRequest.query.order_by(RegistrationRequest.created_at.desc()).all()
+    pending_count = RegistrationRequest.get_pending_count()
+    return render_template('admin/registration_requests.html', 
+        requests=requests,
+        pending_count=pending_count
+    )
+
+
+@admin_bp.route('/registration-request/<int:request_id>/approve', methods=['POST'])
+@login_required
+@superadmin_required
+def approve_registration(request_id):
+    reg_request = RegistrationRequest.query.get_or_404(request_id)
+    
+    if reg_request.status != 'pending':
+        flash('Cette demande a déjà été traitée.', 'warning')
+        return redirect(url_for('admin.registration_requests'))
+    
+    commission_rate = parse_float_safe(request.form.get('commission_rate'), 
+        SiteSetting.get('default_commission_rate', 10.0))
+    password = request.form.get('password', '')
+    
+    if not password or len(password) < 6:
+        flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+        return redirect(url_for('admin.registration_requests'))
+    
+    org = Organization(
+        name=reg_request.org_name,
+        email=reg_request.email,
+        phone=reg_request.phone,
+        address=reg_request.address,
+        commission_rate=commission_rate,
+        commission_set_by=current_user.id,
+        commission_updated_at=datetime.utcnow()
+    )
+    db.session.add(org)
+    db.session.flush()
+    
+    user = User(
+        username=reg_request.name,
+        email=reg_request.email,
+        role='org',
+        organization_id=org.id
+    )
+    user.set_password(password)
+    db.session.add(user)
+    
+    reg_request.status = 'approved'
+    reg_request.processed_at = datetime.utcnow()
+    reg_request.processed_by = current_user.id
+    
+    db.session.commit()
+    
+    flash(f'Demande approuvée! Compte créé pour {reg_request.org_name}.', 'success')
+    return redirect(url_for('admin.registration_requests'))
+
+
+@admin_bp.route('/registration-request/<int:request_id>/reject', methods=['POST'])
+@login_required
+@superadmin_required
+def reject_registration(request_id):
+    reg_request = RegistrationRequest.query.get_or_404(request_id)
+    
+    if reg_request.status != 'pending':
+        flash('Cette demande a déjà été traitée.', 'warning')
+        return redirect(url_for('admin.registration_requests'))
+    
+    reg_request.status = 'rejected'
+    reg_request.processed_at = datetime.utcnow()
+    reg_request.processed_by = current_user.id
+    reg_request.notes = request.form.get('notes', '')
+    
+    db.session.commit()
+    
+    flash('Demande rejetée.', 'info')
+    return redirect(url_for('admin.registration_requests'))
