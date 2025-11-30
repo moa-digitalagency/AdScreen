@@ -42,9 +42,20 @@ def screen_booking(screen_code):
                 current_period = period
                 break
     
+    slots_json = [
+        {
+            'id': slot.id,
+            'content_type': slot.content_type,
+            'duration_seconds': slot.duration_seconds,
+            'price_per_play': float(slot.price_per_play)
+        }
+        for slot in screen.time_slots
+    ]
+    
     return render_template('booking/screen.html',
         screen=screen,
-        current_period=current_period
+        current_period=current_period,
+        slots_json=slots_json
     )
 
 

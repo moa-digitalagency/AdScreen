@@ -228,7 +228,7 @@
 </div>
 
 <script>
-const slots = {{ screen.time_slots|tojson|safe if screen.time_slots else '[]' }};
+const slots = {{ slots_json|tojson|safe }};
 
 function updatePrice() {
     const contentType = document.querySelector('input[name="content_type"]:checked')?.value || 'image';
