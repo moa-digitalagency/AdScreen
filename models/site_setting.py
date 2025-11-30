@@ -55,7 +55,7 @@ class SiteSetting(db.Model):
     @classmethod
     def get_seo_settings(cls):
         return {
-            'site_title': cls.get('site_title', 'AdScreen'),
+            'site_title': cls.get('site_title', 'Shabaka AdScreen'),
             'site_description': cls.get('site_description', 'Plateforme de location d\'écrans publicitaires'),
             'meta_keywords': cls.get('meta_keywords', ''),
             'og_image': cls.get('og_image', ''),
@@ -68,7 +68,7 @@ class SiteSetting(db.Model):
             'default_commission_rate': cls.get('default_commission_rate', 10.0),
             'min_commission_rate': cls.get('min_commission_rate', 5.0),
             'max_commission_rate': cls.get('max_commission_rate', 30.0),
-            'platform_name': cls.get('platform_name', 'AdScreen'),
+            'platform_name': cls.get('platform_name', 'Shabaka AdScreen'),
             'support_email': cls.get('support_email', ''),
             'maintenance_mode': cls.get('maintenance_mode', False),
         }

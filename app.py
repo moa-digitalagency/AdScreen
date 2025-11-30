@@ -69,7 +69,7 @@ def inject_site_settings():
     from models import SiteSetting
     return {
         'site_settings': {
-            'platform_name': SiteSetting.get('platform_name', 'AdScreen'),
+            'platform_name': SiteSetting.get('platform_name', 'Shabaka AdScreen'),
             'site_description': SiteSetting.get('site_description', ''),
             'support_email': SiteSetting.get('support_email', ''),
             'admin_whatsapp_number': SiteSetting.get('admin_whatsapp_number', ''),

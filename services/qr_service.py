@@ -51,7 +51,7 @@ def generate_qr_base64(data, box_size=10, border=4):
     return base64.b64encode(img_data).decode()
 
 
-def generate_enhanced_qr_image(screen, booking_url, platform_name='AdScreen'):
+def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScreen'):
     """
     Generate an enhanced QR code image with establishment info.
     
@@ -137,7 +137,7 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='AdScreen'):
     return buffer.getvalue()
 
 
-def generate_enhanced_qr_base64(screen, booking_url, platform_name='AdScreen'):
+def generate_enhanced_qr_base64(screen, booking_url, platform_name='Shabaka AdScreen'):
     """
     Generate an enhanced QR code as a base64-encoded string.
     
