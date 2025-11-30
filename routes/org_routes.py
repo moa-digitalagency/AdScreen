@@ -709,7 +709,7 @@ def stats():
         Booking.total_price,
         Booking.start_date,
         Booking.end_date,
-        Booking.plays_per_hour,
+        Booking.num_plays,
         func.count(StatLog.id).label('play_count')
     ).join(Screen).outerjoin(Booking).outerjoin(
         StatLog, StatLog.content_id == Content.id
@@ -719,7 +719,7 @@ def stats():
         Content.id, Content.client_name, Content.original_filename, 
         Content.content_type, Content.status, Content.created_at,
         Screen.name, Booking.id, Booking.total_price, 
-        Booking.start_date, Booking.end_date, Booking.plays_per_hour
+        Booking.start_date, Booking.end_date, Booking.num_plays
     ).order_by(Content.created_at.desc()).all()
     
     return render_template('org/stats.html',
