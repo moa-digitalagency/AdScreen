@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initFlashMessages();
     initMobileMenu();
     initSmoothScroll();
+    initScrollAnimations();
+    initNavbarScroll();
+    initCounterAnimations();
 });
 
 function initDropdowns() {
@@ -54,16 +57,93 @@ function initMobileMenu() {
 function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href === '#') return;
+            
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const target = document.querySelector(href);
             if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                const headerOffset = 100;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
                 });
             }
         });
     });
+}
+
+function initScrollAnimations() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+                entry.target.style.opacity = '1';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('[data-animate]').forEach(el => {
+        el.style.opacity = '0';
+        observer.observe(el);
+    });
+
+    document.querySelectorAll('.card, .pricing-card, .testimonial-card').forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transitionDelay = `${index * 0.1}s`;
+        observer.observe(el);
+    });
+}
+
+function initNavbarScroll() {
+    const navbar = document.querySelector('nav');
+    if (!navbar) return;
+    
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 50) {
+            navbar.classList.add('shadow-md');
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+        } else {
+            navbar.classList.remove('shadow-md');
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        }
+        
+        lastScroll = currentScroll;
+    });
+}
+
+function initCounterAnimations() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    
+    const counters = document.querySelectorAll('[data-counter]');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const target = parseInt(entry.target.dataset.counter);
+                animateCounter(entry.target, target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    counters.forEach(counter => observer.observe(counter));
 }
 
 function showToast(message, type = 'info') {
@@ -148,32 +228,78 @@ function debounce(func, wait) {
     };
 }
 
-function animateCounter(element, target, duration = 1000) {
+function animateCounter(element, target, duration = 1500) {
     const start = 0;
-    const increment = target / (duration / 16);
-    let current = start;
+    const startTime = performance.now();
     
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            element.textContent = formatNumber(target);
-            clearInterval(timer);
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(easeOutQuart * target);
+        
+        element.textContent = formatNumber(current);
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
         } else {
-            element.textContent = formatNumber(Math.floor(current));
+            element.textContent = formatNumber(target);
         }
-    }, 16);
+    }
+    
+    requestAnimationFrame(update);
 }
 
-if (typeof IntersectionObserver !== 'undefined') {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('[data-animate]').forEach(el => {
-        observer.observe(el);
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+function addRippleEffect(button) {
+    button.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        `;
+        
+        this.style.position = 'relative';
+        this.style.overflow = 'hidden';
+        this.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 600);
     });
 }
+
+document.querySelectorAll('.btn-primary').forEach(addRippleEffect);
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
