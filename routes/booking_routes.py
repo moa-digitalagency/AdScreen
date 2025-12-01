@@ -258,16 +258,6 @@ def booking_status(booking_id):
 def download_receipt(reservation_number):
     booking = Booking.query.filter_by(reservation_number=reservation_number).first_or_404()
     
-    receipt_path = os.path.join('static', 'uploads', 'receipts', f'receipt_{reservation_number}.png')
-    
-    if os.path.exists(receipt_path):
-        return send_file(
-            receipt_path,
-            mimetype='image/png',
-            as_attachment=True,
-            download_name=f'recu_{reservation_number}.png'
-        )
-    
     booking_qr = generate_qr_base64(
         url_for('booking.screen_booking', screen_code=booking.screen.unique_code, _external=True),
         box_size=6, border=2
