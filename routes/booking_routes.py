@@ -176,11 +176,15 @@ def submit_booking(screen_code):
     
     reservation_qr = generate_qr_base64(booking.reservation_number, box_size=6, border=2)
     
+    booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+    booking_qr = generate_qr_base64(booking_url, box_size=6, border=2)
+    
     return render_template('booking/success.html',
         booking=booking,
         screen=screen,
         content=content,
-        reservation_qr=reservation_qr
+        reservation_qr=reservation_qr,
+        booking_qr=booking_qr
     )
 
 

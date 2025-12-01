@@ -395,6 +395,9 @@ def settings():
             'support_email': 'platform',
             'admin_whatsapp_number': 'platform',
             'head_code': 'platform',
+            'default_currency': 'platform',
+            'copyright_text': 'platform',
+            'made_with_text': 'platform',
             'facebook_url': 'social',
             'instagram_url': 'social',
             'twitter_url': 'social',
@@ -445,6 +448,9 @@ def settings():
     platform_settings['admin_whatsapp_number'] = SiteSetting.get('admin_whatsapp_number', '')
     platform_settings['head_code'] = SiteSetting.get('head_code', '')
     platform_settings['favicon'] = SiteSetting.get('favicon', '')
+    platform_settings['default_currency'] = SiteSetting.get('default_currency', 'EUR')
+    platform_settings['copyright_text'] = SiteSetting.get('copyright_text', '© Shabaka AdScreen. Tous droits réservés.')
+    platform_settings['made_with_text'] = SiteSetting.get('made_with_text', 'Fait avec ❤️ en France')
     platform_settings['facebook_url'] = SiteSetting.get('facebook_url', '')
     platform_settings['instagram_url'] = SiteSetting.get('instagram_url', '')
     platform_settings['twitter_url'] = SiteSetting.get('twitter_url', '')

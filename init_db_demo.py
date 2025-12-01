@@ -245,6 +245,49 @@ def create_demo_data():
         for key, value, value_type, category in site_settings:
             SiteSetting.set(key, value, value_type, category)
         
+        logger.info("🎨 Création des fillers par défaut pour chaque écran...")
+        
+        from services.filler_generator import generate_default_filler
+        import os as file_os
+        
+        platform_name = SiteSetting.get('platform_name', 'Shabaka AdScreen')
+        platform_url = 'www.shabaka-adscreen.com'
+        
+        base_url = file_os.environ.get('REPLIT_DEV_DOMAIN', '')
+        if base_url:
+            base_url = f"https://{base_url}"
+        else:
+            base_url = None
+        
+        for screen in [screen1, screen2, screen3, screen4, screen5]:
+            org_id = screen.organization_id
+            upload_dir = f"static/uploads/fillers/{org_id}"
+            file_os.makedirs(upload_dir, exist_ok=True)
+            
+            img_data, filename = generate_default_filler(
+                screen, 
+                platform_name=platform_name, 
+                platform_url=platform_url,
+                base_url=base_url
+            )
+            
+            file_path = file_os.path.join(upload_dir, filename)
+            with open(file_path, 'wb') as f:
+                f.write(img_data)
+            
+            filler = Filler(
+                filename=filename,
+                content_type='image',
+                file_path=file_path,
+                duration_seconds=10.0,
+                is_active=True,
+                in_playlist=True,
+                screen_id=screen.id
+            )
+            db.session.add(filler)
+        
+        db.session.flush()
+        
         logger.info("🔲 Création des overlays de démonstration...")
         
         overlay1 = ScreenOverlay(

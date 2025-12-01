@@ -196,6 +196,19 @@
                     <input type="email" name="support_email" value="{{ platform_settings.support_email }}" 
                            class="input-field" placeholder="support@shabaka-adscreen.com">
                 </div>
+                <div>
+                    <label class="label">Devise par défaut</label>
+                    <select name="default_currency" class="input-field">
+                        <option value="EUR" {% if platform_settings.default_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                        <option value="USD" {% if platform_settings.default_currency == 'USD' %}selected{% endif %}>USD ($)</option>
+                        <option value="GBP" {% if platform_settings.default_currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
+                        <option value="XOF" {% if platform_settings.default_currency == 'XOF' %}selected{% endif %}>XOF (FCFA)</option>
+                        <option value="XAF" {% if platform_settings.default_currency == 'XAF' %}selected{% endif %}>XAF (FCFA)</option>
+                        <option value="MAD" {% if platform_settings.default_currency == 'MAD' %}selected{% endif %}>MAD (DH)</option>
+                        <option value="TND" {% if platform_settings.default_currency == 'TND' %}selected{% endif %}>TND (DT)</option>
+                        <option value="DZD" {% if platform_settings.default_currency == 'DZD' %}selected{% endif %}>DZD (DA)</option>
+                    </select>
+                </div>
                 <div class="flex items-center gap-3 pt-2">
                     <input type="checkbox" name="maintenance_mode" id="maintenance_mode" 
                            class="w-4 h-4 text-primary-600 rounded border-gray-300"
@@ -204,6 +217,33 @@
                         <span class="font-medium">Mode maintenance</span>
                         <span class="text-gray-500 ml-1">- Désactive temporairement l'accès à la plateforme</span>
                     </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-copyright text-gray-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Pied de page</h2>
+                    <p class="text-sm text-gray-500">Personnalisez le texte du pied de page</p>
+                </div>
+            </div>
+            
+            <div class="grid gap-4">
+                <div>
+                    <label class="label">Texte de copyright</label>
+                    <input type="text" name="copyright_text" value="{{ platform_settings.copyright_text }}" 
+                           class="input-field" placeholder="© Shabaka AdScreen. Tous droits réservés.">
+                    <p class="text-xs text-gray-500 mt-1">Ex: © Shabaka AdScreen. Tous droits réservés.</p>
+                </div>
+                <div>
+                    <label class="label">Texte "Fait avec"</label>
+                    <input type="text" name="made_with_text" value="{{ platform_settings.made_with_text }}" 
+                           class="input-field" placeholder="Fait avec ❤️ en France">
+                    <p class="text-xs text-gray-500 mt-1">Ex: Fait avec ❤️ en France</p>
                 </div>
             </div>
         </div>

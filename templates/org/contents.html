@@ -128,13 +128,6 @@
                                         <i class="fas fa-minus-circle"></i>
                                     </button>
                                 </form>
-                                {% else %}
-                                <form action="{{ url_for('org.add_content_to_playlist', content_id=content.id) }}" method="POST" class="inline">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Ajouter à la playlist">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
                                 {% if content.status == 'approved' %}
                                 <form action="{{ url_for('org.suspend_content', content_id=content.id) }}" method="POST" class="inline">
                                     <button type="submit" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Suspendre">
@@ -164,6 +157,16 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                {% else %}
+                                <button onclick="openChangeScreenModal({{ content.id }})" 
+                                        class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Changer d'écran">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <button onclick="openAssignScreenModal({{ content.id }})" 
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Assigner à un écran">
+                                    <i class="fas fa-desktop"></i>
+                                </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

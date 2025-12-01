@@ -83,5 +83,8 @@ def inject_site_settings():
             'head_code': SiteSetting.get('head_code', ''),
             'og_image': SiteSetting.get('og_image', ''),
             'favicon': SiteSetting.get('favicon', ''),
+            'default_currency': SiteSetting.get('default_currency', 'EUR'),
+            'copyright_text': SiteSetting.get('copyright_text', '© Shabaka AdScreen. Tous droits réservés.'),
+            'made_with_text': SiteSetting.get('made_with_text', 'Fait avec ❤️ en France'),
         }
     }
