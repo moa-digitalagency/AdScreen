@@ -43,6 +43,7 @@ with app.app_context():
     from routes.booking_routes import booking_bp
     from routes.player_routes import player_bp
     from routes.api_routes import api_bp
+    from routes.billing_routes import billing_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
@@ -51,6 +52,7 @@ with app.app_context():
     app.register_blueprint(booking_bp, url_prefix="/book")
     app.register_blueprint(player_bp, url_prefix="/player")
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(billing_bp, url_prefix="/org/billing")
 
 @login_manager.user_loader
 def load_user(user_id):
