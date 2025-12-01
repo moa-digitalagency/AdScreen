@@ -202,6 +202,7 @@ def create_demo_data():
             accepts_videos=True,
             max_file_size_mb=50,
             price_per_minute=2.0,
+            is_featured=True,
             organization_id=org1.id
         )
         screen1.set_password('screen123')
@@ -253,6 +254,7 @@ def create_demo_data():
             accepts_videos=True,
             max_file_size_mb=100,
             price_per_minute=3.0,
+            is_featured=True,
             organization_id=org3.id
         )
         screen4.set_password('screen123')
@@ -287,6 +289,7 @@ def create_demo_data():
             accepts_videos=True,
             max_file_size_mb=50,
             price_per_minute=20.0,
+            is_featured=True,
             organization_id=org4.id
         )
         screen6.set_password('screen123')
@@ -321,6 +324,7 @@ def create_demo_data():
             accepts_videos=True,
             max_file_size_mb=50,
             price_per_minute=1000.0,
+            is_featured=True,
             organization_id=org5.id
         )
         screen8.set_password('screen123')
@@ -338,6 +342,7 @@ def create_demo_data():
             accepts_videos=True,
             max_file_size_mb=50,
             price_per_minute=3.0,
+            is_featured=True,
             organization_id=org6.id
         )
         screen9.set_password('screen123')
