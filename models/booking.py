@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 import secrets
 from app import db
 
@@ -22,6 +22,8 @@ class Booking(db.Model):
     status = db.Column(db.String(20), default='pending')
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
+    start_time = db.Column(db.Time, nullable=True)
+    end_time = db.Column(db.Time, nullable=True)
     payment_status = db.Column(db.String(20), default='pending')
     payment_reference = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

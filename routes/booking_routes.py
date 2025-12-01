@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking
-from datetime import datetime, date
+from datetime import datetime, date, time
 import os
 import secrets
 import base64
@@ -85,6 +85,8 @@ def submit_booking(screen_code):
     booking_mode = request.form.get('booking_mode', 'plays')
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
+    start_time_str = request.form.get('start_time')
+    end_time_str = request.form.get('end_time')
     
     if booking_mode == 'dates':
         calculated_plays = int(request.form.get('calculated_plays', 10))
@@ -173,6 +175,21 @@ def submit_booking(screen_code):
     db.session.add(content)
     db.session.flush()
     
+    start_time_parsed = None
+    end_time_parsed = None
+    if start_time_str:
+        try:
+            parts = start_time_str.split(':')
+            start_time_parsed = time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            pass
+    if end_time_str:
+        try:
+            parts = end_time_str.split(':')
+            end_time_parsed = time(int(parts[0]), int(parts[1]))
+        except (ValueError, IndexError):
+            pass
+    
     booking = Booking(
         screen_id=screen.id,
         content_id=content.id,
@@ -185,6 +202,8 @@ def submit_booking(screen_code):
         total_price=total_price,
         start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else date.today(),
         end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
+        start_time=start_time_parsed,
+        end_time=end_time_parsed,
         status='pending',
         payment_status='paid'
     )

@@ -6,6 +6,13 @@ from app import db
 from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from services.currency_service import (
+    convert_to_base_currency, 
+    get_conversion_rate, 
+    calculate_revenue_in_base_currency,
+    get_rates_last_updated,
+    refresh_rates
+)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -246,6 +253,34 @@ def dashboard():
         Booking.payment_status == 'paid'
     ).group_by(Organization.id).order_by(func.sum(Booking.total_price).desc()).limit(5).all()
     
+    admin_base_currency = SiteSetting.get('admin_base_currency', 'EUR')
+    admin_currency_info = get_currency_by_code(admin_base_currency)
+    
+    revenues_by_currency = {}
+    commissions_by_currency = {}
+    for currency_code, total, commission in revenue_by_currency:
+        code = currency_code or 'EUR'
+        revenues_by_currency[code] = total or 0
+        commissions_by_currency[code] = commission or 0
+    
+    converted_revenue = calculate_revenue_in_base_currency(revenues_by_currency, admin_base_currency)
+    converted_commission = calculate_revenue_in_base_currency(commissions_by_currency, admin_base_currency)
+    
+    for stat in currency_stats:
+        stat['converted_total'] = convert_to_base_currency(stat['total'], stat['code'], admin_base_currency)
+        stat['converted_commission'] = convert_to_base_currency(stat['commission'], stat['code'], admin_base_currency)
+        stat['conversion_rate'] = get_conversion_rate(stat['code'], admin_base_currency)
+    
+    for stat in country_stats:
+        for curr in stat.get('currencies', []):
+            curr['converted_total'] = convert_to_base_currency(curr['total'], curr['currency_code'], admin_base_currency)
+            curr['converted_commission'] = convert_to_base_currency(curr['commission'], curr['currency_code'], admin_base_currency)
+            curr['converted_monthly_total'] = convert_to_base_currency(curr['monthly_total'], curr['currency_code'], admin_base_currency)
+            curr['converted_weekly_total'] = convert_to_base_currency(curr['weekly_total'], curr['currency_code'], admin_base_currency)
+            curr['converted_daily_total'] = convert_to_base_currency(curr['daily_total'], curr['currency_code'], admin_base_currency)
+    
+    rates_last_updated = get_rates_last_updated()
+    
     return render_template('admin/dashboard.html',
         total_orgs=total_orgs,
         active_orgs=active_orgs,
@@ -260,7 +295,12 @@ def dashboard():
         country_stats=country_stats,
         recent_orgs=recent_orgs,
         recent_bookings=recent_bookings,
-        top_orgs=top_orgs
+        top_orgs=top_orgs,
+        admin_base_currency=admin_base_currency,
+        admin_currency_symbol=admin_currency_info.get('symbol', admin_base_currency),
+        converted_revenue=converted_revenue,
+        converted_commission=converted_commission,
+        rates_last_updated=rates_last_updated
     )
 
 

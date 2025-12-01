@@ -227,7 +227,7 @@ The platform supports multiple currencies based on organization settings:
 ## 🔧 Recent Fixes (December 2025)
 
 ### Currency Display Bug Fix
-- Fixed hardcoded € symbols in screen detail, form, availability, and slots templates
+- Fixed hardcoded symbols in screen detail, form, availability, and slots templates
 - Currency symbol now dynamically passed from routes using organization's currency setting
 - JavaScript components updated to use dynamic currency symbol
 
@@ -239,3 +239,28 @@ The platform supports multiple currencies based on organization settings:
 - Added detailed explanation of diffusion mode based on content type
 - Shows video last-frame hold behavior clearly
 - Added equitable distribution explanation
+
+### QR Code Design Enhancement
+- Modern gradient backgrounds with professional styling
+- Improved typography with JetBrains Mono fonts
+- Screen info display (name, resolution, organization)
+- Shabaka AdScreen branding with platform URL
+
+### Filler Design Modernization
+- New modern gradient backgrounds for default fillers
+- Professional styling with shadows and rounded corners
+- Clean typography with Inter/JetBrains Mono fonts
+- Logo placeholder and call-to-action sections
+
+### Automatic Currency Conversion (Admin Dashboard)
+- Implemented European Central Bank (ECB) API integration for real-time exchange rates
+- 24-hour caching mechanism to minimize API calls
+- Superadmin dashboard displays all revenues converted to EUR
+- Conversion breakdown table showing original amounts, rates, and converted values
+- Supports 80+ world currencies including EUR, MAD, TND, XOF
+
+### Booking Time Fields
+- Added start_time and end_time fields to booking model
+- Updated booking form with time selection (alongside dates)
+- Visual improvement with green/red colored date-time sections
+- Enables more precise availability calculations and scheduling

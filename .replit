@@ -1,4 +1,4 @@
-modules = ["web", "python-3.11", "nodejs-20"]
+modules = ["web", "python-3.11", "nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-25_05"
@@ -39,7 +39,3 @@ expertMode = true
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 38323
-externalPort = 3000
