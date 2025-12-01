@@ -60,8 +60,22 @@ def get_previous_weeks(count=12):
     return weeks
 
 
+def get_last_week():
+    """Get the previous week (Monday to Sunday) as (start_date, end_date) tuple."""
+    today = datetime.utcnow().date()
+    current_week_start = today - timedelta(days=today.weekday())
+    last_week_start = current_week_start - timedelta(weeks=1)
+    last_week_end = last_week_start + timedelta(days=6)
+    return last_week_start, last_week_end
+
+
 def generate_invoice_for_week(organization_id, week_start, week_end):
-    """Generate or regenerate an invoice for a specific week."""
+    """
+    Generate an invoice for a specific week for an organization.
+    - Only generates if gross_revenue > 0
+    - One invoice per organization (all screens combined)
+    - Updates existing invoice if not validated
+    """
     from models import SiteSetting
     
     org = Organization.query.get(organization_id)
@@ -93,6 +107,9 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
             Booking.created_at >= datetime.combine(week_start, datetime.min.time()),
             Booking.created_at <= datetime.combine(week_end, datetime.max.time())
         ).scalar() or 0
+    
+    if gross_revenue <= 0 and not existing_invoice:
+        return None
     
     commission_rate = org.commission_rate or 10.0
     commission_amount = round(gross_revenue * (commission_rate / 100), 2)
@@ -154,15 +171,14 @@ def invoices():
     
     org = current_user.organization
     
-    previous_weeks = get_previous_weeks(4)
-    for week_start, week_end in previous_weeks:
-        existing = Invoice.query.filter_by(
-            organization_id=org.id,
-            week_start_date=week_start,
-            week_end_date=week_end
-        ).first()
-        if not existing:
-            generate_invoice_for_week(org.id, week_start, week_end)
+    last_week_start, last_week_end = get_last_week()
+    existing = Invoice.query.filter_by(
+        organization_id=org.id,
+        week_start_date=last_week_start,
+        week_end_date=last_week_end
+    ).first()
+    if not existing:
+        generate_invoice_for_week(org.id, last_week_start, last_week_end)
     
     status_filter = request.args.get('status', 'all')
     

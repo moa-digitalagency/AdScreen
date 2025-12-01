@@ -863,22 +863,21 @@ def reject_registration(request_id):
 @superadmin_required
 def billing():
     from utils.currencies import get_currency_by_code
-    from routes.billing_routes import get_previous_weeks, generate_invoice_for_week
+    from routes.billing_routes import get_last_week, generate_invoice_for_week
     
     all_orgs = Organization.query.filter_by(is_active=True).all()
     org_ids = [org.id for org in all_orgs]
     
-    previous_weeks = get_previous_weeks(4)
+    last_week_start, last_week_end = get_last_week()
     
     for org_id in org_ids:
-        for week_start, week_end in previous_weeks:
-            existing = Invoice.query.filter_by(
-                organization_id=org_id,
-                week_start_date=week_start,
-                week_end_date=week_end
-            ).first()
-            if not existing:
-                generate_invoice_for_week(org_id, week_start, week_end)
+        existing = Invoice.query.filter_by(
+            organization_id=org_id,
+            week_start_date=last_week_start,
+            week_end_date=last_week_end
+        ).first()
+        if not existing:
+            generate_invoice_for_week(org_id, last_week_start, last_week_end)
     
     status_filter = request.args.get('status', 'all')
     org_filter = request.args.get('org_id', '')
