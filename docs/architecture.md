@@ -133,7 +133,9 @@ shabaka-adscreen/
 │
 ├── utils/                    # Utilitaires
 │   ├── image_utils.py        # Traitement images
-│   └── video_utils.py        # Traitement vidéos
+│   ├── video_utils.py        # Traitement vidéos
+│   ├── world_data.py         # Données pays/villes (208 pays, 4600+ villes)
+│   └── currencies.py         # Gestion devises et taux de change
 │
 ├── templates/                # Templates Jinja2
 │   ├── base.html
@@ -199,6 +201,19 @@ shabaka-adscreen/
 | MAD | DH | Maroc |
 | XOF | FCFA | Sénégal, Afrique de l'Ouest |
 | TND | DT | Tunisie |
+
+### Données géographiques (world_data.py)
+
+Le module `utils/world_data.py` fournit une couverture mondiale exhaustive :
+
+| Élément | Quantité | Description |
+|---------|----------|-------------|
+| Pays | 208 | Tous les pays avec code ISO, drapeau, continent, devise |
+| Villes | 4 600+ | 1-30 villes par pays (moyenne 22) |
+| Continents | 6 | Afrique, Amérique, Asie, Europe, Océanie |
+| Territoires | 15+ | DOM-TOM, régions autonomes |
+
+**API Endpoint** : `GET /api/cities/<country_code>` retourne la liste des villes pour un pays donné.
 
 ## Flux de données
 

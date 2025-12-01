@@ -220,6 +220,31 @@ Données disponibles par établissement :
 - [ ] Multi-langue interface
 - [ ] Campagnes programmées
 
+### Sélection Pays et Ville
+
+La plateforme intègre un système complet de sélection géographique :
+
+**Données mondiales exhaustives**
+- 208 pays avec codes ISO, drapeaux et devises par défaut
+- Plus de 4 600 villes réparties sur tous les continents
+- Moyenne de 22 villes par pays (minimum 1, maximum 30)
+- Chargement dynamique des villes via API AJAX
+
+**Fonctionnalités**
+- Sélection du pays lors de la création d'organisation
+- Chargement automatique des villes correspondantes
+- Recherche avec autocomplétion
+- Support multilingue (noms en français)
+
+**Couverture géographique**
+| Continent | Pays | Villes (moy.) |
+|-----------|------|---------------|
+| Afrique | 54+ | 20-30 |
+| Europe | 45+ | 20-30 |
+| Asie | 48+ | 20-30 |
+| Amérique | 35+ | 20-30 |
+| Océanie | 14+ | 15-20 |
+
 ## Limites techniques
 
 | Paramètre | Limite |
@@ -229,5 +254,6 @@ Données disponibles par établissement :
 | Formats vidéos | MP4, WebM, MOV |
 | Durée vidéo | Doit correspondre au slot choisi |
 | Résolution | Doit correspondre exactement à l'écran |
-| Devises supportées | EUR, MAD, XOF, TND |
-| Pays supportés | France, Maroc, Sénégal, Tunisie |
+| Devises supportées | EUR, MAD, XOF, TND (+ 200 autres via pays) |
+| Pays supportés | 208 pays (couverture mondiale) |
+| Villes par pays | 1-30 (moyenne 22) |

@@ -6,11 +6,12 @@ Plateforme SaaS permettant aux établissements (bars, restaurants, centres comme
 
 ## ✨ Fonctionnalités principales
 
-### 🌍 Multi-pays & Multi-devises
+### 🌍 Multi-pays & Multi-devises (208 pays, 4600+ villes)
 - 🇫🇷 France (EUR - €)
 - 🇲🇦 Maroc (MAD - DH)
 - 🇸🇳 Sénégal (XOF - FCFA)
 - 🇹🇳 Tunisie (TND - DT)
+- 🌐 Et 200+ autres pays avec sélection dynamique de ville
 
 ### 🏢 Gestion multi-établissements
 - 👑 Superadmin gère les organisations et commissions

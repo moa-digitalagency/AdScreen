@@ -46,7 +46,8 @@ Not specified.
     - **Multi-Currency Support**: Dynamic currency display and price calculation based on organization settings, period multipliers, and content duration handling (video last-frame hold).
     - **Public Catalog**: A `/catalog` page displaying available screens, grouped by country and organization, with screen details, accepted formats, indicative prices, and booking buttons.
     - **Customizable Registration Number Label**: Allows organizations to define country-specific labels (e.g., SIRET, ICE, NINEA).
-    - **City Selection**: Organizations can specify their city via dynamic dropdown with autocomplete, populated from `utils/world_data.py`. API endpoint `/api/cities?country=XX` returns cities for a given country code.
+    - **City Selection**: Organizations can specify their city via dynamic dropdown with autocomplete, populated from `utils/world_data.py`. API endpoint `/api/cities/<country_code>` returns cities for a given country code.
+    - **World Data Coverage**: 208 countries with ISO codes, flags, continents and default currencies. Over 4,600 cities with 15-30 cities per country (average 22). Dynamic AJAX-based city loading for better UX.
 
 ## External Dependencies
 - **PostgreSQL**: Primary database for all application data.
