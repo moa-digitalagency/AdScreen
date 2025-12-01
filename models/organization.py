@@ -19,6 +19,11 @@ class Organization(db.Model):
     commission_set_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     commission_updated_at = db.Column(db.DateTime, nullable=True)
     
+    business_name = db.Column(db.String(256), nullable=True)
+    business_registration_number = db.Column(db.String(100), nullable=True)
+    vat_rate = db.Column(db.Float, default=0.0)
+    vat_number = db.Column(db.String(50), nullable=True)
+    
     users = db.relationship('User', back_populates='organization', foreign_keys='User.organization_id')
     screens = db.relationship('Screen', back_populates='organization', cascade='all, delete-orphan')
     
@@ -36,3 +41,26 @@ class Organization(db.Model):
     def calculate_net_revenue(self, gross_amount):
         commission = self.calculate_platform_commission(gross_amount)
         return round(gross_amount - commission, 2)
+    
+    def calculate_vat(self, amount):
+        if not self.vat_rate or self.vat_rate <= 0:
+            return 0
+        return round(amount * (self.vat_rate / 100), 2)
+    
+    def calculate_price_with_vat(self, amount):
+        vat = self.calculate_vat(amount)
+        return round(amount + vat, 2)
+    
+    def get_business_info(self):
+        return {
+            'business_name': self.business_name or self.name,
+            'registration_number': self.business_registration_number or '',
+            'vat_number': self.vat_number or '',
+            'vat_rate': self.vat_rate or 0,
+            'address': self.address or '',
+            'phone': self.phone or '',
+            'email': self.email or ''
+        }
+    
+    def has_business_info(self):
+        return bool(self.business_name or self.business_registration_number)

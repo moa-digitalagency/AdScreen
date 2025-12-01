@@ -67,11 +67,26 @@
                         </div>
                     </div>
                     
-                    <div class="border-t border-gray-200 mt-4 pt-4">
+                    <div class="border-t border-gray-200 mt-4 pt-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Sous-total HT</span>
+                            <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
+                        </div>
+                        {% if booking.vat_rate and booking.vat_rate > 0 %}
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">TVA ({{ "%.1f"|format(booking.vat_rate) }}%)</span>
+                            <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.vat_amount) }} {{ currency_symbol }}</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span class="text-lg font-semibold text-gray-800">Total TTC</span>
+                            <span class="text-2xl font-bold text-emerald-600">{{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}</span>
+                        </div>
+                        {% else %}
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-semibold text-gray-800">Total</span>
                             <span class="text-2xl font-bold text-emerald-600">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -330,11 +345,25 @@
         <span class="thermal-line-label">Nb diff.:</span>
         <span class="thermal-line-value">x {{ booking.num_plays }}</span>
     </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Sous-total HT:</span>
+        <span class="thermal-line-value">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
+    </div>
+    {% if booking.vat_rate and booking.vat_rate > 0 %}
+    <div class="thermal-line">
+        <span class="thermal-line-label">TVA ({{ "%.1f"|format(booking.vat_rate) }}%):</span>
+        <span class="thermal-line-value">{{ "%.2f"|format(booking.vat_amount) }} {{ currency_symbol }}</span>
+    </div>
+    {% endif %}
     
     <div class="thermal-separator"></div>
     
     <div class="thermal-total">
+        {% if booking.vat_rate and booking.vat_rate > 0 %}
+        TOTAL TTC: {{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}
+        {% else %}
         TOTAL: {{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}
+        {% endif %}
     </div>
     
     <div class="thermal-status">

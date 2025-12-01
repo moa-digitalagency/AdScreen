@@ -39,6 +39,35 @@
 
             <div class="border-b border-gray-100 pb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-briefcase text-purple-500"></i>
+                    Informations légales de l'entreprise
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="business_name" class="label">Dénomination sociale</label>
+                        <input type="text" id="business_name" name="business_name" value="{{ org.business_name or '' }}" class="input-field" placeholder="Nom légal de votre entreprise">
+                        <p class="text-xs text-gray-500 mt-1">La raison sociale qui apparaîtra sur les reçus et factures</p>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="business_registration_number" class="label">Numéro d'immatriculation (SIRET/SIREN)</label>
+                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Ex: 123 456 789 00012">
+                        </div>
+                        <div>
+                            <label for="vat_number" class="label">Numéro de TVA intracommunautaire</label>
+                            <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="Ex: FR12345678901">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="vat_rate" class="label">Taux de TVA (%)</label>
+                        <input type="number" id="vat_rate" name="vat_rate" value="{{ org.vat_rate or 0 }}" class="input-field" min="0" max="100" step="0.1" placeholder="Ex: 20">
+                        <p class="text-xs text-gray-500 mt-1">Le taux de TVA applicable à vos réservations (0 si non assujetti)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b border-gray-100 pb-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-globe text-blue-500"></i>
                     Localisation et devise
                 </h3>

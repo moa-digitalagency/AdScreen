@@ -24,6 +24,14 @@ class Invoice(db.Model):
     net_revenue = db.Column(db.Float, default=0.0)
     currency = db.Column(db.String(10), default='EUR')
     
+    vat_rate = db.Column(db.Float, default=0.0)
+    vat_amount = db.Column(db.Float, default=0.0)
+    commission_with_vat = db.Column(db.Float, default=0.0)
+    
+    platform_business_name = db.Column(db.String(256), nullable=True)
+    platform_vat_number = db.Column(db.String(50), nullable=True)
+    platform_registration_number = db.Column(db.String(100), nullable=True)
+    
     bookings_count = db.Column(db.Integer, default=0)
     
     status = db.Column(db.String(20), default=STATUS_PENDING)
@@ -72,6 +80,20 @@ class Invoice(db.Model):
         if self.payment_proofs:
             return max(self.payment_proofs, key=lambda p: p.uploaded_at)
         return None
+    
+    def calculate_vat(self, vat_rate=None):
+        """Calculate and set VAT on commission amount"""
+        rate = vat_rate if vat_rate is not None else self.vat_rate or 0
+        self.vat_rate = rate
+        self.vat_amount = round(self.commission_amount * (rate / 100), 2) if rate > 0 else 0
+        self.commission_with_vat = round(self.commission_amount + self.vat_amount, 2)
+        return self.vat_amount
+    
+    def get_commission_with_vat(self):
+        """Get commission including VAT"""
+        if self.commission_with_vat:
+            return self.commission_with_vat
+        return self.commission_amount + (self.vat_amount or 0)
 
 
 class PaymentProof(db.Model):

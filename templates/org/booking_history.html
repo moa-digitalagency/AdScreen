@@ -1,0 +1,179 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Historique des réservations{% endblock %}
+
+{% block main_content %}
+<div class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-money-bill-wave text-emerald-600"></i>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500">CA Total HT</p>
+                <p class="text-lg font-bold text-gray-800">{{ "%.2f"|format(total_revenue) }} {{ currency_symbol }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-percent text-orange-600"></i>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500">TVA collectée</p>
+                <p class="text-lg font-bold text-orange-600">{{ "%.2f"|format(total_vat or 0) }} {{ currency_symbol }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-receipt text-blue-600"></i>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500">Réservations</p>
+                <p class="text-lg font-bold text-blue-600">{{ bookings.total }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-4 border-b border-gray-100">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 class="text-lg font-semibold text-gray-800">Toutes les réservations</h2>
+            <form method="GET" class="flex flex-wrap gap-3">
+                <select name="screen" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="all" {% if screen_filter == 'all' %}selected{% endif %}>Tous les écrans</option>
+                    {% for screen in screens %}
+                    <option value="{{ screen.id }}" {% if screen_filter == screen.id|string %}selected{% endif %}>{{ screen.name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="status" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Tous les statuts</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En attente</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approuvé</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Refusé</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Terminé</option>
+                </select>
+                <button type="submit" class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                    <i class="fas fa-filter mr-1"></i> Filtrer
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    {% if bookings.items %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
+                <tr>
+                    <th class="px-4 py-3">N° Réservation</th>
+                    <th class="px-4 py-3">Écran</th>
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3">Diffusions</th>
+                    <th class="px-4 py-3">Statut</th>
+                    <th class="px-4 py-3 text-right">Montant HT</th>
+                    <th class="px-4 py-3 text-right">TVA</th>
+                    <th class="px-4 py-3 text-right">Total TTC</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for booking in bookings.items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <span class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{{ booking.reservation_number or '-' }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-tv text-gray-400 text-xs"></i>
+                            <span class="font-medium text-gray-800">{{ booking.screen.name }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-500">
+                        {{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-gray-800">{{ booking.num_plays }}x</span>
+                        <span class="text-gray-400 text-xs">({{ booking.slot_duration }}s)</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if booking.status == 'pending' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-clock"></i> En attente
+                        </span>
+                        {% elif booking.status == 'approved' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check"></i> Approuvé
+                        </span>
+                        {% elif booking.status == 'rejected' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-times"></i> Refusé
+                        </span>
+                        {% elif booking.status == 'completed' %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            <i class="fas fa-flag-checkered"></i> Terminé
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                            {{ booking.status }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right font-medium text-gray-800">
+                        {{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}
+                    </td>
+                    <td class="px-4 py-3 text-right text-orange-600">
+                        {% if booking.vat_amount and booking.vat_amount > 0 %}
+                        {{ "%.2f"|format(booking.vat_amount) }} {{ currency_symbol }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold text-emerald-600">
+                        {{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if bookings.pages > 1 %}
+    <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+            Page {{ bookings.page }} sur {{ bookings.pages }} ({{ bookings.total }} réservations)
+        </p>
+        <div class="flex gap-2">
+            {% if bookings.has_prev %}
+            <a href="{{ url_for('org.booking_history', page=bookings.prev_num, status=status_filter, screen=screen_filter) }}" 
+               class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                <i class="fas fa-chevron-left"></i> Précédent
+            </a>
+            {% endif %}
+            {% if bookings.has_next %}
+            <a href="{{ url_for('org.booking_history', page=bookings.next_num, status=status_filter, screen=screen_filter) }}" 
+               class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                Suivant <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="p-8 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-inbox text-2xl text-gray-400"></i>
+        </div>
+        <p class="text-gray-500">Aucune réservation trouvée</p>
+        {% if status_filter != 'all' or screen_filter != 'all' %}
+        <a href="{{ url_for('org.booking_history') }}" class="text-primary-600 hover:underline mt-2 inline-block">
+            Réinitialiser les filtres
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

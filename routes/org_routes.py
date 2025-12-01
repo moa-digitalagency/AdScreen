@@ -77,6 +77,65 @@ def dashboard():
     )
 
 
+@org_bp.route('/bookings')
+@login_required
+@org_required
+def booking_history():
+    from utils.currencies import get_currency_by_code
+    
+    org = current_user.organization
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    status_filter = request.args.get('status', 'all')
+    screen_filter = request.args.get('screen', 'all')
+    
+    query = Booking.query.join(Screen).filter(
+        Screen.organization_id == org.id
+    )
+    
+    if status_filter != 'all':
+        query = query.filter(Booking.status == status_filter)
+    
+    if screen_filter != 'all':
+        try:
+            screen_id = int(screen_filter)
+            query = query.filter(Booking.screen_id == screen_id)
+        except ValueError:
+            pass
+    
+    bookings = query.order_by(Booking.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    screens = Screen.query.filter_by(organization_id=org.id).all()
+    
+    total_revenue = db.session.query(func.sum(Booking.total_price)).join(Screen).filter(
+        Screen.organization_id == org.id,
+        Booking.payment_status == 'paid'
+    ).scalar() or 0
+    
+    total_vat = db.session.query(func.sum(Booking.vat_amount)).join(Screen).filter(
+        Screen.organization_id == org.id,
+        Booking.payment_status == 'paid'
+    ).scalar() or 0
+    
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('org/booking_history.html',
+        org=org,
+        bookings=bookings,
+        screens=screens,
+        status_filter=status_filter,
+        screen_filter=screen_filter,
+        total_revenue=total_revenue,
+        total_vat=total_vat,
+        currency_symbol=currency_symbol
+    )
+
+
 @org_bp.route('/settings', methods=['GET', 'POST'])
 @login_required
 @org_required
@@ -94,6 +153,15 @@ def settings():
         country = request.form.get('country', org.country or 'FR')
         currency = request.form.get('currency', org.currency or 'EUR')
         
+        business_name = request.form.get('business_name', '').strip()
+        business_registration_number = request.form.get('business_registration_number', '').strip()
+        vat_number = request.form.get('vat_number', '').strip()
+        try:
+            vat_rate = float(request.form.get('vat_rate', 0) or 0)
+            vat_rate = max(0, min(vat_rate, 100))
+        except (ValueError, TypeError):
+            vat_rate = 0
+        
         if not name:
             flash('Le nom de l\'établissement est obligatoire.', 'error')
             return render_template('org/settings.html',
@@ -107,6 +175,10 @@ def settings():
         org.address = address
         org.country = country
         org.currency = currency
+        org.business_name = business_name
+        org.business_registration_number = business_registration_number
+        org.vat_number = vat_number
+        org.vat_rate = vat_rate
         db.session.commit()
         
         flash('Paramètres mis à jour avec succès!', 'success')

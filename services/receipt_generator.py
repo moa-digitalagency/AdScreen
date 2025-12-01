@@ -26,6 +26,10 @@ def _get_receipt_data(booking, screen, content):
     )
     currency_symbol = currency.get('symbol', 'EUR')
     
+    vat_rate = getattr(booking, 'vat_rate', 0) or 0
+    vat_amount = getattr(booking, 'vat_amount', 0) or 0
+    total_price_with_vat = getattr(booking, 'total_price_with_vat', None) or booking.total_price
+    
     return {
         'currency_symbol': currency_symbol,
         'reservation_number': booking.reservation_number or "---",
@@ -39,6 +43,9 @@ def _get_receipt_data(booking, screen, content):
         'end_date': booking.end_date.strftime('%d/%m/%Y') if booking.end_date else None,
         'price_per_play': booking.price_per_play,
         'total_price': booking.total_price,
+        'vat_rate': vat_rate,
+        'vat_amount': vat_amount,
+        'total_price_with_vat': total_price_with_vat,
         'client_name': content.client_name or "Anonyme",
         'client_email': content.client_email or "---",
         'created_at': booking.created_at.strftime('%d/%m/%Y a %H:%M') if booking.created_at else datetime.now().strftime('%d/%m/%Y a %H:%M'),
@@ -220,11 +227,17 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
     
     y = draw_detail_line("Prix/diff.:", f"{data['price_per_play']:.2f} {data['currency_symbol']}", y)
     y = draw_detail_line("Nb diff.:", f"x {data['num_plays']}", y)
+    y = draw_detail_line("Sous-total HT:", f"{data['total_price']:.2f} {data['currency_symbol']}", y)
+    if data['vat_rate'] and data['vat_rate'] > 0:
+        y = draw_detail_line(f"TVA ({data['vat_rate']:.1f}%):", f"{data['vat_amount']:.2f} {data['currency_symbol']}", y)
     
     draw_dashed_line(y)
     y += 3 + section_gap
     
-    total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
+    if data['vat_rate'] and data['vat_rate'] > 0:
+        total_text = f"TOTAL TTC: {data['total_price_with_vat']:.2f} {data['currency_symbol']}"
+    else:
+        total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
     total_bbox = draw.textbbox((0, 0), total_text, font=font_total)
     total_box_height = 50
     total_box_y = y
@@ -378,7 +391,15 @@ def generate_receipt_pdf(booking, screen, content, qr_base64=None):
     y -= 10
     c.drawString(12, y, "Nb diff.:")
     c.drawRightString(pdf_width - 12, y, f"x {data['num_plays']}")
-    y -= 15
+    y -= 10
+    c.drawString(12, y, "Sous-total HT:")
+    c.drawRightString(pdf_width - 12, y, f"{data['total_price']:.2f} {data['currency_symbol']}")
+    y -= 10
+    if data['vat_rate'] and data['vat_rate'] > 0:
+        c.drawString(12, y, f"TVA ({data['vat_rate']:.1f}%):")
+        c.drawRightString(pdf_width - 12, y, f"{data['vat_amount']:.2f} {data['currency_symbol']}")
+        y -= 10
+    y -= 5
     
     c.setDash(3, 2)
     c.line(10, y, pdf_width - 10, y)
@@ -386,7 +407,10 @@ def generate_receipt_pdf(booking, screen, content, qr_base64=None):
     y -= 15
     
     c.setFont("Courier-Bold", 10)
-    total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
+    if data['vat_rate'] and data['vat_rate'] > 0:
+        total_text = f"TOTAL TTC: {data['total_price_with_vat']:.2f} {data['currency_symbol']}"
+    else:
+        total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
     c.rect(10, y - 5, pdf_width - 20, 18, stroke=True, fill=False)
     c.drawCentredString(pdf_width / 2, y, total_text)
     y -= 25

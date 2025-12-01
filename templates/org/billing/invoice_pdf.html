@@ -158,12 +158,24 @@
     <div class="parties">
         <div class="party">
             <div class="party-title">Émetteur</div>
-            <div class="party-name">Shabaka AdScreen</div>
+            <div class="party-name">{{ invoice.platform_business_name or 'Shabaka AdScreen' }}</div>
+            {% if invoice.platform_registration_number %}
+            <p>SIRET: {{ invoice.platform_registration_number }}</p>
+            {% endif %}
+            {% if invoice.platform_vat_number %}
+            <p>N° TVA: {{ invoice.platform_vat_number }}</p>
+            {% endif %}
             <p>Plateforme de gestion d'écrans publicitaires</p>
         </div>
         <div class="party">
             <div class="party-title">Destinataire</div>
-            <div class="party-name">{{ org.name }}</div>
+            <div class="party-name">{{ org.business_name or org.name }}</div>
+            {% if org.business_registration_number %}
+            <p>SIRET: {{ org.business_registration_number }}</p>
+            {% endif %}
+            {% if org.vat_number %}
+            <p>N° TVA: {{ org.vat_number }}</p>
+            {% endif %}
             <p>{{ org.email }}<br>{{ org.address or '' }}</p>
         </div>
     </div>
@@ -178,9 +190,24 @@
             <span class="summary-value">{{ "%.1f"|format(invoice.commission_rate) }}%</span>
         </div>
         <div class="summary-row">
+            <span class="summary-label">Commission HT</span>
+            <span class="summary-value">{{ "%.2f"|format(invoice.commission_amount) }}{{ currency_symbol }}</span>
+        </div>
+        {% if invoice.vat_rate and invoice.vat_rate > 0 %}
+        <div class="summary-row">
+            <span class="summary-label">TVA ({{ "%.1f"|format(invoice.vat_rate) }}%)</span>
+            <span class="summary-value">{{ "%.2f"|format(invoice.vat_amount) }}{{ currency_symbol }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Commission TTC (à verser)</span>
+            <span class="summary-value summary-highlight">{{ "%.2f"|format(invoice.commission_with_vat or invoice.commission_amount) }}{{ currency_symbol }}</span>
+        </div>
+        {% else %}
+        <div class="summary-row">
             <span class="summary-label">Commission plateforme (à verser)</span>
             <span class="summary-value summary-highlight">{{ "%.2f"|format(invoice.commission_amount) }}{{ currency_symbol }}</span>
         </div>
+        {% endif %}
         <div class="summary-row">
             <span class="summary-label">Revenu net (pour l'établissement)</span>
             <span class="summary-value">{{ "%.2f"|format(invoice.net_revenue) }}{{ currency_symbol }}</span>
@@ -215,7 +242,10 @@
 
     <div class="footer">
         <p>Facture générée le {{ invoice.generated_at.strftime('%d/%m/%Y à %H:%M') }}</p>
-        <p>Shabaka AdScreen - Plateforme de gestion d'écrans publicitaires</p>
+        <p>{{ invoice.platform_business_name or 'Shabaka AdScreen' }} - Plateforme de gestion d'écrans publicitaires</p>
+        {% if invoice.platform_registration_number %}
+        <p>SIRET: {{ invoice.platform_registration_number }}{% if invoice.platform_vat_number %} - TVA: {{ invoice.platform_vat_number }}{% endif %}</p>
+        {% endif %}
     </div>
 
     <div class="no-print" style="text-align: center; margin-top: 40px;">

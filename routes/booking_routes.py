@@ -190,6 +190,11 @@ def submit_booking(screen_code):
         except (ValueError, IndexError):
             pass
     
+    org = screen.organization
+    vat_rate = org.vat_rate if org and org.vat_rate else 0
+    vat_amount = round(total_price * (vat_rate / 100), 2) if vat_rate > 0 else 0
+    total_price_with_vat = round(total_price + vat_amount, 2)
+    
     booking = Booking(
         screen_id=screen.id,
         content_id=content.id,
@@ -200,6 +205,9 @@ def submit_booking(screen_code):
         calculated_plays=calculated_plays,
         price_per_play=price_per_play,
         total_price=total_price,
+        vat_rate=vat_rate,
+        vat_amount=vat_amount,
+        total_price_with_vat=total_price_with_vat,
         start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else date.today(),
         end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
         start_time=start_time_parsed,
@@ -257,9 +265,17 @@ def calculate_price(screen_code):
     price_per_play = slot.price_per_play * multiplier
     total_price = price_per_play * num_plays
     
+    org = screen.organization
+    vat_rate = org.vat_rate if org and org.vat_rate else 0
+    vat_amount = round(total_price * (vat_rate / 100), 2) if vat_rate > 0 else 0
+    total_price_with_vat = round(total_price + vat_amount, 2)
+    
     return jsonify({
         'price_per_play': round(price_per_play, 2),
         'total_price': round(total_price, 2),
+        'vat_rate': vat_rate,
+        'vat_amount': vat_amount,
+        'total_price_with_vat': total_price_with_vat,
         'num_plays': num_plays
     })
 
@@ -419,6 +435,11 @@ def calculate_from_dates(screen_code):
     price_per_play = slot.price_per_play * multiplier
     total_price = price_per_play * total_plays
     
+    org = screen.organization
+    vat_rate = org.vat_rate if org and org.vat_rate else 0
+    vat_amount = round(total_price * (vat_rate / 100), 2) if vat_rate > 0 else 0
+    total_price_with_vat = round(total_price + vat_amount, 2)
+    
     distribution = calculate_equitable_distribution(total_plays, start_date, end_date, period_id)
     
     return jsonify({
@@ -428,5 +449,8 @@ def calculate_from_dates(screen_code):
         'max_available_plays': availability['available_plays'],
         'price_per_play': round(price_per_play, 2),
         'total_price': round(total_price, 2),
+        'vat_rate': vat_rate,
+        'vat_amount': vat_amount,
+        'total_price_with_vat': total_price_with_vat,
         'distribution': distribution['distribution']
     })

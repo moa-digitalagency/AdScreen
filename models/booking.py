@@ -19,6 +19,11 @@ class Booking(db.Model):
     plays_completed = db.Column(db.Integer, default=0)
     price_per_play = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
+    
+    vat_rate = db.Column(db.Float, default=0.0)
+    vat_amount = db.Column(db.Float, default=0.0)
+    total_price_with_vat = db.Column(db.Float, nullable=True)
+    
     status = db.Column(db.String(20), default='pending')
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
@@ -40,3 +45,17 @@ class Booking(db.Model):
         """Generate a unique reservation number"""
         self.reservation_number = f"RES-{secrets.token_hex(4).upper()}"
         return self.reservation_number
+    
+    def calculate_vat(self, vat_rate=None):
+        """Calculate and set VAT based on rate"""
+        rate = vat_rate if vat_rate is not None else self.vat_rate or 0
+        self.vat_rate = rate
+        self.vat_amount = round(self.total_price * (rate / 100), 2) if rate > 0 else 0
+        self.total_price_with_vat = round(self.total_price + self.vat_amount, 2)
+        return self.vat_amount
+    
+    def get_total_with_vat(self):
+        """Get total price including VAT"""
+        if self.total_price_with_vat is not None:
+            return self.total_price_with_vat
+        return self.total_price + (self.vat_amount or 0)

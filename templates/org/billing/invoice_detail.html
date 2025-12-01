@@ -35,7 +35,7 @@
                 {% endif %}
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div>
                     <p class="text-xs text-gray-500 mb-1">CA Brut</p>
                     <p class="text-lg font-bold text-gray-800">{{ "%.2f"|format(invoice.gross_revenue) }}{{ currency_symbol }}</p>
@@ -45,14 +45,40 @@
                     <p class="text-lg font-bold text-gray-800">{{ "%.1f"|format(invoice.commission_rate) }}%</p>
                 </div>
                 <div>
+                    <p class="text-xs text-gray-500 mb-1">Commission HT</p>
+                    <p class="text-lg font-bold text-gray-800">{{ "%.2f"|format(invoice.commission_amount) }}{{ currency_symbol }}</p>
+                </div>
+                {% if invoice.vat_rate and invoice.vat_rate > 0 %}
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">TVA ({{ "%.1f"|format(invoice.vat_rate) }}%)</p>
+                    <p class="text-lg font-bold text-orange-600">{{ "%.2f"|format(invoice.vat_amount) }}{{ currency_symbol }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Commission TTC</p>
+                    <p class="text-lg font-bold text-primary-600">{{ "%.2f"|format(invoice.commission_with_vat or invoice.commission_amount) }}{{ currency_symbol }}</p>
+                </div>
+                {% else %}
+                <div>
                     <p class="text-xs text-gray-500 mb-1">Commission à payer</p>
                     <p class="text-lg font-bold text-primary-600">{{ "%.2f"|format(invoice.commission_amount) }}{{ currency_symbol }}</p>
                 </div>
-                <div>
-                    <p class="text-xs text-gray-500 mb-1">Revenu net</p>
-                    <p class="text-lg font-bold text-green-600">{{ "%.2f"|format(invoice.net_revenue) }}{{ currency_symbol }}</p>
-                </div>
+                {% endif %}
             </div>
+            
+            {% if invoice.platform_business_name or invoice.platform_vat_number %}
+            <div class="p-4 bg-blue-50 rounded-lg mb-6 text-sm">
+                <p class="font-semibold text-blue-800 mb-2">Émetteur de la facture</p>
+                {% if invoice.platform_business_name %}
+                <p class="text-blue-700">{{ invoice.platform_business_name }}</p>
+                {% endif %}
+                {% if invoice.platform_registration_number %}
+                <p class="text-blue-600">SIRET: {{ invoice.platform_registration_number }}</p>
+                {% endif %}
+                {% if invoice.platform_vat_number %}
+                <p class="text-blue-600">TVA: {{ invoice.platform_vat_number }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
 
             <div class="flex flex-wrap gap-3">
                 <a href="{{ url_for('billing.download_invoice', invoice_id=invoice.id) }}" 

@@ -62,6 +62,8 @@ def get_previous_weeks(count=12):
 
 def generate_invoice_for_week(organization_id, week_start, week_end):
     """Generate or regenerate an invoice for a specific week."""
+    from models import SiteSetting
+    
     org = Organization.query.get(organization_id)
     if not org:
         return None
@@ -96,6 +98,14 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
     commission_amount = round(gross_revenue * (commission_rate / 100), 2)
     net_revenue = round(gross_revenue - commission_amount, 2)
     
+    platform_vat_rate = SiteSetting.get('platform_vat_rate', 0) or 0
+    vat_amount = round(commission_amount * (platform_vat_rate / 100), 2) if platform_vat_rate > 0 else 0
+    commission_with_vat = round(commission_amount + vat_amount, 2)
+    
+    platform_business_name = SiteSetting.get('platform_business_name', '')
+    platform_vat_number = SiteSetting.get('platform_vat_number', '')
+    platform_registration_number = SiteSetting.get('platform_registration_number', '')
+    
     if existing_invoice:
         if existing_invoice.status not in [Invoice.STATUS_VALIDATED]:
             existing_invoice.gross_revenue = gross_revenue
@@ -103,6 +113,12 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
             existing_invoice.commission_amount = commission_amount
             existing_invoice.net_revenue = net_revenue
             existing_invoice.bookings_count = bookings_count
+            existing_invoice.vat_rate = platform_vat_rate
+            existing_invoice.vat_amount = vat_amount
+            existing_invoice.commission_with_vat = commission_with_vat
+            existing_invoice.platform_business_name = platform_business_name
+            existing_invoice.platform_vat_number = platform_vat_number
+            existing_invoice.platform_registration_number = platform_registration_number
             existing_invoice.generated_at = datetime.utcnow()
             db.session.commit()
         return existing_invoice
@@ -116,7 +132,13 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
             commission_amount=commission_amount,
             net_revenue=net_revenue,
             currency=org.currency or 'EUR',
-            bookings_count=bookings_count
+            bookings_count=bookings_count,
+            vat_rate=platform_vat_rate,
+            vat_amount=vat_amount,
+            commission_with_vat=commission_with_vat,
+            platform_business_name=platform_business_name,
+            platform_vat_number=platform_vat_number,
+            platform_registration_number=platform_registration_number
         )
         invoice.generate_invoice_number()
         db.session.add(invoice)

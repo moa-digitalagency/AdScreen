@@ -655,6 +655,9 @@ def settings():
             'default_currency': 'platform',
             'copyright_text': 'platform',
             'made_with_text': 'platform',
+            'platform_business_name': 'platform',
+            'platform_registration_number': 'platform',
+            'platform_vat_number': 'platform',
             'facebook_url': 'social',
             'instagram_url': 'social',
             'twitter_url': 'social',
@@ -694,6 +697,10 @@ def settings():
         SiteSetting.set('max_commission_rate', max_rate, 'float', 'platform')
         SiteSetting.set('default_commission_rate', default_rate, 'float', 'platform')
         
+        platform_vat_rate = parse_float_safe(request.form.get('platform_vat_rate'), 0)
+        platform_vat_rate = max(0, min(platform_vat_rate, 100))
+        SiteSetting.set('platform_vat_rate', platform_vat_rate, 'float', 'platform')
+        
         maintenance = 'true' if 'maintenance_mode' in request.form else 'false'
         SiteSetting.set('maintenance_mode', maintenance, 'boolean', 'platform')
         
@@ -715,6 +722,10 @@ def settings():
     platform_settings['youtube_url'] = SiteSetting.get('youtube_url', '')
     platform_settings['contact_phone'] = SiteSetting.get('contact_phone', '')
     platform_settings['contact_address'] = SiteSetting.get('contact_address', '')
+    platform_settings['platform_business_name'] = SiteSetting.get('platform_business_name', '')
+    platform_settings['platform_registration_number'] = SiteSetting.get('platform_registration_number', '')
+    platform_settings['platform_vat_number'] = SiteSetting.get('platform_vat_number', '')
+    platform_settings['platform_vat_rate'] = SiteSetting.get('platform_vat_rate', 0)
     
     return render_template('admin/settings.html',
         seo_settings=seo_settings,

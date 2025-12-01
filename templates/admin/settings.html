@@ -142,6 +142,48 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-briefcase text-amber-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Informations légales de la plateforme</h2>
+                    <p class="text-sm text-gray-500">Ces informations apparaîtront sur les factures de commission</p>
+                </div>
+            </div>
+            
+            <div class="grid gap-4">
+                <div>
+                    <label class="label">Dénomination sociale de la plateforme</label>
+                    <input type="text" name="platform_business_name" 
+                           value="{{ platform_settings.platform_business_name }}" 
+                           class="input-field" placeholder="Nom légal de votre entreprise">
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Numéro d'immatriculation (SIRET/SIREN)</label>
+                        <input type="text" name="platform_registration_number" 
+                               value="{{ platform_settings.platform_registration_number }}" 
+                               class="input-field" placeholder="Ex: 123 456 789 00012">
+                    </div>
+                    <div>
+                        <label class="label">Numéro de TVA intracommunautaire</label>
+                        <input type="text" name="platform_vat_number" 
+                               value="{{ platform_settings.platform_vat_number }}" 
+                               class="input-field" placeholder="Ex: FR12345678901">
+                    </div>
+                </div>
+                <div>
+                    <label class="label">Taux de TVA plateforme (%)</label>
+                    <input type="number" step="0.1" name="platform_vat_rate" 
+                           value="{{ platform_settings.platform_vat_rate }}" 
+                           class="input-field" min="0" max="100" placeholder="Ex: 20">
+                    <p class="text-xs text-gray-500 mt-1">Le taux de TVA applicable aux commissions facturées aux établissements</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-3 mb-6">
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-percentage text-green-600"></i>
                 </div>
