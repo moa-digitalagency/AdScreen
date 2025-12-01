@@ -127,6 +127,67 @@ def dashboard():
         Booking.payment_status == 'paid'
     ).group_by(Organization.country, Organization.currency).all()
     
+    revenue_by_country_daily = db.session.query(
+        Organization.country,
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= today
+    ).group_by(Organization.country, Organization.currency).all()
+    
+    revenue_by_country_weekly = db.session.query(
+        Organization.country,
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= week_ago
+    ).group_by(Organization.country, Organization.currency).all()
+    
+    revenue_by_country_monthly = db.session.query(
+        Organization.country,
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= month_ago
+    ).group_by(Organization.country, Organization.currency).all()
+    
+    avg_commission_by_country = db.session.query(
+        Organization.country,
+        func.avg(Organization.commission_rate).label('avg_commission')
+    ).group_by(Organization.country).all()
+    avg_commission_map = {c: avg for c, avg in avg_commission_by_country}
+    
+    def build_currency_map(data):
+        result = {}
+        for country_code, currency_code, total, commission in data:
+            cc = country_code or 'FR'
+            if cc not in result:
+                result[cc] = {}
+            currency_info = get_currency_by_code(currency_code or 'EUR')
+            result[cc][currency_code or 'EUR'] = {
+                'currency_code': currency_code or 'EUR',
+                'currency_symbol': currency_info.get('symbol', currency_code),
+                'total': total or 0,
+                'commission': commission or 0
+            }
+        return result
+    
+    daily_map = build_currency_map(revenue_by_country_daily)
+    weekly_map = build_currency_map(revenue_by_country_weekly)
+    monthly_map = build_currency_map(revenue_by_country_monthly)
+    
     country_data = {}
     for country_code, currency_code, total, commission in revenue_by_country:
         cc = country_code or 'FR'
@@ -138,14 +199,22 @@ def dashboard():
                 'country_flag': country_info.get('flag', ''),
                 'org_count': orgs_count_map.get(cc, 0),
                 'screen_count': screens_count_map.get(cc, 0),
+                'avg_commission': avg_commission_map.get(cc, 0),
                 'currencies': []
             }
         currency_info = get_currency_by_code(currency_code or 'EUR')
+        curr_code = currency_code or 'EUR'
         country_data[cc]['currencies'].append({
-            'currency_code': currency_code or 'EUR',
+            'currency_code': curr_code,
             'currency_symbol': currency_info.get('symbol', currency_code),
             'total': total or 0,
-            'commission': commission or 0
+            'commission': commission or 0,
+            'daily_total': daily_map.get(cc, {}).get(curr_code, {}).get('total', 0),
+            'daily_commission': daily_map.get(cc, {}).get(curr_code, {}).get('commission', 0),
+            'weekly_total': weekly_map.get(cc, {}).get(curr_code, {}).get('total', 0),
+            'weekly_commission': weekly_map.get(cc, {}).get(curr_code, {}).get('commission', 0),
+            'monthly_total': monthly_map.get(cc, {}).get(curr_code, {}).get('total', 0),
+            'monthly_commission': monthly_map.get(cc, {}).get(curr_code, {}).get('commission', 0)
         })
     
     for cc in orgs_count_map:
@@ -157,6 +226,7 @@ def dashboard():
                 'country_flag': country_info.get('flag', ''),
                 'org_count': orgs_count_map.get(cc, 0),
                 'screen_count': screens_count_map.get(cc, 0),
+                'avg_commission': avg_commission_map.get(cc, 0),
                 'currencies': []
             }
     
@@ -475,6 +545,9 @@ def settings():
     import os
     import secrets
     from werkzeug.utils import secure_filename
+    from utils.currencies import get_all_currencies
+    
+    currencies = get_all_currencies()
     
     if request.method == 'POST':
         min_rate = parse_float_safe(request.form.get('min_commission_rate'), 5.0)
@@ -564,7 +637,8 @@ def settings():
     
     return render_template('admin/settings.html',
         seo_settings=seo_settings,
-        platform_settings=platform_settings
+        platform_settings=platform_settings,
+        currencies=currencies
     )
 
 

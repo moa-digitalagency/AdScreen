@@ -199,14 +199,11 @@
                 <div>
                     <label class="label">Devise par défaut</label>
                     <select name="default_currency" class="input-field">
-                        <option value="EUR" {% if platform_settings.default_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
-                        <option value="USD" {% if platform_settings.default_currency == 'USD' %}selected{% endif %}>USD ($)</option>
-                        <option value="GBP" {% if platform_settings.default_currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
-                        <option value="XOF" {% if platform_settings.default_currency == 'XOF' %}selected{% endif %}>XOF (FCFA)</option>
-                        <option value="XAF" {% if platform_settings.default_currency == 'XAF' %}selected{% endif %}>XAF (FCFA)</option>
-                        <option value="MAD" {% if platform_settings.default_currency == 'MAD' %}selected{% endif %}>MAD (DH)</option>
-                        <option value="TND" {% if platform_settings.default_currency == 'TND' %}selected{% endif %}>TND (DT)</option>
-                        <option value="DZD" {% if platform_settings.default_currency == 'DZD' %}selected{% endif %}>DZD (DA)</option>
+                        {% for currency in currencies %}
+                        <option value="{{ currency.code }}" {% if platform_settings.default_currency == currency.code %}selected{% endif %}>
+                            {{ currency.flag }} {{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="flex items-center gap-3 pt-2">

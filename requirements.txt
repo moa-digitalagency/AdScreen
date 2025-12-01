@@ -20,3 +20,4 @@ pyjwt
 qrcode
 sqlalchemy
 werkzeug
+reportlab

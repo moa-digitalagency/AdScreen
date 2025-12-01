@@ -30,6 +30,8 @@ def org_required(f):
 @login_required
 @org_required
 def dashboard():
+    from utils.currencies import get_currency_by_code
+    
     org = current_user.organization
     screens = Screen.query.filter_by(organization_id=org.id).all()
     
@@ -59,6 +61,9 @@ def dashboard():
         Screen.organization_id == org.id
     ).order_by(Booking.created_at.desc()).limit(10).all()
     
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
     return render_template('org/dashboard.html',
         org=org,
         screens=screens,
@@ -67,7 +72,8 @@ def dashboard():
         pending_validations=pending_validations,
         total_revenue=total_revenue,
         weekly_revenue=weekly_revenue,
-        recent_bookings=recent_bookings
+        recent_bookings=recent_bookings,
+        currency_symbol=currency_symbol
     )
 
 
