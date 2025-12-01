@@ -385,6 +385,10 @@ def create_demo_data():
             ('maintenance_mode', 'false', 'boolean', 'platform'),
             ('site_title', 'Shabaka AdScreen - Location Écrans Publicitaires', 'string', 'seo'),
             ('site_description', 'Un Produit de Shabaka InnovLab - Plateforme de location d\'espaces publicitaires sur écrans', 'string', 'seo'),
+            ('platform_business_name', 'Shabaka InnovLab SAS', 'string', 'platform'),
+            ('platform_registration_number', '123 456 789 00012', 'string', 'platform'),
+            ('platform_vat_number', 'FR12345678901', 'string', 'platform'),
+            ('platform_vat_rate', '20.0', 'float', 'platform'),
         ]
         
         for key, value, value_type, category in site_settings:
