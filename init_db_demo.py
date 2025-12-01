@@ -49,7 +49,10 @@ def create_demo_data():
             currency='EUR',
             timezone='Europe/Paris',
             commission_rate=10.0,
-            subscription_plan='premium'
+            subscription_plan='premium',
+            business_name='SAS Le Bistrot Parisien',
+            registration_number_label='SIRET',
+            business_registration_number='123 456 789 00012'
         )
         db.session.add(org1)
         
@@ -62,7 +65,8 @@ def create_demo_data():
             currency='EUR',
             timezone='Europe/Paris',
             commission_rate=12.0,
-            subscription_plan='basic'
+            subscription_plan='basic',
+            registration_number_label='SIRET'
         )
         db.session.add(org2)
         
@@ -75,7 +79,10 @@ def create_demo_data():
             currency='EUR',
             timezone='Europe/Paris',
             commission_rate=8.0,
-            subscription_plan='enterprise'
+            subscription_plan='enterprise',
+            business_name='SA Atlantis Commerce',
+            registration_number_label='SIRET',
+            business_registration_number='987 654 321 00098'
         )
         db.session.add(org3)
         
@@ -88,7 +95,9 @@ def create_demo_data():
             currency='MAD',
             timezone='Africa/Casablanca',
             commission_rate=10.0,
-            subscription_plan='premium'
+            subscription_plan='premium',
+            registration_number_label='ICE',
+            business_registration_number='001234567890123'
         )
         db.session.add(org4)
         
@@ -101,7 +110,8 @@ def create_demo_data():
             currency='XOF',
             timezone='Africa/Dakar',
             commission_rate=12.0,
-            subscription_plan='basic'
+            subscription_plan='basic',
+            registration_number_label='NINEA'
         )
         db.session.add(org5)
         
@@ -114,7 +124,9 @@ def create_demo_data():
             currency='TND',
             timezone='Africa/Tunis',
             commission_rate=10.0,
-            subscription_plan='basic'
+            subscription_plan='basic',
+            registration_number_label='Matricule Fiscal',
+            business_registration_number='1234567/A/B/C/000'
         )
         db.session.add(org6)
         

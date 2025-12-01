@@ -50,13 +50,18 @@
                     </div>
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="business_registration_number" class="label">{{ registration_label }}</label>
-                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Votre numéro d'immatriculation">
+                            <label for="registration_number_label" class="label">Libellé du numéro d'immatriculation</label>
+                            <input type="text" id="registration_number_label" name="registration_number_label" value="{{ org.registration_number_label or '' }}" class="input-field" placeholder="Ex: SIRET, NIF, Tax ID, ABN...">
+                            <p class="text-xs text-gray-500 mt-1">Le nom du numéro d'immatriculation selon votre pays</p>
                         </div>
                         <div>
-                            <label for="vat_number" class="label">Numéro de TVA</label>
-                            <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="Ex: FR12345678901">
+                            <label for="business_registration_number" class="label">{{ org.registration_number_label or registration_label }}</label>
+                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Votre numéro d'immatriculation">
                         </div>
+                    </div>
+                    <div>
+                        <label for="vat_number" class="label">Numéro de TVA</label>
+                        <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="Ex: FR12345678901">
                     </div>
                     <div>
                         <label for="vat_rate" class="label">Taux de TVA (%)</label>

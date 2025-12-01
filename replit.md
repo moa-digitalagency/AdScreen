@@ -234,6 +234,28 @@ The platform supports multiple currencies based on organization settings:
 - **Videos**: Play in full; if shorter than slot duration, last frame holds until time is reached
 - **Example**: 13s video in 15s slot → video plays, then last frame remains for 2 additional seconds
 
+## 📋 Catalogue Public
+
+Une page catalogue accessible publiquement (`/catalog`) affiche tous les écrans disponibles :
+- Groupement par pays avec drapeaux
+- Organisation par établissement
+- Affichage des images d'écran, résolution, orientation
+- Formats acceptés (images/vidéos)
+- Prix indicatifs et boutons de réservation
+
+## 🏢 Libellé Numéro d'Immatriculation Personnalisable
+
+Chaque organisation peut définir son propre libellé pour le numéro d'immatriculation selon son pays :
+- **SIRET** (France)
+- **ICE** (Maroc)
+- **NINEA** (Sénégal)
+- **Matricule Fiscal** (Tunisie)
+- Et tout autre libellé personnalisé
+
+## ⏰ Génération Automatique des Factures
+
+Les factures sont générées automatiquement chaque dimanche à 23h59 selon le fuseau horaire de la plateforme (`platform_timezone`).
+
 ## 🔧 Recent Fixes (December 2025)
 
 ### Currency Display Bug Fix

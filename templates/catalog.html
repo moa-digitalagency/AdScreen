@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue des Écrans{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="{{ url_for('auth.index') }}" class="logo">
+                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tv text-white text-sm"></i>
+                    </div>
+                    <span class="text-base font-semibold">Shabaka AdScreen</span>
+                </a>
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('auth.index') }}" class="text-gray-600 hover:text-emerald-600 text-sm">
+                        <i class="fas fa-home mr-1"></i>Accueil
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn-primary text-sm">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Connexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pt-24 pb-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="section-badge inline-flex mb-3">
+                    <i class="fas fa-globe text-emerald-500"></i>
+                    Catalogue
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
+                    Tous nos écrans disponibles
+                </h1>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Parcourez notre catalogue d'écrans publicitaires organisé par pays et par établissement. 
+                    Trouvez l'emplacement idéal pour votre campagne.
+                </p>
+            </div>
+
+            {% if catalog %}
+            <div class="space-y-12">
+                {% for country in catalog %}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">{{ country.country_flag }}</span>
+                            <div>
+                                <h2 class="text-xl font-bold text-white">{{ country.country_name }}</h2>
+                                <p class="text-emerald-100 text-sm">
+                                    {{ country.organizations|length }} établissement{% if country.organizations|length > 1 %}s{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="divide-y divide-gray-100">
+                        {% for org in country.organizations %}
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        <i class="fas fa-building text-emerald-500"></i>
+                                        {{ org.name }}
+                                    </h3>
+                                    {% if org.address %}
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ org.address }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <span class="badge badge-success">
+                                    {{ org.screens|length }} écran{% if org.screens|length > 1 %}s{% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {% for screen in org.screens %}
+                                <div class="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow group">
+                                    <div class="relative">
+                                        {% if screen.screen_image %}
+                                        <div class="h-32 bg-gray-100">
+                                            <img src="{{ url_for('static', filename=screen.screen_image.replace('static/', '')) }}" 
+                                                 alt="{{ screen.name }}" 
+                                                 class="w-full h-full object-cover">
+                                        </div>
+                                        {% else %}
+                                        <div class="h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                            <i class="fas fa-tv text-gray-400 text-3xl"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="absolute top-2 right-2">
+                                            <span class="px-2 py-1 bg-white/90 text-gray-700 text-xs font-medium rounded-full shadow-sm">
+                                                {{ screen.resolution_width }}x{{ screen.resolution_height }}
+                                            </span>
+                                        </div>
+                                        <div class="absolute top-2 left-2">
+                                            <span class="px-2 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
+                                                {% if screen.orientation == 'landscape' %}
+                                                <i class="fas fa-arrows-alt-h mr-1"></i>Paysage
+                                                {% elif screen.orientation == 'portrait' %}
+                                                <i class="fas fa-arrows-alt-v mr-1"></i>Portrait
+                                                {% else %}
+                                                <i class="fas fa-square mr-1"></i>Carré
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="p-4">
+                                        <h4 class="font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 transition">
+                                            {{ screen.name }}
+                                        </h4>
+                                        {% if screen.location %}
+                                        <p class="text-xs text-gray-500 mb-3">
+                                            <i class="fas fa-location-dot mr-1"></i>{{ screen.location }}
+                                        </p>
+                                        {% endif %}
+                                        
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                                {% if screen.accepts_images %}
+                                                <span class="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded">
+                                                    <i class="fas fa-image"></i>Images
+                                                </span>
+                                                {% endif %}
+                                                {% if screen.accepts_videos %}
+                                                <span class="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded">
+                                                    <i class="fas fa-video"></i>Vidéos
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                                            <div class="text-sm">
+                                                <span class="text-gray-500">À partir de</span>
+                                                <span class="font-bold text-emerald-600">
+                                                    {{ "%.2f"|format(screen.price_per_minute / 6) }} {{ screen.get_currency_symbol() }}
+                                                </span>
+                                            </div>
+                                            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
+                                               class="btn-primary btn-sm text-xs">
+                                                <i class="fas fa-calendar-plus"></i>
+                                                Réserver
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-tv text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun écran disponible</h3>
+                <p class="text-gray-500 mb-6">Il n'y a actuellement aucun écran publicitaire disponible dans notre catalogue.</p>
+                <a href="{{ url_for('auth.register') }}" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Devenir partenaire
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="bg-gray-900 text-white py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tv text-white text-sm"></i>
+                    </div>
+                    <span class="font-semibold">Shabaka AdScreen</span>
+                </div>
+                <p class="text-gray-400 text-sm">
+                    {{ site_settings.copyright_text }}
+                </p>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

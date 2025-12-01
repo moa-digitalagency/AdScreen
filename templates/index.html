@@ -18,6 +18,9 @@
                         <a href="#fonctionnalites" class="nav-link text-sm">Fonctionnalités</a>
                         <a href="#comment-ca-marche" class="nav-link text-sm">Comment ça marche</a>
                         <a href="#avantages" class="nav-link text-sm">Avantages</a>
+                        <a href="{{ url_for('auth.catalog') }}" class="nav-link text-sm">
+                            <i class="fas fa-th-large mr-1"></i>Catalogue
+                        </a>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary text-sm hidden sm:inline-flex">
@@ -36,6 +39,9 @@
                     <a href="#fonctionnalites" class="nav-link block py-2 px-2">Fonctionnalités</a>
                     <a href="#comment-ca-marche" class="nav-link block py-2 px-2">Comment ça marche</a>
                     <a href="#avantages" class="nav-link block py-2 px-2">Avantages</a>
+                    <a href="{{ url_for('auth.catalog') }}" class="nav-link block py-2 px-2">
+                        <i class="fas fa-th-large mr-1"></i>Catalogue
+                    </a>
                     <div class="border-t border-gray-100 pt-3 mt-2 flex flex-col gap-2">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary block text-center text-sm">
                             <i class="fas fa-sign-in-alt mr-1"></i>

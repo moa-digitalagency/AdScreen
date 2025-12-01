@@ -20,6 +20,7 @@ class Organization(db.Model):
     commission_updated_at = db.Column(db.DateTime, nullable=True)
     
     business_name = db.Column(db.String(256), nullable=True)
+    registration_number_label = db.Column(db.String(100), nullable=True)  # Custom label for registration number (e.g., SIRET, NIF, Tax ID)
     business_registration_number = db.Column(db.String(100), nullable=True)
     vat_rate = db.Column(db.Float, default=0.0)
     vat_number = db.Column(db.String(50), nullable=True)

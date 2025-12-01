@@ -154,3 +154,55 @@ def logout():
     logout_user()
     flash('Vous avez été déconnecté.', 'info')
     return redirect(url_for('auth.index'))
+
+
+@auth_bp.route('/catalog')
+def catalog():
+    from models import Screen, SiteSetting
+    from utils.currencies import get_country_by_code
+    
+    screens = Screen.query.filter_by(is_active=True).join(
+        Organization
+    ).filter(Organization.is_active == True).all()
+    
+    default_country = 'FR'
+    
+    catalog_data = {}
+    for screen in screens:
+        country_code = screen.organization.country or default_country
+        if country_code not in catalog_data:
+            try:
+                country_info = get_country_by_code(country_code)
+                country_name = country_info.get('name', country_code)
+                country_flag = country_info.get('flag', '')
+            except (KeyError, TypeError):
+                country_name = country_code
+                country_flag = ''
+            
+            catalog_data[country_code] = {
+                'country_code': country_code,
+                'country_name': country_name,
+                'country_flag': country_flag,
+                'organizations': {}
+            }
+        
+        org_id = screen.organization.id
+        if org_id not in catalog_data[country_code]['organizations']:
+            catalog_data[country_code]['organizations'][org_id] = {
+                'id': org_id,
+                'name': screen.organization.name,
+                'address': screen.organization.address or '',
+                'currency': screen.organization.currency or 'EUR',
+                'screens': []
+            }
+        
+        catalog_data[country_code]['organizations'][org_id]['screens'].append(screen)
+    
+    sorted_catalog = sorted(catalog_data.values(), key=lambda x: x['country_name'])
+    for country in sorted_catalog:
+        country['organizations'] = sorted(
+            country['organizations'].values(), 
+            key=lambda x: x['name']
+        )
+    
+    return render_template('catalog.html', catalog=sorted_catalog)

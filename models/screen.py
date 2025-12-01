@@ -26,6 +26,7 @@ class Screen(db.Model):
     password_hash = db.Column(db.String(256))
     last_heartbeat = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='offline')
+    screen_image = db.Column(db.String(512), nullable=True)  # Optional image of the physical screen
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False)

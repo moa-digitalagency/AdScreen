@@ -179,6 +179,7 @@ def settings():
             timezone_input = 'UTC'
         
         business_name = request.form.get('business_name', '').strip()
+        registration_number_label = request.form.get('registration_number_label', '').strip()
         business_registration_number = request.form.get('business_registration_number', '').strip()
         vat_number = request.form.get('vat_number', '').strip()
         try:
@@ -204,6 +205,7 @@ def settings():
         org.currency = currency
         org.timezone = timezone_input
         org.business_name = business_name
+        org.registration_number_label = registration_number_label
         org.business_registration_number = business_registration_number
         org.vat_number = vat_number
         org.vat_rate = vat_rate
@@ -261,6 +263,19 @@ def new_screen():
             organization_id=current_user.organization_id
         )
         screen.set_password(password)
+        
+        if 'screen_image' in request.files:
+            file = request.files['screen_image']
+            if file.filename:
+                filename = secure_filename(file.filename)
+                ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                    new_filename = f"{secrets.token_hex(8)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'screen_images', str(current_user.organization_id))
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    screen.screen_image = file_path
         
         db.session.add(screen)
         db.session.flush()
@@ -390,6 +405,25 @@ def edit_screen(screen_id):
         if recalculate_slots:
             for slot in screen.time_slots:
                 slot.price_per_play = screen.calculate_slot_price(slot.duration_seconds)
+        
+        if 'remove_screen_image' in request.form and screen.screen_image:
+            if os.path.exists(screen.screen_image):
+                os.remove(screen.screen_image)
+            screen.screen_image = None
+        elif 'screen_image' in request.files:
+            file = request.files['screen_image']
+            if file.filename:
+                filename = secure_filename(file.filename)
+                ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                    if screen.screen_image and os.path.exists(screen.screen_image):
+                        os.remove(screen.screen_image)
+                    new_filename = f"{secrets.token_hex(8)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'screen_images', str(current_user.organization_id))
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    screen.screen_image = file_path
         
         new_password = request.form.get('password')
         if new_password:
