@@ -1,0 +1,160 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Disponibilités - {{ screen.name }}{% endblock %}
+
+{% block main_content %}
+<div class="mb-6">
+    <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-arrow-left mr-2"></i>Retour à {{ screen.name }}
+    </a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6 mb-6">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">Disponibilités et capacité</h2>
+                <p class="text-gray-500">Analyse des créneaux disponibles pour les 7 prochains jours</p>
+            </div>
+        </div>
+
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-green-700">{{ availability.available_plays }}</p>
+                    <p class="text-sm text-green-600">Slots disponibles</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-green-700">{{ (availability.total_available_seconds / 3600)|round(1) }}h</p>
+                    <p class="text-sm text-green-600">Temps disponible</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-green-700">{{ availability.num_days }}</p>
+                    <p class="text-sm text-green-600">Jours analysés</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                <div class="text-sm text-blue-700">
+                    <p class="font-medium mb-1">Algorithme de réservation</p>
+                    <p>Les réservations sont réparties équitablement sur la période choisie.</p>
+                    <p class="mt-1">Exemple: 100 passages sur 5 jours = 20 passages/jour, placés uniformément.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Tarification de base</h3>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                <span class="text-gray-500">Prix/minute</span>
+                <span class="font-bold text-green-600">{{ "%.2f"|format(screen.price_per_minute or 2.0) }}€</span>
+            </div>
+            <div class="text-sm text-gray-500">
+                <p class="font-medium text-gray-700 mb-2">Formule de calcul:</p>
+                <code class="bg-gray-100 px-2 py-1 rounded block text-center">
+                    (durée_sec / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€
+                </code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <h3 class="font-semibold text-gray-800 mb-4">Capacité par période</h3>
+    <p class="text-gray-500 text-sm mb-6">Nombre maximum de diffusions possibles par période et par durée de slot</p>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">Période</th>
+                    <th class="text-center py-3 px-4 font-medium text-gray-700">Horaires</th>
+                    <th class="text-center py-3 px-4 font-medium text-gray-700">Durée</th>
+                    <th class="text-center py-3 px-4 font-medium text-gray-700">Multiplicateur</th>
+                    {% for slot in screen.time_slots|sort(attribute='duration_seconds')|unique(attribute='duration_seconds') %}
+                    <th class="text-center py-3 px-4 font-medium text-gray-700">{{ slot.duration_seconds }}s</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for period in period_capacity %}
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-3 px-4 font-medium text-gray-800">{{ period.name }}</td>
+                    <td class="py-3 px-4 text-center text-gray-600">{{ period.start_hour }}h - {{ period.end_hour }}h</td>
+                    <td class="py-3 px-4 text-center text-gray-600">{{ period.hours|round(1) }}h</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-medium {% if period.multiplier > 1 %}bg-orange-100 text-orange-700{% elif period.multiplier < 1 %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                            ×{{ period.multiplier }}
+                        </span>
+                    </td>
+                    {% for cap in period.slot_capacities %}
+                    <td class="py-3 px-4 text-center">
+                        <span class="font-mono text-gray-800">{{ cap.max_plays }}</span>
+                        <span class="text-xs text-gray-500 block">{{ "%.2f"|format(cap.price_with_mult) }}€</span>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <h3 class="font-semibold text-gray-800 mb-4">Disponibilités par période (7 prochains jours)</h3>
+    
+    {% if availability.periods %}
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for period in availability.periods %}
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-medium text-gray-800">{{ period.period_name }}</h4>
+                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">×{{ period.price_multiplier }}</span>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Temps disponible:</span>
+                    <span class="font-mono text-gray-800">{{ (period.total_available_seconds / 3600)|round(2) }}h</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Slots 15s dispo:</span>
+                    <span class="font-mono font-semibold text-green-600">{{ period.total_available_plays }}</span>
+                </div>
+            </div>
+            <div class="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
+                {% set usage_percent = 100 - ((period.total_available_plays / ((period.total_available_seconds / 15) or 1)) * 100) %}
+                <div class="h-full bg-blue-500" style="width: {{ usage_percent|min(100) }}%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 text-right">{{ usage_percent|round(1) }}% réservé</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-500 text-center py-8">Aucune période configurée</p>
+    {% endif %}
+</div>
+
+<div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+        <i class="fas fa-lightbulb text-yellow-600 mt-0.5"></i>
+        <div class="text-sm text-yellow-700">
+            <p class="font-medium mb-1">Comment fonctionne la réservation?</p>
+            <ol class="list-decimal list-inside space-y-1 mt-2">
+                <li>Le client choisit un type de contenu (image/vidéo) et une durée de slot</li>
+                <li>Il sélectionne une période de dates (ex: 1-5 décembre)</li>
+                <li>Le système calcule les slots disponibles et propose les créneaux libres</li>
+                <li>Le prix est calculé: nombre_passages × prix_slot × multiplicateur_période</li>
+                <li>Les passages sont répartis équitablement sur toute la période choisie</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

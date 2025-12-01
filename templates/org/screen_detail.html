@@ -27,7 +27,7 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
             <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-sm text-gray-500 mb-1">Résolution</p>
                 <p class="font-mono text-lg font-semibold text-gray-800">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
@@ -36,9 +36,13 @@
                 <p class="text-sm text-gray-500 mb-1">Orientation</p>
                 <p class="text-lg font-semibold text-gray-800 capitalize">{{ screen.orientation }}</p>
             </div>
+            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                <p class="text-sm text-green-600 mb-1">Prix de base</p>
+                <p class="text-lg font-bold text-green-700">{{ "%.2f"|format(screen.price_per_minute or 2.0) }}€/min</p>
+            </div>
             <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-sm text-gray-500 mb-1">Code unique</p>
-                <p class="font-mono text-sm text-gray-800">{{ screen.unique_code[:12] }}...</p>
+                <p class="font-mono text-sm text-gray-800">{{ screen.unique_code }}</p>
             </div>
         </div>
 
@@ -70,6 +74,10 @@
             <a href="{{ url_for('org.screen_overlays', screen_id=screen.id) }}" class="btn-secondary btn-sm">
                 <i class="fas fa-layer-group"></i>
                 Overlays
+            </a>
+            <a href="{{ url_for('org.screen_availability', screen_id=screen.id) }}" class="btn-secondary btn-sm">
+                <i class="fas fa-calendar-check"></i>
+                Disponibilités
             </a>
             <a href="{{ url_for('screen.generate_qr', screen_id=screen.id) }}" class="btn-secondary btn-sm">
                 <i class="fas fa-qrcode"></i>
@@ -143,11 +151,28 @@
     </div>
 </div>
 
+<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+    <div class="flex items-start gap-3">
+        <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+        <div class="text-sm text-blue-700">
+            <p class="font-medium mb-1">Algorithme de tarification</p>
+            <p>Les prix des créneaux sont calculés automatiquement: <code class="bg-blue-100 px-1 rounded">(durée_secondes / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€</code></p>
+            <p class="mt-1">Exemple: Slot 15s = (15/60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€ = <strong>{{ "%.2f"|format((15/60) * (screen.price_per_minute or 2.0)) }}€</strong> par diffusion</p>
+        </div>
+    </div>
+</div>
+
 <div class="grid lg:grid-cols-2 gap-6">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 class="font-semibold text-gray-800 mb-4">Créneaux configurés</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-800">Créneaux configurés</h3>
+            <a href="{{ url_for('org.screen_slots', screen_id=screen.id) }}" class="text-sm text-primary-600 hover:text-primary-700">
+                <i class="fas fa-edit mr-1"></i>Modifier
+            </a>
+        </div>
         <div class="space-y-2">
-            {% for slot in screen.time_slots %}
+            {% for slot in screen.time_slots|sort(attribute='duration_seconds') %}
+            {% set calculated_price = (slot.duration_seconds / 60) * (screen.price_per_minute or 2.0) %}
             <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div class="flex items-center gap-3">
                     <span class="px-2 py-1 bg-{% if slot.content_type == 'image' %}blue{% else %}purple{% endif %}-100 text-{% if slot.content_type == 'image' %}blue{% else %}purple{% endif %}-700 rounded text-xs font-medium capitalize">
@@ -155,7 +180,12 @@
                     </span>
                     <span class="font-mono text-gray-800">{{ slot.duration_seconds }}s</span>
                 </div>
-                <span class="font-semibold text-gray-800">{{ "%.2f"|format(slot.price_per_play) }}€</span>
+                <div class="text-right">
+                    <span class="font-semibold text-gray-800">{{ "%.2f"|format(slot.price_per_play) }}€</span>
+                    {% if (slot.price_per_play - calculated_price)|abs > 0.01 %}
+                    <span class="text-xs text-orange-500 block">personnalisé</span>
+                    {% endif %}
+                </div>
             </div>
             {% else %}
             <p class="text-gray-500 text-center py-4">Aucun créneau configuré</p>
@@ -164,19 +194,41 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 class="font-semibold text-gray-800 mb-4">Périodes journée</h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-800">Périodes journée</h3>
+            <a href="{{ url_for('org.screen_periods', screen_id=screen.id) }}" class="text-sm text-primary-600 hover:text-primary-700">
+                <i class="fas fa-edit mr-1"></i>Modifier
+            </a>
+        </div>
         <div class="space-y-2">
             {% for period in screen.time_periods %}
+            {% set period_hours = period.end_hour - period.start_hour if period.end_hour > period.start_hour else (24 - period.start_hour + period.end_hour) %}
+            {% set period_seconds = period_hours * 3600 %}
             <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div>
                     <span class="font-medium text-gray-800">{{ period.name }}</span>
                     <span class="text-gray-500 text-sm ml-2">{{ period.start_hour }}h - {{ period.end_hour }}h</span>
+                    <span class="text-xs text-gray-400 ml-1">({{ period_hours }}h)</span>
                 </div>
-                <span class="font-mono text-gray-800">x{{ period.price_multiplier }}</span>
+                <div class="text-right">
+                    <span class="font-mono text-gray-800">×{{ period.price_multiplier }}</span>
+                    <span class="text-xs text-gray-500 block">{{ (period_seconds / 15)|int }} slots 15s max</span>
+                </div>
             </div>
             {% else %}
             <p class="text-gray-500 text-center py-4">Aucune période configurée</p>
             {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+        <i class="fas fa-video text-yellow-600 mt-0.5"></i>
+        <div class="text-sm text-yellow-700">
+            <p class="font-medium mb-1">Règle d'affichage vidéo</p>
+            <p>Si une vidéo est plus courte que la durée du créneau réservé, le lecteur affiche la dernière image jusqu'à atteindre la durée réglementaire.</p>
+            <p class="mt-1">Exemple: Vidéo de 13s dans un slot de 15s → la vidéo joue puis le dernier frame reste affiché 2s supplémentaires.</p>
         </div>
     </div>
 </div>

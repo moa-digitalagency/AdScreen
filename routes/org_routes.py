@@ -142,6 +142,7 @@ def new_screen():
         accepts_videos = 'accepts_videos' in request.form
         max_file_size = int(request.form.get('max_file_size', 50))
         password = request.form.get('password')
+        price_per_minute = float(request.form.get('price_per_minute', 2.0))
         
         screen = Screen(
             name=name,
@@ -152,6 +153,7 @@ def new_screen():
             accepts_images=accepts_images,
             accepts_videos=accepts_videos,
             max_file_size_mb=max_file_size,
+            price_per_minute=price_per_minute,
             organization_id=current_user.organization_id
         )
         screen.set_password(password)
@@ -160,20 +162,21 @@ def new_screen():
         db.session.flush()
         
         default_slots = [
-            ('image', 5, 0.30),
-            ('image', 10, 0.50),
-            ('image', 15, 0.70),
-            ('video', 10, 0.60),
-            ('video', 15, 0.80),
-            ('video', 30, 1.50),
+            ('image', 10),
+            ('image', 15),
+            ('image', 30),
+            ('video', 10),
+            ('video', 15),
+            ('video', 30),
         ]
         
-        for content_type, duration, price in default_slots:
+        for content_type, duration in default_slots:
+            calculated_price = screen.calculate_slot_price(duration)
             slot = TimeSlot(
                 screen_id=screen.id,
                 content_type=content_type,
                 duration_seconds=duration,
-                price_per_play=price
+                price_per_play=calculated_price
             )
             db.session.add(slot)
         
@@ -262,6 +265,14 @@ def edit_screen(screen_id):
         screen.accepts_images = 'accepts_images' in request.form
         screen.accepts_videos = 'accepts_videos' in request.form
         screen.max_file_size_mb = int(request.form.get('max_file_size', 50))
+        
+        new_price_per_minute = float(request.form.get('price_per_minute', 2.0))
+        screen.price_per_minute = new_price_per_minute
+        
+        recalculate_slots = 'recalculate_slots' in request.form
+        if recalculate_slots:
+            for slot in screen.time_slots:
+                slot.price_per_play = screen.calculate_slot_price(slot.duration_seconds)
         
         new_password = request.form.get('password')
         if new_password:
@@ -1046,3 +1057,57 @@ def add_internal_to_playlist(internal_id):
     
     flash('Contenu interne ajouté à la playlist!', 'success')
     return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/screen/<int:screen_id>/availability')
+@login_required
+@org_required
+def screen_availability(screen_id):
+    from services.availability_service import calculate_availability, get_period_duration_seconds
+    from datetime import date
+    
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    today = date.today()
+    week_end = today + timedelta(days=7)
+    
+    availability_data = calculate_availability(
+        screen, today.isoformat(), week_end.isoformat()
+    )
+    
+    period_capacity = []
+    for period in screen.time_periods:
+        period_seconds = get_period_duration_seconds(period)
+        period_hours = period_seconds / 3600
+        
+        slot_capacities = []
+        for slot in screen.time_slots:
+            max_plays = period_seconds // slot.duration_seconds
+            slot_capacities.append({
+                'duration': slot.duration_seconds,
+                'content_type': slot.content_type,
+                'max_plays': max_plays,
+                'price': slot.price_per_play,
+                'price_with_mult': round(slot.price_per_play * period.price_multiplier, 2)
+            })
+        
+        period_capacity.append({
+            'name': period.name,
+            'start_hour': period.start_hour,
+            'end_hour': period.end_hour,
+            'hours': period_hours,
+            'seconds': period_seconds,
+            'multiplier': period.price_multiplier,
+            'slot_capacities': slot_capacities
+        })
+    
+    return render_template('org/screen_availability.html',
+        screen=screen,
+        availability=availability_data,
+        period_capacity=period_capacity,
+        today=today,
+        week_end=week_end
+    )

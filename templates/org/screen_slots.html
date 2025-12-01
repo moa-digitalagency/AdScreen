@@ -3,7 +3,7 @@
 {% block page_title %}Créneaux - {{ screen.name }}{% endblock %}
 
 {% block main_content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-4xl mx-auto">
     <div class="mb-6">
         <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-arrow-left mr-2"></i>Retour à {{ screen.name }}
@@ -11,37 +11,87 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Configuration des créneaux</h2>
-        <p class="text-gray-500 mb-6">Définissez les durées et prix pour chaque type de contenu.</p>
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Configuration des créneaux</h2>
+                <p class="text-gray-500">Définissez les durées en secondes et prix pour chaque type de contenu.</p>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                <span class="text-sm text-green-700">Prix de base: <strong>{{ "%.2f"|format(screen.price_per_minute or 2.0) }}€/min</strong></span>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                <div class="text-sm text-blue-700">
+                    <p class="font-medium mb-1">Algorithme de calcul automatique</p>
+                    <p>Le prix suggéré est calculé avec la formule: <code class="bg-blue-100 px-1 rounded">(durée_secondes / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€</code></p>
+                    <p class="mt-1">Vous pouvez personnaliser le prix manuellement si nécessaire.</p>
+                </div>
+            </div>
+        </div>
 
         <form method="POST" id="slotsForm">
             <div id="slots-container" class="space-y-4 mb-6">
                 {% for slot in screen.time_slots %}
-                <div class="slot-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                    <select name="slot_type[]" class="px-3 py-2 border border-gray-300 rounded-lg">
-                        <option value="image" {% if slot.content_type == 'image' %}selected{% endif %}>Image</option>
-                        <option value="video" {% if slot.content_type == 'video' %}selected{% endif %}>Vidéo</option>
-                    </select>
-                    <div class="flex items-center gap-2">
-                        <input type="number" name="slot_duration[]" value="{{ slot.duration_seconds }}" min="5" max="120"
-                            class="w-20 px-3 py-2 border border-gray-300 rounded-lg">
-                        <span class="text-gray-500">sec</span>
+                {% set calculated_price = (slot.duration_seconds / 60) * (screen.price_per_minute or 2.0) %}
+                <div class="slot-row p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <select name="slot_type[]" class="px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                            <option value="image" {% if slot.content_type == 'image' %}selected{% endif %}>Image</option>
+                            <option value="video" {% if slot.content_type == 'video' %}selected{% endif %}>Vidéo</option>
+                        </select>
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="slot_duration[]" value="{{ slot.duration_seconds }}" min="5" max="120"
+                                class="w-20 px-3 py-2 border border-gray-300 rounded-lg duration-input"
+                                data-price-per-min="{{ screen.price_per_minute or 2.0 }}">
+                            <span class="text-gray-500">sec</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="slot_price[]" value="{{ slot.price_per_play }}" min="0.01" step="0.01"
+                                class="w-24 px-3 py-2 border border-gray-300 rounded-lg price-input">
+                            <span class="text-gray-500">€</span>
+                        </div>
+                        <button type="button" class="auto-calc-btn text-green-600 hover:text-green-700 p-2 rounded hover:bg-green-50 transition" title="Recalculer automatiquement">
+                            <i class="fas fa-calculator"></i>
+                        </button>
+                        <button type="button" onclick="this.closest('.slot-row').remove()" class="text-red-500 hover:text-red-700 p-2 rounded hover:bg-red-50 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% if (slot.price_per_play - calculated_price)|abs > 0.01 %}
+                        <span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                            <i class="fas fa-info-circle mr-1"></i>Prix personnalisé (suggéré: {{ "%.2f"|format(calculated_price) }}€)
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                            <i class="fas fa-check-circle mr-1"></i>Prix auto-calculé
+                        </span>
+                        {% endif %}
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" name="slot_price[]" value="{{ slot.price_per_play }}" min="0.01" step="0.01"
-                            class="w-24 px-3 py-2 border border-gray-300 rounded-lg">
-                        <span class="text-gray-500">€</span>
-                    </div>
-                    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-2">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </div>
                 {% endfor %}
             </div>
 
-            <button type="button" onclick="addSlot()" class="mb-6 text-primary-600 hover:text-primary-700 font-medium">
-                <i class="fas fa-plus mr-2"></i>Ajouter un créneau
-            </button>
+            <div class="flex items-center gap-4 mb-6">
+                <button type="button" onclick="addSlot()" class="text-primary-600 hover:text-primary-700 font-medium">
+                    <i class="fas fa-plus mr-2"></i>Ajouter un créneau
+                </button>
+                <button type="button" onclick="recalculateAll()" class="text-green-600 hover:text-green-700 font-medium">
+                    <i class="fas fa-sync-alt mr-2"></i>Recalculer tous les prix
+                </button>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5"></i>
+                    <div class="text-sm text-yellow-700">
+                        <p class="font-medium mb-1">Règle d'affichage vidéo</p>
+                        <p>Si une vidéo est plus courte que la durée du créneau réservé, le lecteur affichera la dernière image jusqu'à atteindre la durée réglementaire du slot.</p>
+                        <p class="mt-1">Exemple: Vidéo de 13s dans un slot de 15s → la vidéo joue puis le dernier frame reste 2s.</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
                 <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="btn-secondary btn-sm">
@@ -54,33 +104,119 @@
             </div>
         </form>
     </div>
+
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Grille tarifaire récapitulative</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-2 text-gray-500 font-medium">Durée</th>
+                        <th class="text-left py-2 text-gray-500 font-medium">Type</th>
+                        <th class="text-right py-2 text-gray-500 font-medium">Prix/diffusion</th>
+                        <th class="text-right py-2 text-gray-500 font-medium">Prix suggéré</th>
+                    </tr>
+                </thead>
+                <tbody id="price-summary">
+                    {% for slot in screen.time_slots|sort(attribute='duration_seconds') %}
+                    {% set calculated_price = (slot.duration_seconds / 60) * (screen.price_per_minute or 2.0) %}
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2 font-mono">{{ slot.duration_seconds }}s</td>
+                        <td class="py-2 capitalize">{{ slot.content_type }}</td>
+                        <td class="py-2 text-right font-semibold">{{ "%.2f"|format(slot.price_per_play) }}€</td>
+                        <td class="py-2 text-right text-gray-500">{{ "%.2f"|format(calculated_price) }}€</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
+const pricePerMinute = {{ screen.price_per_minute or 2.0 }};
+
+function calculatePrice(durationSeconds) {
+    return ((durationSeconds / 60) * pricePerMinute).toFixed(2);
+}
+
 function addSlot() {
     const container = document.getElementById('slots-container');
     const row = document.createElement('div');
-    row.className = 'slot-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg';
+    row.className = 'slot-row p-4 bg-gray-50 rounded-lg border border-gray-200';
+    
+    const defaultDuration = 15;
+    const defaultPrice = calculatePrice(defaultDuration);
+    
     row.innerHTML = `
-        <select name="slot_type[]" class="px-3 py-2 border border-gray-300 rounded-lg">
-            <option value="image">Image</option>
-            <option value="video">Vidéo</option>
-        </select>
-        <div class="flex items-center gap-2">
-            <input type="number" name="slot_duration[]" value="10" min="5" max="120"
-                class="w-20 px-3 py-2 border border-gray-300 rounded-lg">
-            <span class="text-gray-500">sec</span>
+        <div class="flex items-center gap-4 flex-wrap">
+            <select name="slot_type[]" class="px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                <option value="image">Image</option>
+                <option value="video">Vidéo</option>
+            </select>
+            <div class="flex items-center gap-2">
+                <input type="number" name="slot_duration[]" value="${defaultDuration}" min="5" max="120"
+                    class="w-20 px-3 py-2 border border-gray-300 rounded-lg duration-input"
+                    data-price-per-min="${pricePerMinute}">
+                <span class="text-gray-500">sec</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="number" name="slot_price[]" value="${defaultPrice}" min="0.01" step="0.01"
+                    class="w-24 px-3 py-2 border border-gray-300 rounded-lg price-input">
+                <span class="text-gray-500">€</span>
+            </div>
+            <button type="button" class="auto-calc-btn text-green-600 hover:text-green-700 p-2 rounded hover:bg-green-50 transition" title="Recalculer automatiquement">
+                <i class="fas fa-calculator"></i>
+            </button>
+            <button type="button" onclick="this.closest('.slot-row').remove()" class="text-red-500 hover:text-red-700 p-2 rounded hover:bg-red-50 transition">
+                <i class="fas fa-trash"></i>
+            </button>
+            <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                <i class="fas fa-check-circle mr-1"></i>Prix auto-calculé
+            </span>
         </div>
-        <div class="flex items-center gap-2">
-            <input type="number" name="slot_price[]" value="0.50" min="0.01" step="0.01"
-                class="w-24 px-3 py-2 border border-gray-300 rounded-lg">
-            <span class="text-gray-500">€</span>
-        </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 p-2">
-            <i class="fas fa-trash"></i>
-        </button>
     `;
     container.appendChild(row);
+    attachEventListeners(row);
 }
+
+function recalculateAll() {
+    document.querySelectorAll('.slot-row').forEach(row => {
+        const durationInput = row.querySelector('.duration-input');
+        const priceInput = row.querySelector('.price-input');
+        if (durationInput && priceInput) {
+            const duration = parseInt(durationInput.value) || 15;
+            priceInput.value = calculatePrice(duration);
+        }
+    });
+}
+
+function attachEventListeners(row) {
+    const durationInput = row.querySelector('.duration-input');
+    const priceInput = row.querySelector('.price-input');
+    const autoCalcBtn = row.querySelector('.auto-calc-btn');
+    
+    if (autoCalcBtn) {
+        autoCalcBtn.addEventListener('click', function() {
+            if (durationInput && priceInput) {
+                const duration = parseInt(durationInput.value) || 15;
+                priceInput.value = calculatePrice(duration);
+            }
+        });
+    }
+    
+    if (durationInput) {
+        durationInput.addEventListener('input', function() {
+            const duration = parseInt(this.value) || 15;
+            if (priceInput) {
+                priceInput.value = calculatePrice(duration);
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.slot-row').forEach(attachEventListeners);
+});
 </script>
 {% endblock %}
