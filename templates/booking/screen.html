@@ -206,18 +206,18 @@
                                 <i class="fas fa-spinner fa-spin text-blue-500"></i>
                             </span>
                         </div>
-                        <div class="grid grid-cols-3 gap-4 text-center">
-                            <div class="bg-white rounded-lg p-3 shadow-sm">
-                                <p class="text-2xl font-bold text-blue-600" id="num_days_display">0</p>
-                                <p class="text-xs text-gray-500">Jours</p>
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
+                                <p class="text-lg sm:text-2xl font-bold text-blue-600" id="num_days_display">0</p>
+                                <p class="text-[10px] sm:text-xs text-gray-500">Jours</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3 shadow-sm">
-                                <p class="text-2xl font-bold text-green-600" id="available_plays_display">0</p>
-                                <p class="text-xs text-gray-500">Passages disponibles</p>
+                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
+                                <p class="text-lg sm:text-2xl font-bold text-green-600 truncate" id="available_plays_display">0</p>
+                                <p class="text-[10px] sm:text-xs text-gray-500">Passages dispo.</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3 shadow-sm">
-                                <p class="text-2xl font-bold text-purple-600" id="total_seconds_display">0</p>
-                                <p class="text-xs text-gray-500">Secondes libres</p>
+                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
+                                <p class="text-lg sm:text-2xl font-bold text-purple-600 truncate" id="total_seconds_display">0</p>
+                                <p class="text-[10px] sm:text-xs text-gray-500">Sec. libres</p>
                             </div>
                         </div>
                     </div>
@@ -234,16 +234,16 @@
                     Choisissez combien de fois votre contenu sera diffusé (max: <span id="max_plays_text" class="font-semibold text-primary-600">0</span>)
                 </p>
                 
-                <div class="flex items-center justify-center gap-4 mb-4">
+                <div class="flex items-center justify-center gap-2 sm:gap-4 mb-4">
                     <button type="button" onclick="changePlayCount(-10)" 
-                        class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-xl font-bold">
+                        class="w-10 h-10 sm:w-14 sm:h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-lg sm:text-xl font-bold">
                         <i class="fas fa-minus"></i>
                     </button>
                     <input type="number" name="num_plays" id="num_plays" value="10" min="1" max="10000"
-                        class="w-32 text-center text-3xl font-bold border-2 border-gray-200 rounded-xl py-3 focus:border-primary-500 focus:ring-0" 
+                        class="w-24 sm:w-32 text-center text-xl sm:text-3xl font-bold border-2 border-gray-200 rounded-xl py-2 sm:py-3 focus:border-primary-500 focus:ring-0" 
                         onchange="validateAndUpdatePrice()">
                     <button type="button" onclick="changePlayCount(10)" 
-                        class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-xl font-bold">
+                        class="w-10 h-10 sm:w-14 sm:h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-lg sm:text-xl font-bold">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
@@ -282,19 +282,19 @@
                 </div>
                 
                 <div id="contentPreviewSection" class="hidden mt-6">
-                    <div class="bg-gray-900 rounded-xl p-4 relative">
-                        <div class="text-center text-white/60 text-xs mb-3">
-                            <i class="fas fa-tv mr-1"></i> Aperçu sur l'écran ({{ screen.resolution_width }}x{{ screen.resolution_height }})
+                    <div class="bg-gray-900 rounded-xl p-3 sm:p-4 relative">
+                        <div class="text-center text-white/60 text-[10px] sm:text-xs mb-2 sm:mb-3">
+                            <i class="fas fa-tv mr-1"></i> Aperçu ({{ screen.resolution_width }}x{{ screen.resolution_height }})
                         </div>
-                        <div id="screenSimulator" class="mx-auto bg-black rounded-lg overflow-hidden flex items-center justify-center" 
-                             style="width: {% if screen.orientation == 'portrait' %}180px{% else %}320px{% endif %}; height: {% if screen.orientation == 'portrait' %}320px{% else %}180px{% endif %};">
+                        <div id="screenSimulator" class="mx-auto bg-black rounded-lg overflow-hidden flex items-center justify-center max-w-full" 
+                             style="width: min(100%, {% if screen.orientation == 'portrait' %}180px{% else %}280px{% endif %}); aspect-ratio: {% if screen.orientation == 'portrait' %}9/16{% else %}16/9{% endif %};">
                             <img id="previewImage" class="max-w-full max-h-full object-contain">
                             <video id="previewVideo" class="max-w-full max-h-full object-contain hidden" controls muted></video>
                         </div>
-                        <p id="fileName" class="text-white/80 text-sm text-center mt-3"></p>
-                        <p class="text-center text-emerald-400/80 text-xs mt-2">
+                        <p id="fileName" class="text-white/80 text-xs sm:text-sm text-center mt-2 sm:mt-3 truncate px-2"></p>
+                        <p class="text-center text-emerald-400/80 text-[10px] sm:text-xs mt-2">
                             <i class="fas fa-check-circle mr-1"></i>
-                            Le contenu s'adaptera automatiquement sans déformation
+                            Adaptation automatique sans déformation
                         </p>
                     </div>
                     

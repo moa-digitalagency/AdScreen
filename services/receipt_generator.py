@@ -120,113 +120,23 @@ def generate_receipt_pdf(booking, screen, content, qr_base64=None):
     return buffer
 
 
-def pdf_to_image(pdf_buffer):
-    try:
-        import fitz
-        pdf_buffer.seek(0)
-        pdf_document = fitz.open(stream=pdf_buffer.read(), filetype="pdf")
-        page = pdf_document.load_page(0)
-        mat = fitz.Matrix(2, 2)
-        pix = page.get_pixmap(matrix=mat)
-        img_data = pix.tobytes("png")
-        pdf_document.close()
-        return Image.open(io.BytesIO(img_data))
-    except ImportError:
-        return generate_receipt_image_fallback(pdf_buffer)
-
-
-def generate_receipt_image_fallback(pdf_buffer):
-    width = 400
-    height = 600
-    img = Image.new('RGB', (width, height), color='white')
-    return img
+def pdf_to_image(pdf_buffer, scale=2.5):
+    """Convert PDF buffer to PIL Image using PyMuPDF (fitz)."""
+    import fitz
+    pdf_buffer.seek(0)
+    pdf_document = fitz.open(stream=pdf_buffer.read(), filetype="pdf")
+    page = pdf_document.load_page(0)
+    mat = fitz.Matrix(scale, scale)
+    pix = page.get_pixmap(matrix=mat)
+    img_data = pix.tobytes("png")
+    pdf_document.close()
+    return Image.open(io.BytesIO(img_data))
 
 
 def generate_receipt_image(booking, screen, content, qr_base64=None):
-    width = 400
-    height = 600
-    
-    from PIL import ImageDraw, ImageFont
-    
-    img = Image.new('RGB', (width, height), color='white')
-    draw = ImageDraw.Draw(img)
-    
-    try:
-        font_bold = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
-        font_regular = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
-        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 10)
-        font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
-    except:
-        font_bold = ImageFont.load_default()
-        font_regular = ImageFont.load_default()
-        font_small = ImageFont.load_default()
-        font_large = ImageFont.load_default()
-    
-    draw.rectangle([0, 0, width, 70], fill='#10b981')
-    
-    draw.text((width//2, 25), "SHABAKA ADSCREEN", fill='white', font=font_large, anchor='mm')
-    draw.text((width//2, 50), "Recu de Reservation", fill='#d1fae5', font=font_regular, anchor='mm')
-    
-    y = 90
-    
-    draw.rectangle([30, y, width-30, y+50], fill='#f3f4f6', outline='#e5e7eb')
-    draw.text((width//2, y+15), "N Reservation", fill='#6b7280', font=font_small, anchor='mm')
-    draw.text((width//2, y+35), booking.reservation_number or "---", fill='#111827', font=font_bold, anchor='mm')
-    
-    y += 70
-    
-    currency = fetch_currency_by_code(screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR')
-    currency_symbol = currency.get('symbol', 'EUR')
-    
-    details = [
-        ("Ecran", screen.name[:25]),
-        ("Etablissement", screen.organization.name[:25]),
-        ("Type", content.content_type.capitalize() if content.content_type else "---"),
-        ("Duree creneau", f"{booking.slot_duration}s"),
-        ("Diffusions", str(booking.num_plays)),
-        ("Date debut", booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-"),
-        ("Prix unitaire", f"{booking.price_per_play:.2f} {currency_symbol}"),
-    ]
-    
-    if booking.end_date:
-        details.insert(6, ("Date fin", booking.end_date.strftime('%d/%m/%Y')))
-    
-    for label, value in details:
-        draw.text((40, y), label, fill='#6b7280', font=font_regular)
-        draw.text((width-40, y), value, fill='#111827', font=font_regular, anchor='ra')
-        y += 22
-    
-    y += 10
-    draw.line([(30, y), (width-30, y)], fill='#e5e7eb', width=1)
-    y += 15
-    
-    draw.rectangle([30, y, width-30, y+40], fill='#10b981', outline='#059669')
-    draw.text((width//2, y+20), f"TOTAL: {booking.total_price:.2f} {currency_symbol}", fill='white', font=font_large, anchor='mm')
-    
-    y += 60
-    
-    draw.rectangle([30, y, width-30, y+35], fill='#fef3c7', outline='#fcd34d')
-    draw.text((width//2, y+17), "En attente de validation", fill='#92400e', font=font_regular, anchor='mm')
-    
-    y += 55
-    
-    if qr_base64:
-        try:
-            qr_data = base64.b64decode(qr_base64)
-            qr_img = Image.open(io.BytesIO(qr_data))
-            qr_size = 80
-            qr_img = qr_img.resize((qr_size, qr_size))
-            qr_x = (width - qr_size) // 2
-            img.paste(qr_img, (qr_x, y))
-            y += qr_size + 10
-        except Exception:
-            pass
-    
-    footer_y = height - 40
-    draw.text((width//2, footer_y), screen.organization.name, fill='#6b7280', font=font_small, anchor='mm')
-    draw.text((width//2, footer_y + 15), datetime.now().strftime('%d/%m/%Y %H:%M'), fill='#9ca3af', font=font_small, anchor='mm')
-    
-    return img
+    """Generate receipt image by converting the PDF to image (same design for both formats)."""
+    pdf_buffer = generate_receipt_pdf(booking, screen, content, qr_base64)
+    return pdf_to_image(pdf_buffer, scale=2.5)
 
 
 def save_receipt_pdf(booking, screen, content, qr_base64=None):
