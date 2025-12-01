@@ -11,33 +11,60 @@
             </div>
             <div>
                 <h2 class="text-xl font-bold text-gray-800">Paramètres de l'établissement</h2>
-                <p class="text-gray-500 text-sm">{{ org.name }}</p>
+                <p class="text-gray-500 text-sm">Gérez les informations de votre organisation</p>
             </div>
         </div>
 
         <form method="POST" class="space-y-6">
-            <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                    <label for="country" class="label">Pays</label>
-                    <select id="country" name="country" class="input-field">
-                        {% for code, name in countries %}
-                        <option value="{{ code }}" {% if code == org.country %}selected{% endif %}>
-                            {{ name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Le pays de votre établissement</p>
+            <div class="border-b border-gray-100 pb-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-building text-emerald-500"></i>
+                    Informations générales
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="label">Nom de l'établissement</label>
+                        <input type="text" id="name" name="name" value="{{ org.name }}" class="input-field" required>
+                    </div>
+                    <div>
+                        <label for="phone" class="label">Téléphone</label>
+                        <input type="tel" id="phone" name="phone" value="{{ org.phone or '' }}" class="input-field" placeholder="+33 1 23 45 67 89">
+                    </div>
+                    <div>
+                        <label for="address" class="label">Adresse</label>
+                        <textarea id="address" name="address" rows="2" class="input-field" placeholder="Adresse complète de l'établissement">{{ org.address or '' }}</textarea>
+                    </div>
                 </div>
-                <div>
-                    <label for="currency" class="label">Devise</label>
-                    <select id="currency" name="currency" class="input-field">
-                        {% for curr in currencies %}
-                        <option value="{{ curr.code }}" {% if curr.code == org.currency %}selected{% endif %}>
-                            {{ curr.flag }} {{ curr.code }} - {{ curr.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
+            </div>
+
+            <div class="border-b border-gray-100 pb-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-globe text-blue-500"></i>
+                    Localisation et devise
+                </h3>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="country" class="label">Pays</label>
+                        <select id="country" name="country" class="input-field">
+                            {% for code, name in countries %}
+                            <option value="{{ code }}" {% if code == org.country %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Le pays de votre établissement</p>
+                    </div>
+                    <div>
+                        <label for="currency" class="label">Devise</label>
+                        <select id="currency" name="currency" class="input-field">
+                            {% for curr in currencies %}
+                            <option value="{{ curr.code }}" {% if curr.code == org.currency %}selected{% endif %}>
+                                {{ curr.flag }} {{ curr.code }} - {{ curr.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
+                    </div>
                 </div>
             </div>
 
@@ -45,14 +72,13 @@
                 <div class="flex items-start gap-3">
                     <i class="fas fa-info-circle text-gray-400 mt-0.5"></i>
                     <div class="text-sm text-gray-600">
-                        <p class="font-medium mb-1">Informations actuelles</p>
+                        <p class="font-medium mb-1">Informations de contact</p>
                         <ul class="space-y-1 text-gray-500">
-                            <li><strong>Établissement:</strong> {{ org.name }}</li>
-                            <li><strong>Email:</strong> {{ org.email }}</li>
-                            <li><strong>Téléphone:</strong> {{ org.phone or 'Non renseigné' }}</li>
-                            <li><strong>Adresse:</strong> {{ org.address or 'Non renseignée' }}</li>
+                            <li><strong>Email de l'organisation:</strong> {{ org.email }}</li>
+                            <li><strong>Plan d'abonnement:</strong> {{ org.subscription_plan|capitalize }}</li>
+                            <li><strong>Taux de commission:</strong> {{ org.commission_rate }}%</li>
                         </ul>
-                        <p class="text-xs text-gray-400 mt-2">Pour modifier ces informations, contactez l'administrateur.</p>
+                        <p class="text-xs text-gray-400 mt-2">L'email et le taux de commission sont gérés par l'administrateur.</p>
                     </div>
                 </div>
             </div>

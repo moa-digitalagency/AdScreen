@@ -300,7 +300,9 @@ def create_demo_data():
             text_color='#ffffff',
             font_size=28,
             scroll_speed=60,
+            frequency_type='duration',
             display_duration=15,
+            frequency_unit='day',
             is_active=True
         )
         db.session.add(overlay1)
@@ -315,7 +317,9 @@ def create_demo_data():
             text_color='#ffffff',
             font_size=32,
             scroll_speed=50,
-            display_duration=20,
+            frequency_type='passage',
+            passage_limit=20,
+            frequency_unit='day',
             is_active=True
         )
         db.session.add(overlay2)
@@ -330,7 +334,9 @@ def create_demo_data():
             text_color='#ffffff',
             font_size=24,
             scroll_speed=70,
+            frequency_type='duration',
             display_duration=12,
+            frequency_unit='noon',
             is_active=True
         )
         db.session.add(overlay3)
@@ -345,7 +351,9 @@ def create_demo_data():
             text_color='#ffffff',
             font_size=36,
             scroll_speed=55,
-            display_duration=18,
+            frequency_type='passage',
+            passage_limit=15,
+            frequency_unit='evening',
             is_active=True
         )
         db.session.add(overlay4)

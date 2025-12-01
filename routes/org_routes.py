@@ -82,9 +82,23 @@ def settings():
     countries = get_country_choices()
     
     if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        address = request.form.get('address', '').strip()
         country = request.form.get('country', org.country or 'FR')
         currency = request.form.get('currency', org.currency or 'EUR')
         
+        if not name:
+            flash('Le nom de l\'établissement est obligatoire.', 'error')
+            return render_template('org/settings.html',
+                org=org,
+                currencies=currencies,
+                countries=countries
+            )
+        
+        org.name = name
+        org.phone = phone
+        org.address = address
         org.country = country
         org.currency = currency
         db.session.commit()
@@ -551,8 +565,15 @@ def screen_overlays(screen_id):
         scroll_speed = int(request.form.get('scroll_speed', 60))
         is_active = 'is_active' in request.form
         
-        display_duration = int(request.form.get('display_duration', 10))
-        passage_limit = int(request.form.get('passage_limit', 0))
+        frequency_type = request.form.get('frequency_type', 'duration')
+        frequency_unit = request.form.get('frequency_unit', 'day')
+        
+        if frequency_type == 'duration':
+            display_duration = int(request.form.get('display_duration', 10))
+            passage_limit = 0
+        else:
+            display_duration = 0
+            passage_limit = int(request.form.get('passage_limit', 10))
         
         start_time_str = request.form.get('start_time', '')
         end_time_str = request.form.get('end_time', '')
@@ -600,8 +621,10 @@ def screen_overlays(screen_id):
             text_color=text_color,
             font_size=font_size,
             scroll_speed=scroll_speed,
+            frequency_type=frequency_type,
             display_duration=display_duration,
             passage_limit=passage_limit,
+            frequency_unit=frequency_unit,
             start_time=start_time,
             end_time=end_time,
             image_width=image_width,

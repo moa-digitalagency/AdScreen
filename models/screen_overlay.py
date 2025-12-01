@@ -28,9 +28,10 @@ class ScreenOverlay(db.Model):
     image_pos_y = db.Column(db.Integer, default=0)
     image_opacity = db.Column(db.Float, default=1.0)
     
+    frequency_type = db.Column(db.String(20), default='duration')
     display_duration = db.Column(db.Integer, default=10)
     passage_limit = db.Column(db.Integer, default=0)
-    frequency_unit = db.Column(db.String(20), default='hour')
+    frequency_unit = db.Column(db.String(20), default='day')
     current_passage_count = db.Column(db.Integer, default=0)
     last_passage_reset = db.Column(db.DateTime)
     
@@ -56,7 +57,9 @@ class ScreenOverlay(db.Model):
     CORNER_BOTTOM_LEFT = 'bottom_left'
     CORNER_BOTTOM_RIGHT = 'bottom_right'
     
-    FREQUENCY_HOUR = 'hour'
+    FREQUENCY_TYPE_DURATION = 'duration'
+    FREQUENCY_TYPE_PASSAGE = 'passage'
+    
     FREQUENCY_MORNING = 'morning'
     FREQUENCY_NOON = 'noon'
     FREQUENCY_AFTERNOON = 'afternoon'
@@ -64,7 +67,6 @@ class ScreenOverlay(db.Model):
     FREQUENCY_NIGHT = 'night'
     FREQUENCY_DAY = 'day'
     FREQUENCY_WEEK = 'week'
-    FREQUENCY_MONTH = 'month'
     
     def is_currently_active(self):
         if not self.is_active:
@@ -92,6 +94,7 @@ class ScreenOverlay(db.Model):
             'text_color': self.text_color,
             'font_size': self.font_size,
             'scroll_speed': self.scroll_speed,
+            'frequency_type': self.frequency_type,
             'display_duration': self.display_duration,
             'passage_limit': self.passage_limit,
             'frequency_unit': self.frequency_unit,
@@ -106,43 +109,50 @@ class ScreenOverlay(db.Model):
             'is_active': self.is_currently_active()
         }
     
+    def _get_current_period(self, hour):
+        if 6 <= hour < 12:
+            return 'morning'
+        elif 12 <= hour < 14:
+            return 'noon'
+        elif 14 <= hour < 18:
+            return 'afternoon'
+        elif 18 <= hour < 22:
+            return 'evening'
+        else:
+            return 'night'
+    
+    def _should_reset_counter(self, now):
+        if not self.last_passage_reset:
+            return True
+        
+        if self.frequency_unit == 'day':
+            return now.date() > self.last_passage_reset.date()
+        elif self.frequency_unit == 'week':
+            days_diff = (now - self.last_passage_reset).days
+            return days_diff >= 7 or now.isocalendar()[1] != self.last_passage_reset.isocalendar()[1]
+        elif self.frequency_unit in ['morning', 'noon', 'afternoon', 'evening', 'night']:
+            current_period = self._get_current_period(now.hour)
+            last_period = self._get_current_period(self.last_passage_reset.hour)
+            if now.date() > self.last_passage_reset.date():
+                return True
+            return current_period == self.frequency_unit and last_period != self.frequency_unit
+        
+        return False
+    
     def should_display(self):
         if not self.is_currently_active():
             return False
         
-        if self.passage_limit <= 0:
+        if self.frequency_type == 'duration':
+            return True
+        
+        if self.frequency_type == 'passage' and self.passage_limit <= 0:
             return True
         
         now = datetime.utcnow()
-        if self.last_passage_reset:
-            should_reset = False
-            if self.frequency_unit == 'hour':
-                should_reset = (now - self.last_passage_reset).total_seconds() >= 3600
-            elif self.frequency_unit == 'day':
-                should_reset = (now - self.last_passage_reset).days >= 1
-            elif self.frequency_unit == 'week':
-                should_reset = (now - self.last_passage_reset).days >= 7
-            elif self.frequency_unit == 'month':
-                should_reset = (now - self.last_passage_reset).days >= 30
-            elif self.frequency_unit in ['morning', 'noon', 'afternoon', 'evening', 'night']:
-                current_hour = now.hour
-                period_changed = False
-                if self.frequency_unit == 'morning' and not (6 <= current_hour < 12):
-                    period_changed = True
-                elif self.frequency_unit == 'noon' and not (12 <= current_hour < 14):
-                    period_changed = True
-                elif self.frequency_unit == 'afternoon' and not (14 <= current_hour < 18):
-                    period_changed = True
-                elif self.frequency_unit == 'evening' and not (18 <= current_hour < 22):
-                    period_changed = True
-                elif self.frequency_unit == 'night' and not (current_hour >= 22 or current_hour < 6):
-                    period_changed = True
-                should_reset = period_changed
-            
-            if should_reset:
-                self.current_passage_count = 0
-                self.last_passage_reset = now
-        else:
+        
+        if self._should_reset_counter(now):
+            self.current_passage_count = 0
             self.last_passage_reset = now
         
         return self.current_passage_count < self.passage_limit

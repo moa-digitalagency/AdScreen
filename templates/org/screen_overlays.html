@@ -233,32 +233,85 @@
                         <i class="fas fa-repeat text-blue-500"></i>
                         Fréquence d'affichage
                     </h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="label">Durée d'affichage (sec)</label>
-                            <input type="number" name="display_duration" id="displayDuration" value="10" min="1" max="300" class="input-field">
-                            <p class="text-xs text-gray-400 mt-1">Combien de temps l'overlay reste visible</p>
-                        </div>
-                        <div>
-                            <label class="label">Limite de passages</label>
-                            <input type="number" name="passage_limit" id="passageLimit" value="0" min="0" class="input-field" placeholder="0 = illimité">
-                            <p class="text-xs text-gray-400 mt-1">0 = affichage continu</p>
+                    
+                    <div class="mb-4">
+                        <label class="label">Type de fréquence</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="frequency_type" value="duration" checked class="peer sr-only" onchange="switchFrequencyType('duration')">
+                                <div class="p-3 border-2 border-gray-200 rounded-xl peer-checked:border-blue-500 peer-checked:bg-blue-50 transition">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-clock text-blue-600 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-800 text-sm">Par durée</p>
+                                            <p class="text-xs text-gray-500">Temps d'affichage</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="frequency_type" value="passage" class="peer sr-only" onchange="switchFrequencyType('passage')">
+                                <div class="p-3 border-2 border-gray-200 rounded-xl peer-checked:border-purple-500 peer-checked:bg-purple-50 transition">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-hashtag text-purple-600 text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-800 text-sm">Par passages</p>
+                                            <p class="text-xs text-gray-500">Nombre de fois</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
-                    <div class="mt-3" id="frequencyUnitContainer">
-                        <label class="label">Réinitialiser le compteur chaque</label>
-                        <select name="frequency_unit" id="frequencyUnit" class="input-field">
-                            <option value="hour">Heure</option>
-                            <option value="morning">Matin (6h-12h)</option>
-                            <option value="noon">Midi (12h-14h)</option>
-                            <option value="afternoon">Après-midi (14h-18h)</option>
-                            <option value="evening">Soir (18h-22h)</option>
-                            <option value="night">Nuit (22h-6h)</option>
-                            <option value="day">Jour</option>
-                            <option value="week">Semaine</option>
-                            <option value="month">Mois</option>
-                        </select>
-                        <p class="text-xs text-gray-400 mt-1">Le compteur de passages se réinitialise à chaque période</p>
+
+                    <div id="durationFields">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="label">Durée d'affichage (sec)</label>
+                                <input type="number" name="display_duration" id="displayDuration" value="10" min="1" max="300" class="input-field">
+                                <p class="text-xs text-gray-400 mt-1">Temps visible par cycle</p>
+                            </div>
+                            <div>
+                                <label class="label">Cycle</label>
+                                <select name="frequency_unit" id="frequencyUnitDuration" class="input-field">
+                                    <option value="morning">Matin (6h-12h)</option>
+                                    <option value="noon">Midi (12h-14h)</option>
+                                    <option value="afternoon">Après-midi (14h-18h)</option>
+                                    <option value="evening">Soir (18h-22h)</option>
+                                    <option value="night">Nuit (22h-6h)</option>
+                                    <option value="day" selected>Jour</option>
+                                    <option value="week">Semaine</option>
+                                </select>
+                                <p class="text-xs text-gray-400 mt-1">Par période choisie</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="passageFields" class="hidden">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="label">Nombre de passages</label>
+                                <input type="number" name="passage_limit" id="passageLimit" value="10" min="1" class="input-field">
+                                <p class="text-xs text-gray-400 mt-1">Fois par cycle</p>
+                            </div>
+                            <div>
+                                <label class="label">Cycle</label>
+                                <select id="frequencyUnitPassage" class="input-field" onchange="syncFrequencyUnit()">
+                                    <option value="morning">Matin (6h-12h)</option>
+                                    <option value="noon">Midi (12h-14h)</option>
+                                    <option value="afternoon">Après-midi (14h-18h)</option>
+                                    <option value="evening">Soir (18h-22h)</option>
+                                    <option value="night">Nuit (22h-6h)</option>
+                                    <option value="day" selected>Jour</option>
+                                    <option value="week">Semaine</option>
+                                </select>
+                                <p class="text-xs text-gray-400 mt-1">Réinitialisation du compteur</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -391,6 +444,22 @@ function switchOverlayType(type) {
     document.getElementById('imageFields').classList.toggle('hidden', type !== 'image');
     clearAllPreviews();
     updateLivePreview();
+}
+
+function switchFrequencyType(type) {
+    document.getElementById('durationFields').classList.toggle('hidden', type !== 'duration');
+    document.getElementById('passageFields').classList.toggle('hidden', type !== 'passage');
+    syncFrequencyUnit();
+}
+
+function syncFrequencyUnit() {
+    const frequencyType = document.querySelector('input[name="frequency_type"]:checked').value;
+    const durationSelect = document.getElementById('frequencyUnitDuration');
+    const passageSelect = document.getElementById('frequencyUnitPassage');
+    
+    if (frequencyType === 'passage') {
+        durationSelect.value = passageSelect.value;
+    }
 }
 
 function clearAllPreviews() {
