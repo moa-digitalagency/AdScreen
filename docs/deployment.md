@@ -1,4 +1,4 @@
-# Guide de Déploiement
+# Guide de Déploiement - Shabaka AdScreen
 
 ## Prérequis
 
@@ -14,11 +14,12 @@
 | `DATABASE_URL` | URL de connexion PostgreSQL | Oui |
 | `SESSION_SECRET` | Clé secrète pour les sessions Flask | Oui |
 | `UPLOAD_FOLDER` | Chemin du dossier uploads (défaut: static/uploads) | Non |
+| `REPLIT_DEV_DOMAIN` | Domaine Replit (auto-configuré) | Non |
 
 ### Exemple de configuration
 
 ```bash
-export DATABASE_URL="postgresql://user:password@localhost:5432/adscreen"
+export DATABASE_URL="postgresql://user:password@localhost:5432/shabaka_adscreen"
 export SESSION_SECRET="votre-cle-secrete-tres-longue-et-aleatoire"
 ```
 
@@ -28,7 +29,7 @@ export SESSION_SECRET="votre-cle-secrete-tres-longue-et-aleatoire"
 
 ```bash
 git clone <repository-url>
-cd adscreen
+cd shabaka-adscreen
 ```
 
 ### 2. Installer les dépendances Python
@@ -41,24 +42,40 @@ pip install -r requirements.txt
 uv sync
 ```
 
+### Dépendances principales
+
+- flask
+- flask-sqlalchemy
+- flask-login
+- gunicorn
+- psycopg2-binary
+- pillow (génération reçus thermiques)
+- reportlab (génération PDF)
+- qrcode
+- pyjwt
+- email-validator
+- werkzeug
+
 ### 3. Configurer la base de données
 
 ```bash
 # Créer la base de données PostgreSQL
-createdb adscreen
+createdb shabaka_adscreen
 
 # Initialiser les tables
 python init_db.py
 
-# Optionnel : créer les données de démonstration
+# Optionnel : créer les données de démonstration (6 organisations, 9 écrans)
 python init_db_demo.py
 ```
 
 ### 4. Créer les dossiers nécessaires
 
 ```bash
-mkdir -p static/uploads
-chmod 755 static/uploads
+mkdir -p static/uploads/contents
+mkdir -p static/uploads/fillers
+mkdir -p static/uploads/internal
+chmod -R 755 static/uploads
 ```
 
 ## Démarrage
@@ -66,7 +83,7 @@ chmod 755 static/uploads
 ### Mode développement
 
 ```bash
-python main.py
+gunicorn --bind 0.0.0.0:5000 --reload main:app
 ```
 
 L'application sera accessible sur http://localhost:5000 avec le rechargement automatique activé.
@@ -88,6 +105,7 @@ gunicorn \
   --keep-alive 5 \
   --max-requests 1000 \
   --max-requests-jitter 50 \
+  --reuse-port \
   --access-logfile - \
   --error-logfile - \
   main:app
@@ -105,6 +123,12 @@ Pour publier :
 1. Cliquez sur "Deploy" dans l'interface Replit
 2. L'application sera accessible via une URL `.replit.app`
 
+### Variables Replit auto-configurées
+
+- `DATABASE_URL` - URL PostgreSQL
+- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
+- `REPLIT_DEV_DOMAIN` - Domaine de développement
+
 ## Nginx (Reverse Proxy)
 
 Configuration recommandée pour Nginx :
@@ -114,7 +138,7 @@ server {
     listen 80;
     server_name votre-domaine.com;
 
-    client_max_body_size 100M;
+    client_max_body_size 200M;
 
     location / {
         proxy_pass http://127.0.0.1:5000;
@@ -125,7 +149,7 @@ server {
     }
 
     location /static {
-        alias /chemin/vers/adscreen/static;
+        alias /chemin/vers/shabaka-adscreen/static;
         expires 30d;
     }
 }
@@ -136,13 +160,13 @@ server {
 ### Sauvegarde de la base de données
 
 ```bash
-pg_dump -U user adscreen > backup_$(date +%Y%m%d).sql
+pg_dump -U user shabaka_adscreen > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restauration
 
 ```bash
-psql -U user adscreen < backup_20231201.sql
+psql -U user shabaka_adscreen < backup_20231201.sql
 ```
 
 ### Mise à jour
@@ -153,6 +177,13 @@ pip install -r requirements.txt
 # Relancer l'application
 ```
 
+### Réinitialisation des données de démo
+
+```bash
+# Supprimer et recréer les données de démonstration
+python init_db_demo.py --force
+```
+
 ## Monitoring
 
 ### Logs applicatifs
@@ -160,14 +191,21 @@ pip install -r requirements.txt
 Les logs sont affichés sur la sortie standard. En production, redirigez-les vers un fichier :
 
 ```bash
-gunicorn main:app 2>&1 | tee -a /var/log/adscreen/app.log
+gunicorn main:app 2>&1 | tee -a /var/log/shabaka-adscreen/app.log
 ```
 
 ### Points de vérification
 
 - **Santé** : `GET /` doit retourner 200
-- **API** : `GET /api/health` (à implémenter)
+- **Player** : `GET /player` doit afficher le formulaire de connexion
 - **Base de données** : `python init_db.py --check`
+
+### Métriques clés
+
+- Uptime des écrans (heartbeat logs)
+- Nombre de réservations par jour
+- Revenus par devise (EUR, MAD, XOF, TND)
+- Temps de validation des contenus
 
 ## Troubleshooting
 
@@ -178,10 +216,14 @@ Vérifiez que :
 2. La variable `DATABASE_URL` est correcte
 3. L'utilisateur a les droits sur la base
 
+```bash
+python init_db.py --check
+```
+
 ### Erreur d'upload de fichiers
 
 Vérifiez que :
-1. Le dossier `static/uploads` existe
+1. Les dossiers `static/uploads/*` existent
 2. Les permissions sont correctes (755)
 3. `MAX_CONTENT_LENGTH` est suffisant dans `app.py`
 
@@ -191,3 +233,23 @@ Vérifiez que :
 1. Le code unique de l'écran est correct
 2. Le mot de passe player est correct
 3. L'écran est actif dans le dashboard
+
+### Reçus ne s'affichent pas
+
+Vérifiez que :
+1. Pillow est installé (`pip install pillow`)
+2. Les fonts sont disponibles (DejaVuSans)
+3. La réservation existe en base
+
+### Problèmes de devises
+
+Vérifiez que :
+1. L'organisation a une devise configurée (currency)
+2. Le pays est défini (country)
+3. Les symboles sont corrects dans `models/organization.py`
+
+## Support
+
+- **Documentation** : `/docs`
+- **Email support** : support@shabaka-adscreen.com
+- **WhatsApp admin** : Configurable dans les paramètres

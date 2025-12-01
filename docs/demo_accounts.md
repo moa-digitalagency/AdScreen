@@ -1,4 +1,4 @@
-# Comptes de Démonstration
+# Comptes de Démonstration - Shabaka AdScreen
 
 Ce document décrit les comptes et données créés par le script `init_db_demo.py`.
 
@@ -23,59 +23,76 @@ Accès complet à la plateforme : gestion des établissements, statistiques glob
 
 | Champ | Valeur |
 |-------|--------|
-| Email | admin@adscreen.com |
+| Email | admin@shabaka-adscreen.com |
 | Mot de passe | admin123 |
 | Rôle | superadmin |
 
-**Accès** : http://localhost:5000/admin
+**Accès** : `/admin`
 
-### Établissements
+### Établissements par pays
 
-Chaque établissement a son propre compte pour gérer ses écrans.
+Chaque établissement a son propre compte pour gérer ses écrans. **Mot de passe commun : `demo123`**
 
-#### 1. Le Bistrot Parisien
+#### 🇫🇷 France (EUR - €)
 
-| Champ | Valeur |
-|-------|--------|
-| Email | manager@restaurant-paris.fr |
-| Mot de passe | demo123 |
-| Plan | Premium |
-| Commission | 10% |
+| Établissement | Email | Plan | Commission | Écrans |
+|--------------|-------|------|------------|--------|
+| Le Bistrot Parisien | manager@restaurant-paris.fr | Premium | 10% | 2 |
+| Bar Le Central | manager@bar-lyon.fr | Basic | 12% | 1 |
+| Centre Commercial Atlantis | manager@atlantis-mall.fr | Enterprise | 8% | 2 |
 
-**Écrans** :
-- Écran Entrée (1920x1080 paysage)
-- Écran Bar (1080x1920 portrait)
+#### 🇲🇦 Maroc (MAD - DH)
 
-#### 2. Bar Le Central
+| Établissement | Email | Plan | Commission | Écrans |
+|--------------|-------|------|------------|--------|
+| Café Marrakech | manager@cafe-marrakech.ma | Premium | 10% | 2 |
 
-| Champ | Valeur |
-|-------|--------|
-| Email | manager@bar-lyon.fr |
-| Mot de passe | demo123 |
-| Plan | Basic |
-| Commission | 12% |
+#### 🇸🇳 Sénégal (XOF - FCFA)
 
-**Écrans** :
-- Écran Principal (1920x1080 paysage, images uniquement)
+| Établissement | Email | Plan | Commission | Écrans |
+|--------------|-------|------|------------|--------|
+| Restaurant Dakar Beach | manager@dakar-beach.sn | Basic | 12% | 1 |
 
-#### 3. Centre Commercial Atlantis
+#### 🇹🇳 Tunisie (TND - DT)
 
-| Champ | Valeur |
-|-------|--------|
-| Email | manager@atlantis-mall.fr |
-| Mot de passe | demo123 |
-| Plan | Enterprise |
-| Commission | 8% |
+| Établissement | Email | Plan | Commission | Écrans |
+|--------------|-------|------|------------|--------|
+| Tunisian Café | manager@tunis-cafe.tn | Basic | 10% | 1 |
 
-**Écrans** :
-- Totem Hall A (1080x1920 portrait)
-- Écran Géant Food Court (3840x2160 4K paysage)
+**Accès établissement** : `/org`
 
-**Accès établissement** : http://localhost:5000/org
+## Détail des écrans
 
-## Configuration des écrans
+### France
 
-### Mot de passe Player
+| Établissement | Écran | Résolution | Orientation | Prix/min |
+|--------------|-------|------------|-------------|----------|
+| Le Bistrot Parisien | Écran Entrée | 1920x1080 | Paysage | 2.00 € |
+| Le Bistrot Parisien | Écran Bar | 1080x1920 | Portrait | 1.50 € |
+| Bar Le Central | Écran Principal | 1920x1080 | Paysage | 1.80 € |
+| Centre Commercial Atlantis | Totem Hall A | 1080x1920 | Portrait | 3.00 € |
+| Centre Commercial Atlantis | Écran Géant Food Court | 3840x2160 | Paysage | 5.00 € |
+
+### Maroc
+
+| Établissement | Écran | Résolution | Orientation | Prix/min |
+|--------------|-------|------------|-------------|----------|
+| Café Marrakech | Écran Terrasse | 1920x1080 | Paysage | 20.00 DH |
+| Café Marrakech | Totem Médina | 1080x1920 | Portrait | 15.00 DH |
+
+### Sénégal
+
+| Établissement | Écran | Résolution | Orientation | Prix/min |
+|--------------|-------|------------|-------------|----------|
+| Restaurant Dakar Beach | Écran Beach Bar | 1920x1080 | Paysage | 1000 FCFA |
+
+### Tunisie
+
+| Établissement | Écran | Résolution | Orientation | Prix/min |
+|--------------|-------|------------|-------------|----------|
+| Tunisian Café | Écran Café Habib | 1920x1080 | Paysage | 3.00 DT |
+
+## Mot de passe Player
 
 Tous les écrans de démonstration ont le même mot de passe player :
 
@@ -83,20 +100,22 @@ Tous les écrans de démonstration ont le même mot de passe player :
 screen123
 ```
 
-**Accès player** : http://localhost:5000/player
+**Accès player** : `/player`
 
-### Créneaux horaires (par écran)
+## Créneaux horaires (par écran)
 
-| Type | Durée | Prix/diffusion |
-|------|-------|----------------|
-| Image | 5s | 0,50 € |
-| Image | 10s | 0,80 € |
-| Image | 15s | 1,00 € |
-| Vidéo | 10s | 1,50 € |
-| Vidéo | 15s | 2,00 € |
-| Vidéo | 30s | 3,50 € |
+Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 
-### Périodes horaires (multiplicateurs de prix)
+| Type | Durée | Formule |
+|------|-------|---------|
+| Image | 10s | prix_min × (10/60) |
+| Image | 15s | prix_min × (15/60) |
+| Image | 30s | prix_min × (30/60) |
+| Vidéo | 15s | prix_min × (15/60) |
+| Vidéo | 30s | prix_min × (30/60) |
+| Vidéo | 60s | prix_min × (60/60) |
+
+## Périodes horaires (multiplicateurs de prix)
 
 | Période | Horaires | Multiplicateur |
 |---------|----------|----------------|
@@ -106,36 +125,59 @@ screen123
 | Soir | 18:00 - 22:00 | x1.8 |
 | Nuit | 22:00 - 06:00 | x0.5 |
 
+## Overlays de démonstration
+
+7 bandeaux défilants pré-configurés :
+
+| Écran | Position | Message |
+|-------|----------|---------|
+| Écran Entrée (Paris) | Footer | Happy Hour 17h-19h |
+| Totem Hall A (Atlantis) | Header | Soldes -50% |
+| Écran Bar (Paris) | Body | Menu du jour |
+| Écran Food Court (Atlantis) | Footer | Horaires restauration |
+| Terrasse Marrakech | Footer | Bilingue AR/FR |
+| Beach Bar Dakar | Header | Happy Hour FCFA |
+| Café Habib Tunis | Footer | Services WiFi |
+
 ## Scénarios de test
 
 ### 1. Test Superadmin
 
-1. Connectez-vous avec admin@adscreen.com
-2. Consultez la liste des établissements
+1. Connectez-vous avec admin@shabaka-adscreen.com / admin123
+2. Consultez la liste des établissements (6 établissements, 4 pays)
 3. Visualisez les statistiques globales
 4. Créez un nouvel établissement
 
 ### 2. Test Établissement
 
-1. Connectez-vous avec manager@restaurant-paris.fr
-2. Consultez vos écrans
+1. Connectez-vous avec manager@restaurant-paris.fr / demo123
+2. Consultez vos écrans (2 écrans)
 3. Modifiez la configuration d'un écran
 4. Téléchargez le QR code d'un écran
+5. Gérez les overlays (bandeaux défilants)
 
 ### 3. Test Client (Annonceur)
 
 1. Scannez un QR code ou accédez au lien d'un écran
-2. Consultez les spécifications de l'écran
+2. Consultez les specs (résolution, prix en devise locale)
 3. Sélectionnez un créneau et une période
 4. Uploadez un contenu (image ou vidéo)
-5. Suivez le statut de votre réservation
+5. Téléchargez votre reçu (image thermique ou PDF)
 
 ### 4. Test Player
 
-1. Accédez à http://localhost:5000/player
+1. Accédez à `/player`
 2. Entrez le code unique d'un écran
 3. Entrez le mot de passe : screen123
 4. Lancez la playlist en mode plein écran
+5. Vérifiez l'affichage des overlays
+
+### 5. Test Multi-devises
+
+1. Réservez sur un écran français (prix en €)
+2. Réservez sur un écran marocain (prix en DH)
+3. Réservez sur un écran sénégalais (prix en FCFA)
+4. Vérifiez que les reçus affichent la bonne devise
 
 ## Réinitialisation
 
@@ -151,3 +193,4 @@ python init_db_demo.py --force
 - Les mots de passe de démonstration sont faibles et ne doivent **jamais** être utilisés en production
 - Les données de démonstration sont destinées uniquement aux tests
 - Après les tests, utilisez `--clear` pour supprimer toutes les données avant la mise en production
+- Les devises sont configurées par organisation et affectent tous les écrans de l'établissement

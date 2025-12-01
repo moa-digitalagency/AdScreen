@@ -1,37 +1,51 @@
-# 📺 AdScreen - SaaS Location Écrans Publicitaires
+# 📺 Shabaka AdScreen - SaaS Location Écrans Publicitaires
 
-Plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service.
+Plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. Support multi-pays et multi-devises (EUR, MAD, XOF, TND).
+
+**Un produit de Shabaka InnovLab**
 
 ## ✨ Fonctionnalités principales
+
+### 🌍 Multi-pays & Multi-devises
+- 🇫🇷 France (EUR - €)
+- 🇲🇦 Maroc (MAD - DH)
+- 🇸🇳 Sénégal (XOF - FCFA)
+- 🇹🇳 Tunisie (TND - DT)
 
 ### 🏢 Gestion multi-établissements
 - 👑 Superadmin gère les organisations et commissions
 - 📋 Demandes d'inscription via WhatsApp
 - 💰 Commission personnalisable par établissement
+- 📊 Statistiques par devise
 
 ### 📺 Gestion des écrans
 - 🖥️ Résolution, orientation, types de contenu acceptés
 - 📛 Nommage personnalisé des écrans
 - 👁️ Aperçu en direct de ce qui s'affiche
-- 🔲 **Overlays superposés** (bandeaux défilants ou images fixes)
+- 🔲 **Overlays superposés** (bandeaux défilants)
+- 🎨 Fillers générés automatiquement avec QR code
 
 ### 🎭 Système d'overlays
 - 📜 Type bandeau: Texte défilant (ticker)
-- 🖼️ Type image: Image fixe
 - 📍 Positions: Header (haut), Body (centre), Footer (bas)
 - 🎨 Personnalisation: Couleurs, taille de police, vitesse de défilement
+- ⏱️ Fréquence configurable par durée ou nombre de passages
 
 ### ⏰ Créneaux horaires
-- 🕐 Slots configurables avec prix par diffusion
+- 🕐 Slots configurables avec prix calculés automatiquement
 - 🌅 Multiplicateurs de prix (matin, midi, soir, nuit)
+- 💵 Prix affichés en devise locale
 
 ### 📱 QR Codes & Réservations
 - 🔗 Génération automatique par écran
 - 🛒 Réservation en libre-service
+- 🧾 **Reçu thermique** (image style ticket de caisse)
+- 📄 **Reçu PDF** imprimable
 
 ### ✅ Validation contenu
 - 📤 File d'attente avec aperçu
 - 🔍 Validation stricte (ratio, résolution, durée)
+- ✔️ Validation/refus manuel avec motif
 
 ### 🎮 Player web
 - 📺 Interface fullscreen pour diffusion sur écrans
@@ -40,12 +54,13 @@ Plateforme SaaS permettant aux établissements (bars, restaurants, centres comme
 
 ### 📊 Statistiques
 - 📈 Tracking des passages et revenus
-- 📉 Analytics en temps réel
+- 📉 Analytics par écran, période, devise
+- 🕐 Monitoring uptime des écrans
 
 ## 📋 Prérequis
 
 - 🐍 Python 3.11+
-- 🗄️ PostgreSQL
+- 🗄️ PostgreSQL 14+
 - 🎥 ffmpeg (pour validation vidéos)
 
 ## 🚀 Installation
@@ -54,7 +69,7 @@ Plateforme SaaS permettant aux établissements (bars, restaurants, centres comme
 
 ```bash
 git clone <repository-url>
-cd adscreen
+cd shabaka-adscreen
 ```
 
 ### 2️⃣ Installer les dépendances
@@ -72,7 +87,7 @@ uv sync
 Configurer les variables d'environnement :
 
 ```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/adscreen
+DATABASE_URL=postgresql://user:password@localhost:5432/shabaka_adscreen
 SESSION_SECRET=your-secret-key-here
 ```
 
@@ -82,7 +97,7 @@ SESSION_SECRET=your-secret-key-here
 # Créer les tables
 python init_db.py
 
-# Optionnel : Créer les données de démonstration
+# Créer les données de démonstration (6 organisations, 9 écrans, 4 pays)
 python init_db_demo.py
 ```
 
@@ -97,7 +112,7 @@ gunicorn --bind 0.0.0.0:5000 --reload main:app
 ### 🌐 Production
 
 ```bash
-gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
+gunicorn --bind 0.0.0.0:5000 --workers 4 --reuse-port main:app
 ```
 
 L'application sera accessible sur `http://localhost:5000`
@@ -106,12 +121,22 @@ L'application sera accessible sur `http://localhost:5000`
 
 Après avoir exécuté `init_db_demo.py` :
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| 👑 Superadmin | admin@adscreen.com | admin123 |
-| 🏪 Le Bistrot Parisien | manager@restaurant-paris.fr | demo123 |
-| 🍺 Bar Le Central | manager@bar-lyon.fr | demo123 |
-| 🏬 Centre Commercial Atlantis | manager@atlantis-mall.fr | demo123 |
+### 👑 Superadmin
+
+| Email | Mot de passe |
+|-------|--------------|
+| admin@shabaka-adscreen.com | admin123 |
+
+### 🏪 Établissements (mot de passe: demo123)
+
+| Pays | Établissement | Email | Devise |
+|------|--------------|-------|--------|
+| 🇫🇷 | Le Bistrot Parisien | manager@restaurant-paris.fr | EUR |
+| 🇫🇷 | Bar Le Central | manager@bar-lyon.fr | EUR |
+| 🇫🇷 | Centre Commercial Atlantis | manager@atlantis-mall.fr | EUR |
+| 🇲🇦 | Café Marrakech | manager@cafe-marrakech.ma | MAD |
+| 🇸🇳 | Restaurant Dakar Beach | manager@dakar-beach.sn | XOF |
+| 🇹🇳 | Tunisian Café | manager@tunis-cafe.tn | TND |
 
 🔑 Mot de passe player pour tous les écrans : `screen123`
 
@@ -126,9 +151,15 @@ Après avoir exécuté `init_db_demo.py` :
 ├── 📁 models/             # Modèles SQLAlchemy
 ├── 📁 routes/             # Routes Flask (blueprints)
 ├── 📁 services/           # Logique métier
+│   ├── playlist_service.py
+│   ├── pricing_service.py
+│   ├── qr_service.py
+│   ├── receipt_generator.py  # Reçus thermiques
+│   └── filler_generator.py   # Génération fillers
 ├── 📁 utils/              # Utilitaires
 ├── 📁 templates/          # Templates Jinja2
 ├── 📁 static/             # Fichiers statiques
+│   └── uploads/           # Contenus uploadés
 └── 📁 docs/               # Documentation
 ```
 
@@ -144,19 +175,32 @@ Après avoir exécuté `init_db_demo.py` :
 Le player écran communique avec l'API pour récupérer la playlist :
 
 ```
-GET /api/playlist/<screen_code>
-POST /api/heartbeat/<screen_code>
-POST /api/log-play/<screen_code>
+GET /api/playlist/<screen_code>     # Récupère la playlist + overlays
+POST /api/heartbeat/<screen_code>   # Signal de vie
+POST /api/log-play/<screen_code>    # Log de diffusion
 ```
 
 ## ⚙️ Paramètres Admin
 
-Dans l'espace admin, vous pouvez configurer :
+Dans l'espace admin (`/admin`), vous pouvez configurer :
 - 📱 Numéro WhatsApp pour recevoir les demandes d'inscription
 - 💰 Commissions par défaut/min/max
 - 🔍 Paramètres SEO
 - 🔧 Mode maintenance
 
+## 🧾 Système de reçus
+
+Après une réservation, le client peut télécharger :
+- **Image thermique** : Style ticket de caisse avec en-tête établissement + écran
+- **PDF** : Document imprimable
+
+Les reçus incluent :
+- Numéro de réservation
+- Détails du créneau et des diffusions
+- Prix dans la devise de l'établissement
+- QR code de vérification
+- Statut de validation
+
 ## 📄 Licence
 
-Propriétaire - Tous droits réservés
+Propriétaire - Tous droits réservés - Shabaka InnovLab
