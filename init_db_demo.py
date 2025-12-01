@@ -44,6 +44,8 @@ def create_demo_data():
             email='demo@restaurant-paris.fr',
             phone='+33 1 42 00 00 00',
             address='123 Avenue des Champs-Élysées, 75008 Paris',
+            country='FR',
+            currency='EUR',
             commission_rate=10.0,
             subscription_plan='premium'
         )
@@ -54,6 +56,8 @@ def create_demo_data():
             email='contact@bar-lyon.fr',
             phone='+33 4 72 00 00 00',
             address='45 Rue de la République, 69002 Lyon',
+            country='FR',
+            currency='EUR',
             commission_rate=12.0,
             subscription_plan='basic'
         )
@@ -64,10 +68,48 @@ def create_demo_data():
             email='pub@atlantis-mall.fr',
             phone='+33 2 40 00 00 00',
             address='Boulevard Salvador Allende, 44800 Saint-Herblain',
+            country='FR',
+            currency='EUR',
             commission_rate=8.0,
             subscription_plan='enterprise'
         )
         db.session.add(org3)
+        
+        org4 = Organization(
+            name='Café Marrakech',
+            email='contact@cafe-marrakech.ma',
+            phone='+212 5 24 00 00 00',
+            address='Avenue Mohammed V, Guéliz, Marrakech',
+            country='MA',
+            currency='MAD',
+            commission_rate=10.0,
+            subscription_plan='premium'
+        )
+        db.session.add(org4)
+        
+        org5 = Organization(
+            name='Restaurant Dakar Beach',
+            email='info@dakar-beach.sn',
+            phone='+221 33 820 00 00',
+            address='Corniche Ouest, Almadies, Dakar',
+            country='SN',
+            currency='XOF',
+            commission_rate=12.0,
+            subscription_plan='basic'
+        )
+        db.session.add(org5)
+        
+        org6 = Organization(
+            name='Tunisian Café',
+            email='contact@tunis-cafe.tn',
+            phone='+216 71 00 00 00',
+            address='Avenue Habib Bourguiba, Tunis',
+            country='TN',
+            currency='TND',
+            commission_rate=10.0,
+            subscription_plan='basic'
+        )
+        db.session.add(org6)
         
         db.session.flush()
         
@@ -99,6 +141,33 @@ def create_demo_data():
         )
         user3.set_password('demo123')
         db.session.add(user3)
+        
+        user4 = User(
+            username='Café Marrakech',
+            email='manager@cafe-marrakech.ma',
+            role='org',
+            organization_id=org4.id
+        )
+        user4.set_password('demo123')
+        db.session.add(user4)
+        
+        user5 = User(
+            username='Dakar Beach',
+            email='manager@dakar-beach.sn',
+            role='org',
+            organization_id=org5.id
+        )
+        user5.set_password('demo123')
+        db.session.add(user5)
+        
+        user6 = User(
+            username='Tunis Café',
+            email='manager@tunis-cafe.tn',
+            role='org',
+            organization_id=org6.id
+        )
+        user6.set_password('demo123')
+        db.session.add(user6)
         
         logger.info("📺 Création des écrans...")
         
@@ -182,11 +251,77 @@ def create_demo_data():
         screen5.set_password('screen123')
         db.session.add(screen5)
         
+        screen6 = Screen(
+            name='Écran Terrasse Marrakech',
+            location='Terrasse principale',
+            latitude=31.6295,
+            longitude=-7.9811,
+            resolution_width=1920,
+            resolution_height=1080,
+            orientation='landscape',
+            accepts_images=True,
+            accepts_videos=True,
+            max_file_size_mb=50,
+            organization_id=org4.id
+        )
+        screen6.set_password('screen123')
+        db.session.add(screen6)
+        
+        screen7 = Screen(
+            name='Totem Médina',
+            location='Entrée Médina',
+            latitude=31.6295,
+            longitude=-7.9811,
+            resolution_width=1080,
+            resolution_height=1920,
+            orientation='portrait',
+            accepts_images=True,
+            accepts_videos=True,
+            max_file_size_mb=50,
+            organization_id=org4.id
+        )
+        screen7.set_password('screen123')
+        db.session.add(screen7)
+        
+        screen8 = Screen(
+            name='Écran Beach Bar',
+            location='Bar de plage',
+            latitude=14.7167,
+            longitude=-17.4677,
+            resolution_width=1920,
+            resolution_height=1080,
+            orientation='landscape',
+            accepts_images=True,
+            accepts_videos=True,
+            max_file_size_mb=50,
+            organization_id=org5.id
+        )
+        screen8.set_password('screen123')
+        db.session.add(screen8)
+        
+        screen9 = Screen(
+            name='Écran Café Habib',
+            location='Salle principale',
+            latitude=36.8065,
+            longitude=10.1815,
+            resolution_width=1920,
+            resolution_height=1080,
+            orientation='landscape',
+            accepts_images=True,
+            accepts_videos=True,
+            max_file_size_mb=50,
+            organization_id=org6.id
+        )
+        screen9.set_password('screen123')
+        db.session.add(screen9)
+        
         db.session.flush()
+        
+        all_screens = [screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9]
         
         logger.info("⏱️  Création des créneaux horaires...")
         
-        for screen in [screen1, screen2, screen3, screen4, screen5]:
+        for screen in all_screens:
             slots = [
                 ('image', 5, 0.50),
                 ('image', 10, 0.80),
@@ -209,7 +344,7 @@ def create_demo_data():
         
         logger.info("🕐 Création des périodes horaires...")
         
-        for screen in [screen1, screen2, screen3, screen4, screen5]:
+        for screen in all_screens:
             periods = [
                 ('Matin', 6, 12, 0.8),
                 ('Midi', 12, 14, 1.5),
@@ -259,7 +394,7 @@ def create_demo_data():
         else:
             base_url = None
         
-        for screen in [screen1, screen2, screen3, screen4, screen5]:
+        for screen in all_screens:
             org_id = screen.organization_id
             upload_dir = f"static/uploads/fillers/{org_id}"
             file_os.makedirs(upload_dir, exist_ok=True)
@@ -358,6 +493,57 @@ def create_demo_data():
         )
         db.session.add(overlay4)
         
+        overlay5 = ScreenOverlay(
+            screen_id=screen6.id,
+            overlay_type='ticker',
+            message='مرحبا بكم في مقهى مراكش - Bienvenue au Café Marrakech - Thé à la menthe offert!',
+            position='footer',
+            position_mode='linear',
+            background_color='#dc2626',
+            text_color='#ffffff',
+            font_size=28,
+            scroll_speed=60,
+            frequency_type='duration',
+            display_duration=15,
+            frequency_unit='day',
+            is_active=True
+        )
+        db.session.add(overlay5)
+        
+        overlay6 = ScreenOverlay(
+            screen_id=screen8.id,
+            overlay_type='ticker',
+            message='Teranga Beach Bar - Happy Hour 17h-20h - Cocktails à 2000 FCFA',
+            position='header',
+            position_mode='linear',
+            background_color='#059669',
+            text_color='#ffffff',
+            font_size=28,
+            scroll_speed=55,
+            frequency_type='duration',
+            display_duration=20,
+            frequency_unit='day',
+            is_active=True
+        )
+        db.session.add(overlay6)
+        
+        overlay7 = ScreenOverlay(
+            screen_id=screen9.id,
+            overlay_type='ticker',
+            message='Café Habib Bourguiba - Wifi gratuit - Narguilé premium disponible',
+            position='footer',
+            position_mode='linear',
+            background_color='#7c3aed',
+            text_color='#ffffff',
+            font_size=26,
+            scroll_speed=50,
+            frequency_type='passage',
+            passage_limit=25,
+            frequency_unit='day',
+            is_active=True
+        )
+        db.session.add(overlay7)
+        
         db.session.commit()
         
         print("""
@@ -372,30 +558,38 @@ def create_demo_data():
        📧 Email: admin@shabaka-adscreen.com
        🔑 Mot de passe: admin123
     
-    🏢 ÉTABLISSEMENTS:
+    🏢 ÉTABLISSEMENTS (mot de passe: demo123):
     
-       1️⃣  Le Bistrot Parisien
-          📧 Email: manager@restaurant-paris.fr
-          🔑 Mot de passe: demo123
+    🇫🇷 FRANCE (EUR):
+       1️⃣  Le Bistrot Parisien - manager@restaurant-paris.fr
+       2️⃣  Bar Le Central - manager@bar-lyon.fr
+       3️⃣  Centre Commercial Atlantis - manager@atlantis-mall.fr
     
-       2️⃣  Bar Le Central
-          📧 Email: manager@bar-lyon.fr
-          🔑 Mot de passe: demo123
+    🇲🇦 MAROC (MAD):
+       4️⃣  Café Marrakech - manager@cafe-marrakech.ma
     
-       3️⃣  Centre Commercial Atlantis
-          📧 Email: manager@atlantis-mall.fr
-          🔑 Mot de passe: demo123
+    🇸🇳 SÉNÉGAL (XOF):
+       5️⃣  Restaurant Dakar Beach - manager@dakar-beach.sn
+    
+    🇹🇳 TUNISIE (TND):
+       6️⃣  Tunisian Café - manager@tunis-cafe.tn
     
     📺 ÉCRANS (mot de passe player: screen123):
-       • Le Bistrot Parisien: 2 écrans
-       • Bar Le Central: 1 écran
-       • Centre Commercial Atlantis: 2 écrans
+       • Le Bistrot Parisien: 2 écrans (FR)
+       • Bar Le Central: 1 écran (FR)
+       • Centre Commercial Atlantis: 2 écrans (FR)
+       • Café Marrakech: 2 écrans (MA)
+       • Restaurant Dakar Beach: 1 écran (SN)
+       • Tunisian Café: 1 écran (TN)
     
-    🔲 OVERLAYS DE DÉMONSTRATION (4 bandeaux):
+    🔲 OVERLAYS DE DÉMONSTRATION (7 bandeaux):
        • Écran Entrée (footer) - Happy Hour
        • Totem Hall A (header) - Soldes
        • Écran Bar (body) - Menu du jour
        • Écran Food Court (footer) - Horaires
+       • Terrasse Marrakech (footer) - Bilingue AR/FR
+       • Beach Bar Dakar (header) - Happy Hour FCFA
+       • Café Habib Tunis (footer) - Services
     
     ════════════════════════════════════════════════════════════════
         """)
