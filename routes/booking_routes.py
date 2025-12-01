@@ -11,6 +11,7 @@ from utils.image_utils import validate_image
 from utils.video_utils import validate_video, get_video_duration
 from services.qr_service import generate_qr_base64
 from services.receipt_generator import save_receipt_image
+from services.availability_service import calculate_availability, calculate_plays_for_dates, calculate_equitable_distribution
 from utils.currencies import get_currency_by_code
 
 booking_bp = Blueprint('booking', __name__)
@@ -272,3 +273,138 @@ def download_receipt(reservation_number):
         as_attachment=True,
         download_name=f'recu_{reservation_number}.png'
     )
+
+
+@booking_bp.route('/<screen_code>/availability', methods=['POST'])
+def get_availability(screen_code):
+    """
+    Calculate availability for a screen based on date range and options.
+    This implements the reservation algorithm for showing available slots.
+    """
+    screen = Screen.query.filter_by(unique_code=screen_code, is_active=True).first_or_404()
+    
+    data = request.get_json()
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    period_id = data.get('period_id')
+    slot_duration = data.get('slot_duration')
+    content_type = data.get('content_type', 'image')
+    
+    if not start_date or not end_date:
+        return jsonify({'error': 'Dates de debut et de fin requises'}), 400
+    
+    try:
+        if slot_duration:
+            slot_duration = int(slot_duration)
+    except (ValueError, TypeError):
+        slot_duration = None
+    
+    try:
+        if period_id:
+            period_id = int(period_id)
+    except (ValueError, TypeError):
+        period_id = None
+    
+    availability = calculate_availability(
+        screen, start_date, end_date, period_id, slot_duration, content_type
+    )
+    
+    distribution = calculate_equitable_distribution(
+        availability['available_plays'],
+        start_date,
+        end_date,
+        period_id
+    )
+    
+    slot = None
+    if slot_duration:
+        slot = TimeSlot.query.filter_by(
+            screen_id=screen.id,
+            content_type=content_type,
+            duration_seconds=slot_duration
+        ).first()
+    
+    period = TimePeriod.query.get(period_id) if period_id else None
+    multiplier = period.price_multiplier if period else 1.0
+    
+    price_per_play = (slot.price_per_play * multiplier) if slot else 0
+    
+    return jsonify({
+        'availability': {
+            'total_available_seconds': availability['total_available_seconds'],
+            'available_plays': availability['available_plays'],
+            'slot_duration': availability.get('slot_duration', slot_duration),
+            'num_days': availability['num_days'],
+            'periods': availability['periods']
+        },
+        'distribution': distribution,
+        'price_per_play': round(price_per_play, 2),
+        'recommended_plays': min(availability['available_plays'], max(10, availability['available_plays'] // 10))
+    })
+
+
+@booking_bp.route('/<screen_code>/calculate-dates', methods=['POST'])
+def calculate_from_dates(screen_code):
+    """
+    Calculate the number of plays and cost for a date range.
+    Implements the algorithm for the 'dates' booking mode.
+    """
+    screen = Screen.query.filter_by(unique_code=screen_code, is_active=True).first_or_404()
+    
+    data = request.get_json()
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    period_id = data.get('period_id')
+    slot_duration = int(data.get('slot_duration', 10))
+    content_type = data.get('content_type', 'image')
+    plays_per_day = int(data.get('plays_per_day', 20))
+    
+    if not start_date or not end_date:
+        return jsonify({'error': 'Dates requises'}), 400
+    
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Format de date invalide'}), 400
+    
+    num_days = (end - start).days + 1
+    if num_days <= 0:
+        return jsonify({'error': 'La date de fin doit etre apres la date de debut'}), 400
+    
+    total_plays = plays_per_day * num_days
+    
+    availability = calculate_availability(
+        screen, start_date, end_date, period_id, slot_duration, content_type
+    )
+    
+    if total_plays > availability['available_plays']:
+        total_plays = availability['available_plays']
+        plays_per_day = total_plays // num_days if num_days > 0 else total_plays
+    
+    slot = TimeSlot.query.filter_by(
+        screen_id=screen.id,
+        content_type=content_type,
+        duration_seconds=slot_duration
+    ).first()
+    
+    if not slot:
+        return jsonify({'error': 'Creneau non disponible'}), 400
+    
+    period = TimePeriod.query.get(period_id) if period_id else None
+    multiplier = period.price_multiplier if period else 1.0
+    
+    price_per_play = slot.price_per_play * multiplier
+    total_price = price_per_play * total_plays
+    
+    distribution = calculate_equitable_distribution(total_plays, start_date, end_date, period_id)
+    
+    return jsonify({
+        'num_days': num_days,
+        'plays_per_day': plays_per_day,
+        'total_plays': total_plays,
+        'max_available_plays': availability['available_plays'],
+        'price_per_play': round(price_per_play, 2),
+        'total_price': round(total_price, 2),
+        'distribution': distribution['distribution']
+    })

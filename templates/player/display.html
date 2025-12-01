@@ -465,18 +465,34 @@
             player.videoEl.loop = false;
             
             let hasLogged = false;
-            let hasEnded = false;
+            let videoEnded = false;
+            const slotDuration = duration * 1000;
+            const startTime = Date.now();
             
             const handleVideoEnd = () => {
-                if (hasEnded) return;
-                hasEnded = true;
-                debug('Video ended naturally');
-                clearTimer();
-                advanceToNext();
+                if (videoEnded) return;
+                videoEnded = true;
+                
+                const videoDuration = player.videoEl.duration || 0;
+                const elapsedTime = Date.now() - startTime;
+                const remainingSlotTime = slotDuration - elapsedTime;
+                
+                if (remainingSlotTime > 100) {
+                    debug(`Video ended (${videoDuration.toFixed(1)}s), keeping last frame for ${(remainingSlotTime/1000).toFixed(1)}s to complete ${duration}s slot`);
+                    player.videoEl.pause();
+                } else {
+                    debug('Video ended, slot duration reached');
+                }
             };
             
             player.videoEl.onloadeddata = () => {
-                debug('Video loaded, duration: ' + player.videoEl.duration);
+                const videoDuration = player.videoEl.duration || 0;
+                debug(`Video loaded, video duration: ${videoDuration.toFixed(1)}s, slot duration: ${duration}s`);
+                
+                if (videoDuration < duration) {
+                    debug(`Video shorter than slot (${videoDuration.toFixed(1)}s < ${duration}s) - will hold last frame`);
+                }
+                
                 player.videoEl.play().then(() => {
                     if (!hasLogged) {
                         hasLogged = true;
@@ -492,20 +508,16 @@
             
             player.videoEl.onerror = (e) => {
                 debug('Video error: ' + (e.message || 'unknown'));
-                if (!hasEnded) {
-                    hasEnded = true;
-                    scheduleNext(500);
-                }
+                scheduleNext(500);
             };
             
             player.videoEl.ontimeupdate = () => {
-                if (!hasEnded && player.videoEl.currentTime >= player.videoEl.duration - 0.1) {
+                if (!videoEnded && player.videoEl.currentTime >= player.videoEl.duration - 0.1) {
                     handleVideoEnd();
                 }
             };
             
-            const maxDuration = Math.max(duration, 5) * 1000 + 3000;
-            scheduleNext(maxDuration);
+            scheduleNext(slotDuration);
         }
 
         function updateInfoDisplay(item) {

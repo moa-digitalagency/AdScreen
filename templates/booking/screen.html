@@ -334,7 +334,7 @@ function toggleBookingMode() {
     updatePrice();
 }
 
-function calculatePlaysFromDates() {
+async function calculatePlaysFromDates() {
     const startDate = document.getElementById('start_date').value;
     const endDate = document.getElementById('end_date').value;
     
@@ -345,15 +345,51 @@ function calculatePlaysFromDates() {
         return;
     }
     
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const contentType = document.querySelector('input[name="content_type"]:checked')?.value || 'image';
+    const slotDuration = parseInt(document.querySelector('input[name="slot_duration"]:checked')?.value || 10);
+    const periodId = document.querySelector('input[name="period_id"]:checked')?.value || '';
     
-    const estimatedPlays = Math.max(1, Math.floor(diffDays * playsPerDayEstimate / 10));
+    try {
+        const response = await fetch(`/book/{{ screen.unique_code }}/availability`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate,
+                content_type: contentType,
+                slot_duration: slotDuration,
+                period_id: periodId || null
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Availability error:', data.error);
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+            const estimatedPlays = Math.max(1, Math.floor(diffDays * 20));
+            document.getElementById('estimated_plays').textContent = estimatedPlays;
+            document.getElementById('calculated_plays').value = estimatedPlays;
+        } else {
+            const recommendedPlays = data.recommended_plays || 10;
+            const availablePlays = data.availability?.available_plays || 0;
+            
+            document.getElementById('estimated_plays').innerHTML = 
+                `${recommendedPlays} <span class="text-xs text-blue-500">(max: ${availablePlays})</span>`;
+            document.getElementById('calculated_plays').value = recommendedPlays;
+        }
+    } catch (error) {
+        console.error('Error fetching availability:', error);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+        const estimatedPlays = Math.max(1, Math.floor(diffDays * 20));
+        document.getElementById('estimated_plays').textContent = estimatedPlays;
+        document.getElementById('calculated_plays').value = estimatedPlays;
+    }
     
-    document.getElementById('estimated_plays').textContent = estimatedPlays;
-    document.getElementById('calculated_plays').value = estimatedPlays;
     updatePrice();
 }
 
