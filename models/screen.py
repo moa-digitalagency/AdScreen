@@ -21,6 +21,7 @@ class Screen(db.Model):
     max_file_size_mb = db.Column(db.Integer, default=50)
     is_active = db.Column(db.Boolean, default=True)
     is_featured = db.Column(db.Boolean, default=False)
+    price_per_minute = db.Column(db.Float, default=2.0)  # Base price per minute for auto-calculating slot prices
     unique_code = db.Column(db.String(6), unique=True)
     password_hash = db.Column(db.String(256))
     last_heartbeat = db.Column(db.DateTime)
@@ -63,3 +64,22 @@ class Screen(db.Model):
         from math import gcd
         g = gcd(self.resolution_width, self.resolution_height)
         return f"{self.resolution_width // g}:{self.resolution_height // g}"
+    
+    def calculate_slot_price(self, duration_seconds):
+        """Calculate slot price based on duration and price_per_minute.
+        Formula: (duration_seconds / 60) * price_per_minute
+        Example: 15s at 2€/min = (15/60) * 2 = 0.50€
+        """
+        return round((duration_seconds / 60) * (self.price_per_minute or 2.0), 2)
+    
+    def get_currency_symbol(self):
+        """Get currency symbol from organization."""
+        if self.organization:
+            return self.organization.get_currency_symbol()
+        return '€'
+    
+    def get_currency(self):
+        """Get currency code from organization."""
+        if self.organization:
+            return self.organization.currency or 'EUR'
+        return 'EUR'

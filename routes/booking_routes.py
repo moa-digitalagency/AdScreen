@@ -58,10 +58,17 @@ def screen_booking(screen_code):
         for slot in screen.time_slots
     ]
     
+    org_currency = screen.organization.currency if screen.organization else 'EUR'
+    currency_info = get_currency_by_code(org_currency)
+    currency_symbol = currency_info.get('symbol', org_currency)
+    
     return render_template('booking/screen.html',
         screen=screen,
         current_period=current_period,
-        slots_json=slots_json
+        slots_json=slots_json,
+        currency_symbol=currency_symbol,
+        currency_code=org_currency,
+        price_per_minute=screen.price_per_minute or 2.0
     )
 
 

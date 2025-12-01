@@ -182,6 +182,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=50,
+            price_per_minute=2.0,
             organization_id=org1.id
         )
         screen1.set_password('screen123')
@@ -198,6 +199,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=30,
+            price_per_minute=1.5,
             organization_id=org1.id
         )
         screen2.set_password('screen123')
@@ -214,6 +216,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=False,
             max_file_size_mb=20,
+            price_per_minute=1.8,
             organization_id=org2.id
         )
         screen3.set_password('screen123')
@@ -230,6 +233,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=100,
+            price_per_minute=3.0,
             organization_id=org3.id
         )
         screen4.set_password('screen123')
@@ -246,6 +250,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=200,
+            price_per_minute=5.0,
             organization_id=org3.id
         )
         screen5.set_password('screen123')
@@ -262,6 +267,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=50,
+            price_per_minute=20.0,
             organization_id=org4.id
         )
         screen6.set_password('screen123')
@@ -278,6 +284,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=50,
+            price_per_minute=15.0,
             organization_id=org4.id
         )
         screen7.set_password('screen123')
@@ -294,6 +301,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=50,
+            price_per_minute=1000.0,
             organization_id=org5.id
         )
         screen8.set_password('screen123')
@@ -310,6 +318,7 @@ def create_demo_data():
             accepts_images=True,
             accepts_videos=True,
             max_file_size_mb=50,
+            price_per_minute=3.0,
             organization_id=org6.id
         )
         screen9.set_password('screen123')
@@ -319,25 +328,26 @@ def create_demo_data():
         
         all_screens = [screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9]
         
-        logger.info("⏱️  Création des créneaux horaires...")
+        logger.info("⏱️  Création des créneaux horaires (prix auto-calculés)...")
         
         for screen in all_screens:
-            slots = [
-                ('image', 5, 0.50),
-                ('image', 10, 0.80),
-                ('image', 15, 1.00),
-                ('video', 10, 1.50),
-                ('video', 15, 2.00),
-                ('video', 30, 3.50),
+            slot_durations = [
+                ('image', 10),
+                ('image', 15),
+                ('image', 30),
+                ('video', 15),
+                ('video', 30),
+                ('video', 60),
             ]
             
-            for content_type, duration, price in slots:
+            for content_type, duration in slot_durations:
                 if content_type == 'video' and not screen.accepts_videos:
                     continue
+                calculated_price = screen.calculate_slot_price(duration)
                 slot = TimeSlot(
                     content_type=content_type,
                     duration_seconds=duration,
-                    price_per_play=price,
+                    price_per_play=calculated_price,
                     screen_id=screen.id
                 )
                 db.session.add(slot)

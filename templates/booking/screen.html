@@ -109,6 +109,10 @@
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Durée du créneau</h2>
+                <p class="text-sm text-gray-500 mb-3">
+                    <i class="fas fa-info-circle text-primary-500 mr-1"></i>
+                    Tarif: {{ "%.2f"|format(price_per_minute) }}{{ currency_symbol }}/min
+                </p>
                 <div class="flex flex-wrap gap-3">
                     {% for slot in screen.time_slots %}
                     <label class="relative">
@@ -119,7 +123,7 @@
                         <span class="inline-flex items-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition slot-label"
                               data-type="{{ slot.content_type }}">
                             <span class="font-medium">{{ slot.duration_seconds }}s</span>
-                            <span class="text-gray-500">{{ "%.2f"|format(slot.price_per_play) }}€</span>
+                            <span class="text-gray-500">{{ "%.2f"|format(slot.price_per_play) }}{{ currency_symbol }}</span>
                         </span>
                     </label>
                     {% endfor %}
@@ -278,7 +282,7 @@
             <div class="bg-primary-600 rounded-xl p-6 text-white">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-white/80">Prix unitaire</span>
-                    <span id="pricePerPlay" class="font-mono">0.00€</span>
+                    <span id="pricePerPlay" class="font-mono">0.00{{ currency_symbol }}</span>
                 </div>
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-white/80">Nombre de diffusions</span>
@@ -286,7 +290,7 @@
                 </div>
                 <div class="border-t border-white/20 pt-4 flex items-center justify-between">
                     <span class="text-xl font-semibold">Total</span>
-                    <span id="totalPrice" class="text-3xl font-bold">0.00€</span>
+                    <span id="totalPrice" class="text-3xl font-bold">0.00{{ currency_symbol }}</span>
                 </div>
             </div>
 
@@ -303,6 +307,8 @@ const slots = {{ slots_json|tojson|safe }};
 const screenId = {{ screen.id }};
 const periods = {{ screen.time_periods|map(attribute='id')|list|tojson|safe }};
 const playsPerDayEstimate = {{ (screen.time_slots|length * 60) if screen.time_slots else 100 }};
+const currencySymbol = '{{ currency_symbol }}';
+const pricePerMinute = {{ price_per_minute }};
 
 function toggleBookingMode() {
     const mode = document.querySelector('input[name="booking_mode"]:checked')?.value || 'plays';
@@ -431,9 +437,9 @@ function updatePrice() {
     const pricePerPlay = basePrice * periodMultiplier;
     const total = pricePerPlay * numPlays;
     
-    document.getElementById('pricePerPlay').textContent = pricePerPlay.toFixed(2) + '€';
+    document.getElementById('pricePerPlay').textContent = pricePerPlay.toFixed(2) + currencySymbol;
     document.getElementById('displayNumPlays').textContent = numPlays;
-    document.getElementById('totalPrice').textContent = total.toFixed(2) + '€';
+    document.getElementById('totalPrice').textContent = total.toFixed(2) + currencySymbol;
     
     document.querySelectorAll('input[name="content_type"]').forEach(input => {
         const label = input.closest('label');
