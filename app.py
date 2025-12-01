@@ -65,6 +65,19 @@ def inject_now():
 
 
 @app.context_processor
+def inject_csrf_token():
+    import secrets
+    from flask import session
+    
+    def csrf_token():
+        if '_csrf_token' not in session:
+            session['_csrf_token'] = secrets.token_hex(32)
+        return session['_csrf_token']
+    
+    return {'csrf_token': csrf_token}
+
+
+@app.context_processor
 def inject_currency():
     from flask_login import current_user
     from utils.currencies import get_currency_by_code
