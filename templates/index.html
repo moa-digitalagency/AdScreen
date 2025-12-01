@@ -530,106 +530,108 @@
 </div>
 
 <!-- Modal de détection de résolution -->
-<div id="resolution-modal" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeResolutionModal()"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg mx-4">
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-desktop text-2xl"></i>
+<div id="resolution-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+    <div class="min-h-screen px-3 sm:px-4 py-4 sm:py-6 flex items-start sm:items-center justify-center">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeResolutionModal()"></div>
+        <div class="relative w-full max-w-md sm:max-w-lg mx-auto">
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 sm:p-6 text-white">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-desktop text-lg sm:text-2xl"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-base sm:text-xl font-bold truncate">Analyse de votre écran</h3>
+                                <p class="text-emerald-100 text-xs sm:text-sm truncate">Résolution détectée avec précision</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold">Analyse de votre écran</h3>
-                            <p class="text-emerald-100 text-sm">Résolution détectée avec précision</p>
-                        </div>
-                    </div>
-                    <button onclick="closeResolutionModal()" class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-gray-50 rounded-xl p-4 text-center">
-                        <div class="text-gray-500 text-xs mb-1">Largeur</div>
-                        <div class="text-2xl font-bold text-gray-900" id="screen-width">-</div>
-                        <div class="text-gray-400 text-xs">pixels</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-4 text-center">
-                        <div class="text-gray-500 text-xs mb-1">Hauteur</div>
-                        <div class="text-2xl font-bold text-gray-900" id="screen-height">-</div>
-                        <div class="text-gray-400 text-xs">pixels</div>
+                        <button onclick="closeResolutionModal()" class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition flex-shrink-0">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 </div>
-                
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-expand-arrows-alt text-emerald-600"></i>
-                            <span class="text-gray-700 text-sm font-medium">Résolution totale</span>
+                <div class="p-4 sm:p-6 max-h-[70vh] sm:max-h-none overflow-y-auto">
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <div class="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                            <div class="text-gray-500 text-xs mb-1">Largeur</div>
+                            <div class="text-xl sm:text-2xl font-bold text-gray-900" id="screen-width">-</div>
+                            <div class="text-gray-400 text-xs">pixels</div>
                         </div>
-                        <span class="font-bold text-emerald-600" id="total-resolution">-</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-mobile-alt text-gray-500"></i>
-                            <span class="text-gray-700 text-sm font-medium">Orientation</span>
-                        </div>
-                        <span class="font-semibold text-gray-900" id="screen-orientation">-</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-ruler-combined text-gray-500"></i>
-                            <span class="text-gray-700 text-sm font-medium">Ratio d'aspect</span>
-                        </div>
-                        <span class="font-semibold text-gray-900" id="aspect-ratio">-</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-search-plus text-gray-500"></i>
-                            <span class="text-gray-700 text-sm font-medium">Densité de pixels (DPR)</span>
-                        </div>
-                        <span class="font-semibold text-gray-900" id="pixel-density">-</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-palette text-gray-500"></i>
-                            <span class="text-gray-700 text-sm font-medium">Profondeur de couleur</span>
-                        </div>
-                        <span class="font-semibold text-gray-900" id="color-depth">-</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-window-maximize text-blue-600"></i>
-                            <span class="text-gray-700 text-sm font-medium">Zone visible (viewport)</span>
-                        </div>
-                        <span class="font-semibold text-blue-600" id="viewport-size">-</span>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <i class="fas fa-lightbulb text-emerald-600 text-sm"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900 mb-1">Recommandation</p>
-                            <p class="text-xs text-gray-600" id="screen-recommendation">-</p>
+                        <div class="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
+                            <div class="text-gray-500 text-xs mb-1">Hauteur</div>
+                            <div class="text-xl sm:text-2xl font-bold text-gray-900" id="screen-height">-</div>
+                            <div class="text-gray-400 text-xs">pixels</div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button onclick="copyResolutionInfo()" class="flex-1 btn-secondary justify-center text-sm py-2.5">
-                        <i class="fas fa-copy mr-2"></i>
-                        Copier les infos
-                    </button>
-                    <a href="{{ url_for('auth.register') }}" class="flex-1 btn-primary justify-center text-sm py-2.5">
-                        <i class="fas fa-rocket mr-2"></i>
-                        Créer un écran
-                    </a>
+                    
+                    <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-emerald-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-expand-arrows-alt text-emerald-600 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Résolution totale</span>
+                            </div>
+                            <span class="font-bold text-emerald-600 text-sm sm:text-base flex-shrink-0 ml-2" id="total-resolution">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-mobile-alt text-gray-500 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Orientation</span>
+                            </div>
+                            <span class="font-semibold text-gray-900 text-xs sm:text-sm flex-shrink-0 ml-2" id="screen-orientation">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-ruler-combined text-gray-500 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Ratio d'aspect</span>
+                            </div>
+                            <span class="font-semibold text-gray-900 text-sm flex-shrink-0 ml-2" id="aspect-ratio">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-search-plus text-gray-500 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Densité pixels (DPR)</span>
+                            </div>
+                            <span class="font-semibold text-gray-900 text-xs sm:text-sm flex-shrink-0 ml-2" id="pixel-density">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-palette text-gray-500 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Profondeur couleur</span>
+                            </div>
+                            <span class="font-semibold text-gray-900 text-sm flex-shrink-0 ml-2" id="color-depth">-</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2.5 sm:p-3 bg-blue-50 rounded-lg">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fas fa-window-maximize text-blue-600 text-sm flex-shrink-0"></i>
+                                <span class="text-gray-700 text-xs sm:text-sm font-medium truncate">Zone visible</span>
+                            </div>
+                            <span class="font-semibold text-blue-600 text-sm flex-shrink-0 ml-2" id="viewport-size">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4">
+                        <div class="flex items-start gap-2 sm:gap-3">
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-lightbulb text-emerald-600 text-xs sm:text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs sm:text-sm font-medium text-gray-900 mb-1">Recommandation</p>
+                                <p class="text-xs text-gray-600 leading-relaxed" id="screen-recommendation">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <button onclick="copyResolutionInfo()" class="flex-1 btn-secondary justify-center text-xs sm:text-sm py-2 sm:py-2.5">
+                            <i class="fas fa-copy mr-1.5 sm:mr-2"></i>
+                            Copier les infos
+                        </button>
+                        <a href="{{ url_for('auth.register') }}" class="flex-1 btn-primary justify-center text-xs sm:text-sm py-2 sm:py-2.5">
+                            <i class="fas fa-rocket mr-1.5 sm:mr-2"></i>
+                            Créer un écran
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
