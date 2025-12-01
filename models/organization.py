@@ -10,6 +10,7 @@ class Organization(db.Model):
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(256))
+    country = db.Column(db.String(5), default='FR')
     is_active = db.Column(db.Boolean, default=True)
     commission_rate = db.Column(db.Float, default=10.0)
     subscription_plan = db.Column(db.String(50), default='basic')

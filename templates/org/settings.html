@@ -1,0 +1,69 @@
+{% extends "org/base.html" %}
+
+{% block page_title %}Paramètres{% endblock %}
+
+{% block main_content %}
+<div class="max-w-2xl">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-cog text-gray-600 text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">Paramètres de l'établissement</h2>
+                <p class="text-gray-500 text-sm">{{ org.name }}</p>
+            </div>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="country" class="label">Pays</label>
+                    <select id="country" name="country" class="input-field">
+                        {% for code, name in countries %}
+                        <option value="{{ code }}" {% if code == org.country %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Le pays de votre établissement</p>
+                </div>
+                <div>
+                    <label for="currency" class="label">Devise</label>
+                    <select id="currency" name="currency" class="input-field">
+                        {% for curr in currencies %}
+                        <option value="{{ curr.code }}" {% if curr.code == org.currency %}selected{% endif %}>
+                            {{ curr.flag }} {{ curr.code }} - {{ curr.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-info-circle text-gray-400 mt-0.5"></i>
+                    <div class="text-sm text-gray-600">
+                        <p class="font-medium mb-1">Informations actuelles</p>
+                        <ul class="space-y-1 text-gray-500">
+                            <li><strong>Établissement:</strong> {{ org.name }}</li>
+                            <li><strong>Email:</strong> {{ org.email }}</li>
+                            <li><strong>Téléphone:</strong> {{ org.phone or 'Non renseigné' }}</li>
+                            <li><strong>Adresse:</strong> {{ org.address or 'Non renseignée' }}</li>
+                        </ul>
+                        <p class="text-xs text-gray-400 mt-2">Pour modifier ces informations, contactez l'administrateur.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save mr-2"></i>
+                    Enregistrer les modifications
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

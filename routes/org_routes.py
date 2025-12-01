@@ -71,6 +71,34 @@ def dashboard():
     )
 
 
+@org_bp.route('/settings', methods=['GET', 'POST'])
+@login_required
+@org_required
+def settings():
+    from utils.currencies import get_all_currencies, get_country_choices
+    
+    org = current_user.organization
+    currencies = get_all_currencies()
+    countries = get_country_choices()
+    
+    if request.method == 'POST':
+        country = request.form.get('country', org.country or 'FR')
+        currency = request.form.get('currency', org.currency or 'EUR')
+        
+        org.country = country
+        org.currency = currency
+        db.session.commit()
+        
+        flash('Paramètres mis à jour avec succès!', 'success')
+        return redirect(url_for('org.settings'))
+    
+    return render_template('org/settings.html',
+        org=org,
+        currencies=currencies,
+        countries=countries
+    )
+
+
 @org_bp.route('/screens')
 @login_required
 @org_required

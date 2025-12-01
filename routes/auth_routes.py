@@ -77,12 +77,13 @@ def login():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    from utils.currencies import get_all_currencies
+    from utils.currencies import get_all_currencies, get_country_choices
     
     if current_user.is_authenticated:
         return redirect(url_for('org.dashboard'))
     
     currencies = get_all_currencies()
+    countries = get_country_choices()
     
     if request.method == 'POST':
         name = request.form.get('name')
@@ -90,22 +91,23 @@ def register():
         org_name = request.form.get('org_name')
         phone = request.form.get('phone')
         address = request.form.get('address')
+        country = request.form.get('country', 'FR')
         currency = request.form.get('currency', 'EUR')
         message = request.form.get('message', '')
         
         if not name or not email or not org_name or not phone:
             flash('Veuillez remplir tous les champs obligatoires.', 'error')
-            return render_template('auth/register.html', currencies=currencies)
+            return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         existing_request = RegistrationRequest.query.filter_by(email=email, status='pending').first()
         if existing_request:
             flash('Une demande est déjà en cours pour cet email.', 'warning')
-            return render_template('auth/register.html', currencies=currencies)
+            return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash('Cet email est déjà associé à un compte.', 'error')
-            return render_template('auth/register.html', currencies=currencies)
+            return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         reg_request = RegistrationRequest(
             name=name,
@@ -113,6 +115,7 @@ def register():
             org_name=org_name,
             phone=phone,
             address=address,
+            country=country,
             currency=currency,
             message=message
         )
@@ -121,6 +124,8 @@ def register():
         
         admin_whatsapp = SiteSetting.get('admin_whatsapp_number', '')
         if admin_whatsapp:
+            from utils.currencies import get_country_name
+            country_name = get_country_name(country)
             whatsapp_message = f"""Nouvelle demande d'inscription AdScreen:
 
 Nom: {name}
@@ -128,6 +133,7 @@ Email: {email}
 Établissement: {org_name}
 Téléphone: {phone}
 Adresse: {address or 'Non renseignée'}
+Pays: {country_name}
 Devise: {currency}
 Message: {message or 'Aucun'}
 
@@ -139,7 +145,7 @@ Connectez-vous à l'admin pour valider cette demande."""
         flash('Votre demande a été envoyée avec succès! Nous vous contacterons bientôt via WhatsApp.', 'success')
         return redirect(url_for('auth.login'))
     
-    return render_template('auth/register.html', currencies=currencies)
+    return render_template('auth/register.html', currencies=currencies, countries=countries)
 
 
 @auth_bp.route('/logout')

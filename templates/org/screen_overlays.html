@@ -175,11 +175,11 @@
                         <div>
                             <label class="label">Taille sur l'écran</label>
                             <div class="flex items-center gap-3">
-                                <input type="range" name="image_width_percent" id="imageSize" min="5" max="50" value="20" 
+                                <input type="range" name="image_width_percent" id="imageSize" min="5" max="300" value="20" 
                                     class="flex-1" oninput="updateImageSizeLabel(); updateLivePreview();">
                                 <span id="imageSizeLabel" class="text-sm font-mono w-14 text-right">20%</span>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Pourcentage de la largeur de l'écran</p>
+                            <p class="text-xs text-gray-500 mt-1">Pourcentage de la largeur de l'écran (jusqu'à 300%)</p>
                         </div>
 
                         <div id="customPositionFields" class="hidden">
@@ -212,26 +212,53 @@
                 </div>
 
                 <div class="border-t border-gray-100 pt-4">
-                    <h4 class="font-medium text-gray-800 mb-3 text-sm">Paramètres d'affichage</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="label">Durée d'affichage (sec)</label>
-                            <input type="number" name="display_duration" id="displayDuration" value="10" min="1" max="300" class="input-field">
-                        </div>
-                        <div>
-                            <label class="label">Limite de passages</label>
-                            <input type="number" name="passage_limit" value="0" min="0" class="input-field" placeholder="0 = illimité">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mt-3">
+                    <h4 class="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
+                        <i class="fas fa-calendar-alt text-emerald-500"></i>
+                        Période d'affichage
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label class="label">Date de début</label>
                             <input type="datetime-local" name="start_time" class="input-field text-sm">
+                            <p class="text-xs text-gray-400 mt-1">Laisser vide = immédiat</p>
                         </div>
                         <div>
                             <label class="label">Date de fin</label>
                             <input type="datetime-local" name="end_time" class="input-field text-sm">
+                            <p class="text-xs text-gray-400 mt-1">Laisser vide = sans limite</p>
                         </div>
+                    </div>
+                    
+                    <h4 class="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
+                        <i class="fas fa-repeat text-blue-500"></i>
+                        Fréquence d'affichage
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Durée d'affichage (sec)</label>
+                            <input type="number" name="display_duration" id="displayDuration" value="10" min="1" max="300" class="input-field">
+                            <p class="text-xs text-gray-400 mt-1">Combien de temps l'overlay reste visible</p>
+                        </div>
+                        <div>
+                            <label class="label">Limite de passages</label>
+                            <input type="number" name="passage_limit" id="passageLimit" value="0" min="0" class="input-field" placeholder="0 = illimité">
+                            <p class="text-xs text-gray-400 mt-1">0 = affichage continu</p>
+                        </div>
+                    </div>
+                    <div class="mt-3" id="frequencyUnitContainer">
+                        <label class="label">Réinitialiser le compteur chaque</label>
+                        <select name="frequency_unit" id="frequencyUnit" class="input-field">
+                            <option value="hour">Heure</option>
+                            <option value="morning">Matin (6h-12h)</option>
+                            <option value="noon">Midi (12h-14h)</option>
+                            <option value="afternoon">Après-midi (14h-18h)</option>
+                            <option value="evening">Soir (18h-22h)</option>
+                            <option value="night">Nuit (22h-6h)</option>
+                            <option value="day">Jour</option>
+                            <option value="week">Semaine</option>
+                            <option value="month">Mois</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Le compteur de passages se réinitialise à chaque période</p>
                     </div>
                 </div>
 
@@ -472,21 +499,13 @@ function updateTickerPreview(position) {
     const previewFontSize = Math.max(10, Math.min(fontSize * 0.4, 18));
     const animationDuration = Math.max(3, 30 - (speed / 5));
     
-    if (position === 'body') {
-        target.innerHTML = `
-            <div class="w-full overflow-hidden" style="background: ${bgColor};">
-                <div class="ticker-text whitespace-nowrap" style="color: ${textColor}; font-size: ${previewFontSize}px; padding: 6px 0; animation: tickerScroll ${animationDuration}s linear infinite ${animationPaused ? 'paused' : 'running'};">
-                    ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message}
-                </div>
-            </div>
-        `;
-    } else {
-        target.innerHTML = `
-            <div class="ticker-text whitespace-nowrap" style="background: ${bgColor}; color: ${textColor}; font-size: ${previewFontSize}px; padding: 6px 0; animation: tickerScroll ${animationDuration}s linear infinite ${animationPaused ? 'paused' : 'running'};">
+    target.innerHTML = `
+        <div class="w-full overflow-hidden" style="background: ${bgColor};">
+            <div class="ticker-text whitespace-nowrap" style="color: ${textColor}; font-size: ${previewFontSize}px; padding: 6px 0; animation: tickerScroll ${animationDuration}s linear infinite ${animationPaused ? 'paused' : 'running'};">
                 ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message}
             </div>
-        `;
-    }
+        </div>
+    `;
     
     document.getElementById('bgColorText').value = bgColor;
     document.getElementById('textColorText').value = textColor;
@@ -579,12 +598,23 @@ function resetPreview() {
     updateLivePreview();
 }
 
+function updateFrequencyVisibility() {
+    const passageLimit = parseInt(document.getElementById('passageLimit').value) || 0;
+    const container = document.getElementById('frequencyUnitContainer');
+    if (container) {
+        container.style.display = passageLimit > 0 ? 'block' : 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     updateLivePreview();
+    updateFrequencyVisibility();
     
     document.getElementById('imagePosition').addEventListener('change', function() {
         updateLivePreview();
     });
+    
+    document.getElementById('passageLimit').addEventListener('input', updateFrequencyVisibility);
 });
 </script>
 

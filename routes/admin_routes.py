@@ -101,6 +101,33 @@ def dashboard():
             'commission': commission or 0
         })
     
+    from utils.currencies import get_country_by_code
+    
+    revenue_by_country = db.session.query(
+        Organization.country,
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).group_by(Organization.country, Organization.currency).all()
+    
+    country_stats = []
+    for country_code, currency_code, total, commission in revenue_by_country:
+        country_info = get_country_by_code(country_code or 'FR')
+        currency_info = get_currency_by_code(currency_code or 'EUR')
+        country_stats.append({
+            'country_code': country_code or 'FR',
+            'country_name': country_info.get('name', country_code),
+            'country_flag': country_info.get('flag', ''),
+            'currency_code': currency_code or 'EUR',
+            'currency_symbol': currency_info.get('symbol', currency_code),
+            'total': total or 0,
+            'commission': commission or 0
+        })
+    
     recent_orgs = Organization.query.order_by(Organization.created_at.desc()).limit(5).all()
     recent_bookings = Booking.query.filter_by(payment_status='paid').order_by(
         Booking.created_at.desc()
@@ -126,6 +153,7 @@ def dashboard():
         total_platform_commission=total_platform_commission,
         weekly_commission=weekly_commission,
         currency_stats=currency_stats,
+        country_stats=country_stats,
         recent_orgs=recent_orgs,
         recent_bookings=recent_bookings,
         top_orgs=top_orgs

@@ -38,6 +38,11 @@
                 <i class="fas fa-chart-bar w-5"></i>
                 <span>Statistiques</span>
             </a>
+            <a href="{{ url_for('org.settings') }}" 
+               class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition text-sm sm:text-base {% if request.endpoint == 'org.settings' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
+                <i class="fas fa-cog w-5"></i>
+                <span>Paramètres</span>
+            </a>
         </nav>
 
         <div class="absolute bottom-0 w-full p-3 sm:p-4 border-t border-gray-100">

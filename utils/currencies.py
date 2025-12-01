@@ -1,3 +1,89 @@
+COUNTRIES = {
+    "EU": {"name": "Union Européenne", "flag": "🇪🇺"},
+    "FR": {"name": "France", "flag": "🇫🇷"},
+    "US": {"name": "États-Unis", "flag": "🇺🇸"},
+    "GB": {"name": "Royaume-Uni", "flag": "🇬🇧"},
+    "CH": {"name": "Suisse", "flag": "🇨🇭"},
+    "CA": {"name": "Canada", "flag": "🇨🇦"},
+    "AU": {"name": "Australie", "flag": "🇦🇺"},
+    "JP": {"name": "Japon", "flag": "🇯🇵"},
+    "CN": {"name": "Chine", "flag": "🇨🇳"},
+    "IN": {"name": "Inde", "flag": "🇮🇳"},
+    "BR": {"name": "Brésil", "flag": "🇧🇷"},
+    "MX": {"name": "Mexique", "flag": "🇲🇽"},
+    "AR": {"name": "Argentine", "flag": "🇦🇷"},
+    "CO": {"name": "Colombie", "flag": "🇨🇴"},
+    "CL": {"name": "Chili", "flag": "🇨🇱"},
+    "PE": {"name": "Pérou", "flag": "🇵🇪"},
+    "MA": {"name": "Maroc", "flag": "🇲🇦"},
+    "TN": {"name": "Tunisie", "flag": "🇹🇳"},
+    "DZ": {"name": "Algérie", "flag": "🇩🇿"},
+    "EG": {"name": "Égypte", "flag": "🇪🇬"},
+    "SA": {"name": "Arabie Saoudite", "flag": "🇸🇦"},
+    "AE": {"name": "Émirats Arabes Unis", "flag": "🇦🇪"},
+    "QA": {"name": "Qatar", "flag": "🇶🇦"},
+    "KW": {"name": "Koweït", "flag": "🇰🇼"},
+    "BH": {"name": "Bahreïn", "flag": "🇧🇭"},
+    "OM": {"name": "Oman", "flag": "🇴🇲"},
+    "JO": {"name": "Jordanie", "flag": "🇯🇴"},
+    "LB": {"name": "Liban", "flag": "🇱🇧"},
+    "IL": {"name": "Israël", "flag": "🇮🇱"},
+    "TR": {"name": "Turquie", "flag": "🇹🇷"},
+    "RU": {"name": "Russie", "flag": "🇷🇺"},
+    "UA": {"name": "Ukraine", "flag": "🇺🇦"},
+    "PL": {"name": "Pologne", "flag": "🇵🇱"},
+    "CZ": {"name": "République Tchèque", "flag": "🇨🇿"},
+    "HU": {"name": "Hongrie", "flag": "🇭🇺"},
+    "RO": {"name": "Roumanie", "flag": "🇷🇴"},
+    "BG": {"name": "Bulgarie", "flag": "🇧🇬"},
+    "HR": {"name": "Croatie", "flag": "🇭🇷"},
+    "RS": {"name": "Serbie", "flag": "🇷🇸"},
+    "SE": {"name": "Suède", "flag": "🇸🇪"},
+    "NO": {"name": "Norvège", "flag": "🇳🇴"},
+    "DK": {"name": "Danemark", "flag": "🇩🇰"},
+    "IS": {"name": "Islande", "flag": "🇮🇸"},
+    "ZA": {"name": "Afrique du Sud", "flag": "🇿🇦"},
+    "NG": {"name": "Nigéria", "flag": "🇳🇬"},
+    "KE": {"name": "Kenya", "flag": "🇰🇪"},
+    "GH": {"name": "Ghana", "flag": "🇬🇭"},
+    "SN": {"name": "Sénégal", "flag": "🇸🇳"},
+    "CM": {"name": "Cameroun", "flag": "🇨🇲"},
+    "CI": {"name": "Côte d'Ivoire", "flag": "🇨🇮"},
+    "MU": {"name": "Maurice", "flag": "🇲🇺"},
+    "TZ": {"name": "Tanzanie", "flag": "🇹🇿"},
+    "UG": {"name": "Ouganda", "flag": "🇺🇬"},
+    "RW": {"name": "Rwanda", "flag": "🇷🇼"},
+    "ET": {"name": "Éthiopie", "flag": "🇪🇹"},
+    "TH": {"name": "Thaïlande", "flag": "🇹🇭"},
+    "VN": {"name": "Vietnam", "flag": "🇻🇳"},
+    "ID": {"name": "Indonésie", "flag": "🇮🇩"},
+    "MY": {"name": "Malaisie", "flag": "🇲🇾"},
+    "SG": {"name": "Singapour", "flag": "🇸🇬"},
+    "PH": {"name": "Philippines", "flag": "🇵🇭"},
+    "KR": {"name": "Corée du Sud", "flag": "🇰🇷"},
+    "TW": {"name": "Taïwan", "flag": "🇹🇼"},
+    "HK": {"name": "Hong Kong", "flag": "🇭🇰"},
+    "NZ": {"name": "Nouvelle-Zélande", "flag": "🇳🇿"},
+    "PK": {"name": "Pakistan", "flag": "🇵🇰"},
+    "BD": {"name": "Bangladesh", "flag": "🇧🇩"},
+    "LK": {"name": "Sri Lanka", "flag": "🇱🇰"},
+    "NP": {"name": "Népal", "flag": "🇳🇵"},
+    "MM": {"name": "Myanmar", "flag": "🇲🇲"},
+    "KH": {"name": "Cambodge", "flag": "🇰🇭"},
+    "LA": {"name": "Laos", "flag": "🇱🇦"},
+    "BE": {"name": "Belgique", "flag": "🇧🇪"},
+    "NL": {"name": "Pays-Bas", "flag": "🇳🇱"},
+    "DE": {"name": "Allemagne", "flag": "🇩🇪"},
+    "IT": {"name": "Italie", "flag": "🇮🇹"},
+    "ES": {"name": "Espagne", "flag": "🇪🇸"},
+    "PT": {"name": "Portugal", "flag": "🇵🇹"},
+    "AT": {"name": "Autriche", "flag": "🇦🇹"},
+    "IE": {"name": "Irlande", "flag": "🇮🇪"},
+    "FI": {"name": "Finlande", "flag": "🇫🇮"},
+    "GR": {"name": "Grèce", "flag": "🇬🇷"},
+    "LU": {"name": "Luxembourg", "flag": "🇱🇺"},
+}
+
 CURRENCIES = [
     {"code": "EUR", "name": "Euro", "symbol": "€", "country": "EU", "flag": "🇪🇺"},
     {"code": "USD", "name": "Dollar américain", "symbol": "$", "country": "US", "flag": "🇺🇸"},
@@ -76,6 +162,26 @@ def get_all_currencies():
     return CURRENCIES
 
 
+def get_all_countries():
+    return COUNTRIES
+
+
+def get_country_by_code(code):
+    if code in COUNTRIES:
+        return {"code": code, **COUNTRIES[code]}
+    return {"code": code, "name": code, "flag": ""}
+
+
+def get_country_name(code):
+    country = COUNTRIES.get(code, {})
+    return country.get("name", code)
+
+
+def get_country_flag(code):
+    country = COUNTRIES.get(code, {})
+    return country.get("flag", "")
+
+
 def get_currency_by_code(code):
     for currency in CURRENCIES:
         if currency["code"] == code:
@@ -90,3 +196,11 @@ def get_currency_symbol(code):
 
 def get_currency_choices():
     return [(c["code"], f"{c['flag']} {c['code']} - {c['name']}") for c in CURRENCIES]
+
+
+def get_country_choices():
+    return [(code, f"{info['flag']} {info['name']}") for code, info in sorted(COUNTRIES.items(), key=lambda x: x[1]['name'])]
+
+
+def get_currencies_by_country(country_code):
+    return [c for c in CURRENCIES if c["country"] == country_code]

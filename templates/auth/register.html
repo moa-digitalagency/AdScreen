@@ -103,18 +103,31 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">Devise de facturation</label>
-                        <select id="currency" name="currency" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
-                            {% for curr in currencies %}
-                            <option value="{{ curr.code }}" {% if curr.code == 'EUR' %}selected{% endif %}>
-                                {{ curr.flag }} {{ curr.code }} - {{ curr.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">Choisissez la devise pour vos tarifs et factures</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
+                            <select id="country" name="country" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                {% for code, name in countries %}
+                                <option value="{{ code }}" {% if code == 'FR' %}selected{% endif %}>
+                                    {{ name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">Devise</label>
+                            <select id="currency" name="currency" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                                {% for curr in currencies %}
+                                <option value="{{ curr.code }}" {% if curr.code == 'EUR' %}selected{% endif %}>
+                                    {{ curr.flag }} {{ curr.code }} - {{ curr.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
+                    <p class="text-xs text-gray-500 -mt-3">Choisissez votre pays et la devise pour vos tarifs</p>
 
                     <div>
                         <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message (optionnel)</label>
