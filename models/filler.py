@@ -11,6 +11,7 @@ class Filler(db.Model):
     file_path = db.Column(db.String(512), nullable=False)
     duration_seconds = db.Column(db.Float)
     is_active = db.Column(db.Boolean, default=True)
+    in_playlist = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=False)

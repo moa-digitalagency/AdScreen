@@ -289,7 +289,9 @@
         let heartbeatInterval;
         let playTimeout;
         let controlsTimeout;
+        let refreshInterval;
         const CONTROLS_HIDE_DELAY = 10000;
+        const PLAYLIST_REFRESH_INTERVAL = 10000;
 
         function showControls() {
             document.body.classList.add('show-controls');
@@ -321,24 +323,39 @@
                     return;
                 }
                 
-                const oldPlaylistLength = playlist.length;
                 const oldPlaylistIds = new Set(playlist.map(p => `${p.id}-${p.category}`));
+                const newPlaylist = data.playlist;
                 
-                playlist = data.playlist;
-                overlays = data.overlays || [];
-                
-                const newItems = playlist.filter(p => !oldPlaylistIds.has(`${p.id}-${p.category}`));
+                const newItems = newPlaylist.filter(p => !oldPlaylistIds.has(`${p.id}-${p.category}`));
                 if (newItems.length > 0) {
                     console.log('New items added to playlist:', newItems.length);
                 }
                 
-                console.log('Playlist loaded:', playlist.length, 'items');
-                console.log('Overlays loaded:', overlays.length, 'items');
+                const removedItems = playlist.filter(p => 
+                    !newPlaylist.some(np => np.id === p.id && np.category === p.category)
+                );
+                if (removedItems.length > 0) {
+                    console.log('Items removed from playlist:', removedItems.length);
+                }
+                
+                playlist = newPlaylist;
+                overlays = data.overlays || [];
+                
+                if (currentIndex >= playlist.length) {
+                    currentIndex = 0;
+                }
+                
+                console.log('Playlist updated:', playlist.length, 'items');
                 renderOverlays();
                 
                 if (!isPlaying && playlist.length > 0 && !isPaused) {
                     isPlaying = true;
                     playNext();
+                }
+                
+                if (playlist.length === 0) {
+                    document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
+                    document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
                 }
             } catch (error) {
                 console.error('Failed to fetch playlist:', error);
@@ -347,7 +364,7 @@
 
         async function logPlay(item) {
             try {
-                await fetch('/player/api/log-play', {
+                const response = await fetch('/player/api/log-play', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -358,6 +375,12 @@
                         booking_id: item.booking_id
                     })
                 });
+                
+                const result = await response.json();
+                if (result.exhausted) {
+                    console.log('Content exhausted, will be removed from playlist');
+                    fetchPlaylist();
+                }
             } catch (error) {
                 console.error('Failed to log play:', error);
             }
@@ -381,7 +404,16 @@
         }
 
         function playNext() {
-            if (isPaused || playlist.length === 0) return;
+            if (isPaused) return;
+            
+            if (playlist.length === 0) {
+                document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
+                document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
+                isPlaying = false;
+                return;
+            }
+            
+            clearTimeout(playTimeout);
             
             const item = playlist[currentIndex];
             const imageEl = document.getElementById('imageContent');
@@ -393,17 +425,22 @@
                 'filler': '🎬 Démo'
             };
             
-            document.getElementById('currentInfo').textContent = 
-                `${categoryLabels[item.category] || item.category} - ${item.duration}s`;
+            const itemName = item.name || 'Contenu';
+            document.getElementById('currentInfo').innerHTML = 
+                `<strong>${categoryLabels[item.category] || item.category}</strong> - ${itemName}<br>
+                 <span style="opacity: 0.7">Durée: ${item.duration}s ${item.remaining_plays ? `| Restant: ${item.remaining_plays}` : ''}</span>`;
             
             const nextIndex = (currentIndex + 1) % playlist.length;
             const nextItem = playlist[nextIndex];
             document.getElementById('nextInfo').textContent = 
-                `Suivant: ${categoryLabels[nextItem.category] || nextItem.category}`;
+                `Suivant: ${categoryLabels[nextItem.category] || nextItem.category} - ${nextItem.name || 'Contenu'}`;
+            
+            const duration = parseInt(item.duration) || 10;
             
             if (item.type === 'image') {
                 videoEl.style.display = 'none';
                 videoEl.pause();
+                videoEl.onended = null;
                 imageEl.style.display = 'block';
                 imageEl.src = item.url;
                 imageEl.id = 'content';
@@ -413,7 +450,7 @@
                 playTimeout = setTimeout(() => {
                     currentIndex = (currentIndex + 1) % playlist.length;
                     playNext();
-                }, item.duration * 1000);
+                }, duration * 1000);
                 
             } else if (item.type === 'video') {
                 imageEl.style.display = 'none';
@@ -422,19 +459,28 @@
                 videoEl.id = 'content';
                 
                 videoEl.onloadeddata = () => {
-                    videoEl.play();
+                    videoEl.play().catch(e => console.error('Video play error:', e));
                     logPlay(item);
                 };
                 
                 videoEl.onended = () => {
+                    clearTimeout(playTimeout);
+                    currentIndex = (currentIndex + 1) % playlist.length;
+                    playNext();
+                };
+                
+                videoEl.onerror = () => {
+                    console.error('Video load error, skipping to next');
+                    clearTimeout(playTimeout);
                     currentIndex = (currentIndex + 1) % playlist.length;
                     playNext();
                 };
                 
                 playTimeout = setTimeout(() => {
+                    videoEl.onended = null;
                     currentIndex = (currentIndex + 1) % playlist.length;
                     playNext();
-                }, (item.duration + 1) * 1000);
+                }, (duration + 2) * 1000);
             }
         }
 
@@ -449,7 +495,10 @@
                     videoEl.pause();
                 }
             } else {
-                playNext();
+                if (playlist.length > 0) {
+                    isPlaying = true;
+                    playNext();
+                }
             }
             
             sendHeartbeat();
@@ -506,25 +555,26 @@
             
             document.getElementById('loading').classList.add('hidden');
             
+            heartbeatInterval = setInterval(sendHeartbeat, 30000);
+            sendHeartbeat();
+            
+            refreshInterval = setInterval(fetchPlaylist, PLAYLIST_REFRESH_INTERVAL);
+            
             if (playlist.length > 0) {
                 isPlaying = true;
                 playNext();
-                
-                heartbeatInterval = setInterval(sendHeartbeat, 30000);
-                sendHeartbeat();
-                
-                setInterval(fetchPlaylist, 30000);
             } else {
                 document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
-                document.getElementById('nextInfo').textContent = 'La playlist est vide';
-                
-                setInterval(fetchPlaylist, 10000);
+                document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
             }
         }
 
         window.addEventListener('beforeunload', () => {
             if (heartbeatInterval) {
                 clearInterval(heartbeatInterval);
+            }
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
             }
         });
     </script>

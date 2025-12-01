@@ -12,77 +12,64 @@
     {% if contents %}
     <div class="divide-y divide-gray-100">
         {% for content in contents %}
-        <div class="p-6 flex items-start gap-6">
-            <div class="w-32 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                {% if content.content_type == 'image' %}
-                <img src="/{{ content.file_path }}" alt="Preview" class="w-full h-full object-cover">
-                {% else %}
-                <video src="/{{ content.file_path }}" class="w-full h-full object-cover" muted></video>
-                {% endif %}
-            </div>
-            
-            <div class="flex-1">
-                <div class="flex items-start justify-between mb-2">
-                    <div>
-                        <h3 class="font-medium text-gray-800">{{ content.original_filename }}</h3>
-                        <p class="text-sm text-gray-500">{{ content.screen.name }}</p>
-                    </div>
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
-                        En attente
-                    </span>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                        <p class="text-xs text-gray-500">Client</p>
-                        <p class="text-sm font-medium">{{ content.client_name or 'Anonyme' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Email</p>
-                        <p class="text-sm font-medium">{{ content.client_email or '-' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Type</p>
-                        <p class="text-sm font-medium capitalize">{{ content.content_type }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Résolution</p>
-                        <p class="text-sm font-medium font-mono">{{ content.width }}x{{ content.height }}</p>
-                    </div>
-                </div>
-
-                {% if content.booking %}
-                <div class="bg-gray-50 rounded-lg p-3 mb-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-sm text-gray-600">{{ content.booking.num_plays }} diffusions</span>
-                            <span class="text-gray-400 mx-2">•</span>
-                            <span class="text-sm text-gray-600">{{ content.booking.slot_duration }}s</span>
+        <div class="p-4 sm:p-6 hover:bg-gray-50/50 transition">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                <div class="flex items-start gap-4 flex-1">
+                    <div class="w-24 h-16 sm:w-32 sm:h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer relative group" 
+                         onclick="openPreview('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.original_filename }}')">
+                        {% if content.content_type == 'image' %}
+                        <img src="/{{ content.file_path }}" alt="Preview" class="w-full h-full object-cover">
+                        {% else %}
+                        <video src="/{{ content.file_path }}" class="w-full h-full object-cover" muted></video>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <i class="fas fa-play text-white text-xl"></i>
                         </div>
-                        <span class="font-semibold text-gray-800">{{ "%.2f"|format(content.booking.total_price) }}€</span>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="font-medium text-gray-800 truncate">{{ content.original_filename }}</h3>
+                            <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium flex-shrink-0">
+                                En attente
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-2">
+                            <i class="fas fa-tv mr-1"></i>{{ content.screen.name }}
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                            <span><i class="fas fa-user mr-1"></i>{{ content.client_name or 'Anonyme' }}</span>
+                            <span><i class="fas fa-{{ 'image' if content.content_type == 'image' else 'video' }} mr-1"></i>{{ content.content_type|capitalize }}</span>
+                            <span><i class="fas fa-expand-arrows-alt mr-1"></i>{{ content.width }}x{{ content.height }}</span>
+                            {% if content.booking %}
+                            <span><i class="fas fa-clock mr-1"></i>{{ content.booking.slot_duration }}s</span>
+                            <span><i class="fas fa-redo mr-1"></i>{{ content.booking.num_plays }} diffusions</span>
+                            <span class="font-semibold text-gray-800"><i class="fas fa-euro-sign mr-1"></i>{{ "%.2f"|format(content.booking.total_price) }}€</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                {% endif %}
                 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 lg:flex-shrink-0">
+                    <button onclick="openPreview('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.original_filename }}')" 
+                            class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <i class="fas fa-eye"></i>
+                        <span class="hidden sm:inline">Aperçu</span>
+                    </button>
+                    
                     <form action="{{ url_for('org.approve_content', content_id=content.id) }}" method="POST" class="inline">
-                        <button type="submit" class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        <button type="submit" class="flex items-center gap-2 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                             <i class="fas fa-check"></i>
-                            Approuver
+                            <span class="hidden sm:inline">Approuver</span>
                         </button>
                     </form>
                     
                     <button onclick="showRejectModal({{ content.id }})" 
-                        class="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                            class="flex items-center gap-2 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                         <i class="fas fa-times"></i>
-                        Refuser
+                        <span class="hidden sm:inline">Refuser</span>
                     </button>
-                    
-                    <a href="/{{ content.file_path }}" target="_blank" 
-                       class="inline-flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition">
-                        <i class="fas fa-eye"></i>
-                        Voir
-                    </a>
                 </div>
             </div>
         </div>
@@ -97,6 +84,24 @@
         <p class="text-gray-500">Aucun contenu en attente de validation.</p>
     </div>
     {% endif %}
+</div>
+
+<div id="previewModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50" onclick="closePreview(event)">
+    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 overflow-hidden" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <h3 id="previewTitle" class="font-semibold text-gray-800">Aperçu du contenu</h3>
+            <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="previewContent" class="bg-black flex items-center justify-center" style="max-height: 70vh;">
+        </div>
+        <div class="p-4 bg-gray-50 flex justify-end gap-3">
+            <button onclick="closePreview()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                Fermer
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
@@ -127,6 +132,36 @@
 </div>
 
 <script>
+function openPreview(filePath, contentType, fileName) {
+    const modal = document.getElementById('previewModal');
+    const content = document.getElementById('previewContent');
+    const title = document.getElementById('previewTitle');
+    
+    title.textContent = fileName;
+    
+    if (contentType === 'image') {
+        content.innerHTML = `<img src="/${filePath}" alt="Preview" style="max-width: 100%; max-height: 70vh; object-fit: contain;">`;
+    } else {
+        content.innerHTML = `<video src="/${filePath}" controls autoplay style="max-width: 100%; max-height: 70vh;"></video>`;
+    }
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closePreview(event) {
+    if (event && event.target !== event.currentTarget) return;
+    const modal = document.getElementById('previewModal');
+    const content = document.getElementById('previewContent');
+    
+    const video = content.querySelector('video');
+    if (video) video.pause();
+    
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    content.innerHTML = '';
+}
+
 function showRejectModal(contentId) {
     document.getElementById('rejectForm').action = `/org/validation/${contentId}/reject`;
     document.getElementById('rejectModal').classList.remove('hidden');
@@ -137,5 +172,12 @@ function hideRejectModal() {
     document.getElementById('rejectModal').classList.add('hidden');
     document.getElementById('rejectModal').classList.remove('flex');
 }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreview();
+        hideRejectModal();
+    }
+});
 </script>
 {% endblock %}

@@ -836,3 +836,99 @@ def screen_playlist(screen_id):
         fillers=fillers,
         overlays=overlays
     )
+
+
+@org_bp.route('/content/<int:content_id>/remove-from-playlist', methods=['POST'])
+@login_required
+@org_required
+def remove_content_from_playlist(content_id):
+    content = Content.query.join(Screen).filter(
+        Content.id == content_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    content.in_playlist = False
+    db.session.commit()
+    
+    flash('Contenu retiré de la playlist.', 'info')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/content/<int:content_id>/add-to-playlist', methods=['POST'])
+@login_required
+@org_required
+def add_content_to_playlist(content_id):
+    content = Content.query.join(Screen).filter(
+        Content.id == content_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    content.in_playlist = True
+    db.session.commit()
+    
+    flash('Contenu ajouté à la playlist!', 'success')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/filler/<int:filler_id>/remove-from-playlist', methods=['POST'])
+@login_required
+@org_required
+def remove_filler_from_playlist(filler_id):
+    filler = Filler.query.join(Screen).filter(
+        Filler.id == filler_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    filler.in_playlist = False
+    db.session.commit()
+    
+    flash('Filler retiré de la playlist.', 'info')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/filler/<int:filler_id>/add-to-playlist', methods=['POST'])
+@login_required
+@org_required
+def add_filler_to_playlist(filler_id):
+    filler = Filler.query.join(Screen).filter(
+        Filler.id == filler_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    filler.in_playlist = True
+    db.session.commit()
+    
+    flash('Filler ajouté à la playlist!', 'success')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/internal/<int:internal_id>/remove-from-playlist', methods=['POST'])
+@login_required
+@org_required
+def remove_internal_from_playlist(internal_id):
+    internal = InternalContent.query.join(Screen).filter(
+        InternalContent.id == internal_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    internal.in_playlist = False
+    db.session.commit()
+    
+    flash('Contenu interne retiré de la playlist.', 'info')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/internal/<int:internal_id>/add-to-playlist', methods=['POST'])
+@login_required
+@org_required
+def add_internal_to_playlist(internal_id):
+    internal = InternalContent.query.join(Screen).filter(
+        InternalContent.id == internal_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    internal.in_playlist = True
+    db.session.commit()
+    
+    flash('Contenu interne ajouté à la playlist!', 'success')
+    return redirect(request.referrer or url_for('org.contents'))

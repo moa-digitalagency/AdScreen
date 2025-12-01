@@ -13,6 +13,7 @@ class InternalContent(db.Model):
     duration_seconds = db.Column(db.Float)
     priority = db.Column(db.Integer, default=80)
     is_active = db.Column(db.Boolean, default=True)
+    in_playlist = db.Column(db.Boolean, default=True)
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

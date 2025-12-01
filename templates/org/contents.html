@@ -44,8 +44,9 @@
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Playlist</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Diffusions</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
@@ -81,6 +82,17 @@
                         </td>
                         <td class="px-6 py-4 text-gray-800">{{ content.screen.name }}</td>
                         <td class="px-6 py-4">
+                            {% if content.in_playlist is not none and content.in_playlist %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                <i class="fas fa-list-ul mr-1"></i>Active
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
+                                <i class="fas fa-ban mr-1"></i>Retirée
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
                             {% if content.status == 'approved' %}
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approuvé</span>
                             {% elif content.status == 'pending' %}
@@ -91,13 +103,33 @@
                             <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Rejeté</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">{{ content.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {% if content.booking %}
+                            <div class="text-gray-800 font-medium">{{ content.booking.plays_completed }}/{{ content.booking.num_plays }}</div>
+                            <div class="text-xs text-gray-400">{{ content.booking.slot_duration }}s chaque</div>
+                            {% else %}
+                            <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
                                 <button onclick="openPreviewModal('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.screen.resolution_width }}', '{{ content.screen.resolution_height }}')" 
                                         class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                {% if content.in_playlist is not none and content.in_playlist %}
+                                <form action="{{ url_for('org.remove_content_from_playlist', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Retirer de la playlist">
+                                        <i class="fas fa-list-ul"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form action="{{ url_for('org.add_content_to_playlist', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Ajouter à la playlist">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
                                 {% if content.status == 'approved' %}
                                 <form action="{{ url_for('org.suspend_content', content_id=content.id) }}" method="POST" class="inline">
                                     <button type="submit" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Suspendre">

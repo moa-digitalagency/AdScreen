@@ -19,6 +19,7 @@ class Content(db.Model):
     client_name = db.Column(db.String(128))
     client_email = db.Column(db.String(120))
     client_phone = db.Column(db.String(20))
+    in_playlist = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     validated_at = db.Column(db.DateTime)
     

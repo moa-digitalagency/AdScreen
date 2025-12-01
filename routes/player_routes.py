@@ -80,6 +80,7 @@ def get_playlist():
     paid_contents = Content.query.join(Booking).filter(
         Content.screen_id == screen.id,
         Content.status == 'approved',
+        Content.in_playlist == True,
         Booking.status == 'active',
         Booking.plays_completed < Booking.num_plays
     ).all()
@@ -89,23 +90,29 @@ def get_playlist():
             if content.booking.time_period_id != current_period.id:
                 continue
         
+        duration = content.booking.slot_duration if content.booking else (content.duration_seconds or 10)
+        remaining = content.booking.num_plays - content.booking.plays_completed if content.booking else 0
+        
         playlist.append({
             'id': content.id,
             'type': content.content_type,
             'url': f'/{content.file_path}',
-            'duration': content.duration_seconds or 10,
+            'duration': duration,
             'priority': 100,
             'category': 'paid',
-            'booking_id': content.booking.id
+            'booking_id': content.booking.id if content.booking else None,
+            'remaining_plays': remaining,
+            'name': content.original_filename or content.filename
         })
     
     internal_contents = InternalContent.query.filter_by(
         screen_id=screen.id,
-        is_active=True
+        is_active=True,
+        in_playlist=True
     ).all()
     
+    today = datetime.now().date()
     for internal in internal_contents:
-        today = datetime.now().date()
         if internal.start_date and internal.start_date > today:
             continue
         if internal.end_date and internal.end_date < today:
@@ -117,12 +124,14 @@ def get_playlist():
             'url': f'/{internal.file_path}',
             'duration': internal.duration_seconds or 10,
             'priority': internal.priority,
-            'category': 'internal'
+            'category': 'internal',
+            'name': internal.name
         })
     
     fillers = Filler.query.filter_by(
         screen_id=screen.id,
-        is_active=True
+        is_active=True,
+        in_playlist=True
     ).all()
     
     for filler in fillers:
@@ -132,7 +141,8 @@ def get_playlist():
             'url': f'/{filler.file_path}',
             'duration': filler.duration_seconds or 10,
             'priority': 20,
-            'category': 'filler'
+            'category': 'filler',
+            'name': filler.filename
         })
     
     playlist.sort(key=lambda x: x['priority'], reverse=True)
@@ -208,13 +218,15 @@ def log_play():
     )
     db.session.add(stat)
     
+    exhausted = False
     if category == 'paid' and booking_id:
         booking = Booking.query.get(booking_id)
         if booking:
             booking.plays_completed += 1
             if booking.plays_completed >= booking.num_plays:
                 booking.status = 'completed'
+                exhausted = True
     
     db.session.commit()
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'exhausted': exhausted})
