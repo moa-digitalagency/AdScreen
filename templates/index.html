@@ -70,10 +70,10 @@
                             <i class="fas fa-rocket"></i>
                             Commencer gratuitement
                         </a>
-                        <a href="#comment-ca-marche" class="btn-secondary justify-center">
-                            <i class="fas fa-play-circle"></i>
-                            Voir la démo
-                        </a>
+                        <button onclick="detectScreenResolution()" class="btn-secondary justify-center" id="detect-resolution-btn">
+                            <i class="fas fa-desktop"></i>
+                            Détecter mon écran
+                        </button>
                     </div>
                     <div class="flex items-center justify-center lg:justify-start gap-6 sm:gap-8">
                         <div class="text-center">
@@ -528,4 +528,203 @@
         </div>
     </footer>
 </div>
+
+<!-- Modal de détection de résolution -->
+<div id="resolution-modal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeResolutionModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg mx-4">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-desktop text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Analyse de votre écran</h3>
+                            <p class="text-emerald-100 text-sm">Résolution détectée avec précision</p>
+                        </div>
+                    </div>
+                    <button onclick="closeResolutionModal()" class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-xl p-4 text-center">
+                        <div class="text-gray-500 text-xs mb-1">Largeur</div>
+                        <div class="text-2xl font-bold text-gray-900" id="screen-width">-</div>
+                        <div class="text-gray-400 text-xs">pixels</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4 text-center">
+                        <div class="text-gray-500 text-xs mb-1">Hauteur</div>
+                        <div class="text-2xl font-bold text-gray-900" id="screen-height">-</div>
+                        <div class="text-gray-400 text-xs">pixels</div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-expand-arrows-alt text-emerald-600"></i>
+                            <span class="text-gray-700 text-sm font-medium">Résolution totale</span>
+                        </div>
+                        <span class="font-bold text-emerald-600" id="total-resolution">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-mobile-alt text-gray-500"></i>
+                            <span class="text-gray-700 text-sm font-medium">Orientation</span>
+                        </div>
+                        <span class="font-semibold text-gray-900" id="screen-orientation">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-ruler-combined text-gray-500"></i>
+                            <span class="text-gray-700 text-sm font-medium">Ratio d'aspect</span>
+                        </div>
+                        <span class="font-semibold text-gray-900" id="aspect-ratio">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-search-plus text-gray-500"></i>
+                            <span class="text-gray-700 text-sm font-medium">Densité de pixels (DPR)</span>
+                        </div>
+                        <span class="font-semibold text-gray-900" id="pixel-density">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-palette text-gray-500"></i>
+                            <span class="text-gray-700 text-sm font-medium">Profondeur de couleur</span>
+                        </div>
+                        <span class="font-semibold text-gray-900" id="color-depth">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-window-maximize text-blue-600"></i>
+                            <span class="text-gray-700 text-sm font-medium">Zone visible (viewport)</span>
+                        </div>
+                        <span class="font-semibold text-blue-600" id="viewport-size">-</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-lightbulb text-emerald-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 mb-1">Recommandation</p>
+                            <p class="text-xs text-gray-600" id="screen-recommendation">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="copyResolutionInfo()" class="flex-1 btn-secondary justify-center text-sm py-2.5">
+                        <i class="fas fa-copy mr-2"></i>
+                        Copier les infos
+                    </button>
+                    <a href="{{ url_for('auth.register') }}" class="flex-1 btn-primary justify-center text-sm py-2.5">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Créer un écran
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function detectScreenResolution() {
+    // Détection précise de la résolution
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
+    const availWidth = window.screen.availWidth;
+    const availHeight = window.screen.availHeight;
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const colorDepth = window.screen.colorDepth;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Résolution physique réelle (en tenant compte du DPR)
+    const physicalWidth = Math.round(screenWidth * devicePixelRatio);
+    const physicalHeight = Math.round(screenHeight * devicePixelRatio);
+    
+    // Calcul du ratio d'aspect
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    const divisor = gcd(screenWidth, screenHeight);
+    const ratioW = screenWidth / divisor;
+    const ratioH = screenHeight / divisor;
+    
+    // Déterminer l'orientation
+    const orientation = screenWidth > screenHeight ? 'Paysage (Landscape)' : 
+                       screenWidth < screenHeight ? 'Portrait' : 'Carré';
+    
+    // Recommandation basée sur la résolution
+    let recommendation = '';
+    if (physicalWidth >= 3840) {
+        recommendation = 'Écran 4K Ultra HD - Parfait pour les affichages publicitaires grand format avec une qualité exceptionnelle.';
+    } else if (physicalWidth >= 2560) {
+        recommendation = 'Écran QHD/2K - Excellent pour les affichages publicitaires de qualité professionnelle.';
+    } else if (physicalWidth >= 1920) {
+        recommendation = 'Écran Full HD - Idéal pour la plupart des espaces publicitaires. Rapport qualité/visibilité optimal.';
+    } else if (physicalWidth >= 1280) {
+        recommendation = 'Écran HD - Convient pour les petits affichages et les espaces avec distance de vue réduite.';
+    } else {
+        recommendation = 'Résolution standard - Recommandé pour les petits écrans d\'information ou menus.';
+    }
+    
+    // Mise à jour de la modale
+    document.getElementById('screen-width').textContent = screenWidth;
+    document.getElementById('screen-height').textContent = screenHeight;
+    document.getElementById('total-resolution').textContent = `${screenWidth} × ${screenHeight}`;
+    document.getElementById('screen-orientation').textContent = orientation;
+    document.getElementById('aspect-ratio').textContent = `${ratioW}:${ratioH}`;
+    document.getElementById('pixel-density').textContent = `${devicePixelRatio}x (${physicalWidth}×${physicalHeight} réel)`;
+    document.getElementById('color-depth').textContent = `${colorDepth} bits`;
+    document.getElementById('viewport-size').textContent = `${viewportWidth} × ${viewportHeight}`;
+    document.getElementById('screen-recommendation').textContent = recommendation;
+    
+    // Afficher la modale
+    document.getElementById('resolution-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeResolutionModal() {
+    document.getElementById('resolution-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function copyResolutionInfo() {
+    const info = `
+Résolution d'écran détectée:
+- Résolution: ${document.getElementById('total-resolution').textContent}
+- Orientation: ${document.getElementById('screen-orientation').textContent}
+- Ratio d'aspect: ${document.getElementById('aspect-ratio').textContent}
+- Densité de pixels: ${document.getElementById('pixel-density').textContent}
+- Profondeur de couleur: ${document.getElementById('color-depth').textContent}
+- Viewport: ${document.getElementById('viewport-size').textContent}
+
+Généré par Shabaka AdScreen
+    `.trim();
+    
+    navigator.clipboard.writeText(info).then(() => {
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check mr-2"></i>Copié !';
+        btn.classList.add('bg-emerald-100', 'text-emerald-700');
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('bg-emerald-100', 'text-emerald-700');
+        }, 2000);
+    });
+}
+
+// Fermer avec Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeResolutionModal();
+});
+</script>
 {% endblock %}
