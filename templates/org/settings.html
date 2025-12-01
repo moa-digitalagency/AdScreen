@@ -79,7 +79,7 @@
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                         <label for="country" class="label">Pays</label>
-                        <select id="country" name="country" class="input-field">
+                        <select id="country" name="country" class="input-field" onchange="updateCities()">
                             {% for code, name in countries %}
                             <option value="{{ code }}" {% if code == org.country %}selected{% endif %}>
                                 {{ name }}
@@ -88,6 +88,20 @@
                         </select>
                         <p class="text-xs text-gray-500 mt-1">Le pays de votre établissement</p>
                     </div>
+                    <div>
+                        <label for="city" class="label">Ville</label>
+                        <select id="city" name="city" class="input-field">
+                            <option value="">-- Sélectionner une ville --</option>
+                            {% for city_name in cities %}
+                            <option value="{{ city_name }}" {% if city_name == org.city %}selected{% endif %}>
+                                {{ city_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">La ville de votre établissement</p>
+                    </div>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4 mt-4">
                     <div>
                         <label for="currency" class="label">Devise</label>
                         <select id="currency" name="currency" class="input-field">
@@ -99,17 +113,17 @@
                         </select>
                         <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
                     </div>
-                </div>
-                <div class="mt-4">
-                    <label for="timezone" class="label">Fuseau horaire</label>
-                    <select id="timezone" name="timezone" class="input-field">
-                        {% for tz in timezones %}
-                        <option value="{{ tz }}" {% if tz == org.timezone %}selected{% endif %}>
-                            {{ tz }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">Le fuseau horaire de votre établissement</p>
+                    <div>
+                        <label for="timezone" class="label">Fuseau horaire</label>
+                        <select id="timezone" name="timezone" class="input-field">
+                            {% for tz in timezones %}
+                            <option value="{{ tz }}" {% if tz == org.timezone %}selected{% endif %}>
+                                {{ tz }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Le fuseau horaire de votre établissement</p>
+                    </div>
                 </div>
             </div>
 
@@ -137,4 +151,32 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateCities() {
+    const countrySelect = document.getElementById('country');
+    const citySelect = document.getElementById('city');
+    const country = countrySelect.value;
+    
+    citySelect.innerHTML = '<option value="">Chargement...</option>';
+    
+    fetch('/api/cities?country=' + encodeURIComponent(country))
+        .then(response => response.json())
+        .then(cities => {
+            citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading cities:', error);
+            citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+        });
+}
+</script>
 {% endblock %}

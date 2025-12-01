@@ -345,6 +345,9 @@ def get_all_countries():
 
 
 def get_country_by_code(code):
+    from utils.world_data import WORLD_COUNTRIES
+    if code in WORLD_COUNTRIES:
+        return {"code": code, **WORLD_COUNTRIES[code]}
     if code in COUNTRIES:
         return {"code": code, **COUNTRIES[code]}
     return {"code": code, "name": code, "flag": ""}
@@ -377,8 +380,19 @@ def get_currency_choices():
 
 
 def get_country_choices():
-    return [(code, f"{info['flag']} {info['name']}") for code, info in sorted(COUNTRIES.items(), key=lambda x: x[1]['name'])]
+    from utils.world_data import WORLD_COUNTRIES
+    return [(code, f"{info['flag']} {info['name']}") for code, info in sorted(WORLD_COUNTRIES.items(), key=lambda x: x[1]['name'])]
 
 
 def get_currencies_by_country(country_code):
     return [c for c in CURRENCIES if c["country"] == country_code]
+
+
+def get_cities_for_country(country_code):
+    from utils.world_data import get_cities_for_country as _get_cities
+    return _get_cities(country_code)
+
+
+def search_cities(query, country_code=None, limit=20):
+    from utils.world_data import search_cities as _search_cities
+    return _search_cities(query, country_code, limit)

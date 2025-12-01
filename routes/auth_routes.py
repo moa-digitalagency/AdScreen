@@ -255,3 +255,23 @@ def detect_country_from_ip(request):
             return lang_parts[1].upper()
     
     return None
+
+
+@auth_bp.route('/api/cities')
+def api_cities():
+    """API endpoint for city autocomplete."""
+    from flask import jsonify
+    from utils.currencies import get_cities_for_country
+    
+    country_code = request.args.get('country', '')
+    query = request.args.get('q', '').strip().lower()
+    
+    if not country_code:
+        return jsonify([])
+    
+    cities = get_cities_for_country(country_code)
+    
+    if query:
+        cities = [c for c in cities if c.lower().startswith(query)]
+    
+    return jsonify(cities[:30])

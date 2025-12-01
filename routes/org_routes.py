@@ -140,12 +140,13 @@ def booking_history():
 @login_required
 @org_required
 def settings():
-    from utils.currencies import get_all_currencies, get_country_choices
+    from utils.currencies import get_all_currencies, get_country_choices, get_cities_for_country
     from models.site_setting import SiteSetting
     
     org = current_user.organization
     currencies = get_all_currencies()
     countries = get_country_choices()
+    cities = get_cities_for_country(org.country or 'FR')
     registration_label = SiteSetting.get('registration_number_label', "Numéro d'immatriculation")
     
     timezones = [
@@ -171,6 +172,7 @@ def settings():
         name = request.form.get('name', '').strip()
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
+        city = request.form.get('city', '').strip()
         country = request.form.get('country', org.country or 'FR')
         currency = request.form.get('currency', org.currency or 'EUR')
         timezone_input = request.form.get('timezone', org.timezone or 'UTC')
@@ -194,6 +196,7 @@ def settings():
                 org=org,
                 currencies=currencies,
                 countries=countries,
+                cities=cities,
                 timezones=timezones,
                 registration_label=registration_label
             )
@@ -201,6 +204,7 @@ def settings():
         org.name = name
         org.phone = phone
         org.address = address
+        org.city = city
         org.country = country
         org.currency = currency
         org.timezone = timezone_input
@@ -218,6 +222,7 @@ def settings():
         org=org,
         currencies=currencies,
         countries=countries,
+        cities=cities,
         timezones=timezones,
         registration_label=registration_label
     )
