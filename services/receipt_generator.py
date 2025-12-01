@@ -93,10 +93,10 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
     
     y = padding
     
-    title_bbox = temp_draw.textbbox((0, 0), "SHABAKA ADSCREEN", font=font_title)
+    title_bbox = temp_draw.textbbox((0, 0), data['org_name'], font=font_title)
     y += (title_bbox[3] - title_bbox[1]) + 5
     
-    subtitle_bbox = temp_draw.textbbox((0, 0), data['org_name'], font=font_subtitle)
+    subtitle_bbox = temp_draw.textbbox((0, 0), data['screen_name'], font=font_subtitle)
     y += (subtitle_bbox[3] - subtitle_bbox[1]) + 15
     
     y += 3
@@ -143,13 +143,13 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
     
     y = padding
     
-    title = "SHABAKA ADSCREEN"
+    title = data['org_name']
     title_bbox = draw.textbbox((0, 0), title, font=font_title)
     title_x = (width - (title_bbox[2] - title_bbox[0])) // 2
     draw.text((title_x, y), title, fill='#000000', font=font_title)
     y += (title_bbox[3] - title_bbox[1]) + 5
     
-    subtitle = data['org_name']
+    subtitle = data['screen_name']
     subtitle_bbox = draw.textbbox((0, 0), subtitle, font=font_subtitle)
     subtitle_x = (width - (subtitle_bbox[2] - subtitle_bbox[0])) // 2
     draw.text((subtitle_x, y), subtitle, fill='#000000', font=font_subtitle)
@@ -316,13 +316,14 @@ def generate_receipt_pdf(booking, screen, content, qr_base64=None):
     
     y = pdf_height - 20
     
-    c.setFont("Courier-Bold", 12)
-    c.drawCentredString(pdf_width / 2, y, "SHABAKA ADSCREEN")
+    c.setFont("Courier-Bold", 10)
+    org_name = data['org_name'][:25]
+    c.drawCentredString(pdf_width / 2, y, org_name)
     y -= 12
     
     c.setFont("Courier", 8)
-    org_name = data['org_name'][:25]
-    c.drawCentredString(pdf_width / 2, y, org_name)
+    screen_name = data['screen_name'][:25]
+    c.drawCentredString(pdf_width / 2, y, screen_name)
     y -= 15
     
     c.line(10, y, pdf_width - 10, y)
