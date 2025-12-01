@@ -157,7 +157,7 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     org_x = (width - (org_bbox[2] - org_bbox[0])) // 2
     org_y = int(header_height * 0.20)
     
-    draw.text((org_x + 3, org_y + 3), org_name, fill='#4338ca', font=title_font)
+    draw.text((org_x + 3, org_y + 3), org_name, fill='#047857', font=title_font)
     draw.text((org_x, org_y), org_name, fill='white', font=title_font)
     
     underline_width = min(int((org_bbox[2] - org_bbox[0]) * 0.6), width - 100)
