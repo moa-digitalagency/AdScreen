@@ -503,6 +503,34 @@ def toggle_featured(screen_id):
     return redirect(request.referrer or url_for('admin.screens'))
 
 
+@admin_bp.route('/screen/<int:screen_id>/assign', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def assign_screen(screen_id):
+    screen = Screen.query.get_or_404(screen_id)
+    organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
+    
+    if request.method == 'POST':
+        new_org_id = request.form.get('organization_id')
+        if new_org_id:
+            new_org = Organization.query.get(new_org_id)
+            if new_org:
+                old_org_name = screen.organization.name if screen.organization else 'Aucun'
+                screen.organization_id = new_org.id
+                db.session.commit()
+                flash(f'Écran "{screen.name}" transféré de "{old_org_name}" vers "{new_org.name}".', 'success')
+                return redirect(url_for('admin.screens'))
+            else:
+                flash('Établissement non trouvé.', 'error')
+        else:
+            flash('Veuillez sélectionner un établissement.', 'error')
+    
+    return render_template('admin/assign_screen.html', 
+        screen=screen, 
+        organizations=organizations
+    )
+
+
 @admin_bp.route('/registration-requests')
 @login_required
 @superadmin_required

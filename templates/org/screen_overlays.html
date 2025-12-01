@@ -28,10 +28,14 @@
                     <div class="text-sm text-blue-700">
                         <p class="font-medium mb-1">Types d'overlays disponibles</p>
                         <ul class="list-disc list-inside space-y-1">
-                            <li><strong>Bandeau défilant</strong>: Texte qui défile horizontalement (ticker)</li>
-                            <li><strong>Image fixe</strong>: Image positionnée sur une partie de l'écran</li>
+                            <li><strong>Bandeau défilant</strong>: Texte qui défile horizontalement (ideal pour les infos)</li>
+                            <li><strong>Image fixe</strong>: Logo, watermark ou image positionnée</li>
                         </ul>
-                        <p class="mt-2"><strong>Positions</strong>: Header (haut), Body (centre), Footer (bas)</p>
+                        <p class="mt-2"><strong>Modes de position</strong>:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li><strong>Linéaire</strong>: Header (haut), Body (centre), Footer (bas) - pleine largeur</li>
+                            <li><strong>Coin</strong>: Haut-gauche, Haut-droite, Bas-gauche, Bas-droite - compact</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -46,12 +50,40 @@
                         </select>
                     </div>
                     <div>
-                        <label class="label">Position</label>
+                        <label class="label">Mode de position</label>
+                        <select name="position_mode" id="position_mode" class="input-field" onchange="togglePositionMode(); updatePreview();">
+                            <option value="linear">Linéaire (Header/Body/Footer)</option>
+                            <option value="corner">Coin (Angles de l'écran)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div id="linear_position_field">
+                        <label class="label">Position linéaire</label>
                         <select name="position" id="position" class="input-field" onchange="updatePreview()">
                             <option value="header">Header (Haut)</option>
                             <option value="body">Body (Centre)</option>
                             <option value="footer" selected>Footer (Bas)</option>
                         </select>
+                    </div>
+                    <div id="corner_position_field" class="hidden">
+                        <label class="label">Position coin</label>
+                        <select name="corner_position" id="corner_position" class="input-field" onchange="updatePreview()">
+                            <option value="top_left">Haut-Gauche</option>
+                            <option value="top_right">Haut-Droite</option>
+                            <option value="bottom_left">Bas-Gauche</option>
+                            <option value="bottom_right" selected>Bas-Droite</option>
+                        </select>
+                    </div>
+                    <div id="corner_size_field" class="hidden">
+                        <label class="label">Taille (% de l'écran)</label>
+                        <input type="range" name="corner_size" id="corner_size" min="5" max="30" value="15" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" onchange="updatePreview(); updateSizeLabel();">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>5%</span>
+                            <span id="corner_size_label">15%</span>
+                            <span>30%</span>
+                        </div>
                     </div>
                 </div>
 
@@ -179,15 +211,31 @@
             <h3 class="font-semibold text-gray-800 mb-4">Aperçu en direct</h3>
             <div class="relative bg-gray-900 rounded-lg overflow-hidden" 
                  id="previewScreen"
-                 style="aspect-ratio: {{ screen.resolution_width }}/{{ screen.resolution_height }};">
+                 style="aspect-ratio: {{ screen.resolution_width }}/{{ screen.resolution_height }}; min-height: 200px;">
                 <div class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
-                    <i class="fas fa-tv mr-2"></i>Contenu principal
+                    <div class="text-center">
+                        <i class="fas fa-tv text-3xl mb-2"></i>
+                        <p>Contenu principal</p>
+                    </div>
                 </div>
                 <div id="previewHeader" class="absolute top-0 left-0 right-0 hidden"></div>
                 <div id="previewFooter" class="absolute bottom-0 left-0 right-0 hidden"></div>
                 <div id="previewBody" class="absolute inset-0 flex items-center justify-center hidden"></div>
+                <div id="previewTopLeft" class="absolute top-2 left-2 hidden"></div>
+                <div id="previewTopRight" class="absolute top-2 right-2 hidden"></div>
+                <div id="previewBottomLeft" class="absolute bottom-2 left-2 hidden"></div>
+                <div id="previewBottomRight" class="absolute bottom-2 right-2 hidden"></div>
             </div>
-            <p class="text-xs text-gray-400 text-center mt-2">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
+            <div class="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
+                <span class="flex items-center gap-1">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    {{ screen.resolution_width }}x{{ screen.resolution_height }}
+                </span>
+                <span class="flex items-center gap-1">
+                    <i class="fas fa-mobile-alt"></i>
+                    {{ screen.orientation|capitalize }}
+                </span>
+            </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -230,51 +278,120 @@
             <div id="modalPreviewHeader" class="absolute top-0 left-0 right-0"></div>
             <div id="modalPreviewFooter" class="absolute bottom-0 left-0 right-0"></div>
             <div id="modalPreviewBody" class="absolute inset-0 flex items-center justify-center"></div>
+            <div id="modalPreviewTopLeft" class="absolute top-4 left-4"></div>
+            <div id="modalPreviewTopRight" class="absolute top-4 right-4"></div>
+            <div id="modalPreviewBottomLeft" class="absolute bottom-4 left-4"></div>
+            <div id="modalPreviewBottomRight" class="absolute bottom-4 right-4"></div>
         </div>
     </div>
 </div>
 
 <script>
+const screenWidth = {{ screen.resolution_width }};
+const screenHeight = {{ screen.resolution_height }};
+
 function toggleOverlayType() {
     const type = document.getElementById('overlay_type').value;
     document.getElementById('ticker_fields').classList.toggle('hidden', type !== 'ticker');
     document.getElementById('image_fields').classList.toggle('hidden', type !== 'image');
+    
+    if (type === 'ticker') {
+        document.getElementById('position_mode').value = 'linear';
+        togglePositionMode();
+    }
+}
+
+function togglePositionMode() {
+    const mode = document.getElementById('position_mode').value;
+    const isLinear = mode === 'linear';
+    
+    document.getElementById('linear_position_field').classList.toggle('hidden', !isLinear);
+    document.getElementById('corner_position_field').classList.toggle('hidden', isLinear);
+    document.getElementById('corner_size_field').classList.toggle('hidden', isLinear);
+}
+
+function updateSizeLabel() {
+    const size = document.getElementById('corner_size').value;
+    document.getElementById('corner_size_label').textContent = size + '%';
+}
+
+function clearAllPreviews() {
+    ['previewHeader', 'previewFooter', 'previewBody', 'previewTopLeft', 'previewTopRight', 'previewBottomLeft', 'previewBottomRight'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = '';
+            el.classList.add('hidden');
+        }
+    });
 }
 
 function updatePreview() {
     const type = document.getElementById('overlay_type').value;
-    const position = document.getElementById('position').value;
+    const positionMode = document.getElementById('position_mode').value;
     const bgColor = document.getElementById('background_color').value;
     const textColor = document.getElementById('text_color').value;
     const fontSize = document.getElementById('font_size').value;
     const message = document.getElementById('message').value;
+    const cornerSize = document.getElementById('corner_size').value;
     
-    document.getElementById('previewHeader').classList.add('hidden');
-    document.getElementById('previewFooter').classList.add('hidden');
-    document.getElementById('previewBody').classList.add('hidden');
+    clearAllPreviews();
     
     let targetEl;
-    if (position === 'header') targetEl = document.getElementById('previewHeader');
-    else if (position === 'footer') targetEl = document.getElementById('previewFooter');
-    else targetEl = document.getElementById('previewBody');
     
-    if (type === 'ticker' && message) {
-        targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: ${fontSize}px; padding: 8px; white-space: nowrap; overflow: hidden;">${message}</div>`;
-        targetEl.classList.remove('hidden');
+    if (positionMode === 'linear') {
+        const position = document.getElementById('position').value;
+        if (position === 'header') targetEl = document.getElementById('previewHeader');
+        else if (position === 'footer') targetEl = document.getElementById('previewFooter');
+        else targetEl = document.getElementById('previewBody');
+        
+        if (type === 'ticker' && message) {
+            targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: ${Math.min(fontSize, 16)}px; padding: 8px; white-space: nowrap; overflow: hidden;">${message}</div>`;
+            targetEl.classList.remove('hidden');
+        }
+    } else {
+        const cornerPos = document.getElementById('corner_position').value;
+        const posMap = {
+            'top_left': 'previewTopLeft',
+            'top_right': 'previewTopRight',
+            'bottom_left': 'previewBottomLeft',
+            'bottom_right': 'previewBottomRight'
+        };
+        targetEl = document.getElementById(posMap[cornerPos]);
+        
+        if (type === 'ticker' && message) {
+            targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: 10px; padding: 4px 8px; border-radius: 4px; max-width: ${cornerSize * 2}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${message}</div>`;
+            targetEl.classList.remove('hidden');
+        } else if (type === 'image') {
+            targetEl.innerHTML = `<div style="width: ${cornerSize * 3}px; height: ${cornerSize * 2}px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-image text-white/50"></i></div>`;
+            targetEl.classList.remove('hidden');
+        }
     }
 }
 
 function previewOverlay(id, type, position, bgColor, textColor, fontSize, message, imagePath) {
     const modal = document.getElementById('overlayPreviewModal');
     
-    document.getElementById('modalPreviewHeader').innerHTML = '';
-    document.getElementById('modalPreviewFooter').innerHTML = '';
-    document.getElementById('modalPreviewBody').innerHTML = '';
+    ['modalPreviewHeader', 'modalPreviewFooter', 'modalPreviewBody', 'modalPreviewTopLeft', 'modalPreviewTopRight', 'modalPreviewBottomLeft', 'modalPreviewBottomRight'].forEach(elId => {
+        const el = document.getElementById(elId);
+        if (el) el.innerHTML = '';
+    });
     
     let targetEl;
-    if (position === 'header') targetEl = document.getElementById('modalPreviewHeader');
-    else if (position === 'footer') targetEl = document.getElementById('modalPreviewFooter');
-    else targetEl = document.getElementById('modalPreviewBody');
+    const linearPositions = ['header', 'footer', 'body'];
+    
+    if (linearPositions.includes(position)) {
+        if (position === 'header') targetEl = document.getElementById('modalPreviewHeader');
+        else if (position === 'footer') targetEl = document.getElementById('modalPreviewFooter');
+        else targetEl = document.getElementById('modalPreviewBody');
+    } else {
+        const posMap = {
+            'top_left': 'modalPreviewTopLeft',
+            'top_right': 'modalPreviewTopRight',
+            'bottom_left': 'modalPreviewBottomLeft',
+            'bottom_right': 'modalPreviewBottomRight'
+        };
+        targetEl = document.getElementById(posMap[position]) || document.getElementById('modalPreviewBody');
+    }
     
     if (type === 'ticker') {
         targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: ${fontSize}px; padding: 12px; white-space: nowrap; animation: ticker 10s linear infinite;">${message}</div>`;
@@ -296,7 +413,10 @@ document.getElementById('overlayPreviewModal').addEventListener('click', functio
     if (e.target === this) closeOverlayPreview();
 });
 
-document.addEventListener('DOMContentLoaded', updatePreview);
+document.addEventListener('DOMContentLoaded', function() {
+    togglePositionMode();
+    updatePreview();
+});
 </script>
 
 <style>

@@ -497,7 +497,16 @@ def screen_overlays(screen_id):
     if request.method == 'POST':
         overlay_type = request.form.get('overlay_type', 'ticker')
         message = request.form.get('message', '')
-        position = request.form.get('position', 'footer')
+        position_mode = request.form.get('position_mode', 'linear')
+        
+        if position_mode == 'linear':
+            position = request.form.get('position', 'footer')
+            corner_position_value = 'top_left'
+        else:
+            position = 'corner'
+            corner_position_raw = request.form.get('corner_position', 'bottom-right')
+            corner_position_value = corner_position_raw.replace('-', '_')
+        
         background_color = request.form.get('background_color', '#1f2937')
         text_color = request.form.get('text_color', '#ffffff')
         font_size = int(request.form.get('font_size', 24))
@@ -516,12 +525,17 @@ def screen_overlays(screen_id):
                 file.save(file_path)
                 image_path = file_path
         
+        corner_size = int(request.form.get('corner_size', 15))
+        
         overlay = ScreenOverlay(
             screen_id=screen_id,
             overlay_type=overlay_type,
             message=message if overlay_type == 'ticker' else None,
             image_path=image_path,
             position=position,
+            position_mode=position_mode,
+            corner_position=corner_position_value,
+            corner_size=corner_size,
             background_color=background_color,
             text_color=text_color,
             font_size=font_size,

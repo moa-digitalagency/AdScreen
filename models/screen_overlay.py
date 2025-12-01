@@ -18,6 +18,8 @@ class ScreenOverlay(db.Model):
     text_color = db.Column(db.String(20), default='#FFFFFF')
     font_size = db.Column(db.Integer, default=24)
     scroll_speed = db.Column(db.Integer, default=50)
+    corner_size = db.Column(db.Integer, default=15)
+    position_mode = db.Column(db.String(20), default='linear')
     
     display_duration = db.Column(db.Integer, default=10)
     passage_limit = db.Column(db.Integer, default=0)
@@ -76,7 +78,9 @@ class ScreenOverlay(db.Model):
             'message': self.message,
             'image_path': self.image_path,
             'position': self.position,
+            'position_mode': self.position_mode,
             'corner_position': self.corner_position,
+            'corner_size': self.corner_size,
             'background_color': self.background_color,
             'text_color': self.text_color,
             'font_size': self.font_size,
