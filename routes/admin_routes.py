@@ -391,6 +391,7 @@ def organization_new():
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
         country = request.form.get('country', 'FR')
+        city = request.form.get('city', '').strip()
         currency = request.form.get('currency', 'EUR')
         commission_rate = parse_float_safe(request.form.get('commission_rate'), 
             SiteSetting.get('default_commission_rate', 10.0))
@@ -426,6 +427,7 @@ def organization_new():
                 phone=phone,
                 address=address,
                 country=country,
+                city=city,
                 currency=currency,
                 commission_rate=commission_rate,
                 commission_set_by=current_user.id,
@@ -471,6 +473,7 @@ def organization_edit(org_id):
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
         country = request.form.get('country', org.country or 'FR')
+        city = request.form.get('city', '').strip()
         currency = request.form.get('currency', org.currency or 'EUR')
         
         if not name or not email:
@@ -490,6 +493,7 @@ def organization_edit(org_id):
         org.phone = phone
         org.address = address
         org.country = country
+        org.city = city
         org.currency = currency
         db.session.commit()
         

@@ -44,13 +44,22 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid md:grid-cols-3 gap-6">
             <div>
                 <label class="label">Pays *</label>
-                <select name="country" class="input-field" required>
+                <select name="country" id="country-select" class="input-field" required>
                     {% for code, label in countries %}
                     <option value="{{ code }}" {% if (org and org.country == code) or (not org and code == 'FR') %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="label">Ville</label>
+                <select name="city" id="city-select" class="input-field">
+                    <option value="">-- Sélectionner une ville --</option>
+                    {% if org and org.city %}
+                    <option value="{{ org.city }}" selected>{{ org.city }}</option>
+                    {% endif %}
                 </select>
             </div>
             <div>
@@ -99,4 +108,43 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('country-select');
+    const citySelect = document.getElementById('city-select');
+    const currentCity = "{{ org.city if org and org.city else '' }}";
+    
+    function loadCities(countryCode, selectedCity = '') {
+        fetch(`/api/cities/${countryCode}`)
+            .then(response => response.json())
+            .then(data => {
+                citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+                if (data.cities && data.cities.length > 0) {
+                    data.cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        if (city === selectedCity) {
+                            option.selected = true;
+                        }
+                        citySelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error loading cities:', err);
+                citySelect.innerHTML = '<option value="">Erreur de chargement</option>';
+            });
+    }
+    
+    countrySelect.addEventListener('change', function() {
+        loadCities(this.value);
+    });
+    
+    if (countrySelect.value) {
+        loadCities(countrySelect.value, currentCity);
+    }
+});
+</script>
 {% endblock %}

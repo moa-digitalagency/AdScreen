@@ -8,6 +8,16 @@ from sqlalchemy import func
 api_bp = Blueprint('api', __name__)
 
 
+@api_bp.route('/cities/<country_code>')
+def get_cities_by_country(country_code):
+    from utils.currencies import get_cities_for_country
+    cities = get_cities_for_country(country_code)
+    return jsonify({
+        'country': country_code,
+        'cities': cities
+    })
+
+
 @api_bp.route('/screens/status')
 @login_required
 def screens_status():
