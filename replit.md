@@ -42,11 +42,13 @@ Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, r
 │   ├── stat_log.py         # 📊 Statistiques de lecture
 │   ├── heartbeat_log.py    # 💓 Logs de connexion écrans
 │   ├── site_setting.py     # ⚙️ Paramètres du site
-│   └── registration_request.py # 📝 Demandes d'inscription
+│   ├── registration_request.py # 📝 Demandes d'inscription
+│   └── invoice.py          # 💰 Factures et preuves de paiement
 ├── routes/
 │   ├── auth_routes.py      # 🔑 Login/Register/Logout
-│   ├── admin_routes.py     # 👑 Dashboard superadmin
+│   ├── admin_routes.py     # 👑 Dashboard superadmin + Facturation
 │   ├── org_routes.py       # 🏪 Dashboard établissement
+│   ├── billing_routes.py   # 💰 Facturation établissements
 │   ├── screen_routes.py    # 📺 Gestion écrans
 │   ├── booking_routes.py   # 🛒 Réservations publiques
 │   ├── player_routes.py    # 🎮 API et page player
@@ -65,8 +67,8 @@ Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, r
 
 ## 👥 Rôles utilisateurs
 
-1. **👑 Superadmin**: Gère les établissements, commissions, stats globales, demandes d'inscription
-2. **🏪 Établissement (org)**: Configure écrans, valide contenus, ajoute overlays, visualise en direct
+1. **👑 Superadmin**: Gère les établissements, commissions, stats globales, demandes d'inscription, validation paiements
+2. **🏪 Établissement (org)**: Configure écrans, valide contenus, ajoute overlays, visualise en direct, gère ses factures
 3. **📱 Client/Annonceur**: Réserve via QR code, uploade contenu
 4. **📺 Écran (player)**: Page web fullscreen pour diffusion avec overlays
 
@@ -119,6 +121,14 @@ Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, r
 - ✅ Numéro WhatsApp admin configurable
 - ✅ Mode maintenance
 - ✅ Statistiques globales
+
+### 💰 Facturation Hebdomadaire
+- ✅ Génération automatique des factures chaque semaine
+- ✅ Récapitulatif du chiffre d'affaires et commissions par établissement
+- ✅ Menu Facturation pour les établissements (voir factures, télécharger, joindre preuve de paiement)
+- ✅ Menu Facturation admin (voir toutes les factures, valider/rejeter les preuves de paiement)
+- ✅ Statuts des factures: En attente, Payée (en validation), Validée
+- ✅ Historique des preuves de paiement avec notes de validation
 
 ## 🔐 Comptes de test
 
