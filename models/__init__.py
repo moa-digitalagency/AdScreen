@@ -14,6 +14,7 @@ from models.heartbeat_log import HeartbeatLog
 from models.site_setting import SiteSetting
 from models.registration_request import RegistrationRequest
 from models.screen_overlay import ScreenOverlay
+from models.invoice import Invoice, PaymentProof
 
 __all__ = [
     'db',
@@ -31,4 +32,6 @@ __all__ = [
     'SiteSetting',
     'RegistrationRequest',
     'ScreenOverlay',
+    'Invoice',
+    'PaymentProof',
 ]
