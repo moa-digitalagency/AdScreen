@@ -1,333 +1,60 @@
-# Shabaka AdScreen - SaaS Location Écrans Publicitaires 📺
-
-## 🎯 Overview
-Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. Les annonceurs accèdent via lien/QR code, choisissent des créneaux, uploadent du contenu adapté, payent et reçoivent des rapports.
-
-## 🏗️ Architecture
-
-### Backend
-- **Framework**: Flask (Python 3.11) 🐍
-- **Base de données**: PostgreSQL avec SQLAlchemy ORM 🗄️
-- **Authentification**: Flask-Login avec sessions 🔐
-- **Validation médias**: Pillow (images), ffmpeg (vidéos) 🖼️
-- **QR Codes**: qrcode[pil] 📱
-
-### Frontend
-- **Templates**: Jinja2 📝
-- **CSS**: Tailwind CSS (CDN) 🎨
-- **Icons**: Font Awesome ⭐
-- **Fonts**: Inter, JetBrains Mono (Google Fonts) ✏️
-- **JavaScript**: Vanilla JS ⚡
-
-## 📁 Structure du projet
-
-```
-├── app.py              # Configuration Flask et extensions
-├── main.py             # Point d'entrée
-├── create_superadmin.py # Script création admin
-├── init_db.py          # Initialisation base de données
-├── init_db_demo.py     # Données de démonstration
-├── models/             # Modèles SQLAlchemy
-│   ├── __init__.py         # Export tous les modèles
-│   ├── user.py             # 👤 Utilisateurs (superadmin, org)
-│   ├── organization.py     # 🏢 Établissements
-│   ├── screen.py           # 📺 Écrans publicitaires
-│   ├── screen_overlay.py   # 🎭 Overlays (bandeaux, images)
-│   ├── time_slot.py        # ⏰ Créneaux horaires
-│   ├── time_period.py      # 🌅 Périodes de la journée
-│   ├── content.py          # 📦 Contenus uploadés
-│   ├── booking.py          # 📋 Réservations
-│   ├── filler.py           # 🎬 Contenus de remplissage
-│   ├── internal_content.py # 📢 Contenus internes
-│   ├── stat_log.py         # 📊 Statistiques de lecture
-│   ├── heartbeat_log.py    # 💓 Logs de connexion écrans
-│   ├── site_setting.py     # ⚙️ Paramètres du site
-│   ├── registration_request.py # 📝 Demandes d'inscription
-│   └── invoice.py          # 💰 Factures et preuves de paiement
-├── routes/
-│   ├── auth_routes.py      # 🔑 Login/Register/Logout
-│   ├── admin_routes.py     # 👑 Dashboard superadmin + Facturation
-│   ├── org_routes.py       # 🏪 Dashboard établissement
-│   ├── billing_routes.py   # 💰 Facturation établissements
-│   ├── screen_routes.py    # 📺 Gestion écrans
-│   ├── booking_routes.py   # 🛒 Réservations publiques
-│   ├── player_routes.py    # 🎮 API et page player
-│   └── api_routes.py       # 🔌 API REST
-├── services/
-│   ├── playlist_service.py # 📻 Gestion playlist
-│   ├── pricing_service.py  # 💰 Calcul prix
-│   └── qr_service.py       # 📱 Génération QR
-├── utils/
-│   ├── image_utils.py      # 🖼️ Validation images
-│   └── video_utils.py      # 🎥 Validation vidéos
-├── templates/              # 📄 Templates Jinja2
-└── static/                 # 📦 Fichiers statiques
-    └── uploads/            # 📤 Contenus uploadés
-```
-
-## 👥 Rôles utilisateurs
-
-1. **👑 Superadmin**: Gère les établissements, commissions, stats globales, demandes d'inscription, validation paiements
-2. **🏪 Établissement (org)**: Configure écrans, valide contenus, ajoute overlays, visualise en direct, gère ses factures
-3. **📱 Client/Annonceur**: Réserve via QR code, uploade contenu
-4. **📺 Écran (player)**: Page web fullscreen pour diffusion avec overlays
-
-## ✨ Fonctionnalités principales
-
-### 🏢 Gestion des établissements
-- ✅ CRUD établissements et écrans
-- ✅ Configuration slots (durées/prix) et périodes journée (multiplicateurs)
-- ✅ Génération QR codes par écran
-- ✅ Commissions personnalisables par établissement
-
-### 📝 Système d'inscription
-- ✅ Demandes d'inscription via formulaire
-- ✅ Notification WhatsApp à l'admin (numéro configurable)
-- ✅ Validation/rejet des demandes par l'admin
-- ✅ Création de compte avec commission personnalisée
-
-### 📺 Gestion des écrans
-- ✅ Nommage personnalisé des écrans
-- ✅ Aperçu en direct de ce qui s'affiche
-- ✅ **Overlays superposés** (bandeaux défilants ou images fixes)
-- ✅ Position des overlays: header, body ou footer
-- ✅ Configuration couleurs, taille de police, vitesse de défilement
-
-### 🎬 Gestion du contenu
-- ✅ Upload contenu avec validation stricte (ratio, résolution, durée)
-- ✅ File de validation avec aperçu
-- ✅ Contenus internes établissement
-- ✅ Fillers/démos
-- ✅ **Actions sur les publicités**: suspendre, activer, supprimer
-- ✅ **Aperçu selon résolution écran** pour tous types de contenus
-- ✅ **Vue playlist admin** avec miniature écran en temps réel
-
-### 📋 Système de réservation
-- ✅ **Numéro de réservation unique** (format RES-XXXXXXXX)
-- ✅ **Reçu complet** avec QR code, détails booking, et impression
-- ✅ Adaptation automatique du contenu (pas de restriction résolution stricte)
-- ✅ Suivi de statut de réservation
-
-### 📺 Player écran
-- ✅ Player web fullscreen avec loop automatique
-- ✅ Affichage des overlays en temps réel
-- ✅ Heartbeat et statuts temps réel
-- ✅ Statistiques et tracking passages
-- ✅ **Timeout contrôles de 10 secondes** (curseur et contrôles visibles)
-- ✅ Rafraîchissement automatique de la playlist toutes les 30s
-
-### ⚙️ Administration
-- ✅ Paramètres du site (SEO, commissions)
-- ✅ Numéro WhatsApp admin configurable
-- ✅ Mode maintenance
-- ✅ Statistiques globales
-
-### 💰 Facturation Hebdomadaire
-- ✅ Génération automatique des factures chaque semaine
-- ✅ Récapitulatif du chiffre d'affaires et commissions par établissement
-- ✅ Menu Facturation pour les établissements (voir factures, télécharger, joindre preuve de paiement)
-- ✅ Menu Facturation admin (voir toutes les factures, valider/rejeter les preuves de paiement)
-- ✅ Statuts des factures: En attente, Payée (en validation), Validée
-- ✅ Historique des preuves de paiement avec notes de validation
-
-## 🔐 Comptes de test
-
-- **👑 Superadmin**: admin@adscreen.com / admin123
-- Pour créer un superadmin: `python create_superadmin.py email password`
-
-## 🚀 Démarrage
-
-L'application démarre automatiquement sur le port 5000 via Gunicorn.
-
-```bash
-# Initialiser la base de données
-python init_db.py
-
-# Créer les données de démonstration
-python init_db_demo.py
-```
-
-## 🗄️ Base de données
-
-PostgreSQL est configuré via la variable d'environnement DATABASE_URL.
-Les tables sont créées automatiquement au démarrage.
-
-## 📻 Priorités playlist
-
-1. 💰 Contenus payants (priorité 100)
-2. 📢 Contenus internes établissement (priorité 80)
-3. 🎬 Fillers/démos (priorité 20)
-
-## 🎭 Système d'overlays
-
-Les overlays permettent aux établissements d'afficher des messages superposés sur leurs écrans:
-
-### Bandeau défilant (Ticker)
-- **Positions disponibles**: Header (haut), Body (centre), Footer (bas) uniquement
-- **Aperçu temps réel**: Visualisation du défilement pendant la saisie
-- **Vitesse de défilement**: Contrôle via slider (20-150)
-- **Personnalisation**: Couleurs fond/texte, taille police (16-72px)
-- **Durée d'affichage**: Configurable en secondes
-
-### Image overlay
-- **Toutes les positions**: Header, Body, Footer + coins (top-left, top-right, bottom-left, bottom-right) + position personnalisée
-- **Aperçu en temps réel**: Visualisation du positionnement et de la taille
-- **Taille ajustable**: Pourcentage de la largeur de l'écran (5-50%)
-- **Position personnalisée**: Coordonnées X/Y en pourcentage
-- **Opacité**: Contrôle de la transparence (10-100%)
-- **Dimensions originales**: Affichage des dimensions de l'image uploadée
-
-### Paramètres communs
-- **Durée d'affichage**: Temps en secondes
-- **Limite de passages**: Nombre maximum par période
-- **Période de diffusion**: Date/heure de début et de fin
-- **Fréquence**: Heure, jour, semaine, mois, ou périodes (matin, midi, après-midi, soir, nuit)
-
-## 🌟 Écrans en vedette
-
-- Les super-admins peuvent marquer des écrans comme "en vedette"
-- Les écrans en vedette apparaissent sur la page d'accueil
-- Bouton de mise en vedette dans l'administration des écrans
-
-## 📱 QR Codes personnalisés
-
-Deux types de QR codes disponibles pour chaque écran:
-- **QR Code simple**: Code basique noir/blanc
-- **QR Code complet**: Inclut nom de l'établissement, nom de l'écran, résolution, et plateforme
-
-## ⚙️ Paramètres du site avancés
-
-### SEO
-- Titre et description du site
-- Mots-clés meta
-- Image OG et favicon personnalisables
-- Google Analytics ID
-
-### Réseaux sociaux
-- Facebook, Instagram, Twitter, LinkedIn, YouTube
-- WhatsApp pour contact direct
-
-### Code personnalisé
-- Injection de code dans le `<head>` (scripts, pixels tracking, etc.)
-
-### Contact
-- Téléphone, adresse
-- Numéro WhatsApp admin
-
-## 💱 Multi-Currency Support
-
-The platform supports multiple currencies based on organization settings:
-
-### Supported Currencies
-- **EUR** (€) - France
-- **MAD** (DH) - Morocco
-- **XOF** (FCFA) - Senegal, West Africa
-- **TND** (DT) - Tunisia
-
-### Price Calculation
-- **Base formula**: `(duration_seconds / 60) × price_per_minute`
-- **Period multipliers**: Different rates for morning, lunch, afternoon, evening, night
-- **Slot examples**: 10s → 0.33×, 15s → 0.50×, 30s → 1.00× (based on price_per_minute)
-
-### Video Playback Algorithm
-- **Images**: Displayed for the full slot duration
-- **Videos**: Play in full; if shorter than slot duration, last frame holds until time is reached
-- **Example**: 13s video in 15s slot → video plays, then last frame remains for 2 additional seconds
-
-## 📋 Catalogue Public
-
-Une page catalogue accessible publiquement (`/catalog`) affiche tous les écrans disponibles :
-- Groupement par pays avec drapeaux
-- Organisation par établissement
-- Affichage des images d'écran, résolution, orientation
-- Formats acceptés (images/vidéos)
-- Prix indicatifs et boutons de réservation
-
-## 🏢 Libellé Numéro d'Immatriculation Personnalisable
-
-Chaque organisation peut définir son propre libellé pour le numéro d'immatriculation selon son pays :
-- **SIRET** (France)
-- **ICE** (Maroc)
-- **NINEA** (Sénégal)
-- **Matricule Fiscal** (Tunisie)
-- Et tout autre libellé personnalisé
-
-## ⏰ Génération Automatique des Factures
-
-Les factures sont générées automatiquement chaque dimanche à 23h59 selon le fuseau horaire de la plateforme (`platform_timezone`).
-
-## 🔧 Recent Fixes (December 2025)
-
-### Currency Display Bug Fix
-- Fixed hardcoded symbols in screen detail, form, availability, and slots templates
-- Currency symbol now dynamically passed from routes using organization's currency setting
-- JavaScript components updated to use dynamic currency symbol
-
-### Availability Page Error Fix
-- Fixed Jinja2 `min` filter usage error in screen_availability.html
-- Changed `usage_percent|min(100)` to proper conditional capping logic
-
-### Booking Status Page Enhancement
-- Added detailed explanation of diffusion mode based on content type
-- Shows video last-frame hold behavior clearly
-- Added equitable distribution explanation
-
-### QR Code Design Enhancement
-- Modern gradient backgrounds with professional styling
-- Improved typography with JetBrains Mono fonts
-- Screen info display (name, resolution, organization)
-- Shabaka AdScreen branding with platform URL
-
-### Filler Design Modernization
-- New modern gradient backgrounds for default fillers
-- Professional styling with shadows and rounded corners
-- Clean typography with Inter/JetBrains Mono fonts
-- Logo placeholder and call-to-action sections
-
-### Automatic Currency Conversion (Admin Dashboard)
-- Implemented European Central Bank (ECB) API integration for real-time exchange rates
-- 24-hour caching mechanism to minimize API calls
-- Superadmin dashboard displays all revenues converted to EUR
-- Conversion breakdown table showing original amounts, rates, and converted values
-- Supports 80+ world currencies including EUR, MAD, TND, XOF
-
-### Booking Time Fields
-- Added start_time and end_time fields to booking model
-- Updated booking form with time selection (alongside dates)
-- Visual improvement with green/red colored date-time sections
-- Enables more precise availability calculations and scheduling
-
-### Design Enhancements (December 2025)
-
-#### QR Code Complet - Nouveau Design Premium
-- Design glassmorphism avec gradients modernes (violet/indigo/bleu)
-- Cercles décoratifs flottants dans le header
-- Effet de vague entre les sections
-- Coins colorés sur le conteneur QR
-- Section info avec résolution, orientation, formats acceptés
-- Bouton CTA avec gradient vert
-- Footer moderne avec barre d'accent gradient
-
-#### Filler Generator - Nouveau Style Professionnel
-- Fond sombre avec gradient et effet de vague
-- Cercles décoratifs dans le header
-- Barre d'accent gradient dans le footer
-- Coins colorés sur le conteneur QR
-- Système de badges responsive pour les infos écran
-- Bouton CTA avec gradient vert
-- Typographie premium avec ombres
-
-#### Dashboard Admin - Conversion Devises Améliorée
-- Bouton de rafraîchissement des taux avec indicateur de chargement
-- Bannière gradient pour le statut de conversion
-- Token CSRF pour la sécurité des formulaires
-- Timeout automatique de 15s pour réinitialiser le bouton
-- Messages flash pour succès/erreur
-
-#### Formulaire de Réservation - Responsivité Mobile/Tablette
-- Design adaptatif pour écrans de 320px à 1920px
-- Media queries spécifiques pour très petits écrans (320px, 360px, 480px)
-- Grille de disponibilités compacte et responsive
-- Tailles de police et espacement adaptés
-- Contrôles de nombre de passages optimisés pour mobile
-- Section dates/heures avec icônes et couleurs (vert/rouge)
+# Shabaka AdScreen - SaaS Location Écrans Publicitaires
+
+## Overview
+Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, restaurants, shopping centers) to monetize their advertising screens through a self-service rental system. Advertisers can access the platform via a link or QR code, select time slots, upload appropriate content, make payments, and receive performance reports. The project aims to provide a comprehensive solution for screen monetization, offering flexibility and detailed control for both establishments and advertisers.
+
+## User Preferences
+Not specified.
+
+## System Architecture
+
+### UI/UX Decisions
+- **Templates**: Jinja2 for dynamic content.
+- **Styling**: Tailwind CSS (CDN) for a utility-first approach to design.
+- **Icons**: Font Awesome for a rich icon library.
+- **Fonts**: Inter and JetBrains Mono (Google Fonts) for modern typography.
+- **Design Elements**:
+    - Modern gradient backgrounds (emerald/green tones: #10b981, #059669, #34d399, #047857) with glassmorphism effects.
+    - Decorative circles and wave effects for visual appeal.
+    - Gradient accent bars and professional styling with shadows and rounded corners.
+    - Responsive design for mobile and tablet, adapting content and layouts for various screen sizes (320px to 1920px).
+    - Color-coded date/time sections (green/red) for clarity.
+    - Real-time previews for overlay configurations and content validation.
+    - Unified emerald brand color scheme across QR codes, fillers, and UI components.
+
+### Technical Implementations
+- **Backend Framework**: Flask (Python 3.11).
+- **Database**: PostgreSQL with SQLAlchemy ORM.
+- **Authentication**: Flask-Login using session management.
+- **Media Validation**: Pillow for images and ffmpeg for videos, ensuring content adheres to specified ratios, resolutions, and durations.
+- **QR Code Generation**: `qrcode[pil]` library.
+- **Core Features**:
+    - **User Roles**: Superadmin, Establishment (organization), Client/Advertiser, and Screen (player).
+    - **Establishment Management**: CRUD operations, configurable slots and day periods, custom commissions, QR code generation.
+    - **Registration System**: Form-based requests, WhatsApp notifications to admin, admin validation, account creation with custom commission.
+    - **Screen Management**: Naming, live preview, multi-positional overlays (scrolling banners, static images), customizable colors, font sizes, scroll speeds, and overlay durations/frequencies.
+    - **Content Management**: Strict upload validation, content queues, internal establishment content, filler/demo content, content action controls (suspend, activate, delete), resolution-adaptive previews, real-time admin playlist view.
+    - **Booking System**: Unique reservation numbers, detailed receipts with QR codes, content adaptation, status tracking, precise time selection.
+    - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
+    - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
+    - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
+    - **Playlist Priorities**: Paid content (100) > Internal content (80) > Fillers/Demos (20).
+    - **Overlay System**: Comprehensive configuration for tickers (header, body, footer) and image overlays (all positions + custom X/Y, size, opacity), with real-time previews.
+    - **Featured Screens**: Super-admins can mark screens for homepage display.
+    - **Custom QR Codes**: Simple black/white or detailed QR codes with establishment/screen info.
+    - **Advanced Site Settings**: SEO (title, description, keywords, OG image, favicon, Google Analytics), social media links, custom `<head>` code injection, contact info.
+    - **Multi-Currency Support**: Dynamic currency display and price calculation based on organization settings, period multipliers, and content duration handling (video last-frame hold).
+    - **Public Catalog**: A `/catalog` page displaying available screens, grouped by country and organization, with screen details, accepted formats, indicative prices, and booking buttons.
+    - **Customizable Registration Number Label**: Allows organizations to define country-specific labels (e.g., SIRET, ICE, NINEA).
+
+## External Dependencies
+- **PostgreSQL**: Primary database for all application data.
+- **Pillow**: Python Imaging Library for image processing and validation.
+- **ffmpeg**: For video processing and validation.
+- **qrcode[pil]**: Python library for generating QR codes.
+- **Tailwind CSS (CDN)**: For front-end styling.
+- **Font Awesome**: For icons.
+- **Google Fonts (Inter, JetBrains Mono)**: For typography.
+- **European Central Bank (ECB) API**: For real-time currency exchange rates, used in the admin dashboard for currency conversion.
+- **WhatsApp**: For admin notifications regarding registration requests and contact.
+- **Gunicorn**: Production WSGI HTTP Server.
