@@ -16,7 +16,8 @@ def create_demo_data():
     from app import app, db
     from models import (
         User, Organization, Screen, TimeSlot, TimePeriod,
-        Filler, InternalContent, SiteSetting, ScreenOverlay
+        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
+        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof
     )
     
     with app.app_context():
@@ -621,6 +622,7 @@ def clear_demo_data():
         
         # Drop tables in correct order to avoid circular dependency
         tables_to_drop = [
+            'payment_proofs', 'invoices',
             'stat_logs', 'heartbeat_logs', 'screen_overlays',
             'contents', 'bookings', 'fillers', 'internal_contents',
             'time_slots', 'time_periods', 'screens',
