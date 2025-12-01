@@ -65,6 +65,25 @@ def inject_now():
 
 
 @app.context_processor
+def inject_currency():
+    from flask_login import current_user
+    from utils.currencies import get_currency_by_code
+    
+    currency_symbol = '€'
+    try:
+        if current_user and current_user.is_authenticated:
+            org = getattr(current_user, 'organization', None)
+            if org:
+                org_currency = getattr(org, 'currency', None) or 'EUR'
+                currency_info = get_currency_by_code(org_currency)
+                currency_symbol = currency_info.get('symbol', org_currency)
+    except Exception:
+        pass
+    
+    return {'currency_symbol': currency_symbol}
+
+
+@app.context_processor
 def inject_site_settings():
     from models import SiteSetting
     return {

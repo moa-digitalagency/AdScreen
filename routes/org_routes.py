@@ -132,6 +132,8 @@ def screens():
 @login_required
 @org_required
 def new_screen():
+    from utils.currencies import get_currency_by_code
+    
     if request.method == 'POST':
         name = request.form.get('name')
         location = request.form.get('location')
@@ -203,13 +205,19 @@ def new_screen():
         flash('Écran créé avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
-    return render_template('org/screen_form.html', screen=None)
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('org/screen_form.html', screen=None, currency_symbol=currency_symbol)
 
 
 @org_bp.route('/screen/<int:screen_id>')
 @login_required
 @org_required
 def screen_detail(screen_id):
+    from utils.currencies import get_currency_by_code
+    
     screen = Screen.query.filter_by(
         id=screen_id,
         organization_id=current_user.organization_id
@@ -238,12 +246,17 @@ def screen_detail(screen_id):
         status='pending'
     ).count()
     
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
     return render_template('org/screen_detail.html',
         screen=screen,
         revenue=revenue,
         weekly_revenue=weekly_revenue,
         total_plays=total_plays,
-        pending_count=pending_count
+        pending_count=pending_count,
+        currency_symbol=currency_symbol
     )
 
 
@@ -251,6 +264,8 @@ def screen_detail(screen_id):
 @login_required
 @org_required
 def edit_screen(screen_id):
+    from utils.currencies import get_currency_by_code
+    
     screen = Screen.query.filter_by(
         id=screen_id,
         organization_id=current_user.organization_id
@@ -282,13 +297,19 @@ def edit_screen(screen_id):
         flash('Écran mis à jour avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
-    return render_template('org/screen_form.html', screen=screen)
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('org/screen_form.html', screen=screen, currency_symbol=currency_symbol)
 
 
 @org_bp.route('/screen/<int:screen_id>/slots', methods=['GET', 'POST'])
 @login_required
 @org_required
 def screen_slots(screen_id):
+    from utils.currencies import get_currency_by_code
+    
     screen = Screen.query.filter_by(
         id=screen_id,
         organization_id=current_user.organization_id
@@ -315,13 +336,19 @@ def screen_slots(screen_id):
         flash('Créneaux mis à jour avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
-    return render_template('org/screen_slots.html', screen=screen)
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('org/screen_slots.html', screen=screen, currency_symbol=currency_symbol)
 
 
 @org_bp.route('/screen/<int:screen_id>/periods', methods=['GET', 'POST'])
 @login_required
 @org_required
 def screen_periods(screen_id):
+    from utils.currencies import get_currency_by_code
+    
     screen = Screen.query.filter_by(
         id=screen_id,
         organization_id=current_user.organization_id
@@ -350,7 +377,11 @@ def screen_periods(screen_id):
         flash('Périodes mises à jour avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
-    return render_template('org/screen_periods.html', screen=screen)
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('org/screen_periods.html', screen=screen, currency_symbol=currency_symbol)
 
 
 @org_bp.route('/screen/<int:screen_id>/fillers', methods=['GET', 'POST'])
@@ -1064,6 +1095,7 @@ def add_internal_to_playlist(internal_id):
 @org_required
 def screen_availability(screen_id):
     from services.availability_service import calculate_availability, get_period_duration_seconds
+    from utils.currencies import get_currency_by_code
     from datetime import date
     
     screen = Screen.query.filter_by(
@@ -1104,10 +1136,15 @@ def screen_availability(screen_id):
             'slot_capacities': slot_capacities
         })
     
+    org = current_user.organization
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
     return render_template('org/screen_availability.html',
         screen=screen,
         availability=availability_data,
         period_capacity=period_capacity,
         today=today,
-        week_end=week_end
+        week_end=week_end,
+        currency_symbol=currency_symbol
     )

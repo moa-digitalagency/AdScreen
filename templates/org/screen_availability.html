@@ -55,12 +55,12 @@
         <div class="space-y-3">
             <div class="flex justify-between items-center pb-3 border-b border-gray-100">
                 <span class="text-gray-500">Prix/minute</span>
-                <span class="font-bold text-green-600">{{ "%.2f"|format(screen.price_per_minute or 2.0) }}€</span>
+                <span class="font-bold text-green-600">{{ "%.2f"|format(screen.price_per_minute or 2.0) }}{{ currency_symbol }}</span>
             </div>
             <div class="text-sm text-gray-500">
                 <p class="font-medium text-gray-700 mb-2">Formule de calcul:</p>
                 <code class="bg-gray-100 px-2 py-1 rounded block text-center">
-                    (durée_sec / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€
+                    (durée_sec / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}{{ currency_symbol }}
                 </code>
             </div>
         </div>
@@ -98,7 +98,7 @@
                     {% for cap in period.slot_capacities %}
                     <td class="py-3 px-4 text-center">
                         <span class="font-mono text-gray-800">{{ cap.max_plays }}</span>
-                        <span class="text-xs text-gray-500 block">{{ "%.2f"|format(cap.price_with_mult) }}€</span>
+                        <span class="text-xs text-gray-500 block">{{ "%.2f"|format(cap.price_with_mult) }}{{ currency_symbol }}</span>
                     </td>
                     {% endfor %}
                 </tr>
@@ -131,9 +131,11 @@
             </div>
             <div class="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
                 {% set usage_percent = 100 - ((period.total_available_plays / ((period.total_available_seconds / 15) or 1)) * 100) %}
-                <div class="h-full bg-blue-500" style="width: {{ usage_percent|min(100) }}%"></div>
+                {% set capped_percent = usage_percent if usage_percent <= 100 else 100 %}
+                {% set capped_percent = capped_percent if capped_percent >= 0 else 0 %}
+                <div class="h-full bg-blue-500" style="width: {{ capped_percent|round(1) }}%"></div>
             </div>
-            <p class="text-xs text-gray-500 mt-1 text-right">{{ usage_percent|round(1) }}% réservé</p>
+            <p class="text-xs text-gray-500 mt-1 text-right">{{ capped_percent|round(1) }}% réservé</p>
         </div>
         {% endfor %}
     </div>

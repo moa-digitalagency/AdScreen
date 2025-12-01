@@ -15,7 +15,7 @@
                     <div class="bg-primary-500 h-4 rounded-full" 
                          style="width: {{ (stat.revenue / max_rev * 100)|int }}%"></div>
                 </div>
-                <span class="font-mono text-sm text-gray-800 w-20 text-right">{{ "%.2f"|format(stat.revenue) }}€</span>
+                <span class="font-mono text-sm text-gray-800 w-20 text-right">{{ "%.2f"|format(stat.revenue) }}{{ currency_symbol }}</span>
             </div>
             {% else %}
             <p class="text-gray-500 text-center py-8">Aucune donnée disponible</p>
@@ -37,7 +37,7 @@
                         <p class="text-sm text-gray-500">{{ stat.bookings }} réservations</p>
                     </div>
                 </div>
-                <span class="font-semibold text-gray-800">{{ "%.2f"|format(stat.revenue) }}€</span>
+                <span class="font-semibold text-gray-800">{{ "%.2f"|format(stat.revenue) }}{{ currency_symbol }}</span>
             </div>
             {% else %}
             <p class="text-gray-500 text-center py-8">Aucune donnée disponible</p>
@@ -119,7 +119,7 @@
                     </td>
                     <td class="py-3 px-4 text-right">
                         {% if ad.total_price %}
-                        <span class="font-semibold text-gray-800">{{ "%.2f"|format(ad.total_price) }}€</span>
+                        <span class="font-semibold text-gray-800">{{ "%.2f"|format(ad.total_price) }}{{ currency_symbol }}</span>
                         {% else %}
                         <span class="text-gray-400">-</span>
                         {% endif %}

@@ -203,3 +203,39 @@ Deux types de QR codes disponibles pour chaque écran:
 ### Contact
 - Téléphone, adresse
 - Numéro WhatsApp admin
+
+## 💱 Multi-Currency Support
+
+The platform supports multiple currencies based on organization settings:
+
+### Supported Currencies
+- **EUR** (€) - France
+- **MAD** (DH) - Morocco
+- **XOF** (FCFA) - Senegal, West Africa
+- **TND** (DT) - Tunisia
+
+### Price Calculation
+- **Base formula**: `(duration_seconds / 60) × price_per_minute`
+- **Period multipliers**: Different rates for morning, lunch, afternoon, evening, night
+- **Slot examples**: 10s → 0.33×, 15s → 0.50×, 30s → 1.00× (based on price_per_minute)
+
+### Video Playback Algorithm
+- **Images**: Displayed for the full slot duration
+- **Videos**: Play in full; if shorter than slot duration, last frame holds until time is reached
+- **Example**: 13s video in 15s slot → video plays, then last frame remains for 2 additional seconds
+
+## 🔧 Recent Fixes (December 2025)
+
+### Currency Display Bug Fix
+- Fixed hardcoded € symbols in screen detail, form, availability, and slots templates
+- Currency symbol now dynamically passed from routes using organization's currency setting
+- JavaScript components updated to use dynamic currency symbol
+
+### Availability Page Error Fix
+- Fixed Jinja2 `min` filter usage error in screen_availability.html
+- Changed `usage_percent|min(100)` to proper conditional capping logic
+
+### Booking Status Page Enhancement
+- Added detailed explanation of diffusion mode based on content type
+- Shows video last-frame hold behavior clearly
+- Added equitable distribution explanation

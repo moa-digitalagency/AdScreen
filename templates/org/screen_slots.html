@@ -17,7 +17,7 @@
                 <p class="text-gray-500">Définissez les durées en secondes et prix pour chaque type de contenu.</p>
             </div>
             <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-                <span class="text-sm text-green-700">Prix de base: <strong>{{ "%.2f"|format(screen.price_per_minute or 2.0) }}€/min</strong></span>
+                <span class="text-sm text-green-700">Prix de base: <strong>{{ "%.2f"|format(screen.price_per_minute or 2.0) }}{{ currency_symbol }}/min</strong></span>
             </div>
         </div>
 
@@ -26,7 +26,7 @@
                 <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
                 <div class="text-sm text-blue-700">
                     <p class="font-medium mb-1">Algorithme de calcul automatique</p>
-                    <p>Le prix suggéré est calculé avec la formule: <code class="bg-blue-100 px-1 rounded">(durée_secondes / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}€</code></p>
+                    <p>Le prix suggéré est calculé avec la formule: <code class="bg-blue-100 px-1 rounded">(durée_secondes / 60) × {{ "%.2f"|format(screen.price_per_minute or 2.0) }}{{ currency_symbol }}</code></p>
                     <p class="mt-1">Vous pouvez personnaliser le prix manuellement si nécessaire.</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                         <div class="flex items-center gap-2">
                             <input type="number" name="slot_price[]" value="{{ slot.price_per_play }}" min="0.01" step="0.01"
                                 class="w-24 px-3 py-2 border border-gray-300 rounded-lg price-input">
-                            <span class="text-gray-500">€</span>
+                            <span class="text-gray-500">{{ currency_symbol }}</span>
                         </div>
                         <button type="button" class="auto-calc-btn text-green-600 hover:text-green-700 p-2 rounded hover:bg-green-50 transition" title="Recalculer automatiquement">
                             <i class="fas fa-calculator"></i>
@@ -61,7 +61,7 @@
                         </button>
                         {% if (slot.price_per_play - calculated_price)|abs > 0.01 %}
                         <span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
-                            <i class="fas fa-info-circle mr-1"></i>Prix personnalisé (suggéré: {{ "%.2f"|format(calculated_price) }}€)
+                            <i class="fas fa-info-circle mr-1"></i>Prix personnalisé (suggéré: {{ "%.2f"|format(calculated_price) }}{{ currency_symbol }})
                         </span>
                         {% else %}
                         <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
@@ -123,8 +123,8 @@
                     <tr class="border-b border-gray-100">
                         <td class="py-2 font-mono">{{ slot.duration_seconds }}s</td>
                         <td class="py-2 capitalize">{{ slot.content_type }}</td>
-                        <td class="py-2 text-right font-semibold">{{ "%.2f"|format(slot.price_per_play) }}€</td>
-                        <td class="py-2 text-right text-gray-500">{{ "%.2f"|format(calculated_price) }}€</td>
+                        <td class="py-2 text-right font-semibold">{{ "%.2f"|format(slot.price_per_play) }}{{ currency_symbol }}</td>
+                        <td class="py-2 text-right text-gray-500">{{ "%.2f"|format(calculated_price) }}{{ currency_symbol }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -135,6 +135,7 @@
 
 <script>
 const pricePerMinute = {{ screen.price_per_minute or 2.0 }};
+const currencySymbol = '{{ currency_symbol }}';
 
 function calculatePrice(durationSeconds) {
     return ((durationSeconds / 60) * pricePerMinute).toFixed(2);
@@ -163,7 +164,7 @@ function addSlot() {
             <div class="flex items-center gap-2">
                 <input type="number" name="slot_price[]" value="${defaultPrice}" min="0.01" step="0.01"
                     class="w-24 px-3 py-2 border border-gray-300 rounded-lg price-input">
-                <span class="text-gray-500">€</span>
+                <span class="text-gray-500">${currencySymbol}</span>
             </div>
             <button type="button" class="auto-calc-btn text-green-600 hover:text-green-700 p-2 rounded hover:bg-green-50 transition" title="Recalculer automatiquement">
                 <i class="fas fa-calculator"></i>
