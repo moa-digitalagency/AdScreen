@@ -34,6 +34,11 @@
                 <i class="fas fa-chart-line w-5"></i>
                 <span>Statistiques</span>
             </a>
+            <a href="{{ url_for('admin.billing') }}" 
+               class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if 'billing' in request.endpoint %}bg-gray-800 text-white{% endif %}">
+                <i class="fas fa-file-invoice-dollar w-5"></i>
+                <span>Facturation</span>
+            </a>
             <a href="{{ url_for('admin.registration_requests') }}" 
                class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if 'registration' in request.endpoint %}bg-gray-800 text-white{% endif %}">
                 <i class="fas fa-user-plus w-5"></i>
