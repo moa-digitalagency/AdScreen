@@ -610,10 +610,27 @@ def create_demo_data():
 def clear_demo_data():
     """🗑️ Supprime toutes les données de démonstration."""
     from app import app, db
+    from sqlalchemy import text
     
     with app.app_context():
         logger.warning("⚠️  Suppression de toutes les données...")
-        db.drop_all()
+        
+        # Drop tables in correct order to avoid circular dependency
+        tables_to_drop = [
+            'stat_logs', 'heartbeat_logs', 'screen_overlays',
+            'contents', 'bookings', 'fillers', 'internal_contents',
+            'time_slots', 'time_periods', 'screens',
+            'registration_requests', 'site_settings',
+            'users', 'organizations'
+        ]
+        
+        for table in tables_to_drop:
+            try:
+                db.session.execute(text(f'DROP TABLE IF EXISTS {table} CASCADE'))
+            except Exception as e:
+                logger.debug(f"Table {table}: {e}")
+        
+        db.session.commit()
         db.create_all()
         logger.info("✅ Base de données réinitialisée.")
     
