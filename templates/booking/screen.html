@@ -249,9 +249,8 @@
                 </div>
             </div>
 
-            <button type="submit" 
-                class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-700 transition shadow-lg">
-                <i class="fas fa-check mr-2"></i>
+            <button type="submit" class="btn-primary w-full justify-center text-lg !py-4">
+                <i class="fas fa-check"></i>
                 Confirmer la réservation
             </button>
         </form>
@@ -263,18 +262,29 @@ const slots = {{ slots_json|tojson|safe }};
 
 function updatePrice() {
     const contentType = document.querySelector('input[name="content_type"]:checked')?.value || 'image';
-    const slotDuration = document.querySelector('input[name="slot_duration"]:checked')?.value;
     const periodMultiplier = parseFloat(document.querySelector('input[name="period_id"]:checked')?.dataset.multiplier || 1);
     const numPlays = parseInt(document.getElementById('num_plays').value) || 10;
     
-    document.querySelectorAll('.slot-label').forEach(label => {
-        const type = label.dataset.type;
-        label.style.display = type === contentType ? 'inline-flex' : 'none';
+    document.querySelectorAll('.slot-radio').forEach(input => {
+        const label = input.nextElementSibling;
+        const type = input.dataset.type;
+        const parentLabel = input.parentElement;
+        if (type === contentType) {
+            parentLabel.style.display = 'block';
+        } else {
+            parentLabel.style.display = 'none';
+            if (input.checked) {
+                input.checked = false;
+            }
+        }
     });
     
-    const slotInput = document.querySelector(`input[name="slot_duration"][data-type="${contentType}"]:not([style*="display: none"])`);
-    if (slotInput && !slotInput.parentElement.querySelector('.slot-label').style.display !== 'none') {
-        slotInput.checked = true;
+    const checkedSlot = document.querySelector(`input[name="slot_duration"]:checked`);
+    if (!checkedSlot || checkedSlot.dataset.type !== contentType) {
+        const firstVisibleSlot = document.querySelector(`input[name="slot_duration"][data-type="${contentType}"]`);
+        if (firstVisibleSlot) {
+            firstVisibleSlot.checked = true;
+        }
     }
     
     const basePrice = parseFloat(document.querySelector('input[name="slot_duration"]:checked')?.dataset.price || 0);
