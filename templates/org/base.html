@@ -4,15 +4,15 @@
 <div class="flex min-h-screen">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-        <div class="p-4 sm:p-6 border-b border-gray-100">
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <div class="p-4 sm:p-6 border-b border-gray-100 flex-shrink-0">
             <a href="{{ url_for('org.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-600 text-lg sm:text-xl"></i>
                 <span class="font-bold text-base sm:text-lg text-gray-800">Shabaka AdScreen</span>
             </a>
         </div>
 
-        <nav class="mt-4">
+        <nav class="mt-4 flex-1 overflow-y-auto">
             <a href="{{ url_for('org.dashboard') }}" 
                class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition text-sm sm:text-base {% if request.endpoint == 'org.dashboard' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
                 <i class="fas fa-chart-pie w-5"></i>
@@ -33,6 +33,11 @@
                 <i class="fas fa-check-circle w-5"></i>
                 <span>Validations</span>
             </a>
+            <a href="{{ url_for('billing.invoices') }}" 
+               class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition text-sm sm:text-base {% if 'billing' in request.endpoint %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
+                <i class="fas fa-file-invoice-dollar w-5"></i>
+                <span>Facturation</span>
+            </a>
             <a href="{{ url_for('org.stats') }}" 
                class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition text-sm sm:text-base {% if request.endpoint == 'org.stats' %}bg-primary-50 text-primary-600 border-r-2 border-primary-600{% endif %}">
                 <i class="fas fa-chart-bar w-5"></i>
@@ -45,7 +50,7 @@
             </a>
         </nav>
 
-        <div class="absolute bottom-0 w-full p-3 sm:p-4 border-t border-gray-100">
+        <div class="flex-shrink-0 w-full p-3 sm:p-4 border-t border-gray-100">
             <div class="bg-gray-50 rounded-lg p-2.5 sm:p-3">
                 <div class="flex items-center gap-2 sm:gap-3">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">

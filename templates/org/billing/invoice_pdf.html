@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #10b981;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .invoice-info {
+            text-align: right;
+        }
+        .invoice-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .period {
+            color: #666;
+            margin-top: 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #dbeafe; color: #1e40af; }
+        .status-validated { background: #d1fae5; color: #065f46; }
+        
+        .parties {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .party {
+            width: 45%;
+        }
+        .party-title {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .party-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .summary {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 40px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .summary-label {
+            color: #666;
+        }
+        .summary-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .summary-highlight {
+            font-size: 20px;
+            color: #10b981;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background: #f9fafb;
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        td {
+            font-size: 14px;
+        }
+        .amount {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        @media print {
+            body { padding: 20px; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            Shabaka AdScreen
+        </div>
+        <div class="invoice-info">
+            <div class="invoice-number">{{ invoice.invoice_number }}</div>
+            <div class="period">
+                Semaine du {{ invoice.week_start_date.strftime('%d/%m/%Y') }}<br>
+                au {{ invoice.week_end_date.strftime('%d/%m/%Y') }}
+            </div>
+            <div class="status status-{{ invoice.status }}">
+                {% if invoice.status == 'pending' %}En attente{% elif invoice.status == 'paid' %}Payée{% else %}Validée{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="parties">
+        <div class="party">
+            <div class="party-title">Émetteur</div>
+            <div class="party-name">Shabaka AdScreen</div>
+            <p>Plateforme de gestion d'écrans publicitaires</p>
+        </div>
+        <div class="party">
+            <div class="party-title">Destinataire</div>
+            <div class="party-name">{{ org.name }}</div>
+            <p>{{ org.email }}<br>{{ org.address or '' }}</p>
+        </div>
+    </div>
+
+    <div class="summary">
+        <div class="summary-row">
+            <span class="summary-label">Chiffre d'affaires brut</span>
+            <span class="summary-value">{{ "%.2f"|format(invoice.gross_revenue) }}{{ currency_symbol }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Taux de commission</span>
+            <span class="summary-value">{{ "%.1f"|format(invoice.commission_rate) }}%</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Commission plateforme (à verser)</span>
+            <span class="summary-value summary-highlight">{{ "%.2f"|format(invoice.commission_amount) }}{{ currency_symbol }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Revenu net (pour l'établissement)</span>
+            <span class="summary-value">{{ "%.2f"|format(invoice.net_revenue) }}{{ currency_symbol }}</span>
+        </div>
+    </div>
+
+    <h3>Détail des réservations ({{ bookings|length }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>N° Réservation</th>
+                <th>Écran</th>
+                <th>Date</th>
+                <th class="amount">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.reservation_number or '-' }}</td>
+                <td>{{ booking.screen.name }}</td>
+                <td>{{ booking.created_at.strftime('%d/%m/%Y') }}</td>
+                <td class="amount">{{ "%.2f"|format(booking.total_price) }}{{ currency_symbol }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #666;">Aucune réservation cette semaine</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Facture générée le {{ invoice.generated_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+        <p>Shabaka AdScreen - Plateforme de gestion d'écrans publicitaires</p>
+    </div>
+
+    <div class="no-print" style="text-align: center; margin-top: 40px;">
+        <button onclick="window.print()" style="padding: 10px 30px; background: #10b981; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            Imprimer / Sauvegarder en PDF
+        </button>
+    </div>
+</body>
+</html>
