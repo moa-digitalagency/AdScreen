@@ -1,9 +1,9 @@
 import math
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
-from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest
+from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest, Invoice, PaymentProof
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from services.currency_service import (
@@ -845,3 +845,160 @@ def reject_registration(request_id):
     
     flash('Demande rejetée.', 'info')
     return redirect(url_for('admin.registration_requests'))
+
+
+@admin_bp.route('/billing')
+@login_required
+@superadmin_required
+def billing():
+    from utils.currencies import get_currency_by_code
+    from routes.billing_routes import get_previous_weeks, generate_invoice_for_week
+    
+    all_orgs = Organization.query.filter_by(is_active=True).all()
+    previous_weeks = get_previous_weeks(12)
+    
+    for org in all_orgs:
+        for week_start, week_end in previous_weeks:
+            generate_invoice_for_week(org.id, week_start, week_end)
+    
+    status_filter = request.args.get('status', 'all')
+    org_filter = request.args.get('org_id', '')
+    
+    query = Invoice.query.join(Organization)
+    
+    if status_filter != 'all':
+        query = query.filter(Invoice.status == status_filter)
+    
+    if org_filter:
+        query = query.filter(Invoice.organization_id == int(org_filter))
+    
+    invoices = query.order_by(Invoice.week_start_date.desc(), Organization.name).all()
+    
+    pending_invoices = Invoice.query.filter_by(status=Invoice.STATUS_PENDING).count()
+    awaiting_validation = Invoice.query.filter_by(status=Invoice.STATUS_PAID).count()
+    validated_invoices = Invoice.query.filter_by(status=Invoice.STATUS_VALIDATED).count()
+    
+    total_pending_amount = db.session.query(func.sum(Invoice.commission_amount)).filter(
+        Invoice.status == Invoice.STATUS_PENDING
+    ).scalar() or 0
+    
+    total_awaiting_amount = db.session.query(func.sum(Invoice.commission_amount)).filter(
+        Invoice.status == Invoice.STATUS_PAID
+    ).scalar() or 0
+    
+    total_validated_amount = db.session.query(func.sum(Invoice.commission_amount)).filter(
+        Invoice.status == Invoice.STATUS_VALIDATED
+    ).scalar() or 0
+    
+    organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
+    
+    return render_template('admin/billing/invoices.html',
+        invoices=invoices,
+        organizations=organizations,
+        status_filter=status_filter,
+        org_filter=org_filter,
+        pending_invoices=pending_invoices,
+        awaiting_validation=awaiting_validation,
+        validated_invoices=validated_invoices,
+        total_pending_amount=total_pending_amount,
+        total_awaiting_amount=total_awaiting_amount,
+        total_validated_amount=total_validated_amount
+    )
+
+
+@admin_bp.route('/billing/invoice/<int:invoice_id>')
+@login_required
+@superadmin_required
+def billing_invoice_detail(invoice_id):
+    from utils.currencies import get_currency_by_code
+    
+    invoice = Invoice.query.get_or_404(invoice_id)
+    org = invoice.organization
+    
+    screen_ids = [s.id for s in org.screens]
+    bookings = []
+    if screen_ids:
+        bookings = Booking.query.filter(
+            Booking.screen_id.in_(screen_ids),
+            Booking.payment_status == 'paid',
+            Booking.created_at >= datetime.combine(invoice.week_start_date, datetime.min.time()),
+            Booking.created_at <= datetime.combine(invoice.week_end_date, datetime.max.time())
+        ).order_by(Booking.created_at.desc()).all()
+    
+    currency_info = get_currency_by_code(org.currency or 'EUR')
+    currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
+    
+    return render_template('admin/billing/invoice_detail.html',
+        invoice=invoice,
+        org=org,
+        bookings=bookings,
+        currency_symbol=currency_symbol
+    )
+
+
+@admin_bp.route('/billing/invoice/<int:invoice_id>/validate', methods=['POST'])
+@login_required
+@superadmin_required
+def validate_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    
+    if invoice.status != Invoice.STATUS_PAID:
+        flash('Cette facture ne peut pas être validée.', 'error')
+        return redirect(url_for('admin.billing_invoice_detail', invoice_id=invoice_id))
+    
+    latest_proof = invoice.get_latest_proof()
+    if latest_proof:
+        latest_proof.status = PaymentProof.STATUS_APPROVED
+        latest_proof.reviewed_at = datetime.utcnow()
+        latest_proof.reviewed_by = current_user.id
+    
+    invoice.status = Invoice.STATUS_VALIDATED
+    invoice.validated_at = datetime.utcnow()
+    invoice.validated_by = current_user.id
+    
+    db.session.commit()
+    
+    flash(f'Facture {invoice.invoice_number} validée avec succès!', 'success')
+    return redirect(url_for('admin.billing_invoice_detail', invoice_id=invoice_id))
+
+
+@admin_bp.route('/billing/invoice/<int:invoice_id>/reject', methods=['POST'])
+@login_required
+@superadmin_required
+def reject_invoice_proof(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    
+    if invoice.status != Invoice.STATUS_PAID:
+        flash('Aucune preuve de paiement à rejeter.', 'error')
+        return redirect(url_for('admin.billing_invoice_detail', invoice_id=invoice_id))
+    
+    reason = request.form.get('reason', 'Preuve de paiement non conforme')
+    
+    latest_proof = invoice.get_latest_proof()
+    if latest_proof:
+        latest_proof.status = PaymentProof.STATUS_REJECTED
+        latest_proof.reviewed_at = datetime.utcnow()
+        latest_proof.reviewed_by = current_user.id
+        latest_proof.review_notes = reason
+    
+    invoice.status = Invoice.STATUS_PENDING
+    invoice.paid_at = None
+    
+    db.session.commit()
+    
+    flash('Preuve de paiement refusée. L\'établissement devra soumettre une nouvelle preuve.', 'info')
+    return redirect(url_for('admin.billing_invoice_detail', invoice_id=invoice_id))
+
+
+@admin_bp.route('/billing/proof/<int:proof_id>/view')
+@login_required
+@superadmin_required
+def view_payment_proof(proof_id):
+    import os
+    proof = PaymentProof.query.get_or_404(proof_id)
+    
+    if os.path.exists(proof.file_path):
+        return send_file(proof.file_path, as_attachment=False)
+    else:
+        flash('Fichier non trouvé.', 'error')
+        return redirect(url_for('admin.billing_invoice_detail', invoice_id=proof.invoice_id))
