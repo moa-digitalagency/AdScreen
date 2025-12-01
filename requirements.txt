@@ -77,3 +77,10 @@ flask
 flask-sqlalchemy
 gunicorn
 psycopg2-binary
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
+PyMuPDF
+reportlab
