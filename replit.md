@@ -264,3 +264,38 @@ The platform supports multiple currencies based on organization settings:
 - Updated booking form with time selection (alongside dates)
 - Visual improvement with green/red colored date-time sections
 - Enables more precise availability calculations and scheduling
+
+### Design Enhancements (December 2025)
+
+#### QR Code Complet - Nouveau Design Premium
+- Design glassmorphism avec gradients modernes (violet/indigo/bleu)
+- Cercles décoratifs flottants dans le header
+- Effet de vague entre les sections
+- Coins colorés sur le conteneur QR
+- Section info avec résolution, orientation, formats acceptés
+- Bouton CTA avec gradient vert
+- Footer moderne avec barre d'accent gradient
+
+#### Filler Generator - Nouveau Style Professionnel
+- Fond sombre avec gradient et effet de vague
+- Cercles décoratifs dans le header
+- Barre d'accent gradient dans le footer
+- Coins colorés sur le conteneur QR
+- Système de badges responsive pour les infos écran
+- Bouton CTA avec gradient vert
+- Typographie premium avec ombres
+
+#### Dashboard Admin - Conversion Devises Améliorée
+- Bouton de rafraîchissement des taux avec indicateur de chargement
+- Bannière gradient pour le statut de conversion
+- Token CSRF pour la sécurité des formulaires
+- Timeout automatique de 15s pour réinitialiser le bouton
+- Messages flash pour succès/erreur
+
+#### Formulaire de Réservation - Responsivité Mobile/Tablette
+- Design adaptatif pour écrans de 320px à 1920px
+- Media queries spécifiques pour très petits écrans (320px, 360px, 480px)
+- Grille de disponibilités compacte et responsive
+- Tailles de police et espacement adaptés
+- Contrôles de nombre de passages optimisés pour mobile
+- Section dates/heures avec icônes et couleurs (vert/rouge)
