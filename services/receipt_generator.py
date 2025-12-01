@@ -5,7 +5,6 @@ import base64
 from datetime import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
@@ -27,246 +26,423 @@ def _get_receipt_data(booking, screen, content):
     )
     currency_symbol = currency.get('symbol', 'EUR')
     
-    details = [
-        ("Ecran", screen.name[:30]),
-        ("Etablissement", screen.organization.name[:30]),
-        ("Type", content.content_type.capitalize() if content.content_type else "---"),
-        ("Duree creneau", f"{booking.slot_duration}s"),
-        ("Diffusions", str(booking.num_plays)),
-        ("Date debut", booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-"),
-    ]
-    
-    if booking.end_date:
-        details.append(("Date fin", booking.end_date.strftime('%d/%m/%Y')))
-    
-    details.append(("Prix unitaire", f"{booking.price_per_play:.2f} {currency_symbol}"))
-    
     return {
         'currency_symbol': currency_symbol,
-        'details': details,
         'reservation_number': booking.reservation_number or "---",
-        'total_price': f"{booking.total_price:.2f} {currency_symbol}",
         'org_name': screen.organization.name,
+        'screen_name': screen.name,
+        'content_type': content.content_type.capitalize() if content.content_type else "---",
+        'original_filename': content.original_filename or "---",
+        'slot_duration': booking.slot_duration,
+        'num_plays': booking.num_plays,
+        'start_date': booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-",
+        'end_date': booking.end_date.strftime('%d/%m/%Y') if booking.end_date else None,
+        'price_per_play': booking.price_per_play,
+        'total_price': booking.total_price,
+        'client_name': content.client_name or "Anonyme",
+        'client_email': content.client_email or "---",
+        'created_at': booking.created_at.strftime('%d/%m/%Y a %H:%M') if booking.created_at else datetime.now().strftime('%d/%m/%Y a %H:%M'),
         'date_time': datetime.now().strftime('%d/%m/%Y %H:%M')
     }
 
 
-def generate_receipt_pdf(booking, screen, content, qr_base64=None):
-    buffer = io.BytesIO()
-    width, height = A5
-    c = canvas.Canvas(buffer, pagesize=A5)
-    
-    data = _get_receipt_data(booking, screen, content)
-    currency_symbol = data['currency_symbol']
-    
-    c.setFillColor(colors.HexColor('#10b981'))
-    c.rect(0, height - 80, width, 80, fill=True, stroke=False)
-    
-    c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 18)
-    c.drawCentredString(width / 2, height - 35, "SHABAKA ADSCREEN")
-    
-    c.setFont("Helvetica", 12)
-    c.drawCentredString(width / 2, height - 55, "Recu de Reservation")
-    
-    y = height - 110
-    
-    c.setFillColor(colors.HexColor('#f3f4f6'))
-    c.roundRect(30, y - 45, width - 60, 50, 5, fill=True, stroke=False)
-    
-    c.setFillColor(colors.HexColor('#6b7280'))
-    c.setFont("Helvetica", 10)
-    c.drawCentredString(width / 2, y - 10, "N Reservation")
-    
-    c.setFillColor(colors.HexColor('#111827'))
-    c.setFont("Helvetica-Bold", 14)
-    c.drawCentredString(width / 2, y - 30, data['reservation_number'])
-    
-    y -= 70
-    
-    c.setFont("Helvetica", 11)
-    for label, value in data['details']:
-        c.setFillColor(colors.HexColor('#6b7280'))
-        c.drawString(40, y, label)
-        c.setFillColor(colors.HexColor('#111827'))
-        c.drawRightString(width - 40, y, value)
-        y -= 20
-    
-    y -= 10
-    c.setStrokeColor(colors.HexColor('#e5e7eb'))
-    c.line(30, y, width - 30, y)
-    y -= 25
-    
-    c.setFillColor(colors.HexColor('#10b981'))
-    c.roundRect(30, y - 35, width - 60, 40, 5, fill=True, stroke=False)
-    
-    c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(width / 2, y - 22, f"TOTAL: {data['total_price']}")
-    
-    y -= 60
-    
-    c.setFillColor(colors.HexColor('#fef3c7'))
-    c.roundRect(30, y - 30, width - 60, 35, 5, fill=True, stroke=False)
-    
-    c.setFillColor(colors.HexColor('#92400e'))
-    c.setFont("Helvetica", 11)
-    c.drawCentredString(width / 2, y - 18, "En attente de validation")
-    
-    y -= 55
-    
-    if qr_base64:
-        try:
-            qr_data = base64.b64decode(qr_base64)
-            qr_img = Image.open(io.BytesIO(qr_data))
-            qr_size = 70
-            qr_x = (width - qr_size) / 2
-            c.drawImage(ImageReader(qr_img), qr_x, y - qr_size, width=qr_size, height=qr_size)
-            y -= qr_size + 15
-        except Exception:
-            pass
-    
-    c.setFillColor(colors.HexColor('#6b7280'))
-    c.setFont("Helvetica", 9)
-    c.drawCentredString(width / 2, 40, data['org_name'])
-    c.setFillColor(colors.HexColor('#9ca3af'))
-    c.drawCentredString(width / 2, 25, data['date_time'])
-    
-    c.save()
-    buffer.seek(0)
-    return buffer
-
-
-def _draw_rounded_rect(draw, xy, radius, fill):
-    """Draw a rounded rectangle on PIL ImageDraw."""
-    x1, y1, x2, y2 = xy
-    draw.rounded_rectangle([x1, y1, x2, y2], radius=radius, fill=fill)
-
-
-def _get_font(size, bold=False):
-    """Get a font, falling back to default if custom fonts not available."""
+def _get_font(size, bold=False, mono=True):
+    """Get a font, preferring monospace for thermal receipt style."""
     try:
-        if bold:
-            return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size)
-        return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size)
+        if mono:
+            if bold:
+                return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", size)
+            return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", size)
+        else:
+            if bold:
+                return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size)
+            return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size)
     except:
         return ImageFont.load_default()
 
 
+def _truncate(text, max_len):
+    """Truncate text with ellipsis if too long."""
+    if len(text) > max_len:
+        return text[:max_len-2] + ".."
+    return text
+
+
 def generate_receipt_image(booking, screen, content, qr_base64=None):
-    """Generate receipt image directly using PIL with the same design as PDF."""
-    scale = 2.5
-    width = int(A5[0] * scale)
-    height = int(A5[1] * scale)
+    """Generate thermal-style receipt image matching the print design."""
+    width = 400
+    
+    data = _get_receipt_data(booking, screen, content)
+    
+    font_title = _get_font(24, bold=True)
+    font_subtitle = _get_font(14)
+    font_section = _get_font(12, bold=True)
+    font_label = _get_font(14)
+    font_value = _get_font(14, bold=True)
+    font_total = _get_font(20, bold=True)
+    font_status = _get_font(12)
+    font_small = _get_font(11)
+    font_footer = _get_font(12)
+    
+    padding = 20
+    line_height = 22
+    section_gap = 15
+    
+    temp_img = Image.new('RGB', (width, 2000), '#ffffff')
+    temp_draw = ImageDraw.Draw(temp_img)
+    
+    y = padding
+    
+    title_bbox = temp_draw.textbbox((0, 0), "SHABAKA ADSCREEN", font=font_title)
+    y += (title_bbox[3] - title_bbox[1]) + 5
+    
+    subtitle_bbox = temp_draw.textbbox((0, 0), data['org_name'], font=font_subtitle)
+    y += (subtitle_bbox[3] - subtitle_bbox[1]) + 15
+    
+    y += 3
+    
+    y += 50 + 15
+    
+    y += 3 + section_gap
+    
+    y += 18 + 10
+    
+    detail_lines = 7
+    if data['end_date']:
+        detail_lines += 1
+    y += detail_lines * line_height
+    
+    y += 3 + section_gap
+    y += 18 + 10
+    y += 2 * line_height
+    
+    y += 3 + section_gap
+    
+    y += 50 + section_gap
+    
+    y += 40 + section_gap
+    
+    y += 3 + section_gap
+    y += 2 * line_height
+    
+    y += 3 + section_gap
+    
+    qr_size = 80
+    if qr_base64:
+        y += qr_size + 10
+    
+    y += 3 + section_gap
+    y += 4 * 16
+    
+    y += padding
+    
+    height = y
     
     img = Image.new('RGB', (width, height), '#ffffff')
     draw = ImageDraw.Draw(img)
     
-    data = _get_receipt_data(booking, screen, content)
+    y = padding
     
-    font_title = _get_font(int(18 * scale), bold=True)
-    font_subtitle = _get_font(int(12 * scale))
-    font_label = _get_font(int(10 * scale))
-    font_value = _get_font(int(11 * scale))
-    font_value_bold = _get_font(int(14 * scale), bold=True)
-    font_total = _get_font(int(16 * scale), bold=True)
-    font_status = _get_font(int(11 * scale))
-    font_footer = _get_font(int(9 * scale))
-    
-    header_height = int(80 * scale)
-    draw.rectangle([0, 0, width, header_height], fill='#10b981')
-    
-    title_text = "SHABAKA ADSCREEN"
-    title_bbox = draw.textbbox((0, 0), title_text, font=font_title)
+    title = "SHABAKA ADSCREEN"
+    title_bbox = draw.textbbox((0, 0), title, font=font_title)
     title_x = (width - (title_bbox[2] - title_bbox[0])) // 2
-    draw.text((title_x, int(25 * scale)), title_text, fill='#ffffff', font=font_title)
+    draw.text((title_x, y), title, fill='#000000', font=font_title)
+    y += (title_bbox[3] - title_bbox[1]) + 5
     
-    subtitle_text = "Recu de Reservation"
-    subtitle_bbox = draw.textbbox((0, 0), subtitle_text, font=font_subtitle)
+    subtitle = data['org_name']
+    subtitle_bbox = draw.textbbox((0, 0), subtitle, font=font_subtitle)
     subtitle_x = (width - (subtitle_bbox[2] - subtitle_bbox[0])) // 2
-    draw.text((subtitle_x, int(50 * scale)), subtitle_text, fill='#ffffff', font=font_subtitle)
+    draw.text((subtitle_x, y), subtitle, fill='#000000', font=font_subtitle)
+    y += (subtitle_bbox[3] - subtitle_bbox[1]) + 15
     
-    y = int(100 * scale)
+    draw.line([(padding, y), (width - padding, y)], fill='#000000', width=1)
+    y += 3
     
-    box_x1 = int(30 * scale)
-    box_x2 = width - int(30 * scale)
-    box_height = int(50 * scale)
-    _draw_rounded_rect(draw, (box_x1, y, box_x2, y + box_height), radius=int(5 * scale), fill='#f3f4f6')
+    def draw_dashed_line(y_pos):
+        dash_width = 8
+        gap_width = 4
+        x = padding
+        while x < width - padding:
+            end_x = min(x + dash_width, width - padding)
+            draw.line([(x, y_pos), (end_x, y_pos)], fill='#000000', width=1)
+            x += dash_width + gap_width
     
-    res_label = "N Reservation"
-    res_label_bbox = draw.textbbox((0, 0), res_label, font=font_label)
+    box_y = y + 5
+    box_height = 50
+    draw.rectangle([(padding, box_y), (width - padding, box_y + box_height)], outline='#000000', width=2)
+    
+    res_label = "N° RESERVATION"
+    res_label_bbox = draw.textbbox((0, 0), res_label, font=font_small)
     res_label_x = (width - (res_label_bbox[2] - res_label_bbox[0])) // 2
-    draw.text((res_label_x, y + int(8 * scale)), res_label, fill='#6b7280', font=font_label)
+    draw.text((res_label_x, box_y + 5), res_label, fill='#000000', font=font_small)
     
     res_num = data['reservation_number']
-    res_num_bbox = draw.textbbox((0, 0), res_num, font=font_value_bold)
+    res_num_bbox = draw.textbbox((0, 0), res_num, font=font_value)
     res_num_x = (width - (res_num_bbox[2] - res_num_bbox[0])) // 2
-    draw.text((res_num_x, y + int(28 * scale)), res_num, fill='#111827', font=font_value_bold)
+    draw.text((res_num_x, box_y + 25), res_num, fill='#000000', font=font_value)
     
-    y += int(70 * scale)
+    y = box_y + box_height + 15
     
-    left_margin = int(40 * scale)
-    right_margin = width - int(40 * scale)
-    line_height = int(20 * scale)
+    draw_dashed_line(y)
+    y += 3 + section_gap
     
-    for label, value in data['details']:
-        draw.text((left_margin, y), label, fill='#6b7280', font=font_value)
+    section_title = "RECAPITULATIF"
+    section_bbox = draw.textbbox((0, 0), section_title, font=font_section)
+    section_x = (width - (section_bbox[2] - section_bbox[0])) // 2
+    draw.text((section_x, y), section_title, fill='#000000', font=font_section)
+    y += 18 + 10
+    
+    def draw_detail_line(label, value, y_pos):
+        draw.text((padding, y_pos), label, fill='#333333', font=font_label)
         value_bbox = draw.textbbox((0, 0), value, font=font_value)
-        value_x = right_margin - (value_bbox[2] - value_bbox[0])
-        draw.text((value_x, y), value, fill='#111827', font=font_value)
-        y += line_height
+        value_x = width - padding - (value_bbox[2] - value_bbox[0])
+        draw.text((value_x, y_pos), value, fill='#000000', font=font_value)
+        return y_pos + line_height
     
-    y += int(10 * scale)
-    draw.line([(int(30 * scale), y), (width - int(30 * scale), y)], fill='#e5e7eb', width=1)
-    y += int(15 * scale)
+    y = draw_detail_line("Ecran:", _truncate(data['screen_name'], 18), y)
+    y = draw_detail_line("Etablis.:", _truncate(data['org_name'], 16), y)
+    y = draw_detail_line("Type:", data['content_type'], y)
+    y = draw_detail_line("Fichier:", _truncate(data['original_filename'], 15), y)
+    y = draw_detail_line("Creneau:", f"{data['slot_duration']}s", y)
+    y = draw_detail_line("Diffusions:", f"{data['num_plays']}x", y)
+    y = draw_detail_line("Debut:", data['start_date'], y)
+    if data['end_date']:
+        y = draw_detail_line("Fin:", data['end_date'], y)
     
-    total_box_height = int(40 * scale)
-    _draw_rounded_rect(draw, (box_x1, y, box_x2, y + total_box_height), radius=int(5 * scale), fill='#10b981')
+    draw_dashed_line(y)
+    y += 3 + section_gap
     
-    total_text = f"TOTAL: {data['total_price']}"
+    section_title = "TARIFICATION"
+    section_bbox = draw.textbbox((0, 0), section_title, font=font_section)
+    section_x = (width - (section_bbox[2] - section_bbox[0])) // 2
+    draw.text((section_x, y), section_title, fill='#000000', font=font_section)
+    y += 18 + 10
+    
+    y = draw_detail_line("Prix/diff.:", f"{data['price_per_play']:.2f} {data['currency_symbol']}", y)
+    y = draw_detail_line("Nb diff.:", f"x {data['num_plays']}", y)
+    
+    draw_dashed_line(y)
+    y += 3 + section_gap
+    
+    total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
     total_bbox = draw.textbbox((0, 0), total_text, font=font_total)
+    total_box_height = 50
+    total_box_y = y
+    draw.rectangle([(padding, total_box_y), (width - padding, total_box_y + total_box_height)], outline='#000000', width=3)
     total_x = (width - (total_bbox[2] - total_bbox[0])) // 2
-    total_y = y + (total_box_height - (total_bbox[3] - total_bbox[1])) // 2
-    draw.text((total_x, total_y), total_text, fill='#ffffff', font=font_total)
+    total_y = total_box_y + (total_box_height - (total_bbox[3] - total_bbox[1])) // 2
+    draw.text((total_x, total_y), total_text, fill='#000000', font=font_total)
+    y = total_box_y + total_box_height + section_gap
     
-    y += total_box_height + int(20 * scale)
-    
-    status_box_height = int(35 * scale)
-    _draw_rounded_rect(draw, (box_x1, y, box_x2, y + status_box_height), radius=int(5 * scale), fill='#fef3c7')
-    
-    status_text = "En attente de validation"
+    status_text = "*** EN ATTENTE DE VALIDATION ***"
     status_bbox = draw.textbbox((0, 0), status_text, font=font_status)
-    status_x = (width - (status_bbox[2] - status_bbox[0])) // 2
-    status_y = y + (status_box_height - (status_bbox[3] - status_bbox[1])) // 2
-    draw.text((status_x, status_y), status_text, fill='#92400e', font=font_status)
+    status_box_height = 40
+    status_box_y = y
     
-    y += status_box_height + int(20 * scale)
+    for i in range(0, width - 2 * padding, 12):
+        draw.line([(padding + i, status_box_y), (padding + i + 6, status_box_y)], fill='#000000', width=1)
+        draw.line([(padding + i, status_box_y + status_box_height), (padding + i + 6, status_box_y + status_box_height)], fill='#000000', width=1)
+    draw.line([(padding, status_box_y), (padding, status_box_y + status_box_height)], fill='#000000', width=1)
+    draw.line([(width - padding, status_box_y), (width - padding, status_box_y + status_box_height)], fill='#000000', width=1)
+    
+    status_x = (width - (status_bbox[2] - status_bbox[0])) // 2
+    status_y = status_box_y + (status_box_height - (status_bbox[3] - status_bbox[1])) // 2
+    draw.text((status_x, status_y), status_text, fill='#000000', font=font_status)
+    y = status_box_y + status_box_height + section_gap
+    
+    draw_dashed_line(y)
+    y += 3 + section_gap
+    
+    y = draw_detail_line("Client:", _truncate(data['client_name'], 16), y)
+    y = draw_detail_line("Email:", _truncate(data['client_email'], 18), y)
+    
+    draw_dashed_line(y)
+    y += 3 + section_gap
     
     if qr_base64:
         try:
             qr_data = base64.b64decode(qr_base64)
             qr_img = Image.open(io.BytesIO(qr_data))
-            qr_size = int(70 * scale)
             qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
-            qr_x = (width - qr_size) // 2
+            
+            qr_x = padding
             img.paste(qr_img, (qr_x, y))
-            y += qr_size + int(15 * scale)
+            
+            msg_x = qr_x + qr_size + 10
+            msg_lines = [
+                "Merci pour votre",
+                "reservation!",
+                "Scannez le QR code",
+                "pour passer une",
+                "nouvelle commande."
+            ]
+            msg_y = y
+            for line in msg_lines:
+                draw.text((msg_x, msg_y), line, fill='#000000', font=font_small)
+                msg_y += 14
+            
+            y += qr_size + 10
         except Exception:
             pass
     
-    footer_y = height - int(60 * scale)
+    draw_dashed_line(y)
+    y += 3 + section_gap
     
-    org_text = data['org_name']
-    org_bbox = draw.textbbox((0, 0), org_text, font=font_footer)
-    org_x = (width - (org_bbox[2] - org_bbox[0])) // 2
-    draw.text((org_x, footer_y), org_text, fill='#6b7280', font=font_footer)
-    
-    date_text = data['date_time']
-    date_bbox = draw.textbbox((0, 0), date_text, font=font_footer)
-    date_x = (width - (date_bbox[2] - date_bbox[0])) // 2
-    draw.text((date_x, footer_y + int(15 * scale)), date_text, fill='#9ca3af', font=font_footer)
+    footer_lines = [
+        data['created_at'],
+        "--------------------------------",
+        "Shabaka AdScreen",
+        "www.shabaka-adscreen.com"
+    ]
+    for line in footer_lines:
+        line_bbox = draw.textbbox((0, 0), line, font=font_footer)
+        line_x = (width - (line_bbox[2] - line_bbox[0])) // 2
+        draw.text((line_x, y), line, fill='#000000', font=font_footer)
+        y += 16
     
     return img
+
+
+def generate_receipt_pdf(booking, screen, content, qr_base64=None):
+    """Generate PDF receipt with thermal style design."""
+    buffer = io.BytesIO()
+    
+    pdf_width = 200
+    pdf_height = 500
+    
+    c = canvas.Canvas(buffer, pagesize=(pdf_width, pdf_height))
+    
+    data = _get_receipt_data(booking, screen, content)
+    
+    y = pdf_height - 20
+    
+    c.setFont("Courier-Bold", 12)
+    c.drawCentredString(pdf_width / 2, y, "SHABAKA ADSCREEN")
+    y -= 12
+    
+    c.setFont("Courier", 8)
+    org_name = data['org_name'][:25]
+    c.drawCentredString(pdf_width / 2, y, org_name)
+    y -= 15
+    
+    c.line(10, y, pdf_width - 10, y)
+    y -= 10
+    
+    c.setFont("Courier", 6)
+    c.drawCentredString(pdf_width / 2, y, "N° RESERVATION")
+    y -= 10
+    c.setFont("Courier-Bold", 10)
+    c.drawCentredString(pdf_width / 2, y, data['reservation_number'])
+    y -= 15
+    
+    c.setStrokeColor(colors.black)
+    c.setDash(3, 2)
+    c.line(10, y, pdf_width - 10, y)
+    c.setDash()
+    y -= 12
+    
+    c.setFont("Courier-Bold", 7)
+    c.drawCentredString(pdf_width / 2, y, "RECAPITULATIF")
+    y -= 12
+    
+    c.setFont("Courier", 7)
+    details = [
+        ("Ecran:", _truncate(data['screen_name'], 15)),
+        ("Etablis.:", _truncate(data['org_name'], 13)),
+        ("Type:", data['content_type']),
+        ("Creneau:", f"{data['slot_duration']}s"),
+        ("Diffusions:", f"{data['num_plays']}x"),
+        ("Debut:", data['start_date']),
+    ]
+    if data['end_date']:
+        details.append(("Fin:", data['end_date']))
+    
+    for label, value in details:
+        c.drawString(12, y, label)
+        c.drawRightString(pdf_width - 12, y, value)
+        y -= 10
+    
+    c.setDash(3, 2)
+    c.line(10, y, pdf_width - 10, y)
+    c.setDash()
+    y -= 12
+    
+    c.setFont("Courier-Bold", 7)
+    c.drawCentredString(pdf_width / 2, y, "TARIFICATION")
+    y -= 12
+    
+    c.setFont("Courier", 7)
+    c.drawString(12, y, "Prix/diff.:")
+    c.drawRightString(pdf_width - 12, y, f"{data['price_per_play']:.2f} {data['currency_symbol']}")
+    y -= 10
+    c.drawString(12, y, "Nb diff.:")
+    c.drawRightString(pdf_width - 12, y, f"x {data['num_plays']}")
+    y -= 15
+    
+    c.setDash(3, 2)
+    c.line(10, y, pdf_width - 10, y)
+    c.setDash()
+    y -= 15
+    
+    c.setFont("Courier-Bold", 10)
+    total_text = f"TOTAL: {data['total_price']:.2f} {data['currency_symbol']}"
+    c.rect(10, y - 5, pdf_width - 20, 18, stroke=True, fill=False)
+    c.drawCentredString(pdf_width / 2, y, total_text)
+    y -= 25
+    
+    c.setFont("Courier", 7)
+    c.setDash(3, 2)
+    c.rect(10, y - 5, pdf_width - 20, 15, stroke=True, fill=False)
+    c.setDash()
+    c.drawCentredString(pdf_width / 2, y, "*** EN ATTENTE DE VALIDATION ***")
+    y -= 25
+    
+    c.setDash(3, 2)
+    c.line(10, y, pdf_width - 10, y)
+    c.setDash()
+    y -= 12
+    
+    c.setFont("Courier", 7)
+    c.drawString(12, y, "Client:")
+    c.drawRightString(pdf_width - 12, y, _truncate(data['client_name'], 14))
+    y -= 10
+    c.drawString(12, y, "Email:")
+    c.drawRightString(pdf_width - 12, y, _truncate(data['client_email'], 16))
+    y -= 15
+    
+    if qr_base64:
+        try:
+            qr_data = base64.b64decode(qr_base64)
+            qr_img = Image.open(io.BytesIO(qr_data))
+            qr_size = 40
+            c.drawImage(ImageReader(qr_img), 12, y - qr_size, width=qr_size, height=qr_size)
+            
+            c.setFont("Courier", 6)
+            c.drawString(55, y - 10, "Merci pour votre")
+            c.drawString(55, y - 18, "reservation!")
+            c.drawString(55, y - 26, "Scannez le QR code")
+            c.drawString(55, y - 34, "pour commander.")
+            y -= qr_size + 10
+        except Exception:
+            pass
+    
+    c.setDash(3, 2)
+    c.line(10, y, pdf_width - 10, y)
+    c.setDash()
+    y -= 12
+    
+    c.setFont("Courier", 6)
+    c.drawCentredString(pdf_width / 2, y, data['created_at'])
+    y -= 8
+    c.drawCentredString(pdf_width / 2, y, "------------------------")
+    y -= 8
+    c.drawCentredString(pdf_width / 2, y, "Shabaka AdScreen")
+    y -= 8
+    c.drawCentredString(pdf_width / 2, y, "www.shabaka-adscreen.com")
+    
+    c.save()
+    buffer.seek(0)
+    return buffer
 
 
 def save_receipt_pdf(booking, screen, content, qr_base64=None):
