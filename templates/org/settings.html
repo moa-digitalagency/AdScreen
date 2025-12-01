@@ -50,11 +50,11 @@
                     </div>
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="business_registration_number" class="label">Numéro d'immatriculation (SIRET/SIREN)</label>
-                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Ex: 123 456 789 00012">
+                            <label for="business_registration_number" class="label">{{ registration_label }}</label>
+                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Votre numéro d'immatriculation">
                         </div>
                         <div>
-                            <label for="vat_number" class="label">Numéro de TVA intracommunautaire</label>
+                            <label for="vat_number" class="label">Numéro de TVA</label>
                             <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="Ex: FR12345678901">
                         </div>
                     </div>
@@ -94,6 +94,17 @@
                         </select>
                         <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
                     </div>
+                </div>
+                <div class="mt-4">
+                    <label for="timezone" class="label">Fuseau horaire</label>
+                    <select id="timezone" name="timezone" class="input-field">
+                        {% for tz in timezones %}
+                        <option value="{{ tz }}" {% if tz == org.timezone %}selected{% endif %}>
+                            {{ tz }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Le fuseau horaire de votre établissement</p>
                 </div>
             </div>
 

@@ -653,6 +653,8 @@ def settings():
             'admin_whatsapp_number': 'platform',
             'head_code': 'platform',
             'default_currency': 'platform',
+            'platform_timezone': 'platform',
+            'registration_number_label': 'platform',
             'copyright_text': 'platform',
             'made_with_text': 'platform',
             'platform_business_name': 'platform',
@@ -713,6 +715,8 @@ def settings():
     platform_settings['head_code'] = SiteSetting.get('head_code', '')
     platform_settings['favicon'] = SiteSetting.get('favicon', '')
     platform_settings['default_currency'] = SiteSetting.get('default_currency', 'EUR')
+    platform_settings['platform_timezone'] = SiteSetting.get('platform_timezone', 'UTC')
+    platform_settings['registration_number_label'] = SiteSetting.get('registration_number_label', "Numéro d'immatriculation")
     platform_settings['copyright_text'] = SiteSetting.get('copyright_text', '© Shabaka AdScreen. Tous droits réservés.')
     platform_settings['made_with_text'] = SiteSetting.get('made_with_text', 'Fait avec ❤️ en France')
     platform_settings['facebook_url'] = SiteSetting.get('facebook_url', '')
@@ -727,10 +731,30 @@ def settings():
     platform_settings['platform_vat_number'] = SiteSetting.get('platform_vat_number', '')
     platform_settings['platform_vat_rate'] = SiteSetting.get('platform_vat_rate', 0)
     
+    timezones = [
+        'UTC',
+        'Africa/Abidjan', 'Africa/Accra', 'Africa/Algiers', 'Africa/Cairo', 'Africa/Casablanca',
+        'Africa/Dakar', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi', 'Africa/Tunis',
+        'America/Bogota', 'America/Buenos_Aires', 'America/Caracas', 'America/Chicago',
+        'America/Lima', 'America/Los_Angeles', 'America/Mexico_City', 'America/New_York',
+        'America/Santiago', 'America/Sao_Paulo', 'America/Toronto',
+        'Asia/Bangkok', 'Asia/Beirut', 'Asia/Dubai', 'Asia/Hong_Kong', 'Asia/Jakarta',
+        'Asia/Kolkata', 'Asia/Riyadh', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Singapore',
+        'Asia/Tokyo',
+        'Australia/Melbourne', 'Australia/Sydney',
+        'Europe/Amsterdam', 'Europe/Athens', 'Europe/Berlin', 'Europe/Brussels',
+        'Europe/Dublin', 'Europe/Helsinki', 'Europe/Istanbul', 'Europe/Lisbon',
+        'Europe/London', 'Europe/Madrid', 'Europe/Moscow', 'Europe/Paris',
+        'Europe/Prague', 'Europe/Rome', 'Europe/Stockholm', 'Europe/Vienna', 'Europe/Warsaw',
+        'Europe/Zurich',
+        'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu'
+    ]
+    
     return render_template('admin/settings.html',
         seo_settings=seo_settings,
         platform_settings=platform_settings,
-        currencies=currencies
+        currencies=currencies,
+        timezones=timezones
     )
 
 
@@ -863,21 +887,22 @@ def reject_registration(request_id):
 @superadmin_required
 def billing():
     from utils.currencies import get_currency_by_code
-    from routes.billing_routes import get_last_week, generate_invoice_for_week
+    from routes.billing_routes import should_generate_weekly_invoice, generate_invoice_for_week
     
     all_orgs = Organization.query.filter_by(is_active=True).all()
     org_ids = [org.id for org in all_orgs]
     
-    last_week_start, last_week_end = get_last_week()
+    should_generate, week_start, week_end = should_generate_weekly_invoice()
     
-    for org_id in org_ids:
-        existing = Invoice.query.filter_by(
-            organization_id=org_id,
-            week_start_date=last_week_start,
-            week_end_date=last_week_end
-        ).first()
-        if not existing:
-            generate_invoice_for_week(org_id, last_week_start, last_week_end)
+    if should_generate:
+        for org_id in org_ids:
+            existing = Invoice.query.filter_by(
+                organization_id=org_id,
+                week_start_date=week_start,
+                week_end_date=week_end
+            ).first()
+            if not existing:
+                generate_invoice_for_week(org_id, week_start, week_end)
     
     status_filter = request.args.get('status', 'all')
     org_filter = request.args.get('org_id', '')

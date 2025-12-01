@@ -141,10 +141,31 @@ def booking_history():
 @org_required
 def settings():
     from utils.currencies import get_all_currencies, get_country_choices
+    from models.site_setting import SiteSetting
     
     org = current_user.organization
     currencies = get_all_currencies()
     countries = get_country_choices()
+    registration_label = SiteSetting.get('registration_number_label', "Numéro d'immatriculation")
+    
+    timezones = [
+        'UTC',
+        'Africa/Abidjan', 'Africa/Accra', 'Africa/Algiers', 'Africa/Cairo', 'Africa/Casablanca',
+        'Africa/Dakar', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi', 'Africa/Tunis',
+        'America/Bogota', 'America/Buenos_Aires', 'America/Caracas', 'America/Chicago',
+        'America/Lima', 'America/Los_Angeles', 'America/Mexico_City', 'America/New_York',
+        'America/Santiago', 'America/Sao_Paulo', 'America/Toronto',
+        'Asia/Bangkok', 'Asia/Beirut', 'Asia/Dubai', 'Asia/Hong_Kong', 'Asia/Jakarta',
+        'Asia/Kolkata', 'Asia/Riyadh', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Singapore',
+        'Asia/Tokyo',
+        'Australia/Melbourne', 'Australia/Sydney',
+        'Europe/Amsterdam', 'Europe/Athens', 'Europe/Berlin', 'Europe/Brussels',
+        'Europe/Dublin', 'Europe/Helsinki', 'Europe/Istanbul', 'Europe/Lisbon',
+        'Europe/London', 'Europe/Madrid', 'Europe/Moscow', 'Europe/Paris',
+        'Europe/Prague', 'Europe/Rome', 'Europe/Stockholm', 'Europe/Vienna', 'Europe/Warsaw',
+        'Europe/Zurich',
+        'Pacific/Auckland', 'Pacific/Fiji', 'Pacific/Honolulu'
+    ]
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -152,6 +173,10 @@ def settings():
         address = request.form.get('address', '').strip()
         country = request.form.get('country', org.country or 'FR')
         currency = request.form.get('currency', org.currency or 'EUR')
+        timezone_input = request.form.get('timezone', org.timezone or 'UTC')
+        
+        if timezone_input not in timezones:
+            timezone_input = 'UTC'
         
         business_name = request.form.get('business_name', '').strip()
         business_registration_number = request.form.get('business_registration_number', '').strip()
@@ -167,7 +192,9 @@ def settings():
             return render_template('org/settings.html',
                 org=org,
                 currencies=currencies,
-                countries=countries
+                countries=countries,
+                timezones=timezones,
+                registration_label=registration_label
             )
         
         org.name = name
@@ -175,6 +202,7 @@ def settings():
         org.address = address
         org.country = country
         org.currency = currency
+        org.timezone = timezone_input
         org.business_name = business_name
         org.business_registration_number = business_registration_number
         org.vat_number = vat_number
@@ -187,7 +215,9 @@ def settings():
     return render_template('org/settings.html',
         org=org,
         currencies=currencies,
-        countries=countries
+        countries=countries,
+        timezones=timezones,
+        registration_label=registration_label
     )
 
 

@@ -3,12 +3,17 @@ from flask_login import login_required, current_user
 from functools import wraps
 from app import db
 from models import Screen, Booking, Organization, Invoice, PaymentProof, User
+from models.site_setting import SiteSetting
 from datetime import datetime, timedelta, date
 from sqlalchemy import func, and_
 import os
 import secrets
 from werkzeug.utils import secure_filename
 import io
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 billing_bp = Blueprint('billing', __name__)
 
@@ -67,6 +72,63 @@ def get_last_week():
     last_week_start = current_week_start - timedelta(weeks=1)
     last_week_end = last_week_start + timedelta(days=6)
     return last_week_start, last_week_end
+
+
+def is_invoice_generation_time():
+    """
+    Check if it's time to generate invoices (Sunday 23:00-23:59 in platform timezone).
+    Returns True if we should generate invoices for the previous week.
+    """
+    platform_timezone = SiteSetting.get('platform_timezone', 'UTC')
+    try:
+        tz = ZoneInfo(platform_timezone)
+    except Exception:
+        tz = ZoneInfo('UTC')
+    
+    now = datetime.now(tz)
+    is_sunday = now.weekday() == 6
+    is_late_night = now.hour == 23
+    
+    return is_sunday and is_late_night
+
+
+def should_generate_weekly_invoice():
+    """
+    Determine if weekly invoice generation should happen.
+    Returns (should_generate, week_start, week_end)
+    """
+    if not is_invoice_generation_time():
+        return False, None, None
+    
+    last_week_start, last_week_end = get_last_week()
+    return True, last_week_start, last_week_end
+
+
+def run_scheduled_invoice_generation():
+    """
+    Generate invoices for all organizations for the previous week.
+    This should be called by a scheduled task (cron) on Sundays at 23:59.
+    Returns the number of invoices generated.
+    """
+    if not is_invoice_generation_time():
+        return 0, "Not invoice generation time"
+    
+    last_week_start, last_week_end = get_last_week()
+    all_orgs = Organization.query.filter_by(is_active=True).all()
+    
+    generated_count = 0
+    for org in all_orgs:
+        existing = Invoice.query.filter_by(
+            organization_id=org.id,
+            week_start_date=last_week_start,
+            week_end_date=last_week_end
+        ).first()
+        if not existing:
+            invoice = generate_invoice_for_week(org.id, last_week_start, last_week_end)
+            if invoice:
+                generated_count += 1
+    
+    return generated_count, f"Generated {generated_count} invoices for week {last_week_start} to {last_week_end}"
 
 
 def generate_invoice_for_week(organization_id, week_start, week_end):
@@ -171,14 +233,15 @@ def invoices():
     
     org = current_user.organization
     
-    last_week_start, last_week_end = get_last_week()
-    existing = Invoice.query.filter_by(
-        organization_id=org.id,
-        week_start_date=last_week_start,
-        week_end_date=last_week_end
-    ).first()
-    if not existing:
-        generate_invoice_for_week(org.id, last_week_start, last_week_end)
+    should_generate, week_start, week_end = should_generate_weekly_invoice()
+    if should_generate:
+        existing = Invoice.query.filter_by(
+            organization_id=org.id,
+            week_start_date=week_start,
+            week_end_date=week_end
+        ).first()
+        if not existing:
+            generate_invoice_for_week(org.id, week_start, week_end)
     
     status_filter = request.args.get('status', 'all')
     
@@ -360,3 +423,26 @@ def download_invoice(invoice_id):
     response.headers['Content-Disposition'] = f'attachment; filename=facture_{invoice.invoice_number}.html'
     
     return response
+
+
+@billing_bp.route('/cron/generate-invoices', methods=['POST'])
+def cron_generate_invoices():
+    """
+    Cron endpoint to trigger scheduled invoice generation.
+    Should be called by an external scheduler on Sundays at 23:59 (platform timezone).
+    Requires a valid cron secret for authentication.
+    """
+    import os
+    cron_secret = request.headers.get('X-Cron-Secret', '')
+    expected_secret = os.environ.get('CRON_SECRET', '')
+    
+    if not expected_secret or cron_secret != expected_secret:
+        return {'error': 'Unauthorized'}, 401
+    
+    count, message = run_scheduled_invoice_generation()
+    
+    return {
+        'success': True,
+        'invoices_generated': count,
+        'message': message
+    }, 200

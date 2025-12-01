@@ -47,6 +47,7 @@ def create_demo_data():
             address='123 Avenue des Champs-Élysées, 75008 Paris',
             country='FR',
             currency='EUR',
+            timezone='Europe/Paris',
             commission_rate=10.0,
             subscription_plan='premium'
         )
@@ -59,6 +60,7 @@ def create_demo_data():
             address='45 Rue de la République, 69002 Lyon',
             country='FR',
             currency='EUR',
+            timezone='Europe/Paris',
             commission_rate=12.0,
             subscription_plan='basic'
         )
@@ -71,6 +73,7 @@ def create_demo_data():
             address='Boulevard Salvador Allende, 44800 Saint-Herblain',
             country='FR',
             currency='EUR',
+            timezone='Europe/Paris',
             commission_rate=8.0,
             subscription_plan='enterprise'
         )
@@ -83,6 +86,7 @@ def create_demo_data():
             address='Avenue Mohammed V, Guéliz, Marrakech',
             country='MA',
             currency='MAD',
+            timezone='Africa/Casablanca',
             commission_rate=10.0,
             subscription_plan='premium'
         )
@@ -95,6 +99,7 @@ def create_demo_data():
             address='Corniche Ouest, Almadies, Dakar',
             country='SN',
             currency='XOF',
+            timezone='Africa/Dakar',
             commission_rate=12.0,
             subscription_plan='basic'
         )
@@ -107,6 +112,7 @@ def create_demo_data():
             address='Avenue Habib Bourguiba, Tunis',
             country='TN',
             currency='TND',
+            timezone='Africa/Tunis',
             commission_rate=10.0,
             subscription_plan='basic'
         )
@@ -390,6 +396,8 @@ def create_demo_data():
             ('platform_registration_number', '123 456 789 00012', 'string', 'platform'),
             ('platform_vat_number', 'FR12345678901', 'string', 'platform'),
             ('platform_vat_rate', '20.0', 'float', 'platform'),
+            ('platform_timezone', 'Europe/Paris', 'string', 'platform'),
+            ('registration_number_label', "Numéro d'immatriculation", 'string', 'platform'),
         ]
         
         for key, value, value_type, category in site_settings:

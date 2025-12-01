@@ -160,24 +160,32 @@
                 </div>
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
-                        <label class="label">Numéro d'immatriculation (SIRET/SIREN)</label>
-                        <input type="text" name="platform_registration_number" 
-                               value="{{ platform_settings.platform_registration_number }}" 
-                               class="input-field" placeholder="Ex: 123 456 789 00012">
+                        <label class="label">Libellé du numéro d'immatriculation</label>
+                        <input type="text" name="registration_number_label" 
+                               value="{{ platform_settings.registration_number_label }}" 
+                               class="input-field" placeholder="Ex: SIRET, NIF, Tax ID, ABN...">
+                        <p class="text-xs text-gray-500 mt-1">Le nom du numéro d'immatriculation selon votre pays</p>
                     </div>
                     <div>
-                        <label class="label">Numéro de TVA intracommunautaire</label>
+                        <label class="label">Numéro d'immatriculation</label>
+                        <input type="text" name="platform_registration_number" 
+                               value="{{ platform_settings.platform_registration_number }}" 
+                               class="input-field" placeholder="Votre numéro d'immatriculation">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Numéro de TVA</label>
                         <input type="text" name="platform_vat_number" 
                                value="{{ platform_settings.platform_vat_number }}" 
                                class="input-field" placeholder="Ex: FR12345678901">
                     </div>
-                </div>
-                <div>
-                    <label class="label">Taux de TVA plateforme (%)</label>
-                    <input type="number" step="0.1" name="platform_vat_rate" 
-                           value="{{ platform_settings.platform_vat_rate }}" 
-                           class="input-field" min="0" max="100" placeholder="Ex: 20">
-                    <p class="text-xs text-gray-500 mt-1">Le taux de TVA applicable aux commissions facturées aux établissements</p>
+                    <div>
+                        <label class="label">Taux de TVA plateforme (%)</label>
+                        <input type="number" step="0.1" name="platform_vat_rate" 
+                               value="{{ platform_settings.platform_vat_rate }}" 
+                               class="input-field" min="0" max="100" placeholder="Ex: 20">
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,15 +246,28 @@
                     <input type="email" name="support_email" value="{{ platform_settings.support_email }}" 
                            class="input-field" placeholder="support@shabaka-adscreen.com">
                 </div>
-                <div>
-                    <label class="label">Devise par défaut</label>
-                    <select name="default_currency" class="input-field">
-                        {% for currency in currencies %}
-                        <option value="{{ currency.code }}" {% if platform_settings.default_currency == currency.code %}selected{% endif %}>
-                            {{ currency.flag }} {{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
-                        </option>
-                        {% endfor %}
-                    </select>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="label">Devise par défaut</label>
+                        <select name="default_currency" class="input-field">
+                            {% for currency in currencies %}
+                            <option value="{{ currency.code }}" {% if platform_settings.default_currency == currency.code %}selected{% endif %}>
+                                {{ currency.flag }} {{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Fuseau horaire de la plateforme</label>
+                        <select name="platform_timezone" class="input-field">
+                            {% for tz in timezones %}
+                            <option value="{{ tz }}" {% if platform_settings.platform_timezone == tz %}selected{% endif %}>
+                                {{ tz }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Utilisé pour la génération des factures (dimanche 23h59)</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3 pt-2">
                     <input type="checkbox" name="maintenance_mode" id="maintenance_mode" 

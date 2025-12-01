@@ -23,6 +23,7 @@ class Organization(db.Model):
     business_registration_number = db.Column(db.String(100), nullable=True)
     vat_rate = db.Column(db.Float, default=0.0)
     vat_number = db.Column(db.String(50), nullable=True)
+    timezone = db.Column(db.String(50), default='UTC')
     
     users = db.relationship('User', back_populates='organization', foreign_keys='User.organization_id')
     screens = db.relationship('Screen', back_populates='organization', cascade='all, delete-orphan')
