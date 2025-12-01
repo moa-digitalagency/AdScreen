@@ -24,6 +24,8 @@ def superadmin_required(f):
 @login_required
 @superadmin_required
 def dashboard():
+    from utils.currencies import get_currency_by_code
+    
     total_orgs = Organization.query.count()
     active_orgs = Organization.query.filter_by(is_active=True).count()
     total_screens = Screen.query.count()
@@ -77,6 +79,28 @@ def dashboard():
         for org, gross_revenue in orgs_weekly
     )
     
+    revenue_by_currency = db.session.query(
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).group_by(Organization.currency).all()
+    
+    currency_stats = []
+    for currency_code, total, commission in revenue_by_currency:
+        currency_info = get_currency_by_code(currency_code or 'EUR')
+        currency_stats.append({
+            'code': currency_code or 'EUR',
+            'name': currency_info.get('name', currency_code),
+            'flag': currency_info.get('flag', ''),
+            'symbol': currency_info.get('symbol', currency_code),
+            'total': total or 0,
+            'commission': commission or 0
+        })
+    
     recent_orgs = Organization.query.order_by(Organization.created_at.desc()).limit(5).all()
     recent_bookings = Booking.query.filter_by(payment_status='paid').order_by(
         Booking.created_at.desc()
@@ -101,6 +125,7 @@ def dashboard():
         monthly_revenue=monthly_revenue,
         total_platform_commission=total_platform_commission,
         weekly_commission=weekly_commission,
+        currency_stats=currency_stats,
         recent_orgs=recent_orgs,
         recent_bookings=recent_bookings,
         top_orgs=top_orgs
@@ -513,6 +538,7 @@ def approve_registration(request_id):
         email=reg_request.email,
         phone=reg_request.phone,
         address=reg_request.address,
+        currency=reg_request.currency or 'EUR',
         commission_rate=commission_rate,
         commission_set_by=current_user.id,
         commission_updated_at=datetime.utcnow()

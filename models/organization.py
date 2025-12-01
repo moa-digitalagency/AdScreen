@@ -13,12 +13,21 @@ class Organization(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     commission_rate = db.Column(db.Float, default=10.0)
     subscription_plan = db.Column(db.String(50), default='basic')
+    currency = db.Column(db.String(10), default='EUR')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     commission_set_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     commission_updated_at = db.Column(db.DateTime, nullable=True)
     
     users = db.relationship('User', back_populates='organization', foreign_keys='User.organization_id')
     screens = db.relationship('Screen', back_populates='organization', cascade='all, delete-orphan')
+    
+    def get_currency_symbol(self):
+        from utils.currencies import get_currency_symbol
+        return get_currency_symbol(self.currency or 'EUR')
+    
+    def get_currency_info(self):
+        from utils.currencies import get_currency_by_code
+        return get_currency_by_code(self.currency or 'EUR')
     
     def calculate_platform_commission(self, amount):
         return round(amount * (self.commission_rate / 100), 2)

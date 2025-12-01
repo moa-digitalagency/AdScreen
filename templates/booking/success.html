@@ -116,15 +116,28 @@
         </div>
 
         <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="{{ url_for('booking.download_receipt', reservation_number=booking.reservation_number) }}" class="btn-secondary" download>
+                <i class="fas fa-download"></i>
+                Télécharger le reçu (Image)
+            </a>
             <button onclick="window.print()" class="btn-secondary">
                 <i class="fas fa-print"></i>
-                Imprimer le reçu
+                Imprimer
             </button>
             <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" class="btn-primary">
                 <i class="fas fa-plus"></i>
                 Nouvelle réservation
             </a>
         </div>
+
+        {% if receipt_base64 %}
+        <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-3 text-center">Aperçu du reçu (Image)</h3>
+            <div class="flex justify-center">
+                <img src="data:image/png;base64,{{ receipt_base64 }}" alt="Reçu de réservation" class="max-w-full rounded-lg border border-gray-200 shadow-sm" style="max-height: 400px;">
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 

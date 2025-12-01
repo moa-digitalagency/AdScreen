@@ -11,6 +11,7 @@ class RegistrationRequest(db.Model):
     org_name = db.Column(db.String(255), nullable=False)
     phone = db.Column(db.String(50))
     address = db.Column(db.String(500))
+    currency = db.Column(db.String(10), default='EUR')
     message = db.Column(db.Text)
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

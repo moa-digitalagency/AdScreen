@@ -1,14 +1,16 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking
 from datetime import datetime, date
 import os
 import secrets
 import base64
+import io
 from werkzeug.utils import secure_filename
 from utils.image_utils import validate_image
 from utils.video_utils import validate_video, get_video_duration
 from services.qr_service import generate_qr_base64
+from services.receipt_generator import save_receipt_image, get_receipt_base64
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -179,12 +181,17 @@ def submit_booking(screen_code):
     booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
     booking_qr = generate_qr_base64(booking_url, box_size=6, border=2)
     
+    receipt_path = save_receipt_image(booking, screen, content, booking_qr)
+    receipt_base64 = get_receipt_base64(booking, screen, content, booking_qr)
+    
     return render_template('booking/success.html',
         booking=booking,
         screen=screen,
         content=content,
         reservation_qr=reservation_qr,
-        booking_qr=booking_qr
+        booking_qr=booking_qr,
+        receipt_base64=receipt_base64,
+        receipt_path=receipt_path
     )
 
 
@@ -224,3 +231,31 @@ def calculate_price(screen_code):
 def booking_status(booking_id):
     booking = Booking.query.get_or_404(booking_id)
     return render_template('booking/status.html', booking=booking)
+
+
+@booking_bp.route('/receipt/<reservation_number>')
+def download_receipt(reservation_number):
+    booking = Booking.query.filter_by(reservation_number=reservation_number).first_or_404()
+    
+    receipt_path = os.path.join('static', 'uploads', 'receipts', f'receipt_{reservation_number}.png')
+    
+    if os.path.exists(receipt_path):
+        return send_file(
+            receipt_path,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f'recu_{reservation_number}.png'
+        )
+    
+    booking_qr = generate_qr_base64(
+        url_for('booking.screen_booking', screen_code=booking.screen.unique_code, _external=True),
+        box_size=6, border=2
+    )
+    receipt_path = save_receipt_image(booking, booking.screen, booking.content, booking_qr)
+    
+    return send_file(
+        receipt_path,
+        mimetype='image/png',
+        as_attachment=True,
+        download_name=f'recu_{reservation_number}.png'
+    )
