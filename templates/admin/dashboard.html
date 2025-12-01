@@ -129,19 +129,19 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <p class="font-medium text-sm sm:text-base">CA Mensuel</p>
+            <p class="font-medium text-sm sm:text-base">CA Mensuel (converti)</p>
             <i class="fas fa-chart-line opacity-50"></i>
         </div>
-        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(monthly_revenue) }}€</p>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(converted_monthly_revenue.total) }}{{ admin_currency_symbol }}</p>
         <p class="text-blue-100 text-xs sm:text-sm mt-1">30 derniers jours</p>
     </div>
     
     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 sm:p-6 text-white">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <p class="font-medium text-sm sm:text-base">CA Hebdomadaire</p>
+            <p class="font-medium text-sm sm:text-base">CA Hebdomadaire (converti)</p>
             <i class="fas fa-calendar-week opacity-50"></i>
         </div>
-        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(weekly_revenue) }}€</p>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(converted_weekly_revenue.total) }}{{ admin_currency_symbol }}</p>
         <p class="text-purple-100 text-xs sm:text-sm mt-1">7 derniers jours</p>
     </div>
     
@@ -150,7 +150,7 @@
             <p class="font-medium text-sm sm:text-base">Taux moyen commission</p>
             <i class="fas fa-percentage opacity-50"></i>
         </div>
-        <p class="text-2xl sm:text-3xl font-bold">{{ "%.1f"|format((total_platform_commission / total_revenue * 100) if total_revenue > 0 else 0) }}%</p>
+        <p class="text-2xl sm:text-3xl font-bold">{{ "%.1f"|format((converted_commission.total / converted_revenue.total * 100) if converted_revenue.total > 0 else 0) }}%</p>
         <p class="text-emerald-100 text-xs sm:text-sm mt-1">Sur le CA total</p>
     </div>
 </div>

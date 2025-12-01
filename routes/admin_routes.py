@@ -266,6 +266,32 @@ def dashboard():
     converted_revenue = calculate_revenue_in_base_currency(revenues_by_currency, admin_base_currency)
     converted_commission = calculate_revenue_in_base_currency(commissions_by_currency, admin_base_currency)
     
+    weekly_revenues_by_currency = db.session.query(
+        Organization.currency,
+        func.sum(Booking.total_price).label('total')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= week_ago
+    ).group_by(Organization.currency).all()
+    
+    weekly_rev_dict = {(c or 'EUR'): t or 0 for c, t in weekly_revenues_by_currency}
+    converted_weekly_revenue = calculate_revenue_in_base_currency(weekly_rev_dict, admin_base_currency)
+    
+    monthly_revenues_by_currency = db.session.query(
+        Organization.currency,
+        func.sum(Booking.total_price).label('total')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= month_ago
+    ).group_by(Organization.currency).all()
+    
+    monthly_rev_dict = {(c or 'EUR'): t or 0 for c, t in monthly_revenues_by_currency}
+    converted_monthly_revenue = calculate_revenue_in_base_currency(monthly_rev_dict, admin_base_currency)
+    
     for stat in currency_stats:
         stat['converted_total'] = convert_to_base_currency(stat['total'], stat['code'], admin_base_currency)
         stat['converted_commission'] = convert_to_base_currency(stat['commission'], stat['code'], admin_base_currency)
@@ -300,6 +326,8 @@ def dashboard():
         admin_currency_symbol=admin_currency_info.get('symbol', admin_base_currency),
         converted_revenue=converted_revenue,
         converted_commission=converted_commission,
+        converted_weekly_revenue=converted_weekly_revenue,
+        converted_monthly_revenue=converted_monthly_revenue,
         rates_last_updated=rates_last_updated
     )
 
