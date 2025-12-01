@@ -15,28 +15,28 @@
     </header>
 
     <main class="max-w-4xl mx-auto px-4 py-8">
-        <div class="bg-gradient-to-r from-primary-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
-            <h1 class="text-3xl font-bold mb-2">{{ screen.name }}</h1>
-            <p class="text-white/80 mb-4">{{ screen.location or screen.organization.name }}</p>
-            <div class="flex flex-wrap gap-4">
-                <span class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm">
+        <div class="bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white mb-6 sm:mb-8">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">{{ screen.name }}</h1>
+            <p class="text-white/80 text-sm sm:text-base mb-3 sm:mb-4">{{ screen.location or screen.organization.name }}</p>
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-desktop"></i>
                     {{ screen.resolution_width }}x{{ screen.resolution_height }}
                 </span>
-                <span class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm">
+                <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-arrows-alt-h"></i>
                     {{ screen.orientation|capitalize }}
                 </span>
                 {% if screen.accepts_images %}
-                <span class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm">
+                <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-image"></i>
                     Images
                 </span>
                 {% endif %}
                 {% if screen.accepts_videos %}
-                <span class="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm">
+                <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-video"></i>
-                    Vidéos
+                    Videos
                 </span>
                 {% endif %}
             </div>
@@ -47,84 +47,84 @@
             
             <input type="hidden" name="booking_mode" value="dates">
             
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">1</div>
-                    <h2 class="text-lg font-semibold text-gray-800">Vos informations</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">1</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Vos informations</h2>
                 </div>
-                <div class="grid md:grid-cols-3 gap-4">
+                <div class="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nom <span class="text-red-500">*</span></label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Nom <span class="text-red-500">*</span></label>
                         <input type="text" name="client_name" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
                             placeholder="Votre nom">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Email</label>
                         <input type="email" name="client_email"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
                             placeholder="votre@email.com">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">WhatsApp <span class="text-red-500">*</span></label>
+                    <div class="sm:col-span-2 md:col-span-1">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">WhatsApp <span class="text-red-500">*</span></label>
                         <input type="tel" name="client_phone" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
                             placeholder="+33 6 XX XX XX XX">
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">2</div>
-                    <h2 class="text-lg font-semibold text-gray-800">Type de contenu</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">2</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Type de contenu</h2>
                 </div>
-                <div class="grid md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {% if screen.accepts_images %}
-                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                    <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
                         <input type="radio" name="content_type" value="image" checked
                             class="sr-only" onchange="onContentTypeChange()">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-image text-blue-600 text-xl"></i>
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-image text-blue-600 text-lg sm:text-xl"></i>
                             </div>
                             <div>
-                                <p class="font-medium text-gray-800">Image</p>
-                                <p class="text-sm text-gray-500">JPG, PNG, GIF</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Image</p>
+                                <p class="text-xs sm:text-sm text-gray-500">JPG, PNG, GIF</p>
                             </div>
                         </div>
-                        <div class="absolute top-3 right-3 w-5 h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
+                        <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
                     </label>
                     {% endif %}
                     {% if screen.accepts_videos %}
-                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                    <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
                         <input type="radio" name="content_type" value="video" {% if not screen.accepts_images %}checked{% endif %}
                             class="sr-only" onchange="onContentTypeChange()">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-video text-purple-600 text-xl"></i>
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-video text-purple-600 text-lg sm:text-xl"></i>
                             </div>
                             <div>
-                                <p class="font-medium text-gray-800">Vidéo</p>
-                                <p class="text-sm text-gray-500">MP4, WebM</p>
+                                <p class="font-medium text-gray-800 text-sm sm:text-base">Video</p>
+                                <p class="text-xs sm:text-sm text-gray-500">MP4, WebM</p>
                             </div>
                         </div>
-                        <div class="absolute top-3 right-3 w-5 h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
+                        <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
                     </label>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">3</div>
-                    <h2 class="text-lg font-semibold text-gray-800">Durée du créneau</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">3</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Duree du creneau</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-3">
+                <p class="text-xs sm:text-sm text-gray-500 mb-3">
                     <i class="fas fa-info-circle text-primary-500 mr-1"></i>
                     Tarif: {{ "%.2f"|format(price_per_minute) }}{{ currency_symbol }}/min
                 </p>
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-2 sm:gap-3">
                     {% for slot in screen.time_slots %}
                     <label class="relative">
                         <input type="radio" name="slot_duration" value="{{ slot.duration_seconds }}" 
@@ -175,110 +175,162 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">5</div>
-                    <h2 class="text-lg font-semibold text-gray-800">Dates et heures de diffusion</h2>
+                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">5</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Dates et heures de diffusion</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">
-                    <i class="fas fa-calendar-alt text-primary-500 mr-1"></i>
-                    Selectionnez les dates et heures pour un calcul precis des disponibilites
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="bg-green-50 rounded-xl p-4 border border-green-200">
-                        <p class="text-sm font-medium text-green-800 mb-3"><i class="fas fa-play-circle mr-1"></i> Debut de diffusion</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Date <span class="text-red-500">*</span></label>
-                                <input type="date" name="start_date" id="start_date" value="{{ now().strftime('%Y-%m-%d') }}" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="onDatesChange()">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Heure</label>
-                                <input type="time" name="start_time" id="start_time" value="08:00"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="onDatesChange()">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-red-50 rounded-xl p-4 border border-red-200">
-                        <p class="text-sm font-medium text-red-800 mb-3"><i class="fas fa-stop-circle mr-1"></i> Fin de diffusion</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Date <span class="text-red-500">*</span></label>
-                                <input type="date" name="end_date" id="end_date" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="onDatesChange()">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Heure</label>
-                                <input type="time" name="end_time" id="end_time" value="22:00"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="onDatesChange()">
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 mb-4 border border-indigo-100">
+                    <p class="text-xs sm:text-sm text-indigo-700 flex items-start gap-2">
+                        <i class="fas fa-clock text-indigo-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Selectionnez les dates <strong>et heures</strong> pour un calcul ultra-precis des disponibilites et une meilleure repartition de vos passages</span>
+                    </p>
                 </div>
-                <p class="text-xs text-gray-400 mb-3">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Les heures permettent un calcul plus precis du nombre de passages disponibles
-                </p>
-                
-                <div id="availability_section" class="hidden">
-                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-4 border border-blue-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 border border-green-200 shadow-sm">
                         <div class="flex items-center gap-2 mb-3">
-                            <i class="fas fa-chart-bar text-blue-600"></i>
-                            <span class="font-medium text-blue-800">Disponibilités</span>
-                            <span id="loading_indicator" class="hidden">
-                                <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-play text-white text-xs sm:text-sm"></i>
+                            </div>
+                            <p class="text-sm sm:text-base font-semibold text-green-800">Debut</p>
+                        </div>
+                        <div class="space-y-2 sm:space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-calendar-alt mr-1 text-green-600"></i>
+                                    Date <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" name="start_date" id="start_date" value="{{ now().strftime('%Y-%m-%d') }}" required
+                                    class="w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white" onchange="onDatesChange()">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-clock mr-1 text-green-600"></i>
+                                    Heure de debut
+                                </label>
+                                <input type="time" name="start_time" id="start_time" value="08:00"
+                                    class="w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white" onchange="onDatesChange()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-3 sm:p-4 border border-red-200 shadow-sm">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-stop text-white text-xs sm:text-sm"></i>
+                            </div>
+                            <p class="text-sm sm:text-base font-semibold text-red-800">Fin</p>
+                        </div>
+                        <div class="space-y-2 sm:space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-calendar-alt mr-1 text-red-600"></i>
+                                    Date <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" name="end_date" id="end_date" required
+                                    class="w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white" onchange="onDatesChange()">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">
+                                    <i class="fas fa-clock mr-1 text-red-600"></i>
+                                    Heure de fin
+                                </label>
+                                <input type="time" name="end_time" id="end_time" value="22:00"
+                                    class="w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white" onchange="onDatesChange()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-2 sm:p-3">
+                    <i class="fas fa-lightbulb text-amber-500 flex-shrink-0"></i>
+                    <span>Astuce: Les heures permettent un calcul plus precis du nombre de passages disponibles sur la periode selectionnee</span>
+                </div>
+                
+                <div id="availability_section" class="hidden mt-4">
+                    <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-2 xs:p-3 sm:p-4 border border-blue-200 shadow-sm">
+                        <div class="flex items-center justify-between gap-1 xs:gap-2 mb-2 xs:mb-3">
+                            <div class="flex items-center gap-1 xs:gap-2 min-w-0">
+                                <div class="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-chart-bar text-white text-[10px] xs:text-xs sm:text-sm"></i>
+                                </div>
+                                <span class="font-semibold text-blue-800 text-xs xs:text-sm sm:text-base truncate">Disponibilites</span>
+                            </div>
+                            <span id="loading_indicator" class="hidden flex-shrink-0">
+                                <div class="flex items-center gap-1 text-blue-500 text-[10px] xs:text-xs">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
                             </span>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                                <p class="text-lg sm:text-2xl font-bold text-blue-600" id="num_days_display">0</p>
-                                <p class="text-[10px] sm:text-xs text-gray-500">Jours</p>
+                        <div class="availability-grid grid gap-1.5 xs:gap-2 sm:gap-3" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="bg-white rounded-lg xs:rounded-xl p-1.5 xs:p-2 sm:p-3 shadow-sm border border-blue-100 text-center min-w-0">
+                                <div class="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 mx-auto mb-0.5 xs:mb-1 sm:mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-calendar-day text-blue-600 text-[8px] xs:text-[10px] sm:text-xs"></i>
+                                </div>
+                                <p class="text-sm xs:text-base sm:text-xl font-bold text-blue-600" id="num_days_display">0</p>
+                                <p class="text-[8px] xs:text-[10px] sm:text-xs text-gray-500 font-medium">Jours</p>
                             </div>
-                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                                <p class="text-lg sm:text-2xl font-bold text-green-600 truncate" id="available_plays_display">0</p>
-                                <p class="text-[10px] sm:text-xs text-gray-500">Passages dispo.</p>
+                            <div class="bg-white rounded-lg xs:rounded-xl p-1.5 xs:p-2 sm:p-3 shadow-sm border border-green-100 text-center min-w-0">
+                                <div class="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 mx-auto mb-0.5 xs:mb-1 sm:mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-play-circle text-green-600 text-[8px] xs:text-[10px] sm:text-xs"></i>
+                                </div>
+                                <p class="text-sm xs:text-base sm:text-xl font-bold text-green-600 truncate" id="available_plays_display">0</p>
+                                <p class="text-[8px] xs:text-[10px] sm:text-xs text-gray-500 font-medium">Passages</p>
                             </div>
-                            <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                                <p class="text-lg sm:text-2xl font-bold text-purple-600 truncate" id="total_seconds_display">0</p>
-                                <p class="text-[10px] sm:text-xs text-gray-500">Sec. libres</p>
+                            <div class="bg-white rounded-lg xs:rounded-xl p-1.5 xs:p-2 sm:p-3 shadow-sm border border-purple-100 text-center min-w-0">
+                                <div class="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 mx-auto mb-0.5 xs:mb-1 sm:mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-stopwatch text-purple-600 text-[8px] xs:text-[10px] sm:text-xs"></i>
+                                </div>
+                                <p class="text-sm xs:text-base sm:text-xl font-bold text-purple-600 truncate" id="total_seconds_display">0</p>
+                                <p class="text-[8px] xs:text-[10px] sm:text-xs text-gray-500 font-medium">Sec.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="plays_section" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hidden">
+            <div id="plays_section" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hidden">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">6</div>
-                    <h2 class="text-lg font-semibold text-gray-800">Nombre de passages</h2>
+                    <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">6</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Nombre de passages</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">
-                    <i class="fas fa-info-circle text-primary-500 mr-1"></i>
-                    Choisissez combien de fois votre contenu sera diffusé (max: <span id="max_plays_text" class="font-semibold text-primary-600">0</span>)
-                </p>
+                <div class="bg-gradient-to-r from-primary-50 to-purple-50 rounded-lg p-3 mb-4 border border-primary-100">
+                    <p class="text-xs sm:text-sm text-primary-700 flex items-start gap-2">
+                        <i class="fas fa-bullhorn text-primary-500 mt-0.5 flex-shrink-0"></i>
+                        <span>Choisissez le nombre de diffusions souhaite (max disponible: <span id="max_plays_text" class="font-bold text-primary-600">0</span>)</span>
+                    </p>
+                </div>
                 
-                <div class="flex items-center justify-center gap-2 sm:gap-4 mb-4">
+                <div class="flex items-center justify-center gap-3 sm:gap-5 mb-5">
                     <button type="button" onclick="changePlayCount(-10)" 
-                        class="w-10 h-10 sm:w-14 sm:h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-lg sm:text-xl font-bold">
-                        <i class="fas fa-minus"></i>
+                        class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center hover:from-gray-200 hover:to-gray-300 transition shadow-md active:scale-95 text-gray-700">
+                        <i class="fas fa-minus text-lg sm:text-xl"></i>
                     </button>
-                    <input type="number" name="num_plays" id="num_plays" value="10" min="1" max="10000"
-                        class="w-24 sm:w-32 text-center text-xl sm:text-3xl font-bold border-2 border-gray-200 rounded-xl py-2 sm:py-3 focus:border-primary-500 focus:ring-0" 
-                        onchange="validateAndUpdatePrice()">
+                    <div class="relative">
+                        <input type="number" name="num_plays" id="num_plays" value="10" min="1" max="10000"
+                            class="w-28 sm:w-36 text-center text-2xl sm:text-4xl font-bold border-3 border-primary-200 rounded-2xl py-3 sm:py-4 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 bg-white shadow-inner" 
+                            onchange="validateAndUpdatePrice()">
+                        <span class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">passages</span>
+                    </div>
                     <button type="button" onclick="changePlayCount(10)" 
-                        class="w-10 h-10 sm:w-14 sm:h-14 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-lg sm:text-xl font-bold">
-                        <i class="fas fa-plus"></i>
+                        class="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center hover:from-primary-600 hover:to-purple-700 transition shadow-md active:scale-95 text-white">
+                        <i class="fas fa-plus text-lg sm:text-xl"></i>
                     </button>
                 </div>
                 
                 <input type="hidden" name="calculated_plays" id="calculated_plays" value="0">
                 
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-                    <p class="text-sm text-yellow-800">
-                        <i class="fas fa-clock mr-1"></i>
-                        Répartition équitable: <span id="plays_per_day" class="font-semibold">0</span> passages/jour
-                    </p>
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-3 sm:p-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-amber-600 text-sm sm:text-base"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs sm:text-sm text-amber-800">Repartition equitable</p>
+                            <p class="text-lg sm:text-xl font-bold text-amber-700">
+                                <span id="plays_per_day">0</span>
+                                <span class="text-xs sm:text-sm font-normal">passages/jour</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -644,6 +696,144 @@ document.addEventListener('DOMContentLoaded', function() {
 input[type="radio"]:checked + .slot-label {
     border-color: #0ea5e9;
     background-color: #f0f9ff;
+}
+
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.375rem;
+    width: 100%;
+}
+
+.availability-grid > div {
+    min-width: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 320px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .min-h-screen {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+    
+    main {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+    
+    #availability_section {
+        margin-left: -0.25rem;
+        margin-right: -0.25rem;
+    }
+    
+    .availability-grid {
+        gap: 0.25rem !important;
+    }
+    
+    .availability-grid > div {
+        padding: 0.25rem !important;
+        border-radius: 0.375rem !important;
+    }
+    
+    .availability-grid .font-bold {
+        font-size: 0.875rem !important;
+    }
+    
+    #plays_section .flex.items-center.justify-center {
+        gap: 0.375rem !important;
+    }
+    
+    #plays_section button {
+        width: 2rem !important;
+        height: 2rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    #num_plays {
+        width: 4rem !important;
+        font-size: 1rem !important;
+        padding: 0.375rem !important;
+    }
+    
+    .bg-primary-600 {
+        padding: 0.75rem !important;
+    }
+    
+    #totalPrice {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .min-h-screen {
+        padding-left: 0.375rem;
+        padding-right: 0.375rem;
+    }
+    
+    main {
+        padding-left: 0.375rem;
+        padding-right: 0.375rem;
+    }
+    
+    input[type="date"],
+    input[type="time"] {
+        font-size: 13px;
+        padding: 0.375rem;
+    }
+    
+    .availability-grid {
+        gap: 0.25rem;
+    }
+    
+    .availability-grid > div {
+        padding: 0.375rem !important;
+    }
+    
+    .text-xl {
+        font-size: 0.875rem;
+    }
+    
+    .text-2xl {
+        font-size: 1rem;
+    }
+    
+    .p-3, .sm\:p-4 {
+        padding: 0.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .text-3xl {
+        font-size: 1.5rem;
+    }
+    
+    input[type="number"] {
+        font-size: 1.25rem;
+    }
+    
+    .availability-grid {
+        gap: 0.375rem;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .transition {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+    }
+}
+
+.active\:scale-95:active {
+    transform: scale(0.95);
+}
+
+* {
+    box-sizing: border-box;
 }
 </style>
 {% endblock %}

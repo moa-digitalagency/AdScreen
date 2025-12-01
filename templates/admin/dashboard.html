@@ -57,6 +57,75 @@
     </div>
 </div>
 
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-white shadow-lg">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                <i class="fas fa-sync-alt text-white text-xl sm:text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="text-lg sm:text-xl font-bold">Conversion automatique des devises</h3>
+                <p class="text-white/80 text-sm">
+                    Taux du jour via API - Base: {{ admin_base_currency }}
+                    {% if rates_last_updated %}
+                    <span class="inline-flex items-center ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                        <i class="fas fa-clock mr-1"></i>
+                        Maj: {{ rates_last_updated[:10] }}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center ml-2 px-2 py-0.5 bg-yellow-400/30 rounded-full text-xs">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Taux par defaut
+                    </span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <form action="{{ url_for('admin.refresh_exchange_rates') }}" method="POST" class="flex-shrink-0" id="refreshRatesForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" id="refreshRatesBtn" class="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-gray-100 transition shadow-md disabled:opacity-50 disabled:cursor-wait">
+                <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                <span class="hidden sm:inline" id="refreshTextDesktop">Actualiser les taux</span>
+                <span class="sm:hidden" id="refreshTextMobile">Actualiser</span>
+            </button>
+        </form>
+        <script>
+            (function() {
+                var form = document.getElementById('refreshRatesForm');
+                var btn = document.getElementById('refreshRatesBtn');
+                var icon = document.getElementById('refreshIcon');
+                var textDesktop = document.getElementById('refreshTextDesktop');
+                var textMobile = document.getElementById('refreshTextMobile');
+                
+                form.addEventListener('submit', function(e) {
+                    btn.disabled = true;
+                    icon.classList.add('fa-spin');
+                    textDesktop.textContent = 'Actualisation...';
+                    textMobile.textContent = 'En cours...';
+                    
+                    setTimeout(function() {
+                        if (btn.disabled) {
+                            btn.disabled = false;
+                            icon.classList.remove('fa-spin');
+                            textDesktop.textContent = 'Actualiser les taux';
+                            textMobile.textContent = 'Actualiser';
+                        }
+                    }, 15000);
+                });
+                
+                window.addEventListener('pageshow', function(event) {
+                    if (event.persisted) {
+                        btn.disabled = false;
+                        icon.classList.remove('fa-spin');
+                        textDesktop.textContent = 'Actualiser les taux';
+                        textMobile.textContent = 'Actualiser';
+                    }
+                });
+            })();
+        </script>
+    </div>
+</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
@@ -88,51 +157,75 @@
 
 {% if converted_revenue.by_currency %}
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
-    <div class="flex items-center justify-between mb-4 sm:mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-coins text-amber-600"></i>
+            <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
+                <i class="fas fa-coins text-white"></i>
             </div>
             <div>
-                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Conversion des revenus</h2>
-                <p class="text-gray-500 text-xs sm:text-sm">Tous les revenus convertis en {{ admin_base_currency }}</p>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Conversion des revenus par etablissement</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Tous les revenus convertis automatiquement en {{ admin_base_currency }} au taux du jour</p>
             </div>
         </div>
-        <div class="text-right">
-            <p class="text-xs text-gray-400">
-                <i class="fas fa-sync-alt mr-1"></i>
-                {% if rates_last_updated %}Maj: {{ rates_last_updated[:10] }}{% else %}Taux par defaut{% endif %}
-            </p>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <i class="fas fa-check-circle mr-1"></i>
+                Conversion automatique active
+            </span>
         </div>
     </div>
     
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+    <div class="overflow-x-auto -mx-4 sm:mx-0">
+        <table class="w-full text-sm min-w-[600px]">
             <thead>
-                <tr class="border-b border-gray-200">
-                    <th class="text-left py-2 px-3 text-gray-600 font-medium">Devise</th>
-                    <th class="text-right py-2 px-3 text-gray-600 font-medium">Montant original</th>
-                    <th class="text-right py-2 px-3 text-gray-600 font-medium">Taux</th>
-                    <th class="text-right py-2 px-3 text-gray-600 font-medium">Converti ({{ admin_currency_symbol }})</th>
+                <tr class="border-b-2 border-gray-200 bg-gray-50">
+                    <th class="text-left py-3 px-4 text-gray-700 font-semibold rounded-tl-lg">Devise source</th>
+                    <th class="text-right py-3 px-4 text-gray-700 font-semibold">Montant original</th>
+                    <th class="text-center py-3 px-4 text-gray-700 font-semibold">Taux du jour</th>
+                    <th class="text-right py-3 px-4 text-gray-700 font-semibold rounded-tr-lg">Converti ({{ admin_currency_symbol }})</th>
                 </tr>
             </thead>
             <tbody>
                 {% for curr in converted_revenue.by_currency %}
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-2 px-3">
-                        <span class="font-medium">{{ curr.flag }} {{ curr.code }}</span>
-                        <span class="text-gray-400 text-xs ml-1">{{ curr.name }}</span>
+                <tr class="border-b border-gray-100 hover:bg-blue-50/50 transition">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">{{ curr.flag }}</span>
+                            <div>
+                                <span class="font-semibold text-gray-800">{{ curr.code }}</span>
+                                <span class="text-gray-400 text-xs block">{{ curr.name }}</span>
+                            </div>
+                        </div>
                     </td>
-                    <td class="text-right py-2 px-3 font-mono">{{ "%.2f"|format(curr.original_amount) }} {{ curr.symbol }}</td>
-                    <td class="text-right py-2 px-3 text-gray-500 font-mono text-xs">x{{ "%.4f"|format(curr.rate) }}</td>
-                    <td class="text-right py-2 px-3 font-mono font-semibold text-green-600">{{ "%.2f"|format(curr.converted_amount) }} {{ admin_currency_symbol }}</td>
+                    <td class="text-right py-3 px-4">
+                        <span class="font-mono text-gray-800 font-medium">{{ "%.2f"|format(curr.original_amount) }}</span>
+                        <span class="text-gray-500 ml-1">{{ curr.symbol }}</span>
+                    </td>
+                    <td class="text-center py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-lg font-mono text-xs font-medium">
+                            <i class="fas fa-exchange-alt mr-1 text-indigo-400"></i>
+                            x{{ "%.4f"|format(curr.rate) }}
+                        </span>
+                    </td>
+                    <td class="text-right py-3 px-4">
+                        <span class="font-mono font-bold text-green-600 text-base">{{ "%.2f"|format(curr.converted_amount) }}</span>
+                        <span class="text-green-500 ml-1">{{ admin_currency_symbol }}</span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr class="bg-gray-50 font-semibold">
-                    <td class="py-3 px-3" colspan="3">Total converti</td>
-                    <td class="text-right py-3 px-3 text-green-600 text-lg font-mono">{{ "%.2f"|format(converted_revenue.total) }} {{ admin_currency_symbol }}</td>
+                <tr class="bg-gradient-to-r from-green-50 to-emerald-50 font-semibold">
+                    <td class="py-4 px-4 rounded-bl-lg" colspan="3">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-calculator text-green-600"></i>
+                            <span class="text-gray-800">Total converti automatiquement</span>
+                        </div>
+                    </td>
+                    <td class="text-right py-4 px-4 rounded-br-lg">
+                        <span class="text-green-600 text-xl font-mono font-bold">{{ "%.2f"|format(converted_revenue.total) }}</span>
+                        <span class="text-green-500 ml-1">{{ admin_currency_symbol }}</span>
+                    </td>
                 </tr>
             </tfoot>
         </table>
@@ -143,68 +236,77 @@
 {% if country_stats %}
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
     <div class="flex items-center gap-3 mb-4 sm:mb-6">
-        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-globe text-blue-600"></i>
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-sm">
+            <i class="fas fa-globe text-white"></i>
         </div>
         <div>
             <h2 class="text-base sm:text-lg font-semibold text-gray-800">Statistiques par pays</h2>
-            <p class="text-gray-500 text-xs sm:text-sm">CA Total, Mensuel, Hebdomadaire et Journalier avec commissions</p>
+            <p class="text-gray-500 text-xs sm:text-sm">CA Total, Mensuel, Hebdomadaire et Journalier avec commissions (conversion auto)</p>
         </div>
     </div>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {% for stat in country_stats %}
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-4 border border-blue-100 hover:shadow-md transition">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
-                    <span class="text-2xl">{{ stat.country_flag }}</span>
+                    <span class="text-3xl">{{ stat.country_flag }}</span>
                     <div>
                         <p class="font-bold text-gray-800">{{ stat.country_name }}</p>
                         <p class="text-xs text-gray-500">{{ stat.country_code }}</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="badge badge-info text-xs">{{ "%.1f"|format(stat.avg_commission or 0) }}% moy.</span>
+                    <span class="inline-flex items-center px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                        <i class="fas fa-percentage mr-1"></i>
+                        {{ "%.1f"|format(stat.avg_commission or 0) }}% moy.
+                    </span>
                 </div>
             </div>
             
             <div class="grid grid-cols-2 gap-2 mb-3">
-                <div class="flex justify-between text-sm bg-white/50 rounded-lg px-2 py-1">
-                    <span class="text-gray-600"><i class="fas fa-building mr-1"></i></span>
+                <div class="flex justify-between text-sm bg-white/70 rounded-lg px-3 py-2 border border-gray-100">
+                    <span class="text-gray-600"><i class="fas fa-building mr-1 text-blue-500"></i></span>
                     <span class="font-semibold text-gray-800">{{ stat.org_count }} étab.</span>
                 </div>
-                <div class="flex justify-between text-sm bg-white/50 rounded-lg px-2 py-1">
-                    <span class="text-gray-600"><i class="fas fa-tv mr-1"></i></span>
+                <div class="flex justify-between text-sm bg-white/70 rounded-lg px-3 py-2 border border-gray-100">
+                    <span class="text-gray-600"><i class="fas fa-tv mr-1 text-purple-500"></i></span>
                     <span class="font-semibold text-gray-800">{{ stat.screen_count }} écrans</span>
                 </div>
             </div>
             
             {% if stat.currencies %}
             {% for curr in stat.currencies %}
-            <div class="border-t border-blue-200 pt-3 mt-2">
-                <div class="flex items-center gap-1 mb-2">
-                    <span class="text-sm font-semibold text-gray-700">{{ curr.currency_code }}</span>
-                    <span class="text-xs text-gray-500">({{ curr.currency_symbol }})</span>
+            <div class="border-t border-blue-100 pt-3 mt-2">
+                <div class="flex items-center justify-between gap-1 mb-2">
+                    <div class="flex items-center gap-1">
+                        <span class="text-sm font-semibold text-gray-700">{{ curr.currency_code }}</span>
+                        <span class="text-xs text-gray-500">({{ curr.currency_symbol }})</span>
+                    </div>
+                    <span class="text-xs text-indigo-600 font-medium">
+                        <i class="fas fa-arrow-right mr-1"></i>
+                        {{ "%.2f"|format(curr.converted_total or 0) }} {{ admin_currency_symbol }}
+                    </span>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-white/60 rounded-lg p-2">
-                        <p class="text-gray-500 mb-1"><i class="fas fa-chart-line mr-1"></i>CA Total</p>
+                    <div class="bg-white/80 rounded-lg p-2 border border-gray-100">
+                        <p class="text-gray-500 mb-1"><i class="fas fa-chart-line mr-1 text-blue-500"></i>CA Total</p>
                         <p class="font-bold text-gray-800">{{ "%.2f"|format(curr.total) }} {{ curr.currency_symbol }}</p>
                         <p class="text-emerald-600 text-xs">Com: {{ "%.2f"|format(curr.commission) }} {{ curr.currency_symbol }}</p>
                     </div>
-                    <div class="bg-white/60 rounded-lg p-2">
-                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-alt mr-1"></i>Mensuel</p>
+                    <div class="bg-white/80 rounded-lg p-2 border border-gray-100">
+                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-alt mr-1 text-purple-500"></i>Mensuel</p>
                         <p class="font-bold text-gray-800">{{ "%.2f"|format(curr.monthly_total) }} {{ curr.currency_symbol }}</p>
                         <p class="text-emerald-600 text-xs">Com: {{ "%.2f"|format(curr.monthly_commission) }} {{ curr.currency_symbol }}</p>
                     </div>
-                    <div class="bg-white/60 rounded-lg p-2">
-                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-week mr-1"></i>Hebdo</p>
+                    <div class="bg-white/80 rounded-lg p-2 border border-gray-100">
+                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-week mr-1 text-orange-500"></i>Hebdo</p>
                         <p class="font-bold text-gray-800">{{ "%.2f"|format(curr.weekly_total) }} {{ curr.currency_symbol }}</p>
                         <p class="text-emerald-600 text-xs">Com: {{ "%.2f"|format(curr.weekly_commission) }} {{ curr.currency_symbol }}</p>
                     </div>
-                    <div class="bg-white/60 rounded-lg p-2">
-                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-day mr-1"></i>Jour</p>
+                    <div class="bg-white/80 rounded-lg p-2 border border-gray-100">
+                        <p class="text-gray-500 mb-1"><i class="fas fa-calendar-day mr-1 text-green-500"></i>Jour</p>
                         <p class="font-bold text-gray-800">{{ "%.2f"|format(curr.daily_total) }} {{ curr.currency_symbol }}</p>
                         <p class="text-emerald-600 text-xs">Com: {{ "%.2f"|format(curr.daily_commission) }} {{ curr.currency_symbol }}</p>
                     </div>
@@ -212,7 +314,10 @@
             </div>
             {% endfor %}
             {% else %}
-            <div class="text-xs text-gray-400 italic mt-2 text-center py-4">Aucune réservation</div>
+            <div class="text-xs text-gray-400 italic mt-2 text-center py-4 bg-white/50 rounded-lg">
+                <i class="fas fa-inbox text-gray-300 text-lg mb-1"></i>
+                <p>Aucune réservation</p>
+            </div>
             {% endif %}
         </div>
         {% endfor %}
@@ -223,18 +328,18 @@
 {% if currency_stats %}
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
     <div class="flex items-center gap-3 mb-4 sm:mb-6">
-        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-coins text-amber-600"></i>
+        <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-sm">
+            <i class="fas fa-coins text-white"></i>
         </div>
         <div>
             <h2 class="text-base sm:text-lg font-semibold text-gray-800">Revenus par devise</h2>
-            <p class="text-gray-500 text-xs sm:text-sm">Commission plateforme par monnaie</p>
+            <p class="text-gray-500 text-xs sm:text-sm">Commission plateforme par monnaie (avec conversion en {{ admin_base_currency }})</p>
         </div>
     </div>
     
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {% for stat in currency_stats %}
-        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+        <div class="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-4 border border-gray-200 hover:shadow-md transition">
             <div class="flex items-center gap-2 mb-3">
                 <span class="text-2xl">{{ stat.flag }}</span>
                 <div>
@@ -251,6 +356,12 @@
                     <span class="text-gray-600">Commission</span>
                     <span class="font-semibold text-emerald-600">{{ "%.2f"|format(stat.commission) }} {{ stat.symbol }}</span>
                 </div>
+                {% if stat.converted_total %}
+                <div class="flex justify-between text-xs pt-2 border-t border-gray-200">
+                    <span class="text-indigo-600"><i class="fas fa-exchange-alt mr-1"></i>Converti</span>
+                    <span class="font-semibold text-indigo-600">{{ "%.2f"|format(stat.converted_total) }} {{ admin_currency_symbol }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -277,10 +388,10 @@
                 </thead>
                 <tbody>
                     {% for org, revenue in top_orgs %}
-                    <tr class="border-b border-gray-50">
+                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                         <td class="py-3 px-4 sm:px-0">
                             <div class="flex items-center gap-2 sm:gap-3">
-                                <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <i class="fas fa-store text-gray-600 text-sm"></i>
                                 </div>
                                 <div class="min-w-0">
@@ -292,7 +403,7 @@
                         <td class="py-3 font-semibold text-gray-800 text-sm">{{ "%.2f"|format(revenue) }}€</td>
                         <td class="py-3 text-emerald-600 font-medium text-sm">{{ "%.2f"|format(org.calculate_platform_commission(revenue)) }}€</td>
                         <td class="py-3">
-                            <span class="badge badge-info text-xs">{{ org.commission_rate }}%</span>
+                            <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{{ org.commission_rate }}%</span>
                         </td>
                     </tr>
                     {% else %}
@@ -309,7 +420,7 @@
         <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Dernières réservations</h2>
         <div class="space-y-3 sm:space-y-4">
             {% for booking in recent_bookings[:6] %}
-            <div class="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 last:border-0">
+            <div class="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition rounded-lg px-2 -mx-2">
                 <div class="min-w-0 flex-1">
                     <p class="font-medium text-gray-800 text-sm truncate">{{ booking.screen.name }}</p>
                     <p class="text-xs text-gray-500">{{ booking.num_plays }} diffusions</p>

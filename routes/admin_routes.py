@@ -534,6 +534,19 @@ def screens():
     return render_template('admin/screens.html', screens=all_screens)
 
 
+@admin_bp.route('/refresh-exchange-rates', methods=['POST'])
+@login_required
+@superadmin_required
+def refresh_exchange_rates():
+    """Force refresh exchange rates from API."""
+    result = refresh_rates()
+    if result.get('success'):
+        flash(f'Taux de change actualisés avec succès ({result.get("rates_count", 0)} devises).', 'success')
+    else:
+        flash(f'Erreur lors de la mise à jour des taux: {result.get("message", "Erreur inconnue")}', 'error')
+    return redirect(url_for('admin.dashboard'))
+
+
 @admin_bp.route('/stats')
 @login_required
 @superadmin_required
