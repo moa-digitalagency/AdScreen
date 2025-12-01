@@ -40,16 +40,30 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for content in contents %}
                     <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="w-20 h-12 bg-gray-100 rounded-lg overflow-hidden cursor-pointer" 
+                                 onclick="openPreviewModal('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.screen.resolution_width }}', '{{ content.screen.resolution_height }}')">
+                                {% if content.content_type == 'image' %}
+                                <img src="/{{ content.file_path }}" alt="Preview" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center bg-purple-100">
+                                    <i class="fas fa-play text-purple-600"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -57,7 +71,7 @@
                                 </div>
                                 <div>
                                     <p class="font-medium text-gray-800">{{ content.original_filename or content.filename }}</p>
-                                    <p class="text-sm text-gray-500">{{ content.content_type }}</p>
+                                    <p class="text-sm text-gray-500">{{ content.content_type }} • {{ content.duration_seconds or '-' }}s</p>
                                 </div>
                             </div>
                         </td>
@@ -71,11 +85,50 @@
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approuvé</span>
                             {% elif content.status == 'pending' %}
                             <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">En attente</span>
+                            {% elif content.status == 'suspended' %}
+                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">Suspendu</span>
                             {% else %}
                             <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Rejeté</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ content.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <button onclick="openPreviewModal('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.screen.resolution_width }}', '{{ content.screen.resolution_height }}')" 
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if content.status == 'approved' %}
+                                <form action="{{ url_for('org.suspend_content', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Suspendre">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                </form>
+                                {% elif content.status == 'suspended' %}
+                                <form action="{{ url_for('org.activate_content', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Activer">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </form>
+                                {% elif content.status == 'pending' %}
+                                <form action="{{ url_for('org.approve_content', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Approuver">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('org.reject_content', content_id=content.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Rejeter">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form action="{{ url_for('org.delete_content', content_id=content.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce contenu ? Cette action est irréversible.')">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -93,6 +146,7 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Priorité</th>
@@ -103,6 +157,18 @@
                 <tbody class="divide-y divide-gray-100">
                     {% for internal in internals %}
                     <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="w-20 h-12 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
+                                 onclick="openPreviewModal('{{ internal.file_path }}', '{{ internal.content_type }}', '{{ internal.screen.resolution_width }}', '{{ internal.screen.resolution_height }}')">
+                                {% if internal.content_type == 'image' %}
+                                <img src="/{{ internal.file_path }}" alt="Preview" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center bg-blue-100">
+                                    <i class="fas fa-play text-blue-600"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -126,7 +192,11 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="openPreviewModal('{{ internal.file_path }}', '{{ internal.content_type }}', '{{ internal.screen.resolution_width }}', '{{ internal.screen.resolution_height }}')" 
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 <form action="{{ url_for('org.toggle_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline">
                                     <button type="submit" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{% if internal.is_active %}Désactiver{% else %}Activer{% endif %}">
                                         <i class="fas fa-{% if internal.is_active %}pause{% else %}play{% endif %}"></i>
@@ -156,6 +226,7 @@
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Durée</th>
@@ -166,6 +237,18 @@
                 <tbody class="divide-y divide-gray-100">
                     {% for filler in fillers %}
                     <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="w-20 h-12 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
+                                 onclick="openPreviewModal('{{ filler.file_path }}', '{{ filler.content_type }}', '{{ filler.screen.resolution_width }}', '{{ filler.screen.resolution_height }}')">
+                                {% if filler.content_type == 'image' %}
+                                <img src="/{{ filler.file_path }}" alt="Preview" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center bg-green-100">
+                                    <i class="fas fa-play text-green-600"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -189,7 +272,11 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <button onclick="openPreviewModal('{{ filler.file_path }}', '{{ filler.content_type }}', '{{ filler.screen.resolution_width }}', '{{ filler.screen.resolution_height }}')" 
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 <form action="{{ url_for('org.toggle_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline">
                                     <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{% if filler.is_active %}Désactiver{% else %}Activer{% endif %}">
                                         <i class="fas fa-{% if filler.is_active %}pause{% else %}play{% endif %}"></i>
@@ -220,4 +307,75 @@
     </div>
     {% endif %}
 </div>
+
+<div id="previewModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b">
+            <div>
+                <h3 class="font-semibold text-gray-800">Aperçu du contenu</h3>
+                <p class="text-sm text-gray-500" id="previewResolution"></p>
+            </div>
+            <button onclick="closePreviewModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                <i class="fas fa-times text-gray-600"></i>
+            </button>
+        </div>
+        <div class="p-4 flex items-center justify-center bg-gray-900" id="previewContainer" style="min-height: 400px;">
+        </div>
+    </div>
+</div>
+
+<script>
+function openPreviewModal(filePath, contentType, width, height) {
+    const modal = document.getElementById('previewModal');
+    const container = document.getElementById('previewContainer');
+    const resolutionText = document.getElementById('previewResolution');
+    
+    resolutionText.textContent = `Résolution écran: ${width}x${height}`;
+    
+    const aspectRatio = width / height;
+    const maxWidth = Math.min(800, window.innerWidth - 64);
+    const maxHeight = Math.min(600, window.innerHeight - 200);
+    
+    let displayWidth, displayHeight;
+    if (maxWidth / maxHeight > aspectRatio) {
+        displayHeight = maxHeight;
+        displayWidth = displayHeight * aspectRatio;
+    } else {
+        displayWidth = maxWidth;
+        displayHeight = displayWidth / aspectRatio;
+    }
+    
+    container.style.width = displayWidth + 'px';
+    container.style.height = displayHeight + 'px';
+    
+    if (contentType === 'image') {
+        container.innerHTML = `<img src="/${filePath}" alt="Preview" class="max-w-full max-h-full object-contain">`;
+    } else {
+        container.innerHTML = `<video src="/${filePath}" controls autoplay class="max-w-full max-h-full object-contain"></video>`;
+    }
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    const container = document.getElementById('previewContainer');
+    
+    const video = container.querySelector('video');
+    if (video) {
+        video.pause();
+    }
+    
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    container.innerHTML = '';
+}
+
+document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePreviewModal();
+    }
+});
+</script>
 {% endblock %}

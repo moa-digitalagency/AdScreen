@@ -732,3 +732,107 @@ def stats():
         period_stats=period_stats,
         ad_stats=ad_stats
     )
+
+
+@org_bp.route('/content/<int:content_id>/suspend', methods=['POST'])
+@login_required
+@org_required
+def suspend_content(content_id):
+    content = Content.query.join(Screen).filter(
+        Content.id == content_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    content.status = 'suspended'
+    if content.booking:
+        content.booking.status = 'suspended'
+    
+    db.session.commit()
+    
+    flash('Contenu suspendu.', 'info')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/content/<int:content_id>/activate', methods=['POST'])
+@login_required
+@org_required
+def activate_content(content_id):
+    content = Content.query.join(Screen).filter(
+        Content.id == content_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    content.status = 'approved'
+    if content.booking:
+        content.booking.status = 'active'
+    
+    db.session.commit()
+    
+    flash('Contenu activé!', 'success')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/content/<int:content_id>/delete', methods=['POST'])
+@login_required
+@org_required
+def delete_content(content_id):
+    content = Content.query.join(Screen).filter(
+        Content.id == content_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    if content.file_path and os.path.exists(content.file_path):
+        os.remove(content.file_path)
+    
+    if content.booking:
+        db.session.delete(content.booking)
+    
+    db.session.delete(content)
+    db.session.commit()
+    
+    flash('Contenu supprimé.', 'success')
+    return redirect(request.referrer or url_for('org.contents'))
+
+
+@org_bp.route('/screen/<int:screen_id>/playlist')
+@login_required
+@org_required
+def screen_playlist(screen_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    from datetime import date
+    today = date.today()
+    
+    paid_contents = Content.query.join(Booking).filter(
+        Content.screen_id == screen_id,
+        Content.status == 'approved',
+        Booking.status == 'active',
+        ((Booking.start_date <= today) | (Booking.start_date == None)),
+        ((Booking.end_date >= today) | (Booking.end_date == None))
+    ).all()
+    
+    internal_contents = InternalContent.query.filter_by(
+        screen_id=screen_id,
+        is_active=True
+    ).order_by(InternalContent.priority.desc()).all()
+    
+    fillers = Filler.query.filter_by(
+        screen_id=screen_id,
+        is_active=True
+    ).all()
+    
+    overlays = ScreenOverlay.query.filter_by(
+        screen_id=screen_id,
+        is_active=True
+    ).all()
+    
+    return render_template('org/screen_playlist.html',
+        screen=screen,
+        paid_contents=paid_contents,
+        internal_contents=internal_contents,
+        fillers=fillers,
+        overlays=overlays
+    )

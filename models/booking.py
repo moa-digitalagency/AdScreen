@@ -1,4 +1,5 @@
 from datetime import datetime
+import secrets
 from app import db
 
 
@@ -6,6 +7,7 @@ class Booking(db.Model):
     __tablename__ = 'bookings'
     
     id = db.Column(db.Integer, primary_key=True)
+    reservation_number = db.Column(db.String(16), unique=True, nullable=True)
     slot_duration = db.Column(db.Integer, nullable=False)
     time_period_id = db.Column(db.Integer, db.ForeignKey('time_periods.id'))
     num_plays = db.Column(db.Integer, nullable=False)
@@ -26,3 +28,8 @@ class Booking(db.Model):
     content = db.relationship('Content', back_populates='booking')
     
     time_period = db.relationship('TimePeriod')
+    
+    def generate_reservation_number(self):
+        """Generate a unique reservation number"""
+        self.reservation_number = f"RES-{secrets.token_hex(4).upper()}"
+        return self.reservation_number

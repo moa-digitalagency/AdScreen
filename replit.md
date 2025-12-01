@@ -1,7 +1,7 @@
-# AdScreen - SaaS Location Écrans Publicitaires 📺
+# Shabaka AdScreen - SaaS Location Écrans Publicitaires 📺
 
 ## 🎯 Overview
-AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. Les annonceurs accèdent via lien/QR code, choisissent des créneaux, uploadent du contenu adapté, payent et reçoivent des rapports.
+Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. Les annonceurs accèdent via lien/QR code, choisissent des créneaux, uploadent du contenu adapté, payent et reçoivent des rapports.
 
 ## 🏗️ Architecture
 
@@ -96,12 +96,23 @@ AdScreen est une plateforme SaaS permettant aux établissements (bars, restauran
 - ✅ File de validation avec aperçu
 - ✅ Contenus internes établissement
 - ✅ Fillers/démos
+- ✅ **Actions sur les publicités**: suspendre, activer, supprimer
+- ✅ **Aperçu selon résolution écran** pour tous types de contenus
+- ✅ **Vue playlist admin** avec miniature écran en temps réel
+
+### 📋 Système de réservation
+- ✅ **Numéro de réservation unique** (format RES-XXXXXXXX)
+- ✅ **Reçu complet** avec QR code, détails booking, et impression
+- ✅ Adaptation automatique du contenu (pas de restriction résolution stricte)
+- ✅ Suivi de statut de réservation
 
 ### 📺 Player écran
 - ✅ Player web fullscreen avec loop automatique
 - ✅ Affichage des overlays en temps réel
 - ✅ Heartbeat et statuts temps réel
 - ✅ Statistiques et tracking passages
+- ✅ **Timeout contrôles de 10 secondes** (curseur et contrôles visibles)
+- ✅ Rafraîchissement automatique de la playlist toutes les 30s
 
 ### ⚙️ Administration
 - ✅ Paramètres du site (SEO, commissions)

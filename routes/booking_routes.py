@@ -4,9 +4,11 @@ from models import Screen, TimeSlot, TimePeriod, Content, Booking
 from datetime import datetime, date
 import os
 import secrets
+import base64
 from werkzeug.utils import secure_filename
 from utils.image_utils import validate_image
 from utils.video_utils import validate_video, get_video_duration
+from services.qr_service import generate_qr_base64
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -167,12 +169,18 @@ def submit_booking(screen_code):
         payment_status='paid'
     )
     db.session.add(booking)
+    db.session.flush()
+    
+    booking.generate_reservation_number()
     db.session.commit()
+    
+    reservation_qr = generate_qr_base64(booking.reservation_number, box_size=6, border=2)
     
     return render_template('booking/success.html',
         booking=booking,
         screen=screen,
-        content=content
+        content=content,
+        reservation_qr=reservation_qr
     )
 
 

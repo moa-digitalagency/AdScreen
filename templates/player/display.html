@@ -17,6 +17,10 @@
             cursor: none;
         }
         
+        body.show-controls {
+            cursor: default;
+        }
+        
         #player {
             width: 100vw;
             height: 100vh;
@@ -41,10 +45,12 @@
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 100;
+            pointer-events: none;
         }
         
-        body:hover #controls {
+        body.show-controls #controls {
             opacity: 1;
+            pointer-events: auto;
         }
         
         .control-btn {
@@ -80,9 +86,10 @@
             font-size: 12px;
             opacity: 0;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
         
-        body:hover #status {
+        body.show-controls #status {
             opacity: 1;
         }
         
@@ -115,9 +122,10 @@
             font-size: 12px;
             opacity: 0;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
         
-        body:hover #info {
+        body.show-controls #info {
             opacity: 1;
         }
         
@@ -280,6 +288,28 @@
         let isPlaying = false;
         let heartbeatInterval;
         let playTimeout;
+        let controlsTimeout;
+        const CONTROLS_HIDE_DELAY = 10000;
+
+        function showControls() {
+            document.body.classList.add('show-controls');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                document.body.classList.remove('show-controls');
+            }, CONTROLS_HIDE_DELAY);
+        }
+
+        document.addEventListener('mousemove', showControls);
+        document.addEventListener('mousedown', showControls);
+        document.addEventListener('keydown', (e) => {
+            showControls();
+            if (e.key === ' ' || e.key === 'p') {
+                togglePause();
+            } else if (e.key === 'f' || e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
 
         async function fetchPlaylist() {
             try {
@@ -291,11 +321,25 @@
                     return;
                 }
                 
+                const oldPlaylistLength = playlist.length;
+                const oldPlaylistIds = new Set(playlist.map(p => `${p.id}-${p.category}`));
+                
                 playlist = data.playlist;
                 overlays = data.overlays || [];
+                
+                const newItems = playlist.filter(p => !oldPlaylistIds.has(`${p.id}-${p.category}`));
+                if (newItems.length > 0) {
+                    console.log('New items added to playlist:', newItems.length);
+                }
+                
                 console.log('Playlist loaded:', playlist.length, 'items');
                 console.log('Overlays loaded:', overlays.length, 'items');
                 renderOverlays();
+                
+                if (!isPlaying && playlist.length > 0 && !isPaused) {
+                    isPlaying = true;
+                    playNext();
+                }
             } catch (error) {
                 console.error('Failed to fetch playlist:', error);
             }
@@ -469,21 +513,14 @@
                 heartbeatInterval = setInterval(sendHeartbeat, 30000);
                 sendHeartbeat();
                 
-                setInterval(fetchPlaylist, 60000);
+                setInterval(fetchPlaylist, 30000);
             } else {
                 document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
                 document.getElementById('nextInfo').textContent = 'La playlist est vide';
+                
+                setInterval(fetchPlaylist, 10000);
             }
         }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || e.key === 'p') {
-                togglePause();
-            } else if (e.key === 'f' || e.key === 'F11') {
-                e.preventDefault();
-                toggleFullscreen();
-            }
-        });
 
         window.addEventListener('beforeunload', () => {
             if (heartbeatInterval) {

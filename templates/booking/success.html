@@ -1,62 +1,143 @@
 {% extends "base.html" %}
 
-{% block title %}Réservation confirmée{% endblock %}
+{% block title %}Réservation confirmée - {{ booking.reservation_number }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-    <div class="max-w-md w-full">
-        <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-check text-green-600 text-3xl"></i>
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+    <div class="max-w-lg mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden" id="receipt">
+            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-6 text-center text-white">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold mb-1">Réservation envoyée!</h1>
+                <p class="text-emerald-100">Votre contenu est en attente de validation</p>
             </div>
             
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">Réservation envoyée!</h1>
-            <p class="text-gray-500 mb-6">Votre contenu est en attente de validation par l'établissement.</p>
-            
-            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-gray-500">Écran</span>
-                    <span class="font-medium text-gray-800">{{ screen.name }}</span>
+            <div class="p-6">
+                <div class="bg-gray-50 rounded-xl p-4 mb-6 text-center">
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Numéro de réservation</p>
+                    <p class="text-2xl font-mono font-bold text-gray-800">{{ booking.reservation_number }}</p>
                 </div>
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-gray-500">Type</span>
-                    <span class="font-medium text-gray-800 capitalize">{{ content.content_type }}</span>
-                </div>
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-gray-500">Diffusions</span>
-                    <span class="font-medium text-gray-800">{{ booking.num_plays }}</span>
-                </div>
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-gray-500">Durée</span>
-                    <span class="font-medium text-gray-800">{{ booking.slot_duration }}s</span>
-                </div>
-                <div class="border-t border-gray-200 pt-3 flex items-center justify-between">
-                    <span class="text-gray-600 font-medium">Total</span>
-                    <span class="text-xl font-bold text-primary-600">{{ "%.2f"|format(booking.total_price) }}€</span>
-                </div>
-            </div>
-            
-            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-clock text-yellow-600"></i>
-                    <div class="text-left">
-                        <p class="font-medium text-yellow-800">En attente de validation</p>
-                        <p class="text-sm text-yellow-600">L'établissement va examiner votre contenu.</p>
+
+                <div class="flex justify-center mb-6">
+                    <div class="bg-white p-3 rounded-xl border-2 border-gray-100 shadow-sm">
+                        <img src="data:image/png;base64,{{ reservation_qr }}" alt="QR Code Réservation" class="w-32 h-32">
+                        <p class="text-xs text-gray-400 text-center mt-2">Scanner pour suivi</p>
                     </div>
                 </div>
+
+                <div class="border-t border-dashed border-gray-200 pt-6 mb-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-receipt text-emerald-600"></i>
+                        Récapitulatif
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Écran</span>
+                            <span class="font-medium text-gray-800">{{ screen.name }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Établissement</span>
+                            <span class="font-medium text-gray-800">{{ screen.organization.name }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Type de contenu</span>
+                            <span class="font-medium text-gray-800 capitalize">{{ content.content_type }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Nom du fichier</span>
+                            <span class="font-medium text-gray-800 text-right max-w-[200px] truncate">{{ content.original_filename }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Durée créneau</span>
+                            <span class="font-medium text-gray-800">{{ booking.slot_duration }}s</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Nombre de diffusions</span>
+                            <span class="font-medium text-gray-800">{{ booking.num_plays }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Date de début</span>
+                            <span class="font-medium text-gray-800">{{ booking.start_date.strftime('%d/%m/%Y') if booking.start_date else '-' }}</span>
+                        </div>
+                        {% if booking.end_date %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Date de fin</span>
+                            <span class="font-medium text-gray-800">{{ booking.end_date.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Prix unitaire</span>
+                            <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.price_per_play) }}€</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 mt-4 pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-semibold text-gray-800">Total</span>
+                            <span class="text-2xl font-bold text-emerald-600">{{ "%.2f"|format(booking.total_price) }}€</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                        <div>
+                            <p class="font-medium text-yellow-800">En attente de validation</p>
+                            <p class="text-sm text-yellow-600">L'établissement va examiner votre contenu.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-envelope text-gray-500"></i>
+                        <div>
+                            <p class="text-sm text-gray-600">Confirmation envoyée à</p>
+                            <p class="font-medium text-gray-800">{{ content.client_email }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center text-xs text-gray-400 border-t border-gray-100 pt-4">
+                    <p>{{ screen.organization.name }} - Shabaka AdScreen</p>
+                    <p class="mt-1">{{ booking.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+                </div>
             </div>
-            
-            <p class="text-sm text-gray-500 mb-6">
-                Vous recevrez un email à <strong>{{ content.client_email }}</strong> 
-                lorsque votre contenu sera validé ou refusé.
-            </p>
-            
+        </div>
+
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-print"></i>
+                Imprimer le reçu
+            </button>
             <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
-               class="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium">
-                <i class="fas fa-arrow-left"></i>
-                Faire une autre réservation
+               class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                <i class="fas fa-plus"></i>
+                Nouvelle réservation
             </a>
         </div>
     </div>
 </div>
+
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #receipt, #receipt * {
+        visibility: visible;
+    }
+    #receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+    }
+}
+</style>
 {% endblock %}
