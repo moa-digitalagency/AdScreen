@@ -48,14 +48,16 @@
             </div>
         </div>
 
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
             <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" 
-               class="text-primary-600 hover:text-primary-700 font-medium text-sm">
-                Gérer <i class="fas fa-arrow-right ml-1"></i>
+               class="btn-primary btn-sm">
+                <i class="fas fa-cog"></i>
+                Gérer
             </a>
             <a href="{{ url_for('screen.generate_qr', screen_id=screen.id) }}" 
-               class="text-gray-600 hover:text-gray-800 text-sm">
-                <i class="fas fa-qrcode mr-1"></i>QR Code
+               class="btn-secondary btn-sm">
+                <i class="fas fa-qrcode"></i>
+                QR Code
             </a>
         </div>
     </div>
@@ -66,8 +68,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun écran configuré</h3>
         <p class="text-gray-500 mb-6">Créez votre premier écran pour commencer à recevoir des publicités</p>
-        <a href="{{ url_for('org.new_screen') }}" 
-           class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
+        <a href="{{ url_for('org.new_screen') }}" class="btn-primary">
             <i class="fas fa-plus"></i>
             Créer mon premier écran
         </a>

@@ -110,12 +110,11 @@
         </div>
 
         <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+            <button onclick="window.print()" class="btn-secondary">
                 <i class="fas fa-print"></i>
                 Imprimer le reçu
             </button>
-            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
-               class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" class="btn-primary">
                 <i class="fas fa-plus"></i>
                 Nouvelle réservation
             </a>
@@ -125,19 +124,233 @@
 
 <style>
 @media print {
+    @page {
+        size: 58mm auto;
+        margin: 0;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+        width: 58mm;
+        font-family: 'Courier New', monospace;
+        font-size: 10px;
+        line-height: 1.3;
+    }
+    
     body * {
         visibility: hidden;
     }
-    #receipt, #receipt * {
-        visibility: visible;
+    
+    #thermal-receipt, #thermal-receipt * {
+        visibility: visible !important;
     }
-    #receipt {
+    
+    #thermal-receipt {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
-        box-shadow: none !important;
+        width: 58mm;
+        padding: 2mm;
+        box-sizing: border-box;
+        font-family: 'Courier New', monospace;
+        font-size: 10px;
+        color: #000;
+        background: #fff;
+    }
+    
+    .thermal-header {
+        text-align: center;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 3mm;
+        margin-bottom: 3mm;
+    }
+    
+    .thermal-title {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 2mm;
+    }
+    
+    .thermal-subtitle {
+        font-size: 9px;
+    }
+    
+    .thermal-reservation {
+        text-align: center;
+        border: 1px solid #000;
+        padding: 2mm;
+        margin: 3mm 0;
+    }
+    
+    .thermal-reservation-number {
+        font-size: 14px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+    
+    .thermal-qr {
+        text-align: center;
+        margin: 3mm 0;
+    }
+    
+    .thermal-qr img {
+        width: 25mm !important;
+        height: 25mm !important;
+    }
+    
+    .thermal-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 1mm 0;
+        font-size: 9px;
+    }
+    
+    .thermal-line-label {
+        color: #333;
+    }
+    
+    .thermal-line-value {
+        font-weight: bold;
+        text-align: right;
+        max-width: 28mm;
+        word-wrap: break-word;
+    }
+    
+    .thermal-separator {
+        border-top: 1px dashed #000;
+        margin: 2mm 0;
+    }
+    
+    .thermal-total {
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+        margin: 3mm 0;
+        padding: 2mm;
+        border: 2px solid #000;
+    }
+    
+    .thermal-status {
+        text-align: center;
+        font-size: 9px;
+        padding: 2mm;
+        border: 1px dashed #000;
+        margin: 3mm 0;
+    }
+    
+    .thermal-footer {
+        text-align: center;
+        font-size: 8px;
+        margin-top: 3mm;
+        padding-top: 2mm;
+        border-top: 1px dashed #000;
+    }
+    
+    #receipt {
+        display: none !important;
+    }
+}
+
+@media screen {
+    #thermal-receipt {
+        display: none;
     }
 }
 </style>
+
+<div id="thermal-receipt">
+    <div class="thermal-header">
+        <div class="thermal-title">SHABAKA ADSCREEN</div>
+        <div class="thermal-subtitle">{{ screen.organization.name }}</div>
+    </div>
+    
+    <div class="thermal-reservation">
+        <div style="font-size: 8px;">N° RESERVATION</div>
+        <div class="thermal-reservation-number">{{ booking.reservation_number }}</div>
+    </div>
+    
+    <div class="thermal-qr">
+        <img src="data:image/png;base64,{{ reservation_qr }}" alt="QR">
+        <div style="font-size: 7px; margin-top: 2mm;">Scanner pour suivi</div>
+    </div>
+    
+    <div class="thermal-separator"></div>
+    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 2mm;">RECAPITULATIF</div>
+    
+    <div class="thermal-line">
+        <span class="thermal-line-label">Ecran:</span>
+        <span class="thermal-line-value">{{ screen.name[:18] }}{% if screen.name|length > 18 %}..{% endif %}</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Etablis.:</span>
+        <span class="thermal-line-value">{{ screen.organization.name[:16] }}{% if screen.organization.name|length > 16 %}..{% endif %}</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Type:</span>
+        <span class="thermal-line-value">{{ content.content_type|capitalize }}</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Fichier:</span>
+        <span class="thermal-line-value">{{ content.original_filename[:15] }}{% if content.original_filename|length > 15 %}...{% endif %}</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Creneau:</span>
+        <span class="thermal-line-value">{{ booking.slot_duration }}s</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Diffusions:</span>
+        <span class="thermal-line-value">{{ booking.num_plays }}x</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Debut:</span>
+        <span class="thermal-line-value">{{ booking.start_date.strftime('%d/%m/%Y') if booking.start_date else '-' }}</span>
+    </div>
+    {% if booking.end_date %}
+    <div class="thermal-line">
+        <span class="thermal-line-label">Fin:</span>
+        <span class="thermal-line-value">{{ booking.end_date.strftime('%d/%m/%Y') }}</span>
+    </div>
+    {% endif %}
+    
+    <div class="thermal-separator"></div>
+    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 2mm;">TARIFICATION</div>
+    
+    <div class="thermal-line">
+        <span class="thermal-line-label">Prix/diff.:</span>
+        <span class="thermal-line-value">{{ "%.2f"|format(booking.price_per_play) }} EUR</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Nb diff.:</span>
+        <span class="thermal-line-value">x {{ booking.num_plays }}</span>
+    </div>
+    
+    <div class="thermal-separator"></div>
+    
+    <div class="thermal-total">
+        TOTAL: {{ "%.2f"|format(booking.total_price) }} EUR
+    </div>
+    
+    <div class="thermal-status">
+        *** EN ATTENTE DE VALIDATION ***
+    </div>
+    
+    <div class="thermal-separator"></div>
+    
+    <div class="thermal-line">
+        <span class="thermal-line-label">Client:</span>
+        <span class="thermal-line-value">{{ content.client_name[:16] if content.client_name else 'Anonyme' }}{% if content.client_name and content.client_name|length > 16 %}..{% endif %}</span>
+    </div>
+    <div class="thermal-line">
+        <span class="thermal-line-label">Email:</span>
+        <span class="thermal-line-value">{{ content.client_email[:18] }}{% if content.client_email|length > 18 %}..{% endif %}</span>
+    </div>
+    
+    <div class="thermal-footer">
+        {{ booking.created_at.strftime('%d/%m/%Y a %H:%M') }}<br>
+        --------------------------------<br>
+        Merci pour votre reservation!<br>
+        www.shabaka-adscreen.com
+    </div>
+</div>
 {% endblock %}
