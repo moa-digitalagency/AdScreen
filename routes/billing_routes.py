@@ -154,9 +154,15 @@ def invoices():
     
     org = current_user.organization
     
-    previous_weeks = get_previous_weeks(12)
+    previous_weeks = get_previous_weeks(4)
     for week_start, week_end in previous_weeks:
-        generate_invoice_for_week(org.id, week_start, week_end)
+        existing = Invoice.query.filter_by(
+            organization_id=org.id,
+            week_start_date=week_start,
+            week_end_date=week_end
+        ).first()
+        if not existing:
+            generate_invoice_for_week(org.id, week_start, week_end)
     
     status_filter = request.args.get('status', 'all')
     
