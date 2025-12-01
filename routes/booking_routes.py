@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from utils.image_utils import validate_image
 from utils.video_utils import validate_video, get_video_duration
 from services.qr_service import generate_qr_base64
-from services.receipt_generator import save_receipt_image
+from services.receipt_generator import generate_receipt_image
 from services.availability_service import calculate_availability, calculate_plays_for_dates, calculate_equitable_distribution
 from utils.currencies import get_currency_by_code
 
@@ -199,8 +199,6 @@ def submit_booking(screen_code):
     screen_booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
     screen_qr = generate_qr_base64(screen_booking_url, box_size=6, border=2)
     
-    receipt_path = save_receipt_image(booking, screen, content, screen_qr)
-    
     org_currency = screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR'
     currency_info = get_currency_by_code(org_currency)
     currency_symbol = currency_info.get('symbol', org_currency)
@@ -211,7 +209,6 @@ def submit_booking(screen_code):
         content=content,
         reservation_qr=reservation_qr,
         booking_qr=screen_qr,
-        receipt_path=receipt_path,
         currency_symbol=currency_symbol
     )
 
@@ -262,14 +259,23 @@ def download_receipt(reservation_number):
         url_for('booking.screen_booking', screen_code=booking.screen.unique_code, _external=True),
         box_size=6, border=2
     )
-    receipt_path = save_receipt_image(booking, booking.screen, booking.content, booking_qr)
     
-    return send_file(
-        receipt_path,
+    img = generate_receipt_image(booking, booking.screen, booking.content, booking_qr)
+    
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    
+    response = send_file(
+        buffer,
         mimetype='image/png',
         as_attachment=True,
         download_name=f'recu_{reservation_number}.png'
     )
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @booking_bp.route('/<screen_code>/availability', methods=['POST'])
