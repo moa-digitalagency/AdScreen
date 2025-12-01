@@ -62,3 +62,8 @@ reportlab
 sqlalchemy
 werkzeug
 PyMuPDF
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
