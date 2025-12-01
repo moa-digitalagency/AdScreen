@@ -159,17 +159,25 @@ def logout():
 @auth_bp.route('/catalog')
 def catalog():
     from models import Screen, SiteSetting
-    from utils.currencies import get_country_by_code
+    from utils.currencies import get_country_by_code, get_country_choices
     
     screens = Screen.query.filter_by(is_active=True).join(
         Organization
     ).filter(Organization.is_active == True).all()
     
-    default_country = 'FR'
+    detected_country = detect_country_from_ip(request)
+    country_filter = request.args.get('country', detected_country or 'all')
     
     catalog_data = {}
+    all_countries = set()
+    
     for screen in screens:
-        country_code = screen.organization.country or default_country
+        country_code = screen.organization.country or 'FR'
+        all_countries.add(country_code)
+        
+        if country_filter != 'all' and country_code != country_filter:
+            continue
+        
         if country_code not in catalog_data:
             try:
                 country_info = get_country_by_code(country_code)
@@ -205,4 +213,45 @@ def catalog():
             key=lambda x: x['name']
         )
     
-    return render_template('catalog.html', catalog=sorted_catalog)
+    available_countries = []
+    for code in sorted(all_countries):
+        try:
+            country_info = get_country_by_code(code)
+            available_countries.append({
+                'code': code,
+                'name': country_info.get('name', code),
+                'flag': country_info.get('flag', '')
+            })
+        except (KeyError, TypeError):
+            available_countries.append({
+                'code': code,
+                'name': code,
+                'flag': ''
+            })
+    
+    available_countries = sorted(available_countries, key=lambda x: x['name'])
+    
+    return render_template('catalog.html', 
+                         catalog=sorted_catalog, 
+                         country_filter=country_filter,
+                         available_countries=available_countries,
+                         detected_country=detected_country)
+
+
+def detect_country_from_ip(request):
+    """Detect country from IP address using CF-IPCountry header or other methods."""
+    cf_country = request.headers.get('CF-IPCountry')
+    if cf_country and cf_country != 'XX':
+        return cf_country
+    
+    x_country = request.headers.get('X-Country-Code')
+    if x_country:
+        return x_country
+    
+    accept_language = request.headers.get('Accept-Language', '')
+    if accept_language:
+        lang_parts = accept_language.split(',')[0].split('-')
+        if len(lang_parts) > 1:
+            return lang_parts[1].upper()
+    
+    return None

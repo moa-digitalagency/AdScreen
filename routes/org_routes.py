@@ -1226,6 +1226,70 @@ def add_internal_to_playlist(internal_id):
     return redirect(request.referrer or url_for('org.contents'))
 
 
+@org_bp.route('/booking/<int:booking_id>/receipt/image')
+@login_required
+@org_required
+def download_receipt_image(booking_id):
+    from flask import send_file, Response
+    from services.receipt_generator import generate_receipt_image
+    from services.qr_service import generate_qr_base64
+    import io
+    
+    booking = Booking.query.join(Screen).filter(
+        Booking.id == booking_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    screen = booking.screen
+    content = booking.content
+    
+    if not content:
+        flash('Contenu non trouvé.', 'error')
+        return redirect(url_for('org.booking_history'))
+    
+    booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+    qr_base64 = generate_qr_base64(booking_url)
+    
+    img = generate_receipt_image(booking, screen, content, qr_base64)
+    
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    
+    filename = f"recu_{booking.reservation_number or booking_id}.png"
+    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=filename)
+
+
+@org_bp.route('/booking/<int:booking_id>/receipt/pdf')
+@login_required
+@org_required
+def download_receipt_pdf(booking_id):
+    from flask import send_file
+    from services.receipt_generator import generate_receipt_pdf
+    from services.qr_service import generate_qr_base64
+    
+    booking = Booking.query.join(Screen).filter(
+        Booking.id == booking_id,
+        Screen.organization_id == current_user.organization_id
+    ).first_or_404()
+    
+    screen = booking.screen
+    content = booking.content
+    
+    if not content:
+        flash('Contenu non trouvé.', 'error')
+        return redirect(url_for('org.booking_history'))
+    
+    booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+    qr_base64 = generate_qr_base64(booking_url)
+    
+    pdf_buffer = generate_receipt_pdf(booking, screen, content, qr_base64)
+    pdf_buffer.seek(0)
+    
+    filename = f"recu_{booking.reservation_number or booking_id}.pdf"
+    return send_file(pdf_buffer, mimetype='application/pdf', as_attachment=True, download_name=filename)
+
+
 @org_bp.route('/screen/<int:screen_id>/availability')
 @login_required
 @org_required

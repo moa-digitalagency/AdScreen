@@ -129,9 +129,9 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     canvas = Image.new('RGBA', (canvas_width, canvas_height), '#ffffff')
     draw = ImageDraw.Draw(canvas)
     
-    color_primary_start = (99, 102, 241)
-    color_primary_end = (139, 92, 246)
-    color_accent = (16, 185, 129)
+    color_primary_start = (16, 185, 129)
+    color_primary_end = (5, 150, 105)
+    color_accent = (52, 211, 153)
     color_dark = (15, 23, 42)
     
     for y in range(header_height + 30):
@@ -223,17 +223,17 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     
     for i, (cx, cy) in enumerate(corners):
         if i == 0:
-            draw.line([(cx, cy), (cx + corner_size, cy)], fill='#6366f1', width=corner_thickness)
-            draw.line([(cx, cy), (cx, cy + corner_size)], fill='#6366f1', width=corner_thickness)
-        elif i == 1:
-            draw.line([(cx, cy), (cx + corner_size, cy)], fill='#8b5cf6', width=corner_thickness)
-            draw.line([(cx + corner_size, cy), (cx + corner_size, cy + corner_size)], fill='#8b5cf6', width=corner_thickness)
-        elif i == 2:
+            draw.line([(cx, cy), (cx + corner_size, cy)], fill='#10b981', width=corner_thickness)
             draw.line([(cx, cy), (cx, cy + corner_size)], fill='#10b981', width=corner_thickness)
-            draw.line([(cx, cy + corner_size), (cx + corner_size, cy + corner_size)], fill='#10b981', width=corner_thickness)
+        elif i == 1:
+            draw.line([(cx, cy), (cx + corner_size, cy)], fill='#059669', width=corner_thickness)
+            draw.line([(cx + corner_size, cy), (cx + corner_size, cy + corner_size)], fill='#059669', width=corner_thickness)
+        elif i == 2:
+            draw.line([(cx, cy), (cx, cy + corner_size)], fill='#34d399', width=corner_thickness)
+            draw.line([(cx, cy + corner_size), (cx + corner_size, cy + corner_size)], fill='#34d399', width=corner_thickness)
         else:
-            draw.line([(cx + corner_size, cy), (cx + corner_size, cy + corner_size)], fill='#f59e0b', width=corner_thickness)
-            draw.line([(cx, cy + corner_size), (cx + corner_size, cy + corner_size)], fill='#f59e0b', width=corner_thickness)
+            draw.line([(cx + corner_size, cy), (cx + corner_size, cy + corner_size)], fill='#047857', width=corner_thickness)
+            draw.line([(cx, cy + corner_size), (cx + corner_size, cy + corner_size)], fill='#047857', width=corner_thickness)
     
     qr_x = qr_container_x + (qr_container_size - qr_size) // 2
     qr_y = qr_container_y + (qr_container_size - qr_size) // 2
@@ -256,7 +256,7 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     res_icon = "🖥"
     res_text = f"{screen.resolution_width}x{screen.resolution_height}"
     res_label = "Resolution"
-    draw.text((info_box_x + col_width // 2 - 10, info_y + 10), res_icon, fill='#6366f1', font=icon_font)
+    draw.text((info_box_x + col_width // 2 - 10, info_y + 10), res_icon, fill='#10b981', font=icon_font)
     res_bbox = draw.textbbox((0, 0), res_text, font=info_bold_font)
     draw.text((info_box_x + (col_width - (res_bbox[2] - res_bbox[0])) // 2, info_y + 30), res_text, fill='#1e293b', font=info_bold_font)
     res_label_bbox = draw.textbbox((0, 0), res_label, font=small_font)
@@ -265,7 +265,7 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     orient_icon = "📐"
     orient_text = screen.orientation.capitalize()
     orient_label = "Orientation"
-    draw.text((info_box_x + col_width + col_width // 2 - 10, info_y + 10), orient_icon, fill='#8b5cf6', font=icon_font)
+    draw.text((info_box_x + col_width + col_width // 2 - 10, info_y + 10), orient_icon, fill='#059669', font=icon_font)
     orient_bbox = draw.textbbox((0, 0), orient_text, font=info_bold_font)
     draw.text((info_box_x + col_width + (col_width - (orient_bbox[2] - orient_bbox[0])) // 2, info_y + 30), orient_text, fill='#1e293b', font=info_bold_font)
     orient_label_bbox = draw.textbbox((0, 0), orient_label, font=small_font)
@@ -323,7 +323,7 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
         b = int(42 + (59 - 42) * ratio)
         draw.line([(0, y), (canvas_width, y)], fill=(r, g, b))
     
-    draw.rectangle([(0, footer_y), (canvas_width, footer_y + 3)], fill='#6366f1')
+    draw.rectangle([(0, footer_y), (canvas_width, footer_y + 3)], fill='#10b981')
     
     platform_bbox = draw.textbbox((0, 0), platform_name, font=footer_font)
     platform_x = (canvas_width - (platform_bbox[2] - platform_bbox[0])) // 2

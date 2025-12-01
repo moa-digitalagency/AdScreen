@@ -69,10 +69,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     canvas = Image.new('RGB', (width, height), '#0f172a')
     draw = ImageDraw.Draw(canvas)
     
-    color_primary_start = (99, 102, 241)
-    color_primary_end = (139, 92, 246)
-    color_accent = (16, 185, 129)
-    color_secondary = (245, 158, 11)
+    color_primary_start = (16, 185, 129)
+    color_primary_end = (5, 150, 105)
+    color_accent = (52, 211, 153)
+    color_secondary = (4, 120, 87)
     color_dark = (15, 23, 42)
     color_light = (248, 250, 252)
     
@@ -166,7 +166,7 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     draw.rounded_rectangle(
         [(underline_x, underline_y), (underline_x + underline_width, underline_y + 4)],
         radius=2,
-        fill='#fbbf24'
+        fill='#34d399'
     )
     
     screen_name = screen.name
@@ -268,10 +268,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     corner_size = int(qr_container_size * 0.15)
     corner_thickness = 5
     corners_data = [
-        (qr_x + 8, qr_y + 8, 'tl', '#6366f1'),
-        (qr_x + qr_container_size - 8 - corner_size, qr_y + 8, 'tr', '#8b5cf6'),
-        (qr_x + 8, qr_y + qr_container_size - 8 - corner_size, 'bl', '#10b981'),
-        (qr_x + qr_container_size - 8 - corner_size, qr_y + qr_container_size - 8 - corner_size, 'br', '#f59e0b'),
+        (qr_x + 8, qr_y + 8, 'tl', '#10b981'),
+        (qr_x + qr_container_size - 8 - corner_size, qr_y + 8, 'tr', '#059669'),
+        (qr_x + 8, qr_y + qr_container_size - 8 - corner_size, 'bl', '#34d399'),
+        (qr_x + qr_container_size - 8 - corner_size, qr_y + qr_container_size - 8 - corner_size, 'br', '#047857'),
     ]
     
     for cx, cy, pos, color in corners_data:

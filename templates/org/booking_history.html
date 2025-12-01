@@ -77,6 +77,7 @@
                     <th class="px-4 py-3 text-right">Montant HT</th>
                     <th class="px-4 py-3 text-right">TVA</th>
                     <th class="px-4 py-3 text-right">Total TTC</th>
+                    <th class="px-4 py-3 text-center">Reçu</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -133,6 +134,20 @@
                     </td>
                     <td class="px-4 py-3 text-right font-bold text-emerald-600">
                         {{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <a href="{{ url_for('org.download_receipt_image', booking_id=booking.id) }}" 
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" 
+                               title="Télécharger en image">
+                                <i class="fas fa-image text-xs"></i>
+                            </a>
+                            <a href="{{ url_for('org.download_receipt_pdf', booking_id=booking.id) }}" 
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors" 
+                               title="Télécharger en PDF">
+                                <i class="fas fa-file-pdf text-xs"></i>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
