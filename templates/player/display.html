@@ -227,6 +227,26 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        #debugInfo {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 300px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        body.show-controls #debugInfo {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -253,7 +273,7 @@
     
     <div id="player">
         <img id="imageContent" style="display: none;" />
-        <video id="videoContent" style="display: none;" muted></video>
+        <video id="videoContent" style="display: none;" muted playsinline></video>
     </div>
     
     <div id="overlayFooter" class="overlay-footer" style="display: none;"></div>
@@ -268,6 +288,8 @@
         <div id="nextInfo" style="color: rgba(255,255,255,0.5); margin-top: 4px;"></div>
     </div>
 
+    <div id="debugInfo"></div>
+
     <div id="controls">
         <button class="control-btn" onclick="togglePause()">
             <span id="pauseIcon">⏸</span> Pause
@@ -281,37 +303,236 @@
     </div>
 
     <script>
-        let playlist = [];
-        let overlays = [];
-        let currentIndex = 0;
-        let isPaused = false;
-        let isPlaying = false;
-        let heartbeatInterval;
-        let playTimeout;
-        let controlsTimeout;
-        let refreshInterval;
-        const CONTROLS_HIDE_DELAY = 10000;
-        const PLAYLIST_REFRESH_INTERVAL = 10000;
+        const PlayerState = {
+            IDLE: 'idle',
+            PLAYING: 'playing',
+            PAUSED: 'paused',
+            TRANSITIONING: 'transitioning'
+        };
+
+        const player = {
+            playlist: [],
+            overlays: [],
+            currentIndex: 0,
+            state: PlayerState.IDLE,
+            timerId: null,
+            heartbeatInterval: null,
+            refreshInterval: null,
+            controlsTimeout: null,
+            currentItemStartTime: null,
+            
+            CONTROLS_HIDE_DELAY: 10000,
+            PLAYLIST_REFRESH_INTERVAL: 10000,
+            MIN_DISPLAY_TIME: 1000,
+            
+            imageEl: null,
+            videoEl: null,
+            debugEl: null
+        };
+
+        function debug(msg) {
+            console.log('[Player]', msg);
+            if (player.debugEl) {
+                const time = new Date().toLocaleTimeString();
+                player.debugEl.innerHTML = `[${time}] ${msg}<br>` + 
+                    (player.debugEl.innerHTML || '').split('<br>').slice(0, 10).join('<br>');
+            }
+        }
 
         function showControls() {
             document.body.classList.add('show-controls');
-            clearTimeout(controlsTimeout);
-            controlsTimeout = setTimeout(() => {
+            clearTimeout(player.controlsTimeout);
+            player.controlsTimeout = setTimeout(() => {
                 document.body.classList.remove('show-controls');
-            }, CONTROLS_HIDE_DELAY);
+            }, player.CONTROLS_HIDE_DELAY);
         }
 
-        document.addEventListener('mousemove', showControls);
-        document.addEventListener('mousedown', showControls);
-        document.addEventListener('keydown', (e) => {
-            showControls();
-            if (e.key === ' ' || e.key === 'p') {
-                togglePause();
-            } else if (e.key === 'f' || e.key === 'F11') {
-                e.preventDefault();
-                toggleFullscreen();
+        function clearTimer() {
+            if (player.timerId) {
+                clearTimeout(player.timerId);
+                player.timerId = null;
             }
-        });
+        }
+
+        function scheduleNext(delayMs) {
+            clearTimer();
+            debug(`Scheduling next in ${delayMs}ms`);
+            player.timerId = setTimeout(() => {
+                advanceToNext();
+            }, delayMs);
+        }
+
+        function advanceToNext() {
+            if (player.state === PlayerState.PAUSED) {
+                debug('Paused, not advancing');
+                return;
+            }
+            
+            if (player.playlist.length === 0) {
+                debug('Empty playlist, waiting...');
+                player.state = PlayerState.IDLE;
+                updateInfoDisplay(null);
+                return;
+            }
+            
+            player.state = PlayerState.TRANSITIONING;
+            clearTimer();
+            
+            player.currentIndex = (player.currentIndex + 1) % player.playlist.length;
+            debug(`Advancing to index ${player.currentIndex} of ${player.playlist.length}`);
+            
+            playCurrentItem();
+        }
+
+        function playCurrentItem() {
+            if (player.state === PlayerState.PAUSED) {
+                debug('Paused, not playing');
+                return;
+            }
+            
+            if (player.playlist.length === 0) {
+                debug('No items to play');
+                player.state = PlayerState.IDLE;
+                updateInfoDisplay(null);
+                return;
+            }
+            
+            const item = player.playlist[player.currentIndex];
+            if (!item) {
+                debug('Invalid item at index ' + player.currentIndex);
+                player.currentIndex = 0;
+                if (player.playlist.length > 0) {
+                    setTimeout(() => playCurrentItem(), 100);
+                }
+                return;
+            }
+            
+            player.state = PlayerState.PLAYING;
+            player.currentItemStartTime = Date.now();
+            
+            const duration = Math.max(3, parseInt(item.duration) || 10);
+            debug(`Playing: ${item.category}/${item.name || item.id} for ${duration}s`);
+            
+            updateInfoDisplay(item);
+            
+            if (item.type === 'image') {
+                playImage(item, duration);
+            } else if (item.type === 'video') {
+                playVideo(item, duration);
+            } else {
+                debug('Unknown content type: ' + item.type);
+                scheduleNext(1000);
+            }
+        }
+
+        function playImage(item, duration) {
+            player.videoEl.pause();
+            player.videoEl.removeAttribute('src');
+            player.videoEl.style.display = 'none';
+            
+            player.imageEl.style.display = 'block';
+            player.imageEl.src = item.url;
+            
+            player.imageEl.onload = () => {
+                debug('Image loaded: ' + item.url);
+                logPlay(item);
+            };
+            
+            player.imageEl.onerror = () => {
+                debug('Image error: ' + item.url);
+                scheduleNext(500);
+            };
+            
+            scheduleNext(duration * 1000);
+        }
+
+        function playVideo(item, duration) {
+            player.imageEl.style.display = 'none';
+            
+            player.videoEl.onended = null;
+            player.videoEl.onerror = null;
+            player.videoEl.onloadeddata = null;
+            player.videoEl.ontimeupdate = null;
+            
+            player.videoEl.style.display = 'block';
+            player.videoEl.src = item.url;
+            player.videoEl.currentTime = 0;
+            player.videoEl.loop = false;
+            
+            let hasLogged = false;
+            let hasEnded = false;
+            
+            const handleVideoEnd = () => {
+                if (hasEnded) return;
+                hasEnded = true;
+                debug('Video ended naturally');
+                clearTimer();
+                advanceToNext();
+            };
+            
+            player.videoEl.onloadeddata = () => {
+                debug('Video loaded, duration: ' + player.videoEl.duration);
+                player.videoEl.play().then(() => {
+                    if (!hasLogged) {
+                        hasLogged = true;
+                        logPlay(item);
+                    }
+                }).catch(e => {
+                    debug('Video play error: ' + e.message);
+                    scheduleNext(500);
+                });
+            };
+            
+            player.videoEl.onended = handleVideoEnd;
+            
+            player.videoEl.onerror = (e) => {
+                debug('Video error: ' + (e.message || 'unknown'));
+                if (!hasEnded) {
+                    hasEnded = true;
+                    scheduleNext(500);
+                }
+            };
+            
+            player.videoEl.ontimeupdate = () => {
+                if (!hasEnded && player.videoEl.currentTime >= player.videoEl.duration - 0.1) {
+                    handleVideoEnd();
+                }
+            };
+            
+            const maxDuration = Math.max(duration, 5) * 1000 + 3000;
+            scheduleNext(maxDuration);
+        }
+
+        function updateInfoDisplay(item) {
+            const currentInfoEl = document.getElementById('currentInfo');
+            const nextInfoEl = document.getElementById('nextInfo');
+            
+            if (!item) {
+                currentInfoEl.textContent = 'Aucun contenu disponible';
+                nextInfoEl.textContent = 'En attente de nouveaux contenus...';
+                return;
+            }
+            
+            const categoryLabels = {
+                'paid': '💰 Publicité',
+                'internal': '📢 Promo',
+                'filler': '🎬 Démo'
+            };
+            
+            const itemName = item.name || 'Contenu';
+            currentInfoEl.innerHTML = 
+                `<strong>${categoryLabels[item.category] || item.category}</strong> - ${itemName}<br>
+                 <span style="opacity: 0.7">Durée: ${item.duration}s ${item.remaining_plays ? `| Restant: ${item.remaining_plays}` : ''}</span>`;
+            
+            if (player.playlist.length > 1) {
+                const nextIndex = (player.currentIndex + 1) % player.playlist.length;
+                const nextItem = player.playlist[nextIndex];
+                nextInfoEl.textContent = 
+                    `Suivant: ${categoryLabels[nextItem.category] || nextItem.category} - ${nextItem.name || 'Contenu'}`;
+            } else {
+                nextInfoEl.textContent = 'Boucle en cours...';
+            }
+        }
 
         async function fetchPlaylist() {
             try {
@@ -319,46 +540,35 @@
                 const data = await response.json();
                 
                 if (data.error) {
-                    console.error('Error:', data.error);
+                    debug('Playlist error: ' + data.error);
                     return;
                 }
                 
-                const oldPlaylistIds = new Set(playlist.map(p => `${p.id}-${p.category}`));
-                const newPlaylist = data.playlist;
+                const newPlaylist = data.playlist || [];
+                player.overlays = data.overlays || [];
                 
-                const newItems = newPlaylist.filter(p => !oldPlaylistIds.has(`${p.id}-${p.category}`));
-                if (newItems.length > 0) {
-                    console.log('New items added to playlist:', newItems.length);
+                if (player.playlist.length !== newPlaylist.length) {
+                    debug(`Playlist updated: ${player.playlist.length} -> ${newPlaylist.length} items`);
                 }
                 
-                const removedItems = playlist.filter(p => 
-                    !newPlaylist.some(np => np.id === p.id && np.category === p.category)
-                );
-                if (removedItems.length > 0) {
-                    console.log('Items removed from playlist:', removedItems.length);
+                if (player.currentIndex >= newPlaylist.length && newPlaylist.length > 0) {
+                    player.currentIndex = 0;
                 }
                 
-                playlist = newPlaylist;
-                overlays = data.overlays || [];
-                
-                if (currentIndex >= playlist.length) {
-                    currentIndex = 0;
-                }
-                
-                console.log('Playlist updated:', playlist.length, 'items');
+                player.playlist = newPlaylist;
                 renderOverlays();
                 
-                if (!isPlaying && playlist.length > 0 && !isPaused) {
-                    isPlaying = true;
-                    playNext();
+                if (player.state === PlayerState.IDLE && player.playlist.length > 0) {
+                    debug('Starting playback from idle');
+                    player.currentIndex = 0;
+                    playCurrentItem();
                 }
                 
-                if (playlist.length === 0) {
-                    document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
-                    document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
+                if (player.playlist.length === 0) {
+                    updateInfoDisplay(null);
                 }
             } catch (error) {
-                console.error('Failed to fetch playlist:', error);
+                debug('Fetch playlist error: ' + error.message);
             }
         }
 
@@ -378,16 +588,16 @@
                 
                 const result = await response.json();
                 if (result.exhausted) {
-                    console.log('Content exhausted, will be removed from playlist');
+                    debug('Content exhausted, refreshing playlist');
                     fetchPlaylist();
                 }
             } catch (error) {
-                console.error('Failed to log play:', error);
+                debug('Log play error: ' + error.message);
             }
         }
 
         async function sendHeartbeat() {
-            const status = isPaused ? 'paused' : 'playing';
+            const status = player.state === PlayerState.PAUSED ? 'paused' : 'playing';
             try {
                 await fetch('/player/api/heartbeat', {
                     method: 'POST',
@@ -396,109 +606,30 @@
                 });
                 
                 document.getElementById('statusDot').className = 'status-dot status-' + status;
-                document.getElementById('statusText').textContent = isPaused ? 'En pause' : 'En lecture';
+                document.getElementById('statusText').textContent = 
+                    player.state === PlayerState.PAUSED ? 'En pause' : 'En lecture';
             } catch (error) {
                 document.getElementById('statusDot').className = 'status-dot status-offline';
                 document.getElementById('statusText').textContent = 'Hors ligne';
             }
         }
 
-        function playNext() {
-            if (isPaused) return;
-            
-            if (playlist.length === 0) {
-                document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
-                document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
-                isPlaying = false;
-                return;
-            }
-            
-            clearTimeout(playTimeout);
-            
-            const item = playlist[currentIndex];
-            const imageEl = document.getElementById('imageContent');
-            const videoEl = document.getElementById('videoContent');
-            
-            const categoryLabels = {
-                'paid': '💰 Publicité',
-                'internal': '📢 Promo',
-                'filler': '🎬 Démo'
-            };
-            
-            const itemName = item.name || 'Contenu';
-            document.getElementById('currentInfo').innerHTML = 
-                `<strong>${categoryLabels[item.category] || item.category}</strong> - ${itemName}<br>
-                 <span style="opacity: 0.7">Durée: ${item.duration}s ${item.remaining_plays ? `| Restant: ${item.remaining_plays}` : ''}</span>`;
-            
-            const nextIndex = (currentIndex + 1) % playlist.length;
-            const nextItem = playlist[nextIndex];
-            document.getElementById('nextInfo').textContent = 
-                `Suivant: ${categoryLabels[nextItem.category] || nextItem.category} - ${nextItem.name || 'Contenu'}`;
-            
-            const duration = parseInt(item.duration) || 10;
-            
-            if (item.type === 'image') {
-                videoEl.style.display = 'none';
-                videoEl.pause();
-                videoEl.onended = null;
-                imageEl.style.display = 'block';
-                imageEl.src = item.url;
-                imageEl.id = 'content';
-                
-                logPlay(item);
-                
-                playTimeout = setTimeout(() => {
-                    currentIndex = (currentIndex + 1) % playlist.length;
-                    playNext();
-                }, duration * 1000);
-                
-            } else if (item.type === 'video') {
-                imageEl.style.display = 'none';
-                videoEl.style.display = 'block';
-                videoEl.src = item.url;
-                videoEl.id = 'content';
-                
-                videoEl.onloadeddata = () => {
-                    videoEl.play().catch(e => console.error('Video play error:', e));
-                    logPlay(item);
-                };
-                
-                videoEl.onended = () => {
-                    clearTimeout(playTimeout);
-                    currentIndex = (currentIndex + 1) % playlist.length;
-                    playNext();
-                };
-                
-                videoEl.onerror = () => {
-                    console.error('Video load error, skipping to next');
-                    clearTimeout(playTimeout);
-                    currentIndex = (currentIndex + 1) % playlist.length;
-                    playNext();
-                };
-                
-                playTimeout = setTimeout(() => {
-                    videoEl.onended = null;
-                    currentIndex = (currentIndex + 1) % playlist.length;
-                    playNext();
-                }, (duration + 2) * 1000);
-            }
-        }
-
         function togglePause() {
-            isPaused = !isPaused;
-            document.getElementById('pauseIcon').textContent = isPaused ? '▶' : '⏸';
-            
-            if (isPaused) {
-                clearTimeout(playTimeout);
-                const videoEl = document.getElementById('videoContent');
-                if (videoEl.style.display !== 'none') {
-                    videoEl.pause();
+            if (player.state === PlayerState.PAUSED) {
+                debug('Resuming playback');
+                player.state = PlayerState.PLAYING;
+                document.getElementById('pauseIcon').textContent = '⏸';
+                
+                if (player.playlist.length > 0) {
+                    playCurrentItem();
                 }
             } else {
-                if (playlist.length > 0) {
-                    isPlaying = true;
-                    playNext();
-                }
+                debug('Pausing playback');
+                player.state = PlayerState.PAUSED;
+                document.getElementById('pauseIcon').textContent = '▶';
+                
+                clearTimer();
+                player.videoEl.pause();
             }
             
             sendHeartbeat();
@@ -513,7 +644,7 @@
             headerEl.innerHTML = '';
             footerEl.innerHTML = '';
             
-            overlays.forEach(overlay => {
+            (player.overlays || []).forEach(overlay => {
                 if (!overlay.is_active) return;
                 
                 const container = overlay.position === 'header' ? headerEl : footerEl;
@@ -551,31 +682,52 @@
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
             
+            player.imageEl = document.getElementById('imageContent');
+            player.videoEl = document.getElementById('videoContent');
+            player.debugEl = document.getElementById('debugInfo');
+            
+            debug('Player starting...');
+            
             await fetchPlaylist();
             
             document.getElementById('loading').classList.add('hidden');
             
-            heartbeatInterval = setInterval(sendHeartbeat, 30000);
+            player.heartbeatInterval = setInterval(sendHeartbeat, 30000);
             sendHeartbeat();
             
-            refreshInterval = setInterval(fetchPlaylist, PLAYLIST_REFRESH_INTERVAL);
+            player.refreshInterval = setInterval(fetchPlaylist, player.PLAYLIST_REFRESH_INTERVAL);
             
-            if (playlist.length > 0) {
-                isPlaying = true;
-                playNext();
+            if (player.playlist.length > 0) {
+                debug('Starting playback with ' + player.playlist.length + ' items');
+                player.currentIndex = 0;
+                playCurrentItem();
             } else {
-                document.getElementById('currentInfo').textContent = 'Aucun contenu disponible';
-                document.getElementById('nextInfo').textContent = 'En attente de nouveaux contenus...';
+                debug('No content available');
+                updateInfoDisplay(null);
             }
         }
 
+        document.addEventListener('mousemove', showControls);
+        document.addEventListener('mousedown', showControls);
+        document.addEventListener('keydown', (e) => {
+            showControls();
+            if (e.key === ' ' || e.key === 'p') {
+                e.preventDefault();
+                togglePause();
+            } else if (e.key === 'f' || e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            } else if (e.key === 'n') {
+                e.preventDefault();
+                debug('Manual skip');
+                advanceToNext();
+            }
+        });
+
         window.addEventListener('beforeunload', () => {
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
-            }
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-            }
+            clearTimer();
+            if (player.heartbeatInterval) clearInterval(player.heartbeatInterval);
+            if (player.refreshInterval) clearInterval(player.refreshInterval);
         });
     </script>
 </body>
