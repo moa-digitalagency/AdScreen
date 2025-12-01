@@ -499,13 +499,14 @@ def approve_content(content_id):
     
     content.status = 'approved'
     content.validated_at = datetime.utcnow()
+    content.in_playlist = True
     
     if content.booking:
         content.booking.status = 'active'
     
     db.session.commit()
     
-    flash('Contenu approuvé!', 'success')
+    flash('Contenu approuvé et ajouté à la playlist!', 'success')
     return redirect(url_for('org.validations'))
 
 

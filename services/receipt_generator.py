@@ -1,99 +1,152 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import io
 import os
 import base64
 from datetime import datetime
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A5
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 
-CURRENCIES = [
-    {"code": "EUR", "name": "Euro", "symbol": "€", "country": "EU", "flag": "🇪🇺"},
-    {"code": "USD", "name": "Dollar américain", "symbol": "$", "country": "US", "flag": "🇺🇸"},
-    {"code": "GBP", "name": "Livre sterling", "symbol": "£", "country": "GB", "flag": "🇬🇧"},
-    {"code": "CHF", "name": "Franc suisse", "symbol": "CHF", "country": "CH", "flag": "🇨🇭"},
-    {"code": "CAD", "name": "Dollar canadien", "symbol": "C$", "country": "CA", "flag": "🇨🇦"},
-    {"code": "AUD", "name": "Dollar australien", "symbol": "A$", "country": "AU", "flag": "🇦🇺"},
-    {"code": "JPY", "name": "Yen japonais", "symbol": "¥", "country": "JP", "flag": "🇯🇵"},
-    {"code": "CNY", "name": "Yuan chinois", "symbol": "¥", "country": "CN", "flag": "🇨🇳"},
-    {"code": "INR", "name": "Roupie indienne", "symbol": "₹", "country": "IN", "flag": "🇮🇳"},
-    {"code": "BRL", "name": "Real brésilien", "symbol": "R$", "country": "BR", "flag": "🇧🇷"},
-    {"code": "MXN", "name": "Peso mexicain", "symbol": "$", "country": "MX", "flag": "🇲🇽"},
-    {"code": "ARS", "name": "Peso argentin", "symbol": "$", "country": "AR", "flag": "🇦🇷"},
-    {"code": "COP", "name": "Peso colombien", "symbol": "$", "country": "CO", "flag": "🇨🇴"},
-    {"code": "CLP", "name": "Peso chilien", "symbol": "$", "country": "CL", "flag": "🇨🇱"},
-    {"code": "PEN", "name": "Sol péruvien", "symbol": "S/", "country": "PE", "flag": "🇵🇪"},
-    {"code": "MAD", "name": "Dirham marocain", "symbol": "DH", "country": "MA", "flag": "🇲🇦"},
-    {"code": "TND", "name": "Dinar tunisien", "symbol": "DT", "country": "TN", "flag": "🇹🇳"},
-    {"code": "DZD", "name": "Dinar algérien", "symbol": "DA", "country": "DZ", "flag": "🇩🇿"},
-    {"code": "EGP", "name": "Livre égyptienne", "symbol": "E£", "country": "EG", "flag": "🇪🇬"},
-    {"code": "SAR", "name": "Riyal saoudien", "symbol": "SR", "country": "SA", "flag": "🇸🇦"},
-    {"code": "AED", "name": "Dirham des EAU", "symbol": "AED", "country": "AE", "flag": "🇦🇪"},
-    {"code": "QAR", "name": "Riyal qatari", "symbol": "QR", "country": "QA", "flag": "🇶🇦"},
-    {"code": "KWD", "name": "Dinar koweïtien", "symbol": "KD", "country": "KW", "flag": "🇰🇼"},
-    {"code": "BHD", "name": "Dinar bahreïni", "symbol": "BD", "country": "BH", "flag": "🇧🇭"},
-    {"code": "OMR", "name": "Rial omanais", "symbol": "OMR", "country": "OM", "flag": "🇴🇲"},
-    {"code": "JOD", "name": "Dinar jordanien", "symbol": "JD", "country": "JO", "flag": "🇯🇴"},
-    {"code": "LBP", "name": "Livre libanaise", "symbol": "L£", "country": "LB", "flag": "🇱🇧"},
-    {"code": "ILS", "name": "Shekel israélien", "symbol": "₪", "country": "IL", "flag": "🇮🇱"},
-    {"code": "TRY", "name": "Livre turque", "symbol": "₺", "country": "TR", "flag": "🇹🇷"},
-    {"code": "RUB", "name": "Rouble russe", "symbol": "₽", "country": "RU", "flag": "🇷🇺"},
-    {"code": "UAH", "name": "Hryvnia ukrainienne", "symbol": "₴", "country": "UA", "flag": "🇺🇦"},
-    {"code": "PLN", "name": "Zloty polonais", "symbol": "zł", "country": "PL", "flag": "🇵🇱"},
-    {"code": "CZK", "name": "Couronne tchèque", "symbol": "Kč", "country": "CZ", "flag": "🇨🇿"},
-    {"code": "HUF", "name": "Forint hongrois", "symbol": "Ft", "country": "HU", "flag": "🇭🇺"},
-    {"code": "RON", "name": "Leu roumain", "symbol": "lei", "country": "RO", "flag": "🇷🇴"},
-    {"code": "BGN", "name": "Lev bulgare", "symbol": "лв", "country": "BG", "flag": "🇧🇬"},
-    {"code": "HRK", "name": "Kuna croate", "symbol": "kn", "country": "HR", "flag": "🇭🇷"},
-    {"code": "RSD", "name": "Dinar serbe", "symbol": "din", "country": "RS", "flag": "🇷🇸"},
-    {"code": "SEK", "name": "Couronne suédoise", "symbol": "kr", "country": "SE", "flag": "🇸🇪"},
-    {"code": "NOK", "name": "Couronne norvégienne", "symbol": "kr", "country": "NO", "flag": "🇳🇴"},
-    {"code": "DKK", "name": "Couronne danoise", "symbol": "kr", "country": "DK", "flag": "🇩🇰"},
-    {"code": "ISK", "name": "Couronne islandaise", "symbol": "kr", "country": "IS", "flag": "🇮🇸"},
-    {"code": "ZAR", "name": "Rand sud-africain", "symbol": "R", "country": "ZA", "flag": "🇿🇦"},
-    {"code": "NGN", "name": "Naira nigérian", "symbol": "₦", "country": "NG", "flag": "🇳🇬"},
-    {"code": "KES", "name": "Shilling kényan", "symbol": "KSh", "country": "KE", "flag": "🇰🇪"},
-    {"code": "GHS", "name": "Cedi ghanéen", "symbol": "₵", "country": "GH", "flag": "🇬🇭"},
-    {"code": "XOF", "name": "Franc CFA (UEMOA)", "symbol": "CFA", "country": "SN", "flag": "🇸🇳"},
-    {"code": "XAF", "name": "Franc CFA (CEMAC)", "symbol": "FCFA", "country": "CM", "flag": "🇨🇲"},
-    {"code": "MUR", "name": "Roupie mauricienne", "symbol": "Rs", "country": "MU", "flag": "🇲🇺"},
-    {"code": "TZS", "name": "Shilling tanzanien", "symbol": "TSh", "country": "TZ", "flag": "🇹🇿"},
-    {"code": "UGX", "name": "Shilling ougandais", "symbol": "USh", "country": "UG", "flag": "🇺🇬"},
-    {"code": "RWF", "name": "Franc rwandais", "symbol": "FRw", "country": "RW", "flag": "🇷🇼"},
-    {"code": "ETB", "name": "Birr éthiopien", "symbol": "Br", "country": "ET", "flag": "🇪🇹"},
-    {"code": "THB", "name": "Baht thaïlandais", "symbol": "฿", "country": "TH", "flag": "🇹🇭"},
-    {"code": "VND", "name": "Dong vietnamien", "symbol": "₫", "country": "VN", "flag": "🇻🇳"},
-    {"code": "IDR", "name": "Roupie indonésienne", "symbol": "Rp", "country": "ID", "flag": "🇮🇩"},
-    {"code": "MYR", "name": "Ringgit malaisien", "symbol": "RM", "country": "MY", "flag": "🇲🇾"},
-    {"code": "SGD", "name": "Dollar singapourien", "symbol": "S$", "country": "SG", "flag": "🇸🇬"},
-    {"code": "PHP", "name": "Peso philippin", "symbol": "₱", "country": "PH", "flag": "🇵🇭"},
-    {"code": "KRW", "name": "Won sud-coréen", "symbol": "₩", "country": "KR", "flag": "🇰🇷"},
-    {"code": "TWD", "name": "Dollar taïwanais", "symbol": "NT$", "country": "TW", "flag": "🇹🇼"},
-    {"code": "HKD", "name": "Dollar de Hong Kong", "symbol": "HK$", "country": "HK", "flag": "🇭🇰"},
-    {"code": "NZD", "name": "Dollar néo-zélandais", "symbol": "NZ$", "country": "NZ", "flag": "🇳🇿"},
-    {"code": "PKR", "name": "Roupie pakistanaise", "symbol": "Rs", "country": "PK", "flag": "🇵🇰"},
-    {"code": "BDT", "name": "Taka bangladais", "symbol": "৳", "country": "BD", "flag": "🇧🇩"},
-    {"code": "LKR", "name": "Roupie srilankaise", "symbol": "Rs", "country": "LK", "flag": "🇱🇰"},
-    {"code": "NPR", "name": "Roupie népalaise", "symbol": "Rs", "country": "NP", "flag": "🇳🇵"},
-    {"code": "MMK", "name": "Kyat birman", "symbol": "K", "country": "MM", "flag": "🇲🇲"},
-    {"code": "KHR", "name": "Riel cambodgien", "symbol": "៛", "country": "KH", "flag": "🇰🇭"},
-    {"code": "LAK", "name": "Kip laotien", "symbol": "₭", "country": "LA", "flag": "🇱🇦"},
-]
-
-
-def get_currency_by_code(code):
-    for currency in CURRENCIES:
-        if currency["code"] == code:
-            return currency
-    return {"code": code, "name": code, "symbol": code, "country": "", "flag": ""}
+def fetch_currency_by_code(code):
+    from utils.currencies import get_currency_by_code
+    return get_currency_by_code(code)
 
 
 def get_currency_symbol(code):
-    currency = get_currency_by_code(code)
+    currency = fetch_currency_by_code(code)
     return currency.get("symbol", code)
+
+
+def generate_receipt_pdf(booking, screen, content, qr_base64=None):
+    buffer = io.BytesIO()
+    width, height = A5
+    c = canvas.Canvas(buffer, pagesize=A5)
+    
+    currency = fetch_currency_by_code(screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR')
+    currency_symbol = currency.get('symbol', 'EUR')
+    
+    c.setFillColor(colors.HexColor('#10b981'))
+    c.rect(0, height - 80, width, 80, fill=True, stroke=False)
+    
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 18)
+    c.drawCentredString(width / 2, height - 35, "SHABAKA ADSCREEN")
+    
+    c.setFont("Helvetica", 12)
+    c.drawCentredString(width / 2, height - 55, "Recu de Reservation")
+    
+    y = height - 110
+    
+    c.setFillColor(colors.HexColor('#f3f4f6'))
+    c.roundRect(30, y - 45, width - 60, 50, 5, fill=True, stroke=False)
+    
+    c.setFillColor(colors.HexColor('#6b7280'))
+    c.setFont("Helvetica", 10)
+    c.drawCentredString(width / 2, y - 10, "N Reservation")
+    
+    c.setFillColor(colors.HexColor('#111827'))
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(width / 2, y - 30, booking.reservation_number or "---")
+    
+    y -= 70
+    
+    details = [
+        ("Ecran", screen.name[:30]),
+        ("Etablissement", screen.organization.name[:30]),
+        ("Type", content.content_type.capitalize() if content.content_type else "---"),
+        ("Duree creneau", f"{booking.slot_duration}s"),
+        ("Diffusions", str(booking.num_plays)),
+        ("Date debut", booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-"),
+    ]
+    
+    if booking.end_date:
+        details.append(("Date fin", booking.end_date.strftime('%d/%m/%Y')))
+    
+    details.append(("Prix unitaire", f"{booking.price_per_play:.2f} {currency_symbol}"))
+    
+    c.setFont("Helvetica", 11)
+    for label, value in details:
+        c.setFillColor(colors.HexColor('#6b7280'))
+        c.drawString(40, y, label)
+        c.setFillColor(colors.HexColor('#111827'))
+        c.drawRightString(width - 40, y, value)
+        y -= 20
+    
+    y -= 10
+    c.setStrokeColor(colors.HexColor('#e5e7eb'))
+    c.line(30, y, width - 30, y)
+    y -= 25
+    
+    c.setFillColor(colors.HexColor('#10b981'))
+    c.roundRect(30, y - 35, width - 60, 40, 5, fill=True, stroke=False)
+    
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(width / 2, y - 22, f"TOTAL: {booking.total_price:.2f} {currency_symbol}")
+    
+    y -= 60
+    
+    c.setFillColor(colors.HexColor('#fef3c7'))
+    c.roundRect(30, y - 30, width - 60, 35, 5, fill=True, stroke=False)
+    
+    c.setFillColor(colors.HexColor('#92400e'))
+    c.setFont("Helvetica", 11)
+    c.drawCentredString(width / 2, y - 18, "En attente de validation")
+    
+    y -= 55
+    
+    if qr_base64:
+        try:
+            qr_data = base64.b64decode(qr_base64)
+            qr_img = Image.open(io.BytesIO(qr_data))
+            qr_size = 70
+            qr_x = (width - qr_size) / 2
+            c.drawImage(ImageReader(qr_img), qr_x, y - qr_size, width=qr_size, height=qr_size)
+            y -= qr_size + 15
+        except Exception:
+            pass
+    
+    c.setFillColor(colors.HexColor('#6b7280'))
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(width / 2, 40, screen.organization.name)
+    c.setFillColor(colors.HexColor('#9ca3af'))
+    c.drawCentredString(width / 2, 25, datetime.now().strftime('%d/%m/%Y %H:%M'))
+    
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+
+def pdf_to_image(pdf_buffer):
+    try:
+        import fitz
+        pdf_buffer.seek(0)
+        pdf_document = fitz.open(stream=pdf_buffer.read(), filetype="pdf")
+        page = pdf_document.load_page(0)
+        mat = fitz.Matrix(2, 2)
+        pix = page.get_pixmap(matrix=mat)
+        img_data = pix.tobytes("png")
+        pdf_document.close()
+        return Image.open(io.BytesIO(img_data))
+    except ImportError:
+        return generate_receipt_image_fallback(pdf_buffer)
+
+
+def generate_receipt_image_fallback(pdf_buffer):
+    width = 400
+    height = 600
+    img = Image.new('RGB', (width, height), color='white')
+    return img
 
 
 def generate_receipt_image(booking, screen, content, qr_base64=None):
     width = 400
     height = 600
+    
+    from PIL import ImageDraw, ImageFont
     
     img = Image.new('RGB', (width, height), color='white')
     draw = ImageDraw.Draw(img)
@@ -112,26 +165,26 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
     draw.rectangle([0, 0, width, 70], fill='#10b981')
     
     draw.text((width//2, 25), "SHABAKA ADSCREEN", fill='white', font=font_large, anchor='mm')
-    draw.text((width//2, 50), "Reçu de Réservation", fill='#d1fae5', font=font_regular, anchor='mm')
+    draw.text((width//2, 50), "Recu de Reservation", fill='#d1fae5', font=font_regular, anchor='mm')
     
     y = 90
     
     draw.rectangle([30, y, width-30, y+50], fill='#f3f4f6', outline='#e5e7eb')
-    draw.text((width//2, y+15), "N° Réservation", fill='#6b7280', font=font_small, anchor='mm')
+    draw.text((width//2, y+15), "N Reservation", fill='#6b7280', font=font_small, anchor='mm')
     draw.text((width//2, y+35), booking.reservation_number or "---", fill='#111827', font=font_bold, anchor='mm')
     
     y += 70
     
-    currency = get_currency_by_code(screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR')
-    currency_symbol = currency.get('symbol', '€')
+    currency = fetch_currency_by_code(screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR')
+    currency_symbol = currency.get('symbol', 'EUR')
     
     details = [
-        ("Écran", screen.name[:25]),
-        ("Établissement", screen.organization.name[:25]),
-        ("Type", content.content_type.capitalize()),
-        ("Durée créneau", f"{booking.slot_duration}s"),
+        ("Ecran", screen.name[:25]),
+        ("Etablissement", screen.organization.name[:25]),
+        ("Type", content.content_type.capitalize() if content.content_type else "---"),
+        ("Duree creneau", f"{booking.slot_duration}s"),
         ("Diffusions", str(booking.num_plays)),
-        ("Date début", booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-"),
+        ("Date debut", booking.start_date.strftime('%d/%m/%Y') if booking.start_date else "-"),
         ("Prix unitaire", f"{booking.price_per_play:.2f} {currency_symbol}"),
     ]
     
@@ -166,7 +219,7 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
             qr_x = (width - qr_size) // 2
             img.paste(qr_img, (qr_x, y))
             y += qr_size + 10
-        except Exception as e:
+        except Exception:
             pass
     
     footer_y = height - 40
@@ -174,6 +227,21 @@ def generate_receipt_image(booking, screen, content, qr_base64=None):
     draw.text((width//2, footer_y + 15), datetime.now().strftime('%d/%m/%Y %H:%M'), fill='#9ca3af', font=font_small, anchor='mm')
     
     return img
+
+
+def save_receipt_pdf(booking, screen, content, qr_base64=None):
+    pdf_buffer = generate_receipt_pdf(booking, screen, content, qr_base64)
+    
+    receipts_dir = os.path.join('static', 'uploads', 'receipts')
+    os.makedirs(receipts_dir, exist_ok=True)
+    
+    filename = f"receipt_{booking.reservation_number}.pdf"
+    filepath = os.path.join(receipts_dir, filename)
+    
+    with open(filepath, 'wb') as f:
+        f.write(pdf_buffer.read())
+    
+    return filepath
 
 
 def save_receipt_image(booking, screen, content, qr_base64=None):
@@ -198,3 +266,9 @@ def get_receipt_base64(booking, screen, content, qr_base64=None):
     buffer.seek(0)
     
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+def get_receipt_pdf_base64(booking, screen, content, qr_base64=None):
+    pdf_buffer = generate_receipt_pdf(booking, screen, content, qr_base64)
+    pdf_buffer.seek(0)
+    return base64.b64encode(pdf_buffer.read()).decode('utf-8')

@@ -10,7 +10,8 @@ from werkzeug.utils import secure_filename
 from utils.image_utils import validate_image
 from utils.video_utils import validate_video, get_video_duration
 from services.qr_service import generate_qr_base64
-from services.receipt_generator import save_receipt_image, get_receipt_base64
+from services.receipt_generator import save_receipt_image
+from utils.currencies import get_currency_by_code
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -191,7 +192,10 @@ def submit_booking(screen_code):
     screen_qr = generate_qr_base64(screen_booking_url, box_size=6, border=2)
     
     receipt_path = save_receipt_image(booking, screen, content, screen_qr)
-    receipt_base64 = get_receipt_base64(booking, screen, content, screen_qr)
+    
+    org_currency = screen.organization.currency if hasattr(screen.organization, 'currency') and screen.organization.currency else 'EUR'
+    currency_info = get_currency_by_code(org_currency)
+    currency_symbol = currency_info.get('symbol', org_currency)
     
     return render_template('booking/success.html',
         booking=booking,
@@ -199,8 +203,8 @@ def submit_booking(screen_code):
         content=content,
         reservation_qr=reservation_qr,
         booking_qr=screen_qr,
-        receipt_base64=receipt_base64,
-        receipt_path=receipt_path
+        receipt_path=receipt_path,
+        currency_symbol=currency_symbol
     )
 
 
