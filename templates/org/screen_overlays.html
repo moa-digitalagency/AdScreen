@@ -3,123 +3,235 @@
 {% block page_title %}Overlays - {{ screen.name }}{% endblock %}
 
 {% block main_content %}
-<div class="mb-6">
-    <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700">
+<div class="mb-4 sm:mb-6">
+    <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" class="text-gray-500 hover:text-gray-700 text-sm">
         <i class="fas fa-arrow-left mr-2"></i>Retour à l'écran
     </a>
 </div>
 
-<div class="grid lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-4 mb-6">
-                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-layer-group text-purple-600 text-xl"></i>
+<div class="grid lg:grid-cols-2 gap-4 sm:gap-6">
+    <div class="space-y-4 sm:space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-layer-group text-purple-600 text-lg sm:text-xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">Gestion des Overlays</h2>
-                    <p class="text-gray-500">Ajoutez des messages ou images superposés sur votre écran</p>
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-800">Nouvel Overlay</h2>
+                    <p class="text-gray-500 text-xs sm:text-sm">Bandeau défilant ou image superposée</p>
                 </div>
             </div>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
-                    <div class="text-sm text-blue-700">
-                        <p class="font-medium mb-1">Types d'overlays disponibles</p>
-                        <ul class="list-disc list-inside space-y-1">
-                            <li><strong>Bandeau défilant</strong>: Texte qui défile horizontalement (ideal pour les infos)</li>
-                            <li><strong>Image fixe</strong>: Logo, watermark ou image positionnée</li>
-                        </ul>
-                        <p class="mt-2"><strong>Modes de position</strong>:</p>
-                        <ul class="list-disc list-inside space-y-1 mt-1">
-                            <li><strong>Linéaire</strong>: Header (haut), Body (centre), Footer (bas) - pleine largeur</li>
-                            <li><strong>Coin</strong>: Haut-gauche, Haut-droite, Bas-gauche, Bas-droite - compact</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="label">Type d'overlay</label>
-                        <select name="overlay_type" id="overlay_type" class="input-field" onchange="toggleOverlayType(); updatePreview();">
-                            <option value="ticker">Bandeau défilant (Ticker)</option>
-                            <option value="image">Image fixe</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label">Mode de position</label>
-                        <select name="position_mode" id="position_mode" class="input-field" onchange="togglePositionMode(); updatePreview();">
-                            <option value="linear">Linéaire (Header/Body/Footer)</option>
-                            <option value="corner">Coin (Angles de l'écran)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div id="linear_position_field">
-                        <label class="label">Position linéaire</label>
-                        <select name="position" id="position" class="input-field" onchange="updatePreview()">
-                            <option value="header">Header (Haut)</option>
-                            <option value="body">Body (Centre)</option>
-                            <option value="footer" selected>Footer (Bas)</option>
-                        </select>
-                    </div>
-                    <div id="corner_position_field" class="hidden">
-                        <label class="label">Position coin</label>
-                        <select name="corner_position" id="corner_position" class="input-field" onchange="updatePreview()">
-                            <option value="top_left">Haut-Gauche</option>
-                            <option value="top_right">Haut-Droite</option>
-                            <option value="bottom_left">Bas-Gauche</option>
-                            <option value="bottom_right" selected>Bas-Droite</option>
-                        </select>
-                    </div>
-                    <div id="corner_size_field" class="hidden">
-                        <label class="label">Taille (% de l'écran)</label>
-                        <input type="range" name="corner_size" id="corner_size" min="5" max="30" value="15" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" onchange="updatePreview(); updateSizeLabel();">
-                        <div class="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>5%</span>
-                            <span id="corner_size_label">15%</span>
-                            <span>30%</span>
-                        </div>
+            <form method="POST" enctype="multipart/form-data" id="overlayForm" class="space-y-4 sm:space-y-6">
+                <div>
+                    <label class="label">Type d'overlay</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="overlay_type" value="ticker" checked class="peer sr-only" onchange="switchOverlayType('ticker')">
+                            <div class="p-3 sm:p-4 border-2 border-gray-200 rounded-xl peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-align-left text-blue-600 text-sm sm:text-base"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-800 text-sm sm:text-base">Bandeau</p>
+                                        <p class="text-xs text-gray-500">Texte défilant</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="overlay_type" value="image" class="peer sr-only" onchange="switchOverlayType('image')">
+                            <div class="p-3 sm:p-4 border-2 border-gray-200 rounded-xl peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-image text-purple-600 text-sm sm:text-base"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-800 text-sm sm:text-base">Image</p>
+                                        <p class="text-xs text-gray-500">Logo, watermark</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
-                <div id="ticker_fields">
-                    <div>
-                        <label class="label">Message</label>
-                        <textarea name="message" id="message" rows="3" class="input-field" 
-                            placeholder="Entrez votre message qui défilera sur l'écran..." oninput="updatePreview()"></textarea>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-4 gap-4 mt-4">
+                <div id="tickerFields">
+                    <div class="space-y-4">
                         <div>
-                            <label class="label">Couleur de fond</label>
-                            <input type="color" name="background_color" id="background_color" value="#1f2937" class="w-full h-12 rounded-lg border border-gray-300 cursor-pointer" onchange="updatePreview()">
+                            <label class="label">Position du bandeau</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="position" value="header" class="peer sr-only" onchange="updateLivePreview()">
+                                    <div class="p-2 sm:p-3 border border-gray-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition">
+                                        <i class="fas fa-arrow-up text-gray-500 peer-checked:text-emerald-600 mb-1"></i>
+                                        <p class="text-xs font-medium">Haut</p>
+                                    </div>
+                                </label>
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="position" value="body" class="peer sr-only" onchange="updateLivePreview()">
+                                    <div class="p-2 sm:p-3 border border-gray-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition">
+                                        <i class="fas fa-dot-circle text-gray-500 peer-checked:text-emerald-600 mb-1"></i>
+                                        <p class="text-xs font-medium">Centre</p>
+                                    </div>
+                                </label>
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="position" value="footer" checked class="peer sr-only" onchange="updateLivePreview()">
+                                    <div class="p-2 sm:p-3 border border-gray-200 rounded-lg peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition">
+                                        <i class="fas fa-arrow-down text-gray-500 peer-checked:text-emerald-600 mb-1"></i>
+                                        <p class="text-xs font-medium">Bas</p>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
+
                         <div>
-                            <label class="label">Couleur du texte</label>
-                            <input type="color" name="text_color" id="text_color" value="#ffffff" class="w-full h-12 rounded-lg border border-gray-300 cursor-pointer" onchange="updatePreview()">
+                            <label class="label">Message du bandeau</label>
+                            <textarea name="message" id="tickerMessage" rows="2" class="input-field text-sm" 
+                                placeholder="Entrez votre message qui défilera..." oninput="updateLivePreview()"></textarea>
                         </div>
-                        <div>
-                            <label class="label">Taille police (px)</label>
-                            <input type="number" name="font_size" id="font_size" value="24" min="12" max="72" class="input-field" onchange="updatePreview()">
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="label">Couleur de fond</label>
+                                <div class="flex gap-2">
+                                    <input type="color" name="background_color" id="bgColor" value="#1f2937" 
+                                        class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer" onchange="updateLivePreview()">
+                                    <input type="text" id="bgColorText" value="#1f2937" class="input-field flex-1 font-mono text-xs" 
+                                        oninput="document.getElementById('bgColor').value = this.value; updateLivePreview();">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Couleur du texte</label>
+                                <div class="flex gap-2">
+                                    <input type="color" name="text_color" id="textColor" value="#ffffff" 
+                                        class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer" onchange="updateLivePreview()">
+                                    <input type="text" id="textColorText" value="#ffffff" class="input-field flex-1 font-mono text-xs"
+                                        oninput="document.getElementById('textColor').value = this.value; updateLivePreview();">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="label">Vitesse défilement</label>
-                            <input type="number" name="scroll_speed" id="scroll_speed" value="50" min="10" max="200" class="input-field">
-                            <p class="text-xs text-gray-500 mt-1">Plus élevé = plus rapide</p>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="label">Taille du texte</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range" name="font_size" id="fontSize" min="16" max="72" value="28" 
+                                        class="flex-1" oninput="updateFontSizeLabel(); updateLivePreview();">
+                                    <span id="fontSizeLabel" class="text-sm font-mono w-12 text-right">28px</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Vitesse de défilement</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range" name="scroll_speed" id="scrollSpeed" min="20" max="150" value="60" 
+                                        class="flex-1" oninput="updateSpeedLabel(); updateLivePreview();">
+                                    <span id="speedLabel" class="text-sm font-mono w-10 text-right">60</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="image_fields" class="hidden">
-                    <div>
-                        <label class="label">Image à afficher</label>
-                        <input type="file" name="image_file" accept="image/*" class="input-field">
-                        <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, GIF</p>
+                <div id="imageFields" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">Position de l'image</label>
+                            <select name="image_position" id="imagePosition" class="input-field" onchange="updateLivePreview()">
+                                <optgroup label="Positions linéaires">
+                                    <option value="header">Haut (Header)</option>
+                                    <option value="body">Centre (Body)</option>
+                                    <option value="footer">Bas (Footer)</option>
+                                </optgroup>
+                                <optgroup label="Coins">
+                                    <option value="top_left">Coin Haut-Gauche</option>
+                                    <option value="top_right" selected>Coin Haut-Droite</option>
+                                    <option value="bottom_left">Coin Bas-Gauche</option>
+                                    <option value="bottom_right">Coin Bas-Droite</option>
+                                </optgroup>
+                                <optgroup label="Position libre">
+                                    <option value="custom">Position personnalisée</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="label">Image à afficher</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-emerald-400 transition cursor-pointer" onclick="document.getElementById('imageFile').click()">
+                                <input type="file" name="image_file" id="imageFile" accept="image/*" class="hidden" onchange="previewImage(event)">
+                                <div id="imageUploadPlaceholder">
+                                    <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                                    <p class="text-sm text-gray-500">Cliquez pour sélectionner une image</p>
+                                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF (max 5MB)</p>
+                                </div>
+                                <div id="imagePreviewContainer" class="hidden">
+                                    <img id="uploadedImagePreview" class="max-h-24 mx-auto rounded">
+                                    <p id="imageDimensions" class="text-xs text-gray-500 mt-2"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="label">Taille sur l'écran</label>
+                            <div class="flex items-center gap-3">
+                                <input type="range" name="image_width_percent" id="imageSize" min="5" max="50" value="20" 
+                                    class="flex-1" oninput="updateImageSizeLabel(); updateLivePreview();">
+                                <span id="imageSizeLabel" class="text-sm font-mono w-14 text-right">20%</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Pourcentage de la largeur de l'écran</p>
+                        </div>
+
+                        <div id="customPositionFields" class="hidden">
+                            <label class="label">Position personnalisée</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-gray-500">Position X (%)</label>
+                                    <input type="range" name="image_pos_x" id="imagePosX" min="0" max="100" value="50" 
+                                        class="w-full" oninput="updatePosLabels(); updateLivePreview();">
+                                    <span id="posXLabel" class="text-xs font-mono">50%</span>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500">Position Y (%)</label>
+                                    <input type="range" name="image_pos_y" id="imagePosY" min="0" max="100" value="50" 
+                                        class="w-full" oninput="updatePosLabels(); updateLivePreview();">
+                                    <span id="posYLabel" class="text-xs font-mono">50%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="label">Opacité</label>
+                            <div class="flex items-center gap-3">
+                                <input type="range" name="image_opacity" id="imageOpacity" min="0.1" max="1" step="0.1" value="1" 
+                                    class="flex-1" oninput="updateOpacityLabel(); updateLivePreview();">
+                                <span id="opacityLabel" class="text-sm font-mono w-14 text-right">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <h4 class="font-medium text-gray-800 mb-3 text-sm">Paramètres d'affichage</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Durée d'affichage (sec)</label>
+                            <input type="number" name="display_duration" id="displayDuration" value="10" min="1" max="300" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label">Limite de passages</label>
+                            <input type="number" name="passage_limit" value="0" min="0" class="input-field" placeholder="0 = illimité">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <div>
+                            <label class="label">Date de début</label>
+                            <input type="datetime-local" name="start_time" class="input-field text-sm">
+                        </div>
+                        <div>
+                            <label class="label">Date de fin</label>
+                            <input type="datetime-local" name="end_time" class="input-field text-sm">
+                        </div>
                     </div>
                 </div>
 
@@ -128,104 +240,49 @@
                     <label for="is_active" class="text-sm text-gray-700">Activer immédiatement</label>
                 </div>
 
-                <button type="submit" class="btn-primary btn-sm">
-                    <i class="fas fa-plus"></i>
+                <button type="submit" class="btn-primary w-full justify-center">
+                    <i class="fas fa-plus mr-2"></i>
                     Ajouter l'overlay
                 </button>
             </form>
         </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="font-semibold text-gray-800 mb-4">Overlays existants</h3>
-            
-            {% if overlays %}
-            <div class="space-y-4">
-                {% for overlay in overlays %}
-                <div class="border border-gray-200 rounded-lg p-4 {% if overlay.is_active %}bg-green-50 border-green-200{% endif %}">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if overlay.overlay_type == 'ticker' %}bg-blue-100 text-blue-600{% else %}bg-purple-100 text-purple-600{% endif %}">
-                                <i class="fas {% if overlay.overlay_type == 'ticker' %}fa-align-left{% else %}fa-image{% endif %}"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="font-medium text-gray-800">
-                                        {% if overlay.overlay_type == 'ticker' %}Bandeau défilant{% else %}Image fixe{% endif %}
-                                    </span>
-                                    <span class="px-2 py-0.5 text-xs font-medium rounded-full {% if overlay.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                        {% if overlay.is_active %}Actif{% else %}Inactif{% endif %}
-                                    </span>
-                                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 capitalize">
-                                        {{ overlay.position }}
-                                    </span>
-                                </div>
-                                {% if overlay.overlay_type == 'ticker' and overlay.message %}
-                                <p class="text-gray-600 text-sm mb-2">{{ overlay.message[:100] }}{% if overlay.message|length > 100 %}...{% endif %}</p>
-                                <div class="flex items-center gap-4 text-xs text-gray-500">
-                                    <span><i class="fas fa-text-height mr-1"></i>{{ overlay.font_size }}px</span>
-                                    <span><i class="fas fa-tachometer-alt mr-1"></i>{{ overlay.scroll_speed }}</span>
-                                    <span class="flex items-center gap-1">
-                                        <span class="w-4 h-4 rounded" style="background: {{ overlay.background_color }}"></span>
-                                        <span class="w-4 h-4 rounded border" style="background: {{ overlay.text_color }}"></span>
-                                    </span>
-                                </div>
-                                {% elif overlay.overlay_type == 'image' and overlay.image_path %}
-                                <img src="/{{ overlay.image_path }}" alt="Overlay" class="max-w-xs max-h-24 rounded mt-2">
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="previewOverlay({{ overlay.id }}, '{{ overlay.overlay_type }}', '{{ overlay.position }}', '{{ overlay.background_color }}', '{{ overlay.text_color }}', {{ overlay.font_size }}, '{{ overlay.message|e if overlay.message else '' }}', '{{ overlay.image_path or '' }}')" 
-                                    class="p-2 text-gray-600 hover:text-blue-600 transition" title="Aperçu">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <form action="{{ url_for('org.toggle_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
-                                <button type="submit" class="p-2 text-gray-600 hover:text-emerald-600 transition" title="{% if overlay.is_active %}Désactiver{% else %}Activer{% endif %}">
-                                    <i class="fas {% if overlay.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
-                                </button>
-                            </form>
-                            <form action="{{ url_for('org.delete_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST" onsubmit="return confirm('Supprimer cet overlay ?')">
-                                <button type="submit" class="p-2 text-gray-600 hover:text-red-600 transition" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="text-center py-8">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-layer-group text-gray-400 text-2xl"></i>
-                </div>
-                <p class="text-gray-500">Aucun overlay configuré</p>
-                <p class="text-gray-400 text-sm mt-1">Ajoutez un overlay pour afficher des messages sur votre écran</p>
-            </div>
-            {% endif %}
-        </div>
     </div>
 
-    <div class="space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="font-semibold text-gray-800 mb-4">Aperçu en direct</h3>
-            <div class="relative bg-gray-900 rounded-lg overflow-hidden" 
-                 id="previewScreen"
-                 style="aspect-ratio: {{ screen.resolution_width }}/{{ screen.resolution_height }}; min-height: 200px;">
-                <div class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
-                    <div class="text-center">
-                        <i class="fas fa-tv text-3xl mb-2"></i>
-                        <p>Contenu principal</p>
+    <div class="space-y-4 sm:space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-800">Aperçu en temps réel</h3>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="playPauseBtn" onclick="togglePreviewAnimation()" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Play/Pause">
+                        <i class="fas fa-pause text-gray-600" id="playPauseIcon"></i>
+                    </button>
+                    <button type="button" onclick="resetPreview()" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Réinitialiser">
+                        <i class="fas fa-redo text-gray-600"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="relative bg-gray-900 rounded-xl overflow-hidden shadow-lg" 
+                 id="livePreviewScreen"
+                 style="aspect-ratio: {{ screen.resolution_width }}/{{ screen.resolution_height }};">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center text-gray-600">
+                        <i class="fas fa-tv text-4xl mb-2 opacity-30"></i>
+                        <p class="text-sm opacity-50">Contenu principal</p>
                     </div>
                 </div>
-                <div id="previewHeader" class="absolute top-0 left-0 right-0 hidden"></div>
-                <div id="previewFooter" class="absolute bottom-0 left-0 right-0 hidden"></div>
-                <div id="previewBody" class="absolute inset-0 flex items-center justify-center hidden"></div>
-                <div id="previewTopLeft" class="absolute top-2 left-2 hidden"></div>
-                <div id="previewTopRight" class="absolute top-2 right-2 hidden"></div>
-                <div id="previewBottomLeft" class="absolute bottom-2 left-2 hidden"></div>
-                <div id="previewBottomRight" class="absolute bottom-2 right-2 hidden"></div>
+                
+                <div id="livePreviewHeader" class="absolute top-0 left-0 right-0 overflow-hidden"></div>
+                <div id="livePreviewBody" class="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
+                <div id="livePreviewFooter" class="absolute bottom-0 left-0 right-0 overflow-hidden"></div>
+                
+                <div id="livePreviewTopLeft" class="absolute top-2 left-2"></div>
+                <div id="livePreviewTopRight" class="absolute top-2 right-2"></div>
+                <div id="livePreviewBottomLeft" class="absolute bottom-2 left-2"></div>
+                <div id="livePreviewBottomRight" class="absolute bottom-2 right-2"></div>
+                <div id="livePreviewCustom" class="absolute" style="display: none;"></div>
             </div>
+            
             <div class="flex items-center justify-center gap-4 mt-3 text-xs text-gray-500">
                 <span class="flex items-center gap-1">
                     <i class="fas fa-expand-arrows-alt"></i>
@@ -238,50 +295,59 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="font-semibold text-gray-800 mb-4">Guide</h3>
-            <div class="space-y-3 text-sm text-gray-600">
-                <div class="flex items-start gap-2">
-                    <i class="fas fa-arrow-up text-gray-400 mt-1"></i>
-                    <p><strong>Header:</strong> Affiché en haut de l'écran</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Overlays existants ({{ overlays|length }})</h3>
+            
+            {% if overlays %}
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                {% for overlay in overlays %}
+                <div class="border border-gray-200 rounded-lg p-3 {% if overlay.is_active %}bg-green-50 border-green-200{% endif %}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start gap-3 min-w-0 flex-1">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 {% if overlay.overlay_type == 'ticker' %}bg-blue-100 text-blue-600{% else %}bg-purple-100 text-purple-600{% endif %}">
+                                <i class="fas {% if overlay.overlay_type == 'ticker' %}fa-align-left{% else %}fa-image{% endif %} text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="font-medium text-gray-800 text-sm">
+                                        {% if overlay.overlay_type == 'ticker' %}Bandeau{% else %}Image{% endif %}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 text-xs rounded {% if overlay.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                        {% if overlay.is_active %}Actif{% else %}Inactif{% endif %}
+                                    </span>
+                                    <span class="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded capitalize">{{ overlay.position }}</span>
+                                </div>
+                                {% if overlay.overlay_type == 'ticker' and overlay.message %}
+                                <p class="text-gray-600 text-xs truncate">{{ overlay.message[:50] }}{% if overlay.message|length > 50 %}...{% endif %}</p>
+                                {% elif overlay.overlay_type == 'image' and overlay.image_path %}
+                                <img src="/{{ overlay.image_path }}" alt="Overlay" class="max-h-12 rounded mt-1">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <form action="{{ url_for('org.toggle_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
+                                <button type="submit" class="p-1.5 text-gray-500 hover:text-emerald-600 transition" title="{% if overlay.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                    <i class="fas {% if overlay.is_active %}fa-pause{% else %}fa-play{% endif %} text-sm"></i>
+                                </button>
+                            </form>
+                            <form action="{{ url_for('org.delete_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST" onsubmit="return confirm('Supprimer cet overlay ?')">
+                                <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 transition" title="Supprimer">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-start gap-2">
-                    <i class="fas fa-dot-circle text-gray-400 mt-1"></i>
-                    <p><strong>Body:</strong> Affiché au centre (superposé)</p>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-layer-group text-gray-400 text-lg"></i>
                 </div>
-                <div class="flex items-start gap-2">
-                    <i class="fas fa-arrow-down text-gray-400 mt-1"></i>
-                    <p><strong>Footer:</strong> Affiché en bas de l'écran</p>
-                </div>
+                <p class="text-gray-500 text-sm">Aucun overlay configuré</p>
             </div>
-        </div>
-    </div>
-</div>
-
-<div id="overlayPreviewModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
-    <div class="max-w-4xl w-full">
-        <div class="flex items-center justify-between mb-4">
-            <div class="text-white">
-                <h3 class="font-semibold">Aperçu Overlay</h3>
-                <p class="text-sm text-gray-400">Résolution: {{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
-            </div>
-            <button onclick="closeOverlayPreview()" class="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition">
-                <i class="fas fa-times text-white"></i>
-            </button>
-        </div>
-        <div class="relative bg-gray-800 rounded-lg overflow-hidden" 
-             id="modalPreviewScreen"
-             style="aspect-ratio: {{ screen.resolution_width }}/{{ screen.resolution_height }}; max-height: 60vh;">
-            <div class="absolute inset-0 flex items-center justify-center text-gray-500">
-                <i class="fas fa-tv mr-2 text-4xl"></i>
-            </div>
-            <div id="modalPreviewHeader" class="absolute top-0 left-0 right-0"></div>
-            <div id="modalPreviewFooter" class="absolute bottom-0 left-0 right-0"></div>
-            <div id="modalPreviewBody" class="absolute inset-0 flex items-center justify-center"></div>
-            <div id="modalPreviewTopLeft" class="absolute top-4 left-4"></div>
-            <div id="modalPreviewTopRight" class="absolute top-4 right-4"></div>
-            <div id="modalPreviewBottomLeft" class="absolute bottom-4 left-4"></div>
-            <div id="modalPreviewBottomRight" class="absolute bottom-4 right-4"></div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -289,140 +355,274 @@
 <script>
 const screenWidth = {{ screen.resolution_width }};
 const screenHeight = {{ screen.resolution_height }};
+let animationPaused = false;
+let tickerAnimation = null;
+let uploadedImageSrc = null;
 
-function toggleOverlayType() {
-    const type = document.getElementById('overlay_type').value;
-    document.getElementById('ticker_fields').classList.toggle('hidden', type !== 'ticker');
-    document.getElementById('image_fields').classList.toggle('hidden', type !== 'image');
-    
-    if (type === 'ticker') {
-        document.getElementById('position_mode').value = 'linear';
-        togglePositionMode();
-    }
-}
-
-function togglePositionMode() {
-    const mode = document.getElementById('position_mode').value;
-    const isLinear = mode === 'linear';
-    
-    document.getElementById('linear_position_field').classList.toggle('hidden', !isLinear);
-    document.getElementById('corner_position_field').classList.toggle('hidden', isLinear);
-    document.getElementById('corner_size_field').classList.toggle('hidden', isLinear);
-}
-
-function updateSizeLabel() {
-    const size = document.getElementById('corner_size').value;
-    document.getElementById('corner_size_label').textContent = size + '%';
+function switchOverlayType(type) {
+    document.getElementById('tickerFields').classList.toggle('hidden', type !== 'ticker');
+    document.getElementById('imageFields').classList.toggle('hidden', type !== 'image');
+    clearAllPreviews();
+    updateLivePreview();
 }
 
 function clearAllPreviews() {
-    ['previewHeader', 'previewFooter', 'previewBody', 'previewTopLeft', 'previewTopRight', 'previewBottomLeft', 'previewBottomRight'].forEach(id => {
+    ['livePreviewHeader', 'livePreviewFooter', 'livePreviewBody', 
+     'livePreviewTopLeft', 'livePreviewTopRight', 'livePreviewBottomLeft', 
+     'livePreviewBottomRight', 'livePreviewCustom'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.innerHTML = '';
-            el.classList.add('hidden');
+            el.style.display = id === 'livePreviewCustom' ? 'none' : '';
         }
     });
 }
 
-function updatePreview() {
-    const type = document.getElementById('overlay_type').value;
-    const positionMode = document.getElementById('position_mode').value;
-    const bgColor = document.getElementById('background_color').value;
-    const textColor = document.getElementById('text_color').value;
-    const fontSize = document.getElementById('font_size').value;
-    const message = document.getElementById('message').value;
-    const cornerSize = document.getElementById('corner_size').value;
-    
+function updateFontSizeLabel() {
+    document.getElementById('fontSizeLabel').textContent = document.getElementById('fontSize').value + 'px';
+}
+
+function updateSpeedLabel() {
+    document.getElementById('speedLabel').textContent = document.getElementById('scrollSpeed').value;
+}
+
+function updateImageSizeLabel() {
+    document.getElementById('imageSizeLabel').textContent = document.getElementById('imageSize').value + '%';
+}
+
+function updateOpacityLabel() {
+    const val = Math.round(document.getElementById('imageOpacity').value * 100);
+    document.getElementById('opacityLabel').textContent = val + '%';
+}
+
+function updatePosLabels() {
+    document.getElementById('posXLabel').textContent = document.getElementById('imagePosX').value + '%';
+    document.getElementById('posYLabel').textContent = document.getElementById('imagePosY').value + '%';
+}
+
+function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImageSrc = e.target.result;
+            document.getElementById('uploadedImagePreview').src = uploadedImageSrc;
+            document.getElementById('imageUploadPlaceholder').classList.add('hidden');
+            document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('imageDimensions').textContent = `${img.width} x ${img.height} pixels`;
+            };
+            img.src = uploadedImageSrc;
+            
+            updateLivePreview();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function getSelectedOverlayType() {
+    return document.querySelector('input[name="overlay_type"]:checked').value;
+}
+
+function getSelectedPosition() {
+    const type = getSelectedOverlayType();
+    if (type === 'ticker') {
+        const checked = document.querySelector('input[name="position"]:checked');
+        return checked ? checked.value : 'footer';
+    } else {
+        return document.getElementById('imagePosition').value;
+    }
+}
+
+function updateLivePreview() {
     clearAllPreviews();
     
-    let targetEl;
-    
-    if (positionMode === 'linear') {
-        const position = document.getElementById('position').value;
-        if (position === 'header') targetEl = document.getElementById('previewHeader');
-        else if (position === 'footer') targetEl = document.getElementById('previewFooter');
-        else targetEl = document.getElementById('previewBody');
-        
-        if (type === 'ticker' && message) {
-            targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: ${Math.min(fontSize, 16)}px; padding: 8px; white-space: nowrap; overflow: hidden;">${message}</div>`;
-            targetEl.classList.remove('hidden');
-        }
-    } else {
-        const cornerPos = document.getElementById('corner_position').value;
-        const posMap = {
-            'top_left': 'previewTopLeft',
-            'top_right': 'previewTopRight',
-            'bottom_left': 'previewBottomLeft',
-            'bottom_right': 'previewBottomRight'
-        };
-        targetEl = document.getElementById(posMap[cornerPos]);
-        
-        if (type === 'ticker' && message) {
-            targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: 10px; padding: 4px 8px; border-radius: 4px; max-width: ${cornerSize * 2}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${message}</div>`;
-            targetEl.classList.remove('hidden');
-        } else if (type === 'image') {
-            targetEl.innerHTML = `<div style="width: ${cornerSize * 3}px; height: ${cornerSize * 2}px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-image text-white/50"></i></div>`;
-            targetEl.classList.remove('hidden');
-        }
-    }
-}
-
-function previewOverlay(id, type, position, bgColor, textColor, fontSize, message, imagePath) {
-    const modal = document.getElementById('overlayPreviewModal');
-    
-    ['modalPreviewHeader', 'modalPreviewFooter', 'modalPreviewBody', 'modalPreviewTopLeft', 'modalPreviewTopRight', 'modalPreviewBottomLeft', 'modalPreviewBottomRight'].forEach(elId => {
-        const el = document.getElementById(elId);
-        if (el) el.innerHTML = '';
-    });
-    
-    let targetEl;
-    const linearPositions = ['header', 'footer', 'body'];
-    
-    if (linearPositions.includes(position)) {
-        if (position === 'header') targetEl = document.getElementById('modalPreviewHeader');
-        else if (position === 'footer') targetEl = document.getElementById('modalPreviewFooter');
-        else targetEl = document.getElementById('modalPreviewBody');
-    } else {
-        const posMap = {
-            'top_left': 'modalPreviewTopLeft',
-            'top_right': 'modalPreviewTopRight',
-            'bottom_left': 'modalPreviewBottomLeft',
-            'bottom_right': 'modalPreviewBottomRight'
-        };
-        targetEl = document.getElementById(posMap[position]) || document.getElementById('modalPreviewBody');
-    }
+    const type = getSelectedOverlayType();
+    const position = getSelectedPosition();
     
     if (type === 'ticker') {
-        targetEl.innerHTML = `<div style="background: ${bgColor}; color: ${textColor}; font-size: ${fontSize}px; padding: 12px; white-space: nowrap; animation: ticker 10s linear infinite;">${message}</div>`;
-    } else if (type === 'image' && imagePath) {
-        targetEl.innerHTML = `<img src="/${imagePath}" class="max-w-full max-h-full object-contain">`;
+        updateTickerPreview(position);
+    } else {
+        updateImagePreview(position);
     }
     
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    const customFields = document.getElementById('customPositionFields');
+    if (customFields) {
+        customFields.classList.toggle('hidden', position !== 'custom');
+    }
 }
 
-function closeOverlayPreview() {
-    const modal = document.getElementById('overlayPreviewModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+function updateTickerPreview(position) {
+    const message = document.getElementById('tickerMessage').value || 'Votre message défilant apparaîtra ici...';
+    const bgColor = document.getElementById('bgColor').value;
+    const textColor = document.getElementById('textColor').value;
+    const fontSize = document.getElementById('fontSize').value;
+    const speed = document.getElementById('scrollSpeed').value;
+    
+    let targetId;
+    if (position === 'header') targetId = 'livePreviewHeader';
+    else if (position === 'footer') targetId = 'livePreviewFooter';
+    else targetId = 'livePreviewBody';
+    
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    
+    const previewFontSize = Math.max(10, Math.min(fontSize * 0.4, 18));
+    const animationDuration = Math.max(3, 30 - (speed / 5));
+    
+    if (position === 'body') {
+        target.innerHTML = `
+            <div class="w-full overflow-hidden" style="background: ${bgColor};">
+                <div class="ticker-text whitespace-nowrap" style="color: ${textColor}; font-size: ${previewFontSize}px; padding: 6px 0; animation: tickerScroll ${animationDuration}s linear infinite ${animationPaused ? 'paused' : 'running'};">
+                    ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message}
+                </div>
+            </div>
+        `;
+    } else {
+        target.innerHTML = `
+            <div class="ticker-text whitespace-nowrap" style="background: ${bgColor}; color: ${textColor}; font-size: ${previewFontSize}px; padding: 6px 0; animation: tickerScroll ${animationDuration}s linear infinite ${animationPaused ? 'paused' : 'running'};">
+                ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${message}
+            </div>
+        `;
+    }
+    
+    document.getElementById('bgColorText').value = bgColor;
+    document.getElementById('textColorText').value = textColor;
 }
 
-document.getElementById('overlayPreviewModal').addEventListener('click', function(e) {
-    if (e.target === this) closeOverlayPreview();
-});
+function updateImagePreview(position) {
+    if (!uploadedImageSrc) {
+        const placeholderPositions = {
+            'header': 'livePreviewHeader',
+            'body': 'livePreviewBody',
+            'footer': 'livePreviewFooter',
+            'top_left': 'livePreviewTopLeft',
+            'top_right': 'livePreviewTopRight',
+            'bottom_left': 'livePreviewBottomLeft',
+            'bottom_right': 'livePreviewBottomRight',
+            'custom': 'livePreviewCustom'
+        };
+        
+        const targetId = placeholderPositions[position];
+        const target = document.getElementById(targetId);
+        if (target) {
+            const size = document.getElementById('imageSize').value;
+            target.innerHTML = `
+                <div style="width: ${size * 2}px; height: ${size * 1.5}px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.4); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-image text-white/40 text-lg"></i>
+                </div>
+            `;
+            if (position === 'custom') {
+                target.style.display = 'block';
+                const posX = document.getElementById('imagePosX').value;
+                const posY = document.getElementById('imagePosY').value;
+                target.style.left = `${posX}%`;
+                target.style.top = `${posY}%`;
+                target.style.transform = 'translate(-50%, -50%)';
+            }
+        }
+        return;
+    }
+    
+    const sizePercent = document.getElementById('imageSize').value;
+    const opacity = document.getElementById('imageOpacity').value;
+    
+    const positionMap = {
+        'header': 'livePreviewHeader',
+        'body': 'livePreviewBody',
+        'footer': 'livePreviewFooter',
+        'top_left': 'livePreviewTopLeft',
+        'top_right': 'livePreviewTopRight',
+        'bottom_left': 'livePreviewBottomLeft',
+        'bottom_right': 'livePreviewBottomRight',
+        'custom': 'livePreviewCustom'
+    };
+    
+    const targetId = positionMap[position];
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    
+    const imgStyle = `max-width: ${sizePercent * 2}px; opacity: ${opacity}; border-radius: 4px;`;
+    
+    if (position === 'custom') {
+        const posX = document.getElementById('imagePosX').value;
+        const posY = document.getElementById('imagePosY').value;
+        target.style.display = 'block';
+        target.style.left = `${posX}%`;
+        target.style.top = `${posY}%`;
+        target.style.transform = 'translate(-50%, -50%)';
+        target.innerHTML = `<img src="${uploadedImageSrc}" style="${imgStyle}">`;
+    } else if (['header', 'body', 'footer'].includes(position)) {
+        target.innerHTML = `<div class="flex justify-center p-2"><img src="${uploadedImageSrc}" style="${imgStyle}"></div>`;
+    } else {
+        target.innerHTML = `<img src="${uploadedImageSrc}" style="${imgStyle}">`;
+    }
+}
+
+function togglePreviewAnimation() {
+    animationPaused = !animationPaused;
+    const icon = document.getElementById('playPauseIcon');
+    icon.classList.toggle('fa-pause', !animationPaused);
+    icon.classList.toggle('fa-play', animationPaused);
+    
+    document.querySelectorAll('.ticker-text').forEach(el => {
+        el.style.animationPlayState = animationPaused ? 'paused' : 'running';
+    });
+}
+
+function resetPreview() {
+    animationPaused = false;
+    document.getElementById('playPauseIcon').classList.remove('fa-play');
+    document.getElementById('playPauseIcon').classList.add('fa-pause');
+    updateLivePreview();
+}
 
 document.addEventListener('DOMContentLoaded', function() {
-    togglePositionMode();
-    updatePreview();
+    updateLivePreview();
+    
+    document.getElementById('imagePosition').addEventListener('change', function() {
+        updateLivePreview();
+    });
 });
 </script>
 
 <style>
-@keyframes ticker {
+@keyframes tickerScroll {
     0% { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
+}
+
+.ticker-text {
+    display: inline-block;
+    padding-left: 100%;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 5px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #10b981;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #10b981;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
 }
 </style>
 {% endblock %}

@@ -21,6 +21,13 @@ class ScreenOverlay(db.Model):
     corner_size = db.Column(db.Integer, default=15)
     position_mode = db.Column(db.String(20), default='linear')
     
+    image_width = db.Column(db.Integer, default=0)
+    image_height = db.Column(db.Integer, default=0)
+    image_width_percent = db.Column(db.Float, default=20.0)
+    image_pos_x = db.Column(db.Integer, default=0)
+    image_pos_y = db.Column(db.Integer, default=0)
+    image_opacity = db.Column(db.Float, default=1.0)
+    
     display_duration = db.Column(db.Integer, default=10)
     passage_limit = db.Column(db.Integer, default=0)
     frequency_unit = db.Column(db.String(20), default='hour')
@@ -88,6 +95,14 @@ class ScreenOverlay(db.Model):
             'display_duration': self.display_duration,
             'passage_limit': self.passage_limit,
             'frequency_unit': self.frequency_unit,
+            'image_width': self.image_width,
+            'image_height': self.image_height,
+            'image_width_percent': self.image_width_percent,
+            'image_pos_x': self.image_pos_x,
+            'image_pos_y': self.image_pos_y,
+            'image_opacity': self.image_opacity,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
             'is_active': self.is_currently_active()
         }
     

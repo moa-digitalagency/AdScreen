@@ -152,13 +152,26 @@ Les tables sont créées automatiquement au démarrage.
 
 Les overlays permettent aux établissements d'afficher des messages superposés sur leurs écrans:
 
-- **Type bandeau**: Texte défilant (ticker)
-- **Type image**: Image fixe avec positionnement en coins
-- **Positions**: Header (haut), Body (centre), Footer (bas)
-- **Position coin**: top-left, top-right, bottom-left, bottom-right (pour images)
-- **Personnalisation**: Couleurs, taille de police, vitesse de défilement
-- **Fréquence de passage**: Heure, jour, semaine, mois, ou périodes (matin, midi, après-midi, soir, nuit)
-- **Limite de passages**: Nombre maximum de passages par unité de fréquence
+### Bandeau défilant (Ticker)
+- **Positions disponibles**: Header (haut), Body (centre), Footer (bas) uniquement
+- **Aperçu temps réel**: Visualisation du défilement pendant la saisie
+- **Vitesse de défilement**: Contrôle via slider (20-150)
+- **Personnalisation**: Couleurs fond/texte, taille police (16-72px)
+- **Durée d'affichage**: Configurable en secondes
+
+### Image overlay
+- **Toutes les positions**: Header, Body, Footer + coins (top-left, top-right, bottom-left, bottom-right) + position personnalisée
+- **Aperçu en temps réel**: Visualisation du positionnement et de la taille
+- **Taille ajustable**: Pourcentage de la largeur de l'écran (5-50%)
+- **Position personnalisée**: Coordonnées X/Y en pourcentage
+- **Opacité**: Contrôle de la transparence (10-100%)
+- **Dimensions originales**: Affichage des dimensions de l'image uploadée
+
+### Paramètres communs
+- **Durée d'affichage**: Temps en secondes
+- **Limite de passages**: Nombre maximum par période
+- **Période de diffusion**: Date/heure de début et de fin
+- **Fréquence**: Heure, jour, semaine, mois, ou périodes (matin, midi, après-midi, soir, nuit)
 
 ## 🌟 Écrans en vedette
 

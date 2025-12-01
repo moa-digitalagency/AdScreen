@@ -293,12 +293,14 @@ def create_demo_data():
         overlay1 = ScreenOverlay(
             screen_id=screen1.id,
             overlay_type='ticker',
-            message='Bienvenue au Bistrot Parisien - Happy Hour de 17h à 19h!',
+            message='Bienvenue au Bistrot Parisien - Happy Hour de 17h à 19h! Cocktails à 5€',
             position='footer',
+            position_mode='linear',
             background_color='#1f2937',
             text_color='#ffffff',
             font_size=28,
             scroll_speed=60,
+            display_duration=15,
             is_active=True
         )
         db.session.add(overlay1)
@@ -306,15 +308,47 @@ def create_demo_data():
         overlay2 = ScreenOverlay(
             screen_id=screen4.id,
             overlay_type='ticker',
-            message='Centre Commercial Atlantis - Soldes jusqu\'à -50% dans toutes les boutiques!',
+            message='Centre Commercial Atlantis - Soldes jusqu\'à -50% dans toutes les boutiques! Ouvert 7j/7',
             position='header',
+            position_mode='linear',
             background_color='#059669',
             text_color='#ffffff',
             font_size=32,
             scroll_speed=50,
+            display_duration=20,
             is_active=True
         )
         db.session.add(overlay2)
+        
+        overlay3 = ScreenOverlay(
+            screen_id=screen2.id,
+            overlay_type='ticker',
+            message='Menu du jour : Plat + Dessert à 14.90€ - Réservations au 01 42 00 00 00',
+            position='body',
+            position_mode='linear',
+            background_color='#7c3aed',
+            text_color='#ffffff',
+            font_size=24,
+            scroll_speed=70,
+            display_duration=12,
+            is_active=True
+        )
+        db.session.add(overlay3)
+        
+        overlay4 = ScreenOverlay(
+            screen_id=screen5.id,
+            overlay_type='ticker',
+            message='Nouveau ! Espace restauration ouvert jusqu\'à 22h - WiFi gratuit dans tout le centre',
+            position='footer',
+            position_mode='linear',
+            background_color='#0891b2',
+            text_color='#ffffff',
+            font_size=36,
+            scroll_speed=55,
+            display_duration=18,
+            is_active=True
+        )
+        db.session.add(overlay4)
         
         db.session.commit()
         
@@ -349,9 +383,11 @@ def create_demo_data():
        • Bar Le Central: 1 écran
        • Centre Commercial Atlantis: 2 écrans
     
-    🔲 OVERLAYS DE DÉMONSTRATION:
-       • Bandeau défilant sur Écran Entrée
-       • Bandeau défilant sur Totem Hall A
+    🔲 OVERLAYS DE DÉMONSTRATION (4 bandeaux):
+       • Écran Entrée (footer) - Happy Hour
+       • Totem Hall A (header) - Soldes
+       • Écran Bar (body) - Menu du jour
+       • Écran Food Court (footer) - Horaires
     
     ════════════════════════════════════════════════════════════════
         """)

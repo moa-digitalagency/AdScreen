@@ -497,23 +497,48 @@ def screen_overlays(screen_id):
     if request.method == 'POST':
         overlay_type = request.form.get('overlay_type', 'ticker')
         message = request.form.get('message', '')
-        position_mode = request.form.get('position_mode', 'linear')
         
-        if position_mode == 'linear':
+        if overlay_type == 'ticker':
             position = request.form.get('position', 'footer')
+            position_mode = 'linear'
             corner_position_value = 'top_left'
         else:
-            position = 'corner'
-            corner_position_raw = request.form.get('corner_position', 'bottom-right')
-            corner_position_value = corner_position_raw.replace('-', '_')
+            image_position = request.form.get('image_position', 'top_right')
+            if image_position in ['header', 'body', 'footer']:
+                position = image_position
+                position_mode = 'linear'
+                corner_position_value = 'top_left'
+            elif image_position == 'custom':
+                position = 'custom'
+                position_mode = 'custom'
+                corner_position_value = 'top_left'
+            else:
+                position = 'corner'
+                position_mode = 'corner'
+                corner_position_value = image_position
         
         background_color = request.form.get('background_color', '#1f2937')
         text_color = request.form.get('text_color', '#ffffff')
-        font_size = int(request.form.get('font_size', 24))
-        scroll_speed = int(request.form.get('scroll_speed', 50))
+        font_size = int(request.form.get('font_size', 28))
+        scroll_speed = int(request.form.get('scroll_speed', 60))
         is_active = 'is_active' in request.form
         
+        display_duration = int(request.form.get('display_duration', 10))
+        passage_limit = int(request.form.get('passage_limit', 0))
+        
+        start_time_str = request.form.get('start_time', '')
+        end_time_str = request.form.get('end_time', '')
+        start_time = datetime.fromisoformat(start_time_str) if start_time_str else None
+        end_time = datetime.fromisoformat(end_time_str) if end_time_str else None
+        
+        image_width_percent = float(request.form.get('image_width_percent', 20))
+        image_pos_x = int(request.form.get('image_pos_x', 50))
+        image_pos_y = int(request.form.get('image_pos_y', 50))
+        image_opacity = float(request.form.get('image_opacity', 1.0))
+        
         image_path = None
+        image_width = 0
+        image_height = 0
         if overlay_type == 'image' and 'image_file' in request.files:
             file = request.files['image_file']
             if file.filename:
@@ -524,6 +549,13 @@ def screen_overlays(screen_id):
                 file_path = os.path.join(upload_path, new_filename)
                 file.save(file_path)
                 image_path = file_path
+                
+                try:
+                    from PIL import Image
+                    with Image.open(file_path) as img:
+                        image_width, image_height = img.size
+                except:
+                    pass
         
         corner_size = int(request.form.get('corner_size', 15))
         
@@ -540,6 +572,16 @@ def screen_overlays(screen_id):
             text_color=text_color,
             font_size=font_size,
             scroll_speed=scroll_speed,
+            display_duration=display_duration,
+            passage_limit=passage_limit,
+            start_time=start_time,
+            end_time=end_time,
+            image_width=image_width,
+            image_height=image_height,
+            image_width_percent=image_width_percent,
+            image_pos_x=image_pos_x,
+            image_pos_y=image_pos_y,
+            image_opacity=image_opacity,
             is_active=is_active
         )
         db.session.add(overlay)
