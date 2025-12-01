@@ -6,11 +6,16 @@ from app import db
 class Booking(db.Model):
     __tablename__ = 'bookings'
     
+    BOOKING_MODE_PLAYS = 'plays'
+    BOOKING_MODE_DATES = 'dates'
+    
     id = db.Column(db.Integer, primary_key=True)
     reservation_number = db.Column(db.String(16), unique=True, nullable=True)
+    booking_mode = db.Column(db.String(20), default='plays')
     slot_duration = db.Column(db.Integer, nullable=False)
     time_period_id = db.Column(db.Integer, db.ForeignKey('time_periods.id'))
     num_plays = db.Column(db.Integer, nullable=False)
+    calculated_plays = db.Column(db.Integer, nullable=True)
     plays_completed = db.Column(db.Integer, default=0)
     price_per_play = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)

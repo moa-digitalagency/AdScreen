@@ -103,6 +103,19 @@ def dashboard():
     
     from utils.currencies import get_country_by_code
     
+    orgs_by_country = db.session.query(
+        Organization.country,
+        func.count(Organization.id).label('org_count')
+    ).group_by(Organization.country).all()
+    
+    screens_by_country = db.session.query(
+        Organization.country,
+        func.count(Screen.id).label('screen_count')
+    ).join(Screen, Screen.organization_id == Organization.id).group_by(Organization.country).all()
+    
+    orgs_count_map = {c: count for c, count in orgs_by_country}
+    screens_count_map = {c: count for c, count in screens_by_country}
+    
     revenue_by_country = db.session.query(
         Organization.country,
         Organization.currency,
@@ -114,19 +127,40 @@ def dashboard():
         Booking.payment_status == 'paid'
     ).group_by(Organization.country, Organization.currency).all()
     
-    country_stats = []
+    country_data = {}
     for country_code, currency_code, total, commission in revenue_by_country:
-        country_info = get_country_by_code(country_code or 'FR')
+        cc = country_code or 'FR'
+        if cc not in country_data:
+            country_info = get_country_by_code(cc)
+            country_data[cc] = {
+                'country_code': cc,
+                'country_name': country_info.get('name', cc),
+                'country_flag': country_info.get('flag', ''),
+                'org_count': orgs_count_map.get(cc, 0),
+                'screen_count': screens_count_map.get(cc, 0),
+                'currencies': []
+            }
         currency_info = get_currency_by_code(currency_code or 'EUR')
-        country_stats.append({
-            'country_code': country_code or 'FR',
-            'country_name': country_info.get('name', country_code),
-            'country_flag': country_info.get('flag', ''),
+        country_data[cc]['currencies'].append({
             'currency_code': currency_code or 'EUR',
             'currency_symbol': currency_info.get('symbol', currency_code),
             'total': total or 0,
             'commission': commission or 0
         })
+    
+    for cc in orgs_count_map:
+        if cc not in country_data:
+            country_info = get_country_by_code(cc)
+            country_data[cc] = {
+                'country_code': cc,
+                'country_name': country_info.get('name', cc),
+                'country_flag': country_info.get('flag', ''),
+                'org_count': orgs_count_map.get(cc, 0),
+                'screen_count': screens_count_map.get(cc, 0),
+                'currencies': []
+            }
+    
+    country_stats = list(country_data.values())
     
     recent_orgs = Organization.query.order_by(Organization.created_at.desc()).limit(5).all()
     recent_bookings = Booking.query.filter_by(payment_status='paid').order_by(
@@ -209,11 +243,17 @@ def toggle_organization(org_id):
 @login_required
 @superadmin_required
 def organization_new():
+    from utils.currencies import get_currency_choices, get_country_choices
+    currencies = get_currency_choices()
+    countries = get_country_choices()
+    
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         org_email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
+        country = request.form.get('country', 'FR')
+        currency = request.form.get('currency', 'EUR')
         commission_rate = parse_float_safe(request.form.get('commission_rate'), 
             SiteSetting.get('default_commission_rate', 10.0))
         
@@ -223,23 +263,23 @@ def organization_new():
         
         if not name or not org_email:
             flash('Le nom et l\'email sont obligatoires.', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if not username or not password or len(password) < 6:
             flash('Le nom d\'utilisateur et un mot de passe (min 6 caractères) sont obligatoires.', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if Organization.query.filter_by(email=org_email).first():
             flash('Un établissement avec cet email existe déjà.', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if User.query.filter_by(email=manager_email).first():
             flash('Cet email gestionnaire est déjà utilisé.', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if User.query.filter_by(username=username).first():
             flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         try:
             org = Organization(
@@ -247,6 +287,8 @@ def organization_new():
                 email=org_email,
                 phone=phone,
                 address=address,
+                country=country,
+                currency=currency,
                 commission_rate=commission_rate,
                 commission_set_by=current_user.id,
                 commission_updated_at=datetime.utcnow()
@@ -270,15 +312,19 @@ def organization_new():
         except Exception as e:
             db.session.rollback()
             flash(f'Erreur lors de la création: {str(e)}', 'error')
-            return render_template('admin/organization_form.html', org=None)
+            return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
     
-    return render_template('admin/organization_form.html', org=None)
+    return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
 
 
 @admin_bp.route('/organization/<int:org_id>/edit', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
 def organization_edit(org_id):
+    from utils.currencies import get_currency_choices, get_country_choices
+    currencies = get_currency_choices()
+    countries = get_country_choices()
+    
     org = Organization.query.get_or_404(org_id)
     
     if request.method == 'POST':
@@ -286,10 +332,12 @@ def organization_edit(org_id):
         email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
         address = request.form.get('address', '').strip()
+        country = request.form.get('country', org.country or 'FR')
+        currency = request.form.get('currency', org.currency or 'EUR')
         
         if not name or not email:
             flash('Le nom et l\'email sont obligatoires.', 'error')
-            return render_template('admin/organization_form.html', org=org)
+            return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
         existing = Organization.query.filter(
             Organization.email == email,
@@ -297,18 +345,20 @@ def organization_edit(org_id):
         ).first()
         if existing:
             flash('Un autre établissement avec cet email existe déjà.', 'error')
-            return render_template('admin/organization_form.html', org=org)
+            return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
         org.name = name
         org.email = email
         org.phone = phone
         org.address = address
+        org.country = country
+        org.currency = currency
         db.session.commit()
         
         flash(f'Établissement "{name}" mis à jour!', 'success')
         return redirect(url_for('admin.organization_detail', org_id=org_id))
     
-    return render_template('admin/organization_form.html', org=org)
+    return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
 
 
 @admin_bp.route('/organization/<int:org_id>/delete', methods=['POST'])

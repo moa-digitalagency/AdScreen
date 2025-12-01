@@ -157,9 +157,41 @@
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Nombre de diffusions</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Mode de réservation</h2>
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                        <input type="radio" name="booking_mode" value="plays" checked
+                            class="sr-only" onchange="toggleBookingMode()">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-hashtag text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">Nombre de diffusions</p>
+                                <p class="text-sm text-gray-500">Choisir le nombre exact de passages</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-3 right-3 w-5 h-5 border-2 border-gray-300 rounded-full booking-mode-indicator"></div>
+                    </label>
+                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
+                        <input type="radio" name="booking_mode" value="dates"
+                            class="sr-only" onchange="toggleBookingMode()">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">Durée (dates)</p>
+                                <p class="text-sm text-gray-500">Diffusion pendant une période</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-3 right-3 w-5 h-5 border-2 border-gray-300 rounded-full booking-mode-indicator"></div>
+                    </label>
+                </div>
+                
+                <div id="plays_mode_section">
+                    <h3 class="text-md font-medium text-gray-700 mb-3">Nombre de diffusions</h3>
                     <div class="flex items-center gap-4">
                         <button type="button" onclick="changePlayCount(-10)" 
                             class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
@@ -172,22 +204,31 @@
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
+                    <p class="text-sm text-gray-500 mt-2 text-center">Votre contenu sera diffusé exactement ce nombre de fois</p>
                 </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Dates <span class="text-red-500">*</span></h2>
-                    <div class="grid grid-cols-2 gap-4">
+                
+                <div id="dates_mode_section" class="hidden">
+                    <h3 class="text-md font-medium text-gray-700 mb-3">Période de diffusion</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm text-gray-500 mb-1">Debut <span class="text-red-500">*</span></label>
-                            <input type="date" name="start_date" value="{{ now().strftime('%Y-%m-%d') }}" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <label class="block text-sm text-gray-500 mb-1">Date de début <span class="text-red-500">*</span></label>
+                            <input type="date" name="start_date" id="start_date" value="{{ now().strftime('%Y-%m-%d') }}"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="calculatePlaysFromDates()">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-500 mb-1">Fin <span class="text-red-500">*</span></label>
-                            <input type="date" name="end_date" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <label class="block text-sm text-gray-500 mb-1">Date de fin <span class="text-red-500">*</span></label>
+                            <input type="date" name="end_date" id="end_date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="calculatePlaysFromDates()">
                         </div>
                     </div>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-blue-700 font-medium">Diffusions estimées:</span>
+                            <span id="estimated_plays" class="text-2xl font-bold text-blue-800">0</span>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-1">Calculé selon les paramètres de l'écran (créneaux, périodes)</p>
+                    </div>
+                    <input type="hidden" name="calculated_plays" id="calculated_plays" value="0">
                 </div>
             </div>
 
@@ -259,11 +300,74 @@
 
 <script>
 const slots = {{ slots_json|tojson|safe }};
+const screenId = {{ screen.id }};
+const periods = {{ screen.time_periods|map(attribute='id')|list|tojson|safe }};
+const playsPerDayEstimate = {{ (screen.time_slots|length * 60) if screen.time_slots else 100 }};
+
+function toggleBookingMode() {
+    const mode = document.querySelector('input[name="booking_mode"]:checked')?.value || 'plays';
+    const playsSection = document.getElementById('plays_mode_section');
+    const datesSection = document.getElementById('dates_mode_section');
+    
+    document.querySelectorAll('input[name="booking_mode"]').forEach(input => {
+        const label = input.closest('label');
+        const indicator = label.querySelector('.booking-mode-indicator');
+        if (input.checked) {
+            label.classList.add('border-primary-500', 'bg-primary-50');
+            indicator.classList.add('bg-primary-500', 'border-primary-500');
+        } else {
+            label.classList.remove('border-primary-500', 'bg-primary-50');
+            indicator.classList.remove('bg-primary-500', 'border-primary-500');
+        }
+    });
+    
+    if (mode === 'plays') {
+        playsSection.classList.remove('hidden');
+        datesSection.classList.add('hidden');
+        document.getElementById('num_plays').required = true;
+    } else {
+        playsSection.classList.add('hidden');
+        datesSection.classList.remove('hidden');
+        document.getElementById('num_plays').required = false;
+        calculatePlaysFromDates();
+    }
+    updatePrice();
+}
+
+function calculatePlaysFromDates() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (!startDate || !endDate) {
+        document.getElementById('estimated_plays').textContent = '0';
+        document.getElementById('calculated_plays').value = '0';
+        updatePrice();
+        return;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+    const estimatedPlays = Math.max(1, Math.floor(diffDays * playsPerDayEstimate / 10));
+    
+    document.getElementById('estimated_plays').textContent = estimatedPlays;
+    document.getElementById('calculated_plays').value = estimatedPlays;
+    updatePrice();
+}
 
 function updatePrice() {
     const contentType = document.querySelector('input[name="content_type"]:checked')?.value || 'image';
     const periodMultiplier = parseFloat(document.querySelector('input[name="period_id"]:checked')?.dataset.multiplier || 1);
-    const numPlays = parseInt(document.getElementById('num_plays').value) || 10;
+    const bookingMode = document.querySelector('input[name="booking_mode"]:checked')?.value || 'plays';
+    
+    let numPlays;
+    if (bookingMode === 'plays') {
+        numPlays = parseInt(document.getElementById('num_plays').value) || 10;
+    } else {
+        numPlays = parseInt(document.getElementById('calculated_plays').value) || 0;
+    }
     
     document.querySelectorAll('.slot-radio').forEach(input => {
         const label = input.nextElementSibling;
@@ -363,7 +467,10 @@ function changeFile() {
     document.getElementById('previewVideo').src = '';
 }
 
-document.addEventListener('DOMContentLoaded', updatePrice);
+document.addEventListener('DOMContentLoaded', function() {
+    updatePrice();
+    toggleBookingMode();
+});
 </script>
 
 <style>

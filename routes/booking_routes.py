@@ -73,9 +73,16 @@ def submit_booking(screen_code):
     content_type = request.form.get('content_type')
     slot_duration = int(request.form.get('slot_duration', 10))
     period_id = request.form.get('period_id')
-    num_plays = int(request.form.get('num_plays', 10))
+    booking_mode = request.form.get('booking_mode', 'plays')
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
+    
+    if booking_mode == 'dates':
+        calculated_plays = int(request.form.get('calculated_plays', 10))
+        num_plays = calculated_plays
+    else:
+        num_plays = int(request.form.get('num_plays', 10))
+        calculated_plays = None
     
     if 'file' not in request.files:
         flash('Veuillez sélectionner un fichier.', 'error')
@@ -160,9 +167,11 @@ def submit_booking(screen_code):
     booking = Booking(
         screen_id=screen.id,
         content_id=content.id,
+        booking_mode=booking_mode,
         slot_duration=slot_duration,
         time_period_id=period.id if period else None,
         num_plays=num_plays,
+        calculated_plays=calculated_plays,
         price_per_play=price_per_play,
         total_price=total_price,
         start_date=datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else date.today(),
@@ -178,18 +187,18 @@ def submit_booking(screen_code):
     
     reservation_qr = generate_qr_base64(booking.reservation_number, box_size=6, border=2)
     
-    booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
-    booking_qr = generate_qr_base64(booking_url, box_size=6, border=2)
+    screen_booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+    screen_qr = generate_qr_base64(screen_booking_url, box_size=6, border=2)
     
-    receipt_path = save_receipt_image(booking, screen, content, booking_qr)
-    receipt_base64 = get_receipt_base64(booking, screen, content, booking_qr)
+    receipt_path = save_receipt_image(booking, screen, content, screen_qr)
+    receipt_base64 = get_receipt_base64(booking, screen, content, screen_qr)
     
     return render_template('booking/success.html',
         booking=booking,
         screen=screen,
         content=content,
         reservation_qr=reservation_qr,
-        booking_qr=booking_qr,
+        booking_qr=screen_qr,
         receipt_base64=receipt_base64,
         receipt_path=receipt_path
     )

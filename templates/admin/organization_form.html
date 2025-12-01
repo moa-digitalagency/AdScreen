@@ -44,6 +44,25 @@
             </div>
         </div>
 
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <label class="label">Pays *</label>
+                <select name="country" class="input-field" required>
+                    {% for code, label in countries %}
+                    <option value="{{ code }}" {% if (org and org.country == code) or (not org and code == 'FR') %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="label">Devise *</label>
+                <select name="currency" class="input-field" required>
+                    {% for code, label in currencies %}
+                    <option value="{{ code }}" {% if (org and org.currency == code) or (not org and code == 'EUR') %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
         {% if not org %}
         <div class="border-t border-gray-200 pt-6">
             <h3 class="font-semibold text-gray-800 mb-4">Compte gestionnaire</h3>
