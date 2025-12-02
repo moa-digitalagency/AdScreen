@@ -1,0 +1,468 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}{% if broadcast %}Modifier la diffusion{% else %}Nouvelle diffusion{% endif %}{% endblock %}
+
+{% block main_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('admin.broadcasts') }}" class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition">
+            <i class="fas fa-arrow-left"></i>
+            <span>Retour aux diffusions</span>
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">
+                {% if broadcast %}Modifier la diffusion{% else %}Créer une nouvelle diffusion{% endif %}
+            </h2>
+            <p class="text-gray-500 mt-1">Configurez les paramètres de votre diffusion</p>
+        </div>
+
+        <form action="{% if broadcast %}{{ url_for('admin.broadcast_edit', broadcast_id=broadcast.id) }}{% else %}{{ url_for('admin.broadcast_new') }}{% endif %}" 
+              method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom de la diffusion *</label>
+                <input type="text" name="name" required
+                       value="{{ broadcast.name if broadcast else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                       placeholder="Ex: Promotion été 2024">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date/heure de début</label>
+                    <input type="datetime-local" name="start_datetime"
+                           value="{{ broadcast.start_datetime.strftime('%Y-%m-%dT%H:%M') if broadcast and broadcast.start_datetime else '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Laisser vide pour commencer immédiatement</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date/heure de fin</label>
+                    <input type="datetime-local" name="end_datetime"
+                           value="{{ broadcast.end_datetime.strftime('%Y-%m-%dT%H:%M') if broadcast and broadcast.end_datetime else '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Laisser vide pour une durée illimitée</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Ciblage *</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="target_type" value="country" 
+                               {{ 'checked' if not broadcast or broadcast.target_type == 'country' }}
+                               class="peer sr-only" onchange="updateTargetFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <i class="fas fa-globe text-xl mb-2 text-gray-600 peer-checked:text-primary-600"></i>
+                            <p class="text-sm font-medium">Par pays</p>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="target_type" value="city"
+                               {{ 'checked' if broadcast and broadcast.target_type == 'city' }}
+                               class="peer sr-only" onchange="updateTargetFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <i class="fas fa-city text-xl mb-2 text-gray-600 peer-checked:text-primary-600"></i>
+                            <p class="text-sm font-medium">Par ville</p>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="target_type" value="organization"
+                               {{ 'checked' if broadcast and broadcast.target_type == 'organization' }}
+                               class="peer sr-only" onchange="updateTargetFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <i class="fas fa-building text-xl mb-2 text-gray-600 peer-checked:text-primary-600"></i>
+                            <p class="text-sm font-medium">Par établissement</p>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="target_type" value="screen"
+                               {{ 'checked' if broadcast and broadcast.target_type == 'screen' }}
+                               class="peer sr-only" onchange="updateTargetFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <i class="fas fa-tv text-xl mb-2 text-gray-600 peer-checked:text-primary-600"></i>
+                            <p class="text-sm font-medium">Par écran</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="target-country-field" class="target-field">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pays cible</label>
+                <select name="target_country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    {% for country in countries %}
+                    <option value="{{ country.code }}" {{ 'selected' if broadcast and broadcast.target_country == country.code }}>
+                        {{ country.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="target-city-field" class="target-field hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
+                        <select name="target_country_city" id="country-for-city" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                onchange="updateCities()">
+                            {% for country in countries %}
+                            <option value="{{ country.code }}" {{ 'selected' if broadcast and broadcast.target_type == 'city' and broadcast.target_country == country.code }}>
+                                {{ country.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ville cible</label>
+                        <select name="target_city" id="city-select"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Sélectionner une ville</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="target-organization-field" class="target-field hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Établissement cible</label>
+                <select name="target_organization_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Sélectionner un établissement</option>
+                    {% for org in organizations %}
+                    <option value="{{ org.id }}" {{ 'selected' if broadcast and broadcast.target_organization_id == org.id }}>
+                        {{ org.name }} ({{ org.city or 'Non spécifié' }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="target-screen-field" class="target-field hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Écran cible</label>
+                <select name="target_screen_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Sélectionner un écran</option>
+                    {% for screen in screens %}
+                    <option value="{{ screen.id }}" {{ 'selected' if broadcast and broadcast.target_screen_id == screen.id }}>
+                        {{ screen.organization.name }} - {{ screen.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Type de diffusion *</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="broadcast_type" value="overlay" 
+                               {{ 'checked' if not broadcast or broadcast.broadcast_type == 'overlay' }}
+                               class="peer sr-only" onchange="updateBroadcastTypeFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-layer-group text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Overlay</p>
+                                    <p class="text-xs text-gray-500">Bandeau défilant ou image en superposition</p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="broadcast_type" value="content"
+                               {{ 'checked' if broadcast and broadcast.broadcast_type == 'content' }}
+                               class="peer sr-only" onchange="updateBroadcastTypeFields()">
+                        <div class="p-4 border-2 border-gray-200 rounded-lg peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-film text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Contenu playlist</p>
+                                    <p class="text-xs text-gray-500">S'intègre dans la playlist des écrans</p>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="overlay-fields" class="broadcast-type-field space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Type d'overlay</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="overlay_type" value="ticker" 
+                                   {{ 'checked' if not broadcast or broadcast.overlay_type == 'ticker' }}
+                                   class="peer sr-only" onchange="updateOverlayTypeFields()">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                <i class="fas fa-align-left text-lg mb-1"></i>
+                                <p class="text-xs font-medium">Bandeau</p>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="overlay_type" value="image"
+                                   {{ 'checked' if broadcast and broadcast.overlay_type == 'image' }}
+                                   class="peer sr-only" onchange="updateOverlayTypeFields()">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                <i class="fas fa-image text-lg mb-1"></i>
+                                <p class="text-xs font-medium">Image</p>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="overlay_type" value="corner"
+                                   {{ 'checked' if broadcast and broadcast.overlay_type == 'corner' }}
+                                   class="peer sr-only" onchange="updateOverlayTypeFields()">
+                            <div class="p-3 border-2 border-gray-200 rounded-lg text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                <i class="fas fa-vector-square text-lg mb-1"></i>
+                                <p class="text-xs font-medium">Coin</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="ticker-fields" class="overlay-type-field space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Message du bandeau</label>
+                        <textarea name="overlay_message" rows="3"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                  placeholder="Votre message défilant...">{{ broadcast.overlay_message if broadcast else '' }}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                            <select name="overlay_position" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="header" {{ 'selected' if broadcast and broadcast.overlay_position == 'header' }}>Haut</option>
+                                <option value="footer" {{ 'selected' if not broadcast or broadcast.overlay_position == 'footer' }}>Bas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Couleur fond</label>
+                            <input type="color" name="overlay_background_color" 
+                                   value="{{ broadcast.overlay_background_color if broadcast else '#000000' }}"
+                                   class="w-full h-10 border border-gray-300 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Couleur texte</label>
+                            <input type="color" name="overlay_text_color"
+                                   value="{{ broadcast.overlay_text_color if broadcast else '#FFFFFF' }}"
+                                   class="w-full h-10 border border-gray-300 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Taille police</label>
+                            <input type="number" name="overlay_font_size" min="12" max="72"
+                                   value="{{ broadcast.overlay_font_size if broadcast else 24 }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vitesse de défilement</label>
+                        <input type="range" name="overlay_scroll_speed" min="10" max="200" 
+                               value="{{ broadcast.overlay_scroll_speed if broadcast else 50 }}"
+                               class="w-full">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Lent</span>
+                            <span>Rapide</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="image-fields" class="overlay-type-field hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Image de l'overlay</label>
+                        {% if broadcast and broadcast.overlay_image_path %}
+                        <div class="mb-2">
+                            <img src="/{{ broadcast.overlay_image_path }}" alt="Image actuelle" class="max-h-32 rounded-lg border">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="overlay_image" accept="image/*"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                            <select name="overlay_image_position" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="top_left">Haut gauche</option>
+                                <option value="top_right" selected>Haut droite</option>
+                                <option value="bottom_left">Bas gauche</option>
+                                <option value="bottom_right">Bas droite</option>
+                                <option value="header">Bandeau haut</option>
+                                <option value="footer">Bandeau bas</option>
+                                <option value="custom">Position personnalisée</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Taille (%)</label>
+                            <input type="number" name="overlay_image_width_percent" min="5" max="100"
+                                   value="{{ broadcast.overlay_image_width_percent if broadcast else 20 }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Opacité</label>
+                            <input type="number" name="overlay_image_opacity" min="0" max="1" step="0.1"
+                                   value="{{ broadcast.overlay_image_opacity if broadcast else 1.0 }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="corner-fields" class="overlay-type-field hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Image du coin</label>
+                        {% if broadcast and broadcast.overlay_image_path and broadcast.overlay_type == 'corner' %}
+                        <div class="mb-2">
+                            <img src="/{{ broadcast.overlay_image_path }}" alt="Image actuelle" class="max-h-32 rounded-lg border">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="overlay_image" accept="image/*"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position du coin</label>
+                            <select name="overlay_corner_position" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="top_left" {{ 'selected' if broadcast and broadcast.overlay_corner_position == 'top_left' }}>Haut gauche</option>
+                                <option value="top_right" {{ 'selected' if broadcast and broadcast.overlay_corner_position == 'top_right' }}>Haut droite</option>
+                                <option value="bottom_left" {{ 'selected' if broadcast and broadcast.overlay_corner_position == 'bottom_left' }}>Bas gauche</option>
+                                <option value="bottom_right" {{ 'selected' if broadcast and broadcast.overlay_corner_position == 'bottom_right' }}>Bas droite</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Taille (%)</label>
+                            <input type="number" name="overlay_corner_size" min="5" max="50"
+                                   value="{{ broadcast.overlay_corner_size if broadcast else 15 }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-fields" class="broadcast-type-field hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fichier média (image ou vidéo)</label>
+                    {% if broadcast and broadcast.content_file_path %}
+                    <div class="mb-2">
+                        {% if broadcast.content_type == 'video' %}
+                        <video src="/{{ broadcast.content_file_path }}" class="max-h-32 rounded-lg border" controls></video>
+                        {% else %}
+                        <img src="/{{ broadcast.content_file_path }}" alt="Contenu actuel" class="max-h-32 rounded-lg border">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="content_file" accept="image/*,video/*"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Durée d'affichage (secondes)</label>
+                        <input type="number" name="content_duration" min="1" max="300"
+                               value="{{ broadcast.content_duration if broadcast else 10 }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                        <input type="number" name="content_priority" min="1" max="1000"
+                               value="{{ broadcast.content_priority if broadcast else 200 }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <p class="text-xs text-gray-500 mt-1">Plus la valeur est élevée, plus le contenu sera prioritaire</p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <div class="flex items-center gap-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="is_active" class="sr-only peer" {{ 'checked' if not broadcast or broadcast.is_active }}>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                </label>
+                <span class="text-sm font-medium text-gray-700">Activer la diffusion</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
+                <a href="{{ url_for('admin.broadcasts') }}" 
+                   class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Annuler
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    <span>{% if broadcast %}Enregistrer{% else %}Créer la diffusion{% endif %}</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const citiesByCountry = {{ cities_by_country | tojson }};
+const currentCity = "{{ broadcast.target_city if broadcast and broadcast.target_city else '' }}";
+
+function updateTargetFields() {
+    const targetType = document.querySelector('input[name="target_type"]:checked').value;
+    
+    document.querySelectorAll('.target-field').forEach(el => el.classList.add('hidden'));
+    
+    if (targetType === 'country') {
+        document.getElementById('target-country-field').classList.remove('hidden');
+    } else if (targetType === 'city') {
+        document.getElementById('target-city-field').classList.remove('hidden');
+        updateCities();
+    } else if (targetType === 'organization') {
+        document.getElementById('target-organization-field').classList.remove('hidden');
+    } else if (targetType === 'screen') {
+        document.getElementById('target-screen-field').classList.remove('hidden');
+    }
+}
+
+function updateCities() {
+    const countryCode = document.getElementById('country-for-city').value;
+    const citySelect = document.getElementById('city-select');
+    const cities = citiesByCountry[countryCode] || [];
+    
+    citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
+    cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        if (city === currentCity) {
+            option.selected = true;
+        }
+        citySelect.appendChild(option);
+    });
+}
+
+function updateBroadcastTypeFields() {
+    const broadcastType = document.querySelector('input[name="broadcast_type"]:checked').value;
+    
+    document.querySelectorAll('.broadcast-type-field').forEach(el => el.classList.add('hidden'));
+    
+    if (broadcastType === 'overlay') {
+        document.getElementById('overlay-fields').classList.remove('hidden');
+        updateOverlayTypeFields();
+    } else {
+        document.getElementById('content-fields').classList.remove('hidden');
+    }
+}
+
+function updateOverlayTypeFields() {
+    const overlayType = document.querySelector('input[name="overlay_type"]:checked').value;
+    
+    document.querySelectorAll('.overlay-type-field').forEach(el => el.classList.add('hidden'));
+    
+    if (overlayType === 'ticker') {
+        document.getElementById('ticker-fields').classList.remove('hidden');
+    } else if (overlayType === 'image') {
+        document.getElementById('image-fields').classList.remove('hidden');
+    } else if (overlayType === 'corner') {
+        document.getElementById('corner-fields').classList.remove('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateTargetFields();
+    updateBroadcastTypeFields();
+});
+</script>
+{% endblock %}

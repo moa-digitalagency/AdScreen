@@ -29,6 +29,11 @@
                 <i class="fas fa-tv w-5"></i>
                 <span>Écrans</span>
             </a>
+            <a href="{{ url_for('admin.broadcasts') }}" 
+               class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if 'broadcast' in request.endpoint %}bg-gray-800 text-white{% endif %}">
+                <i class="fas fa-broadcast-tower w-5"></i>
+                <span>Diffusion</span>
+            </a>
             <a href="{{ url_for('admin.stats') }}" 
                class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if request.endpoint == 'admin.stats' %}bg-gray-800 text-white{% endif %}">
                 <i class="fas fa-chart-line w-5"></i>

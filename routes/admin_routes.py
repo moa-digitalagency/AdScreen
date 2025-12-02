@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
-from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest, Invoice, PaymentProof
+from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest, Invoice, PaymentProof, Broadcast
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from services.currency_service import (
@@ -1049,3 +1049,380 @@ def view_payment_proof(proof_id):
     else:
         flash('Fichier non trouvé.', 'error')
         return redirect(url_for('admin.billing_invoice_detail', invoice_id=proof.invoice_id))
+
+
+@admin_bp.route('/broadcasts')
+@login_required
+@superadmin_required
+def broadcasts():
+    all_broadcasts = Broadcast.query.order_by(Broadcast.created_at.desc()).all()
+    active_count = Broadcast.query.filter_by(is_active=True).count()
+    
+    for b in all_broadcasts:
+        b.target_screens_count = len(b.get_target_screens())
+    
+    return render_template('admin/broadcasts/list.html',
+        broadcasts=all_broadcasts,
+        active_count=active_count
+    )
+
+
+@admin_bp.route('/broadcast/new', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def broadcast_new():
+    import os
+    import secrets
+    from werkzeug.utils import secure_filename
+    from utils.countries import get_all_countries
+    
+    countries = get_all_countries()
+    organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
+    screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
+    
+    cities_by_country = {}
+    for org in organizations:
+        country = org.country or 'FR'
+        if country not in cities_by_country:
+            cities_by_country[country] = set()
+        if org.city:
+            cities_by_country[country].add(org.city)
+    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        target_type = request.form.get('target_type', 'country')
+        broadcast_type = request.form.get('broadcast_type', 'overlay')
+        
+        if not name:
+            flash('Le nom de la diffusion est obligatoire.', 'error')
+            return render_template('admin/broadcasts/form.html',
+                broadcast=None,
+                countries=countries,
+                organizations=organizations,
+                screens=screens,
+                cities_by_country=cities_by_country
+            )
+        
+        broadcast = Broadcast(
+            name=name,
+            target_type=target_type,
+            broadcast_type=broadcast_type,
+            created_by=current_user.id
+        )
+        
+        if target_type == 'country':
+            broadcast.target_country = request.form.get('target_country', 'FR')
+        elif target_type == 'city':
+            broadcast.target_country = request.form.get('target_country_city', 'FR')
+            broadcast.target_city = request.form.get('target_city', '')
+        elif target_type == 'organization':
+            org_id = request.form.get('target_organization_id')
+            broadcast.target_organization_id = int(org_id) if org_id else None
+        elif target_type == 'screen':
+            screen_id = request.form.get('target_screen_id')
+            broadcast.target_screen_id = int(screen_id) if screen_id else None
+        
+        if broadcast_type == 'overlay':
+            overlay_type = request.form.get('overlay_type', 'ticker')
+            broadcast.overlay_type = overlay_type
+            broadcast.overlay_message = request.form.get('overlay_message', '')
+            broadcast.overlay_position = request.form.get('overlay_position', 'footer')
+            broadcast.overlay_background_color = request.form.get('overlay_background_color', '#000000')
+            broadcast.overlay_text_color = request.form.get('overlay_text_color', '#FFFFFF')
+            broadcast.overlay_font_size = int(request.form.get('overlay_font_size', 24))
+            broadcast.overlay_scroll_speed = int(request.form.get('overlay_scroll_speed', 50))
+            
+            if overlay_type == 'image' or overlay_type == 'corner':
+                broadcast.overlay_corner_position = request.form.get('overlay_corner_position', 'top_left')
+                broadcast.overlay_corner_size = int(request.form.get('overlay_corner_size', 15))
+                broadcast.overlay_image_width_percent = float(request.form.get('overlay_image_width_percent', 20))
+                broadcast.overlay_image_pos_x = int(request.form.get('overlay_image_pos_x', 0))
+                broadcast.overlay_image_pos_y = int(request.form.get('overlay_image_pos_y', 0))
+                broadcast.overlay_image_opacity = float(request.form.get('overlay_image_opacity', 1.0))
+                
+                if overlay_type == 'image':
+                    image_position = request.form.get('overlay_image_position', 'top_right')
+                    if image_position in ['header', 'body', 'footer']:
+                        broadcast.overlay_position = image_position
+                        broadcast.overlay_position_mode = 'linear'
+                    elif image_position == 'custom':
+                        broadcast.overlay_position = 'custom'
+                        broadcast.overlay_position_mode = 'custom'
+                    else:
+                        broadcast.overlay_position = 'corner'
+                        broadcast.overlay_position_mode = 'corner'
+                        broadcast.overlay_corner_position = image_position
+                
+                if 'overlay_image' in request.files:
+                    file = request.files['overlay_image']
+                    if file.filename:
+                        filename = secure_filename(file.filename)
+                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                        os.makedirs(upload_path, exist_ok=True)
+                        file_path = os.path.join(upload_path, new_filename)
+                        file.save(file_path)
+                        broadcast.overlay_image_path = file_path
+        else:
+            broadcast.content_duration = int(request.form.get('content_duration', 10))
+            broadcast.content_priority = int(request.form.get('content_priority', 200))
+            
+            if 'content_file' in request.files:
+                file = request.files['content_file']
+                if file.filename:
+                    filename = secure_filename(file.filename)
+                    new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    broadcast.content_file_path = file_path
+                    
+                    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                    if ext in ['mp4', 'webm', 'mov', 'avi']:
+                        broadcast.content_type = 'video'
+                    else:
+                        broadcast.content_type = 'image'
+        
+        broadcast.is_active = 'is_active' in request.form
+        
+        start_datetime_str = request.form.get('start_datetime', '')
+        end_datetime_str = request.form.get('end_datetime', '')
+        
+        if start_datetime_str:
+            try:
+                broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
+            except ValueError:
+                pass
+        
+        if end_datetime_str:
+            try:
+                broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
+            except ValueError:
+                pass
+        
+        db.session.add(broadcast)
+        db.session.commit()
+        
+        flash(f'Diffusion "{name}" créée avec succès!', 'success')
+        return redirect(url_for('admin.broadcasts'))
+    
+    return render_template('admin/broadcasts/form.html',
+        broadcast=None,
+        countries=countries,
+        organizations=organizations,
+        screens=screens,
+        cities_by_country=cities_by_country
+    )
+
+
+@admin_bp.route('/broadcast/<int:broadcast_id>/edit', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def broadcast_edit(broadcast_id):
+    import os
+    import secrets
+    from werkzeug.utils import secure_filename
+    from utils.countries import get_all_countries
+    
+    broadcast = Broadcast.query.get_or_404(broadcast_id)
+    countries = get_all_countries()
+    organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
+    screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
+    
+    cities_by_country = {}
+    for org in organizations:
+        country = org.country or 'FR'
+        if country not in cities_by_country:
+            cities_by_country[country] = set()
+        if org.city:
+            cities_by_country[country].add(org.city)
+    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        target_type = request.form.get('target_type', 'country')
+        broadcast_type = request.form.get('broadcast_type', 'overlay')
+        
+        if not name:
+            flash('Le nom de la diffusion est obligatoire.', 'error')
+            return render_template('admin/broadcasts/form.html',
+                broadcast=broadcast,
+                countries=countries,
+                organizations=organizations,
+                screens=screens,
+                cities_by_country=cities_by_country
+            )
+        
+        broadcast.name = name
+        broadcast.target_type = target_type
+        broadcast.broadcast_type = broadcast_type
+        
+        broadcast.target_country = None
+        broadcast.target_city = None
+        broadcast.target_organization_id = None
+        broadcast.target_screen_id = None
+        
+        if target_type == 'country':
+            broadcast.target_country = request.form.get('target_country', 'FR')
+        elif target_type == 'city':
+            broadcast.target_country = request.form.get('target_country_city', 'FR')
+            broadcast.target_city = request.form.get('target_city', '')
+        elif target_type == 'organization':
+            org_id = request.form.get('target_organization_id')
+            broadcast.target_organization_id = int(org_id) if org_id else None
+        elif target_type == 'screen':
+            screen_id = request.form.get('target_screen_id')
+            broadcast.target_screen_id = int(screen_id) if screen_id else None
+        
+        if broadcast_type == 'overlay':
+            overlay_type = request.form.get('overlay_type', 'ticker')
+            broadcast.overlay_type = overlay_type
+            broadcast.overlay_message = request.form.get('overlay_message', '')
+            broadcast.overlay_position = request.form.get('overlay_position', 'footer')
+            broadcast.overlay_background_color = request.form.get('overlay_background_color', '#000000')
+            broadcast.overlay_text_color = request.form.get('overlay_text_color', '#FFFFFF')
+            broadcast.overlay_font_size = int(request.form.get('overlay_font_size', 24))
+            broadcast.overlay_scroll_speed = int(request.form.get('overlay_scroll_speed', 50))
+            
+            if overlay_type == 'image' or overlay_type == 'corner':
+                broadcast.overlay_corner_position = request.form.get('overlay_corner_position', 'top_left')
+                broadcast.overlay_corner_size = int(request.form.get('overlay_corner_size', 15))
+                broadcast.overlay_image_width_percent = float(request.form.get('overlay_image_width_percent', 20))
+                broadcast.overlay_image_pos_x = int(request.form.get('overlay_image_pos_x', 0))
+                broadcast.overlay_image_pos_y = int(request.form.get('overlay_image_pos_y', 0))
+                broadcast.overlay_image_opacity = float(request.form.get('overlay_image_opacity', 1.0))
+                
+                if overlay_type == 'image':
+                    image_position = request.form.get('overlay_image_position', 'top_right')
+                    if image_position in ['header', 'body', 'footer']:
+                        broadcast.overlay_position = image_position
+                        broadcast.overlay_position_mode = 'linear'
+                    elif image_position == 'custom':
+                        broadcast.overlay_position = 'custom'
+                        broadcast.overlay_position_mode = 'custom'
+                    else:
+                        broadcast.overlay_position = 'corner'
+                        broadcast.overlay_position_mode = 'corner'
+                        broadcast.overlay_corner_position = image_position
+                
+                if 'overlay_image' in request.files:
+                    file = request.files['overlay_image']
+                    if file.filename:
+                        if broadcast.overlay_image_path and os.path.exists(broadcast.overlay_image_path):
+                            os.remove(broadcast.overlay_image_path)
+                        
+                        filename = secure_filename(file.filename)
+                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                        os.makedirs(upload_path, exist_ok=True)
+                        file_path = os.path.join(upload_path, new_filename)
+                        file.save(file_path)
+                        broadcast.overlay_image_path = file_path
+        else:
+            broadcast.content_duration = int(request.form.get('content_duration', 10))
+            broadcast.content_priority = int(request.form.get('content_priority', 200))
+            
+            if 'content_file' in request.files:
+                file = request.files['content_file']
+                if file.filename:
+                    if broadcast.content_file_path and os.path.exists(broadcast.content_file_path):
+                        os.remove(broadcast.content_file_path)
+                    
+                    filename = secure_filename(file.filename)
+                    new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    broadcast.content_file_path = file_path
+                    
+                    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+                    if ext in ['mp4', 'webm', 'mov', 'avi']:
+                        broadcast.content_type = 'video'
+                    else:
+                        broadcast.content_type = 'image'
+        
+        broadcast.is_active = 'is_active' in request.form
+        
+        start_datetime_str = request.form.get('start_datetime', '')
+        end_datetime_str = request.form.get('end_datetime', '')
+        
+        broadcast.start_datetime = None
+        broadcast.end_datetime = None
+        
+        if start_datetime_str:
+            try:
+                broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
+            except ValueError:
+                pass
+        
+        if end_datetime_str:
+            try:
+                broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
+            except ValueError:
+                pass
+        
+        db.session.commit()
+        
+        flash(f'Diffusion "{name}" mise à jour!', 'success')
+        return redirect(url_for('admin.broadcasts'))
+    
+    return render_template('admin/broadcasts/form.html',
+        broadcast=broadcast,
+        countries=countries,
+        organizations=organizations,
+        screens=screens,
+        cities_by_country=cities_by_country
+    )
+
+
+@admin_bp.route('/broadcast/<int:broadcast_id>/toggle', methods=['POST'])
+@login_required
+@superadmin_required
+def broadcast_toggle(broadcast_id):
+    broadcast = Broadcast.query.get_or_404(broadcast_id)
+    broadcast.is_active = not broadcast.is_active
+    db.session.commit()
+    
+    status = "activée" if broadcast.is_active else "désactivée"
+    flash(f'Diffusion {status}.', 'success')
+    return redirect(url_for('admin.broadcasts'))
+
+
+@admin_bp.route('/broadcast/<int:broadcast_id>/delete', methods=['POST'])
+@login_required
+@superadmin_required
+def broadcast_delete(broadcast_id):
+    import os
+    broadcast = Broadcast.query.get_or_404(broadcast_id)
+    
+    if broadcast.overlay_image_path and os.path.exists(broadcast.overlay_image_path):
+        os.remove(broadcast.overlay_image_path)
+    
+    if broadcast.content_file_path and os.path.exists(broadcast.content_file_path):
+        os.remove(broadcast.content_file_path)
+    
+    name = broadcast.name
+    db.session.delete(broadcast)
+    db.session.commit()
+    
+    flash(f'Diffusion "{name}" supprimée.', 'success')
+    return redirect(url_for('admin.broadcasts'))
+
+
+@admin_bp.route('/api/cities/<country_code>')
+@login_required
+@superadmin_required
+def get_cities_by_country(country_code):
+    from flask import jsonify
+    
+    cities = db.session.query(Organization.city).filter(
+        Organization.country == country_code,
+        Organization.city.isnot(None),
+        Organization.city != ''
+    ).distinct().order_by(Organization.city).all()
+    
+    city_list = [city[0] for city in cities if city[0]]
+    return jsonify(city_list)

@@ -1,0 +1,207 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Diffusion{% endblock %}
+
+{% block main_content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Gestion des Diffusions</h2>
+            <p class="text-gray-600 mt-1">Diffusez du contenu sur les écrans connectés</p>
+        </div>
+        <a href="{{ url_for('admin.broadcast_new') }}" 
+           class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+            <i class="fas fa-plus"></i>
+            <span>Nouvelle diffusion</span>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-broadcast-tower text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ broadcasts|length }}</p>
+                    <p class="text-sm text-gray-500">Total diffusions</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-play text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ active_count }}</p>
+                    <p class="text-sm text-gray-500">Actives</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tv text-purple-600"></i>
+                </div>
+                <div>
+                    {% set total_screens = broadcasts|map(attribute='target_screens_count')|sum %}
+                    <p class="text-2xl font-bold text-gray-900">{{ total_screens }}</p>
+                    <p class="text-sm text-gray-500">Écrans ciblés</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if broadcasts %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cible</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Écrans</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Période</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Statut</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for broadcast in broadcasts %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                {% if broadcast.broadcast_type == 'overlay' %}
+                                    {% if broadcast.overlay_type == 'ticker' %}
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-align-left text-blue-600 text-sm"></i>
+                                    </div>
+                                    {% elif broadcast.overlay_type == 'image' %}
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-image text-purple-600 text-sm"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-vector-square text-orange-600 text-sm"></i>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-film text-green-600 text-sm"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ broadcast.name }}</p>
+                                    <p class="text-xs text-gray-500">Créé {{ broadcast.created_at.strftime('%d/%m/%Y') }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if broadcast.broadcast_type == 'overlay' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                    <i class="fas fa-layer-group"></i>
+                                    Overlay
+                                    {% if broadcast.overlay_type == 'ticker' %}(Bandeau){% elif broadcast.overlay_type == 'image' %}(Image){% else %}(Coin){% endif %}
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                                    <i class="fas fa-play-circle"></i>
+                                    Contenu playlist
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                {% if broadcast.target_type == 'country' %}
+                                <i class="fas fa-globe text-gray-400"></i>
+                                {% elif broadcast.target_type == 'city' %}
+                                <i class="fas fa-city text-gray-400"></i>
+                                {% elif broadcast.target_type == 'organization' %}
+                                <i class="fas fa-building text-gray-400"></i>
+                                {% else %}
+                                <i class="fas fa-tv text-gray-400"></i>
+                                {% endif %}
+                                <span class="text-sm text-gray-700">{{ broadcast.get_target_display() }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                                <i class="fas fa-tv"></i>
+                                {{ broadcast.target_screens_count }} écran{% if broadcast.target_screens_count > 1 %}s{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if broadcast.start_datetime or broadcast.end_datetime %}
+                                {% if broadcast.start_datetime %}
+                                <div class="text-xs">Du: {{ broadcast.start_datetime.strftime('%d/%m/%Y %H:%M') }}</div>
+                                {% endif %}
+                                {% if broadcast.end_datetime %}
+                                <div class="text-xs">Au: {{ broadcast.end_datetime.strftime('%d/%m/%Y %H:%M') }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-400">Illimité</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if broadcast.is_currently_active() %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                    Active
+                                </span>
+                            {% elif not broadcast.is_active %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                    Désactivée
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
+                                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                                    Programmée
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url_for('admin.broadcast_edit', broadcast_id=broadcast.id) }}" 
+                                   class="p-2 text-gray-400 hover:text-blue-600 transition" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ url_for('admin.broadcast_toggle', broadcast_id=broadcast.id) }}" method="POST" class="inline">
+                                    <button type="submit" 
+                                            class="p-2 transition {% if broadcast.is_active %}text-green-500 hover:text-yellow-600{% else %}text-gray-400 hover:text-green-600{% endif %}"
+                                            title="{% if broadcast.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                        <i class="fas {% if broadcast.is_active %}fa-toggle-on{% else %}fa-toggle-off{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.broadcast_delete', broadcast_id=broadcast.id) }}" method="POST" class="inline"
+                                      onsubmit="return confirm('Supprimer cette diffusion ?')">
+                                    <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-broadcast-tower text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune diffusion</h3>
+        <p class="text-gray-500 mb-6">Créez votre première diffusion pour envoyer du contenu sur les écrans.</p>
+        <a href="{{ url_for('admin.broadcast_new') }}" 
+           class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+            <i class="fas fa-plus"></i>
+            <span>Créer une diffusion</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

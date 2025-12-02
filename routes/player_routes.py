@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from app import db
-from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay
+from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from datetime import datetime
 
 player_bp = Blueprint('player', __name__)
@@ -151,6 +151,16 @@ def get_playlist():
     for overlay in screen.overlays:
         if overlay.is_currently_active():
             active_overlays.append(overlay.to_dict())
+    
+    active_broadcasts = Broadcast.query.filter_by(is_active=True).all()
+    for broadcast in active_broadcasts:
+        if broadcast.applies_to_screen(screen):
+            if broadcast.broadcast_type == 'overlay':
+                active_overlays.append(broadcast.to_overlay_dict())
+            else:
+                playlist.append(broadcast.to_content_dict())
+    
+    playlist.sort(key=lambda x: x['priority'], reverse=True)
     
     return jsonify({
         'screen': {
