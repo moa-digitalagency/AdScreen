@@ -1,5 +1,5 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Broadcast(db.Model):
@@ -29,6 +29,26 @@ class Broadcast(db.Model):
     BROADCAST_TYPE_CONTENT = 'content'
     
     broadcast_type = db.Column(db.String(20), default=BROADCAST_TYPE_OVERLAY)
+    
+    SCHEDULE_MODE_IMMEDIATE = 'immediate'
+    SCHEDULE_MODE_SCHEDULED = 'scheduled'
+    
+    schedule_mode = db.Column(db.String(20), default=SCHEDULE_MODE_IMMEDIATE)
+    scheduled_datetime = db.Column(db.DateTime, nullable=True)
+    schedule_priority = db.Column(db.Integer, default=100)
+    override_playlist = db.Column(db.Boolean, default=False)
+    
+    RECURRENCE_NONE = 'none'
+    RECURRENCE_DAILY = 'daily'
+    RECURRENCE_WEEKLY = 'weekly'
+    RECURRENCE_MONTHLY = 'monthly'
+    RECURRENCE_CUSTOM = 'custom'
+    
+    recurrence_type = db.Column(db.String(20), default=RECURRENCE_NONE)
+    recurrence_interval = db.Column(db.Integer, default=1)
+    recurrence_end_date = db.Column(db.Date, nullable=True)
+    recurrence_days_of_week = db.Column(db.String(50), nullable=True)
+    recurrence_time = db.Column(db.Time, nullable=True)
     
     OVERLAY_TYPE_TICKER = 'ticker'
     OVERLAY_TYPE_IMAGE = 'image'
@@ -235,8 +255,146 @@ class Broadcast(db.Model):
             'type': self.content_type,
             'url': f'/{self.content_file_path}' if self.content_file_path else None,
             'duration': self.content_duration,
-            'priority': self.content_priority,
+            'priority': self.schedule_priority if self.schedule_mode == self.SCHEDULE_MODE_SCHEDULED else self.content_priority,
             'category': 'broadcast',
             'name': self.name,
-            'is_broadcast': True
+            'is_broadcast': True,
+            'override_playlist': self.override_playlist,
+            'scheduled_datetime': self.scheduled_datetime.isoformat() if self.scheduled_datetime else None
         }
+    
+    def get_schedule_mode_display(self):
+        if self.schedule_mode == self.SCHEDULE_MODE_SCHEDULED:
+            return "Programmée"
+        return "Immédiate"
+    
+    def get_recurrence_display(self):
+        if self.recurrence_type == self.RECURRENCE_NONE:
+            return "Unique"
+        elif self.recurrence_type == self.RECURRENCE_DAILY:
+            if self.recurrence_interval == 1:
+                return "Tous les jours"
+            return f"Tous les {self.recurrence_interval} jours"
+        elif self.recurrence_type == self.RECURRENCE_WEEKLY:
+            if self.recurrence_interval == 1:
+                return "Toutes les semaines"
+            return f"Toutes les {self.recurrence_interval} semaines"
+        elif self.recurrence_type == self.RECURRENCE_MONTHLY:
+            if self.recurrence_interval == 1:
+                return "Tous les mois"
+            return f"Tous les {self.recurrence_interval} mois"
+        elif self.recurrence_type == self.RECURRENCE_CUSTOM:
+            return "Personnalisée"
+        return "Non définie"
+    
+    def should_trigger_now(self):
+        if self.schedule_mode == self.SCHEDULE_MODE_IMMEDIATE:
+            return self.is_currently_active()
+        
+        if not self.scheduled_datetime:
+            return False
+        
+        now = datetime.now()
+        
+        if self.recurrence_type == self.RECURRENCE_NONE:
+            time_diff = abs((now - self.scheduled_datetime).total_seconds())
+            return time_diff <= 2 and self.is_currently_active()
+        
+        return self._check_recurrence_trigger(now)
+    
+    def _check_recurrence_trigger(self, now):
+        if not self.scheduled_datetime or not self.recurrence_time:
+            return False
+        
+        if self.recurrence_end_date and now.date() > self.recurrence_end_date:
+            return False
+        
+        if now.date() < self.scheduled_datetime.date():
+            return False
+        
+        current_time = now.time()
+        scheduled_time = self.recurrence_time
+        time_diff = abs(
+            (current_time.hour * 3600 + current_time.minute * 60 + current_time.second) -
+            (scheduled_time.hour * 3600 + scheduled_time.minute * 60 + scheduled_time.second)
+        )
+        
+        if time_diff > 2:
+            return False
+        
+        if self.recurrence_type == self.RECURRENCE_DAILY:
+            days_since_start = (now.date() - self.scheduled_datetime.date()).days
+            return days_since_start % self.recurrence_interval == 0
+        
+        elif self.recurrence_type == self.RECURRENCE_WEEKLY:
+            if self.recurrence_days_of_week:
+                days = [int(d) for d in self.recurrence_days_of_week.split(',') if d]
+                return now.weekday() in days
+            weeks_since_start = (now.date() - self.scheduled_datetime.date()).days // 7
+            return weeks_since_start % self.recurrence_interval == 0
+        
+        elif self.recurrence_type == self.RECURRENCE_MONTHLY:
+            months_diff = (now.year - self.scheduled_datetime.year) * 12 + (now.month - self.scheduled_datetime.month)
+            if months_diff % self.recurrence_interval != 0:
+                return False
+            return now.day == self.scheduled_datetime.day
+        
+        return False
+    
+    def get_next_occurrence(self, from_datetime=None):
+        if from_datetime is None:
+            from_datetime = datetime.now()
+        
+        if self.schedule_mode == self.SCHEDULE_MODE_IMMEDIATE:
+            return None
+        
+        if not self.scheduled_datetime:
+            return None
+        
+        if self.recurrence_type == self.RECURRENCE_NONE:
+            if self.scheduled_datetime > from_datetime:
+                return self.scheduled_datetime
+            return None
+        
+        if self.recurrence_end_date and from_datetime.date() > self.recurrence_end_date:
+            return None
+        
+        base_time = self.recurrence_time or self.scheduled_datetime.time()
+        check_date = max(from_datetime.date(), self.scheduled_datetime.date())
+        
+        for i in range(366):
+            candidate = datetime.combine(check_date + timedelta(days=i), base_time)
+            
+            if candidate <= from_datetime:
+                continue
+            
+            if self.recurrence_end_date and candidate.date() > self.recurrence_end_date:
+                return None
+            
+            if self._is_valid_recurrence_date(candidate):
+                return candidate
+        
+        return None
+    
+    def _is_valid_recurrence_date(self, dt):
+        if dt.date() < self.scheduled_datetime.date():
+            return False
+        
+        if self.recurrence_type == self.RECURRENCE_DAILY:
+            days_since_start = (dt.date() - self.scheduled_datetime.date()).days
+            return days_since_start % self.recurrence_interval == 0
+        
+        elif self.recurrence_type == self.RECURRENCE_WEEKLY:
+            if self.recurrence_days_of_week:
+                days = [int(d) for d in self.recurrence_days_of_week.split(',') if d]
+                return dt.weekday() in days
+            weeks_since_start = (dt.date() - self.scheduled_datetime.date()).days // 7
+            return weeks_since_start % self.recurrence_interval == 0
+        
+        elif self.recurrence_type == self.RECURRENCE_MONTHLY:
+            months_diff = (dt.year - self.scheduled_datetime.year) * 12 + (dt.month - self.scheduled_datetime.month)
+            if months_diff % self.recurrence_interval != 0:
+                return False
+            return dt.day == self.scheduled_datetime.day
+        
+        return True

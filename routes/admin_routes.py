@@ -1218,20 +1218,62 @@ def broadcast_new():
         
         broadcast.is_active = 'is_active' in request.form
         
-        start_datetime_str = request.form.get('start_datetime', '')
-        end_datetime_str = request.form.get('end_datetime', '')
+        schedule_mode = request.form.get('schedule_mode', 'immediate')
+        broadcast.schedule_mode = schedule_mode
         
-        if start_datetime_str:
-            try:
-                broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
-            except ValueError:
-                pass
-        
-        if end_datetime_str:
-            try:
-                broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
-            except ValueError:
-                pass
+        if schedule_mode == 'scheduled':
+            scheduled_datetime_str = request.form.get('scheduled_datetime', '')
+            if scheduled_datetime_str:
+                try:
+                    broadcast.scheduled_datetime = datetime.fromisoformat(scheduled_datetime_str)
+                except ValueError:
+                    pass
+            
+            schedule_priority = request.form.get('schedule_priority', '100')
+            broadcast.schedule_priority = int(schedule_priority) if schedule_priority else 100
+            broadcast.override_playlist = 'override_playlist' in request.form
+            
+            recurrence_type = request.form.get('recurrence_type', 'none')
+            broadcast.recurrence_type = recurrence_type
+            
+            if recurrence_type != 'none':
+                recurrence_interval = request.form.get('recurrence_interval', '1')
+                broadcast.recurrence_interval = int(recurrence_interval) if recurrence_interval else 1
+                
+                recurrence_time_str = request.form.get('recurrence_time', '')
+                if recurrence_time_str:
+                    try:
+                        from datetime import time as dt_time
+                        time_parts = recurrence_time_str.split(':')
+                        broadcast.recurrence_time = dt_time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]) if len(time_parts) > 2 else 0)
+                    except (ValueError, IndexError):
+                        pass
+                
+                recurrence_end_date_str = request.form.get('recurrence_end_date', '')
+                if recurrence_end_date_str:
+                    try:
+                        broadcast.recurrence_end_date = datetime.strptime(recurrence_end_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        pass
+                
+                if recurrence_type == 'weekly' or recurrence_type == 'custom':
+                    days = request.form.getlist('recurrence_days[]')
+                    broadcast.recurrence_days_of_week = ','.join(days) if days else None
+        else:
+            start_datetime_str = request.form.get('start_datetime', '')
+            end_datetime_str = request.form.get('end_datetime', '')
+            
+            if start_datetime_str:
+                try:
+                    broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
+                except ValueError:
+                    pass
+            
+            if end_datetime_str:
+                try:
+                    broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
+                except ValueError:
+                    pass
         
         db.session.add(broadcast)
         db.session.commit()
@@ -1379,23 +1421,87 @@ def broadcast_edit(broadcast_id):
         
         broadcast.is_active = 'is_active' in request.form
         
-        start_datetime_str = request.form.get('start_datetime', '')
-        end_datetime_str = request.form.get('end_datetime', '')
+        schedule_mode = request.form.get('schedule_mode', 'immediate')
+        broadcast.schedule_mode = schedule_mode
         
-        broadcast.start_datetime = None
-        broadcast.end_datetime = None
-        
-        if start_datetime_str:
-            try:
-                broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
-            except ValueError:
-                pass
-        
-        if end_datetime_str:
-            try:
-                broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
-            except ValueError:
-                pass
+        if schedule_mode == 'scheduled':
+            scheduled_datetime_str = request.form.get('scheduled_datetime', '')
+            if scheduled_datetime_str:
+                try:
+                    broadcast.scheduled_datetime = datetime.fromisoformat(scheduled_datetime_str)
+                except ValueError:
+                    pass
+            else:
+                broadcast.scheduled_datetime = None
+            
+            schedule_priority = request.form.get('schedule_priority', '100')
+            broadcast.schedule_priority = int(schedule_priority) if schedule_priority else 100
+            broadcast.override_playlist = 'override_playlist' in request.form
+            
+            recurrence_type = request.form.get('recurrence_type', 'none')
+            broadcast.recurrence_type = recurrence_type
+            
+            if recurrence_type != 'none':
+                recurrence_interval = request.form.get('recurrence_interval', '1')
+                broadcast.recurrence_interval = int(recurrence_interval) if recurrence_interval else 1
+                
+                recurrence_time_str = request.form.get('recurrence_time', '')
+                if recurrence_time_str:
+                    try:
+                        from datetime import time as dt_time
+                        time_parts = recurrence_time_str.split(':')
+                        broadcast.recurrence_time = dt_time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]) if len(time_parts) > 2 else 0)
+                    except (ValueError, IndexError):
+                        pass
+                else:
+                    broadcast.recurrence_time = None
+                
+                recurrence_end_date_str = request.form.get('recurrence_end_date', '')
+                if recurrence_end_date_str:
+                    try:
+                        broadcast.recurrence_end_date = datetime.strptime(recurrence_end_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        pass
+                else:
+                    broadcast.recurrence_end_date = None
+                
+                if recurrence_type == 'weekly' or recurrence_type == 'custom':
+                    days = request.form.getlist('recurrence_days[]')
+                    broadcast.recurrence_days_of_week = ','.join(days) if days else None
+                else:
+                    broadcast.recurrence_days_of_week = None
+            else:
+                broadcast.recurrence_interval = 1
+                broadcast.recurrence_time = None
+                broadcast.recurrence_end_date = None
+                broadcast.recurrence_days_of_week = None
+        else:
+            broadcast.scheduled_datetime = None
+            broadcast.schedule_priority = 100
+            broadcast.override_playlist = False
+            broadcast.recurrence_type = 'none'
+            broadcast.recurrence_interval = 1
+            broadcast.recurrence_time = None
+            broadcast.recurrence_end_date = None
+            broadcast.recurrence_days_of_week = None
+            
+            start_datetime_str = request.form.get('start_datetime', '')
+            end_datetime_str = request.form.get('end_datetime', '')
+            
+            broadcast.start_datetime = None
+            broadcast.end_datetime = None
+            
+            if start_datetime_str:
+                try:
+                    broadcast.start_datetime = datetime.fromisoformat(start_datetime_str)
+                except ValueError:
+                    pass
+            
+            if end_datetime_str:
+                try:
+                    broadcast.end_datetime = datetime.fromisoformat(end_datetime_str)
+                except ValueError:
+                    pass
         
         db.session.commit()
         
