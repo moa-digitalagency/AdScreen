@@ -145,32 +145,47 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 
 ## Diffusions (Broadcasts) de démonstration
 
-4 diffusions centralisées créées par le superadmin :
+5 diffusions centralisées créées par le superadmin avec différents modes de programmation :
 
-| Nom | Type de ciblage | Cible | Type overlay | Position |
-|-----|----------------|-------|--------------|----------|
-| Promotion Été France | Pays | France (FR) | Ticker | Header |
-| Message Marrakech | Ville | Marrakech (MA) | Ticker | Footer |
-| Promo Centre Atlantis | Établissement | Centre Commercial Atlantis | Ticker | Body |
-| Info Écran Beach | Écran | Écran Beach Bar (Dakar) | Ticker | Header |
+| Nom | Ciblage | Mode | Récurrence | Priorité |
+|-----|---------|------|------------|----------|
+| Promotion Été France | Pays: FR | Immédiat | - | 100 |
+| Message Marrakech | Ville: Marrakech | Immédiat | - | 100 |
+| Promo Centre Atlantis | Établissement | Programmé | Quotidien 12h | 150 |
+| Info Écran Beach | Écran spécifique | Programmé | Hebdo ven/sam 18h | 200 |
+| Promo Mensuelle Tunisie | Pays: TN | Programmé | Mensuel 9h | 120 |
 
 ### Détail des diffusions
 
 1. **Promotion Été France** (pays: FR)
+   - Mode: Immédiat (actif dès activation)
    - Message: "Soldes d'été -30% sur toutes les publicités!"
-   - Affecte: 5 écrans (Le Bistrot Parisien, Bar Le Central, Atlantis)
+   - Affecte: 5+ écrans en France
+   - Priorité: 100 (standard)
 
 2. **Message Marrakech** (ville: Marrakech)
+   - Mode: Immédiat
    - Message bilingue arabe/français
    - Affecte: 2 écrans (Café Marrakech)
+   - Priorité: 100 (standard)
 
 3. **Promo Centre Atlantis** (établissement)
+   - Mode: Programmé avec récurrence quotidienne à 12h
    - Message: Nouveau magasin Apple ouvert
    - Affecte: 2 écrans (Totem Hall A, Food Court)
+   - Priorité: 150 (haute) + Override playlist activé
 
 4. **Info Écran Beach** (écran spécifique)
+   - Mode: Programmé avec récurrence hebdomadaire (vendredi, samedi à 18h)
    - Message: Soirée spéciale DJ set
    - Affecte: 1 écran (Beach Bar Dakar)
+   - Priorité: 200 (maximale)
+
+5. **Promo Mensuelle Tunisie** (pays: TN)
+   - Mode: Programmé avec récurrence mensuelle à 9h
+   - Message: Offre spéciale du 1er du mois
+   - Affecte: 1 écran (Tunisian Café)
+   - Priorité: 120 (élevée)
 
 ## Scénarios de test
 

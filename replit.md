@@ -44,7 +44,12 @@ Not specified.
         - **Targeting modes**: Country, city, organization, or specific screen
         - **Organization type targeting**: Filter by paid establishments only, free establishments only, or all
         - **Content types**: Overlay (ticker, image, corner) or playlist content
-        - **Scheduling**: Optional start/end datetime for timed broadcasts
+        - **Scheduling modes**: Immediate (instant activation) or Scheduled (specific datetime)
+        - **Advanced scheduling** (December 2025):
+            - **Recurrence patterns**: One-time, daily, weekly (with day selection), monthly
+            - **Priority system**: Configurable 20-200 (higher priority plays first)
+            - **Override playlist**: Option to shift existing content for scheduled broadcasts
+            - **Recurrence configuration**: Interval, end date, time of day, days of week
         - **Hierarchical targeting**: Selecting a country affects all active screens in that country
         - **Integration**: Broadcasts automatically appear in player API responses when active
     - **Multi-tenant Support**:

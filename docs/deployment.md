@@ -269,6 +269,10 @@ Vérifiez que :
 2. Les dates de début/fin sont valides (ou nulles)
 3. Le ciblage correspond à l'écran (pays, ville, établissement, écran)
 4. Le player a rafraîchi sa playlist (toutes les 30 secondes)
+5. Pour les diffusions programmées :
+   - Le mode est 'scheduled' et la date/heure est passée
+   - La récurrence est correctement configurée (type, intervalle, jours)
+   - La priorité est suffisante pour apparaître dans la playlist
 
 ## Support
 

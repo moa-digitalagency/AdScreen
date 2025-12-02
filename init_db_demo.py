@@ -647,6 +647,8 @@ def create_demo_data():
         
         logger.info("📡 Création des diffusions (broadcasts) de démonstration...")
         
+        from datetime import time as dt_time
+        
         broadcast1 = Broadcast(
             name='Promotion Été France',
             target_type='country',
@@ -660,6 +662,8 @@ def create_demo_data():
             overlay_font_size=28,
             overlay_scroll_speed=60,
             is_active=True,
+            schedule_mode='immediate',
+            priority=100,
             created_by=superadmin.id
         )
         db.session.add(broadcast1)
@@ -678,6 +682,8 @@ def create_demo_data():
             overlay_font_size=26,
             overlay_scroll_speed=50,
             is_active=True,
+            schedule_mode='immediate',
+            priority=100,
             created_by=superadmin.id
         )
         db.session.add(broadcast2)
@@ -695,6 +701,13 @@ def create_demo_data():
             overlay_font_size=30,
             overlay_scroll_speed=55,
             is_active=True,
+            schedule_mode='scheduled',
+            scheduled_datetime=datetime.now() + timedelta(hours=2),
+            priority=150,
+            override_playlist=True,
+            recurrence_type='daily',
+            recurrence_interval=1,
+            recurrence_time=dt_time(12, 0, 0),
             created_by=superadmin.id
         )
         db.session.add(broadcast3)
@@ -712,9 +725,39 @@ def create_demo_data():
             overlay_font_size=24,
             overlay_scroll_speed=65,
             is_active=True,
+            schedule_mode='scheduled',
+            scheduled_datetime=datetime.now() + timedelta(days=1),
+            priority=200,
+            recurrence_type='weekly',
+            recurrence_interval=1,
+            recurrence_days_of_week='friday,saturday',
+            recurrence_time=dt_time(18, 0, 0),
             created_by=superadmin.id
         )
         db.session.add(broadcast4)
+        
+        broadcast5 = Broadcast(
+            name='Promo Mensuelle Tunisie',
+            target_type='country',
+            target_country='TN',
+            broadcast_type='overlay',
+            overlay_type='ticker',
+            overlay_message='🎁 Offre spéciale du mois - Publicité gratuite le 1er de chaque mois!',
+            overlay_position='footer',
+            overlay_background_color='#7c3aed',
+            overlay_text_color='#ffffff',
+            overlay_font_size=26,
+            overlay_scroll_speed=55,
+            is_active=True,
+            schedule_mode='scheduled',
+            scheduled_datetime=datetime.now().replace(day=1) + timedelta(days=30),
+            priority=120,
+            recurrence_type='monthly',
+            recurrence_interval=1,
+            recurrence_time=dt_time(9, 0, 0),
+            created_by=superadmin.id
+        )
+        db.session.add(broadcast5)
         
         db.session.commit()
         
@@ -773,11 +816,12 @@ def create_demo_data():
        • Beach Bar Dakar (header) - Happy Hour FCFA
        • Café Habib Tunis (footer) - Services
     
-    📡 DIFFUSIONS (BROADCASTS) DE DÉMONSTRATION (4):
-       • Promotion Été France (pays: FR) - Bandeau header
-       • Message Marrakech (ville: Marrakech) - Bandeau footer
-       • Promo Centre Atlantis (établissement) - Bandeau body
-       • Info Écran Beach (écran spécifique) - Bandeau header
+    📡 DIFFUSIONS (BROADCASTS) DE DÉMONSTRATION (5):
+       • Promotion Été France (pays: FR) - Immédiat, priorité 100
+       • Message Marrakech (ville: Marrakech) - Immédiat, priorité 100
+       • Promo Centre Atlantis (établissement) - Programmé, quotidien 12h, priorité 150
+       • Info Écran Beach (écran spécifique) - Programmé, hebdo ven/sam 18h, priorité 200
+       • Promo Mensuelle Tunisie (pays: TN) - Programmé, mensuel 9h, priorité 120
     
     ════════════════════════════════════════════════════════════════
         """)

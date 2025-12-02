@@ -36,8 +36,10 @@ Plateforme SaaS permettant aux établissements (bars, restaurants, centres comme
 - Diffusion centralisée par le superadmin
 - Ciblage par pays, ville, établissement ou écran spécifique
 - Types: Overlay (bandeau) ou contenu playlist
+- **Modes de programmation**: Immédiat ou Programmé avec date/heure exacte
+- **Système de récurrence**: Unique, quotidien, hebdomadaire (jours sélectionnables), mensuel
+- **Priorité configurable** (20-200) avec option override pour décaler la playlist
 - Programmation avec dates de début/fin
-- Priorité haute dans la playlist (200)
 
 ### Créneaux horaires
 - Slots configurables avec prix calculés automatiquement
@@ -157,12 +159,13 @@ Mot de passe player pour tous les écrans : `screen123`
 
 ### Diffusions de démonstration
 
-| Nom | Ciblage | Écrans affectés |
-|-----|---------|-----------------|
-| Promotion Été France | Pays: FR | 5 écrans |
-| Message Marrakech | Ville: Marrakech | 2 écrans |
-| Promo Centre Atlantis | Établissement | 2 écrans |
-| Info Écran Beach | Écran spécifique | 1 écran |
+| Nom | Ciblage | Mode | Récurrence |
+|-----|---------|------|------------|
+| Promotion Été France | Pays: FR | Immédiat | - |
+| Message Marrakech | Ville: Marrakech | Immédiat | - |
+| Promo Centre Atlantis | Établissement | Programmé | Quotidien 12h |
+| Info Écran Beach | Écran spécifique | Programmé | Hebdo ven/sam |
+| Promo Mensuelle Tunisie | Pays: TN | Programmé | Mensuel |
 
 ## Structure du projet
 
@@ -237,9 +240,13 @@ Les superadmins peuvent diffuser du contenu vers plusieurs écrans :
 3. Créez une nouvelle diffusion
 4. Choisissez le ciblage (pays, ville, établissement, écran)
 5. Configurez le type (overlay ou contenu)
-6. Activez la diffusion
+6. **Choisissez le mode de programmation**:
+   - **Immédiat**: Diffusion active dès activation
+   - **Programmé**: Définir date/heure + récurrence optionnelle
+7. **Définissez la priorité** (20-200) et l'option override
+8. Activez la diffusion
 
-Les diffusions apparaissent automatiquement sur les players ciblés.
+Les diffusions apparaissent automatiquement sur les players ciblés selon leur programmation.
 
 ## Système de reçus
 

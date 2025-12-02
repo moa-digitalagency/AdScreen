@@ -197,22 +197,44 @@ Les superadmins peuvent diffuser du contenu vers plusieurs écrans simultanémen
 | Type | Description | Priorité playlist |
 |------|-------------|------------------|
 | Overlay | Bandeau défilant superposé | N/A (superposition) |
-| Contenu | S'intègre dans la playlist | 200 (haute priorité) |
+| Contenu | S'intègre dans la playlist | Configurable (20-200) |
 
 **Types d'overlay disponibles**
 - Ticker : Bandeau défilant horizontal
 - Image : Image en position fixe
 - Corner : Logo/image en coin d'écran
 
-**Programmation**
-- Date/heure de début (optionnel)
-- Date/heure de fin (optionnel)
-- Activation/désactivation manuelle
+**Modes de programmation (NOUVEAU)**
+
+| Mode | Description | Usage |
+|------|-------------|-------|
+| Immédiat | Diffusion instantanée dès activation | Annonces urgentes |
+| Programmé | Déclenchement à date/heure précise | Événements planifiés |
+
+**Système de récurrence (NOUVEAU)**
+
+| Type | Description | Exemple |
+|------|-------------|---------|
+| Unique | Une seule diffusion | Événement ponctuel |
+| Quotidien | Répétition chaque jour | Promo du jour |
+| Hebdomadaire | Jours de la semaine sélectionnés | Happy Hour vendredi/samedi |
+| Mensuel | Répétition mensuelle | Offre du 1er du mois |
+
+**Priorité et Override (NOUVEAU)**
+
+| Priorité | Usage | Override |
+|----------|-------|----------|
+| 20-50 | Fillers, contenu de fond | Non |
+| 80-100 | Contenu standard | Non |
+| 100-150 | Contenu prioritaire | Optionnel |
+| 150-200 | Contenu urgent | Oui (décale la playlist) |
+
+L'option "Override playlist" permet de décaler temporairement les contenus existants pour insérer la diffusion à l'heure exacte programmée.
 
 **Cascade hiérarchique**
 - Sélectionner "France" affecte tous les écrans en France
 - Les diffusions s'additionnent aux overlays locaux
-- Priorité : Broadcasts > Overlays locaux pour éviter les conflits
+- Priorité configurable pour contrôler l'ordre d'affichage
 
 ### Génération de reçus
 

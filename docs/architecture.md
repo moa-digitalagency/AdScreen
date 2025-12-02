@@ -227,7 +227,21 @@ Le modèle `Broadcast` permet aux superadmins de pousser du contenu vers les éc
 
 Types de diffusion :
 - **Overlay** : Bandeau défilant (ticker), image, coin
-- **Content** : Contenu intégré à la playlist (priorité 200)
+- **Content** : Contenu intégré à la playlist (priorité configurable)
+
+**Programmation avancée (NOUVEAU)**
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| schedule_mode | VARCHAR(20) | 'immediate' ou 'scheduled' |
+| scheduled_datetime | TIMESTAMP | Date/heure de déclenchement |
+| priority | INTEGER | Priorité 20-200 (défaut: 100) |
+| override_playlist | BOOLEAN | Décaler les contenus existants |
+| recurrence_type | VARCHAR(20) | 'none', 'daily', 'weekly', 'monthly' |
+| recurrence_interval | INTEGER | Intervalle de répétition |
+| recurrence_days_of_week | VARCHAR(50) | Jours pour récurrence hebdo |
+| recurrence_time | TIME | Heure de déclenchement récurrent |
+| recurrence_end_date | DATE | Date de fin de récurrence |
 
 ### Devises supportées
 
