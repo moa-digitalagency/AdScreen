@@ -1,4 +1,4 @@
-modules = ["web", "python-3.11", "nodejs-20", "postgresql-16"]
+modules = ["web", "python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-25_05"
@@ -49,9 +49,19 @@ localPort = 43659
 externalPort = 3002
 
 [[ports]]
+localPort = 44981
+externalPort = 4200
+
+[[ports]]
 localPort = 45397
 externalPort = 3003
 
 [[ports]]
 localPort = 46475
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+SUPERADMIN_EMAIL = "admin@example.com"
+SUPERADMIN_PASSWORD = "changeme123"
