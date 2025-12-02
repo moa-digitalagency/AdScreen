@@ -13,14 +13,24 @@
 |----------|-------------|-------------|
 | `DATABASE_URL` | URL de connexion PostgreSQL | Oui |
 | `SESSION_SECRET` | Clé secrète pour les sessions Flask | Oui |
+| `SUPERADMIN_EMAIL` | Email du super-administrateur | Oui |
+| `SUPERADMIN_PASSWORD` | Mot de passe du super-administrateur | Oui |
 | `UPLOAD_FOLDER` | Chemin du dossier uploads (défaut: static/uploads) | Non |
 | `REPLIT_DEV_DOMAIN` | Domaine Replit (auto-configuré) | Non |
+
+### Configuration du Super-Administrateur
+
+Les identifiants du super-administrateur sont stockés de manière sécurisée via des variables d'environnement. **Ne jamais écrire ces identifiants en clair dans le code source.**
+
+Au démarrage de l'application, le super-administrateur est automatiquement créé ou mis à jour avec les identifiants fournis.
 
 ### Exemple de configuration
 
 ```bash
 export DATABASE_URL="postgresql://user:password@localhost:5432/shabaka_adscreen"
 export SESSION_SECRET="votre-cle-secrete-tres-longue-et-aleatoire"
+export SUPERADMIN_EMAIL="admin@votre-domaine.com"
+export SUPERADMIN_PASSWORD="mot-de-passe-securise"
 ```
 
 ## Installation

@@ -98,7 +98,11 @@ Configurer les variables d'environnement :
 ```bash
 DATABASE_URL=postgresql://user:password@localhost:5432/shabaka_adscreen
 SESSION_SECRET=your-secret-key-here
+SUPERADMIN_EMAIL=admin@votre-domaine.com
+SUPERADMIN_PASSWORD=mot-de-passe-securise
 ```
+
+**Important** : Les identifiants du super-administrateur doivent être stockés dans des variables d'environnement, jamais en clair dans le code.
 
 ### 4. Initialiser la base de données
 
@@ -205,12 +209,22 @@ POST /api/log-play/<screen_code>    # Log de diffusion
 ## Espace Admin
 
 Dans l'espace admin (`/admin`), vous pouvez configurer :
-- Établissements et écrans
+- Établissements (payants ou gratuits) et écrans
+- **Gestion des administrateurs** avec permissions granulaires
 - Numéro WhatsApp pour recevoir les demandes d'inscription
 - Commissions par défaut/min/max
 - Paramètres SEO
 - Mode maintenance
 - **Diffusions (Broadcasts)** : Pousser du contenu vers les écrans ciblés
+
+### Types d'établissements
+
+- **Payant** : Accès complet (réservations, facturation, créneaux, périodes, contenus internes, overlays)
+- **Gratuit** : Fonctionnalités limitées (contenus internes et overlays uniquement)
+
+### Gestion des administrateurs
+
+Le superadmin peut créer d'autres administrateurs avec des permissions spécifiques pour chaque menu (tableau de bord, établissements, écrans, diffusions, statistiques, facturation, demandes, paramètres, utilisateurs).
 
 ## Système de diffusion (Broadcast)
 

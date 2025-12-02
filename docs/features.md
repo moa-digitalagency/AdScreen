@@ -13,6 +13,7 @@ Gestion globale de la plateforme.
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
 | Gestion établissements | Disponible | Créer, modifier, suspendre des établissements |
+| **Types établissements** | Disponible | Payant (accès complet) ou Gratuit (fonctionnalités limitées) |
 | Configuration commissions | Disponible | Définir le taux de commission par établissement |
 | Plans d'abonnement | Disponible | Assigner des plans (basic, premium, enterprise) |
 | Multi-devises | Disponible | Support EUR, MAD, XOF, TND |
@@ -22,6 +23,8 @@ Gestion globale de la plateforme.
 | Mode maintenance | Disponible | Activation/désactivation |
 | **Diffusion (Broadcast)** | Disponible | Pousser du contenu vers les écrans ciblés |
 | Facturation hebdomadaire | Disponible | Génération automatique des factures |
+| **Gestion Admins** | Disponible | Créer des administrateurs avec permissions |
+| **Permissions granulaires** | Disponible | Accès menu par menu pour chaque admin |
 | Liste noire contenus | Prévu | Bloquer des contenus ou IP abusives |
 | Audit logs | Prévu | Traçabilité des actions |
 
@@ -144,7 +147,39 @@ Les overlays permettent d'afficher des informations superposées sur le player :
 - Par durée : Afficher pendant X secondes
 - Par passage : Afficher X fois par jour/période
 
-### Système de diffusion (Broadcast) - NOUVEAU
+### Types d'établissements
+
+La plateforme permet de distinguer deux types d'établissements :
+
+**Établissement Payant**
+- Accès complet à toutes les fonctionnalités
+- Réservations, facturation, créneaux, périodes
+- Contenus internes et overlays
+- Statistiques avancées
+
+**Établissement Gratuit**
+- Fonctionnalités limitées aux contenus internes et overlays
+- Pas de réservations ni de facturation
+- Pas de configuration des créneaux payants
+- Commission à 0%
+
+### Gestion des Administrateurs
+
+Le superadmin peut créer d'autres administrateurs avec des permissions granulaires :
+
+| Permission | Description |
+|------------|-------------|
+| dashboard | Accès au tableau de bord |
+| organizations | Gestion des établissements |
+| screens | Gestion des écrans |
+| broadcasts | Gestion des diffusions |
+| stats | Accès aux statistiques |
+| billing | Gestion de la facturation |
+| registration_requests | Gestion des demandes |
+| settings | Paramètres du site |
+| users | Gestion des administrateurs |
+
+### Système de diffusion (Broadcast)
 
 Les superadmins peuvent diffuser du contenu vers plusieurs écrans simultanément :
 
