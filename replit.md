@@ -38,8 +38,14 @@ Not specified.
     - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
     - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
-    - **Playlist Priorities**: Paid content (100) > Internal content (80) > Fillers/Demos (20).
+    - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
     - **Overlay System**: Comprehensive configuration for tickers (header, body, footer) and image overlays (all positions + custom X/Y, size, opacity), with real-time previews.
+    - **Broadcast/Diffusion System**: Superadmin feature to push content to connected screens based on geographic and organizational targeting:
+        - **Targeting modes**: Country, city, organization, or specific screen
+        - **Content types**: Overlay (ticker, image, corner) or playlist content
+        - **Scheduling**: Optional start/end datetime for timed broadcasts
+        - **Hierarchical targeting**: Selecting a country affects all active screens in that country
+        - **Integration**: Broadcasts automatically appear in player API responses when active
     - **Featured Screens**: Super-admins can mark screens for homepage display.
     - **Custom QR Codes**: Simple black/white or detailed QR codes with establishment/screen info.
     - **Advanced Site Settings**: SEO (title, description, keywords, OG image, favicon, Google Analytics), social media links, custom `<head>` code injection, contact info.
