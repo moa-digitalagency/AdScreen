@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Shabaka AdScreen est une application web Flask suivant une architecture MVC (Model-View-Controller) avec une séparation claire des responsabilités. La plateforme supporte la gestion multi-établissements, les opérations multi-devises (EUR, MAD, XOF, TND), et un système de réservation QR code.
+Shabaka AdScreen est une application web Flask suivant une architecture MVC (Model-View-Controller) avec une séparation claire des responsabilités. La plateforme supporte la gestion multi-établissements, les opérations multi-devises (EUR, MAD, XOF, TND), un système de réservation QR code, et un système de diffusion (broadcast) pour pousser du contenu vers les écrans.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -45,6 +45,9 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 │  └─────────┘ └─────────┘ └────────┘ └─────────────────────────┘ │
 │  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
 │  │ScreenOverlay  │ │ SiteSetting │ │ RegistrationRequest      │ │
+│  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
+│  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
+│  │  Broadcast    │ │   Invoice   │ │     PaymentProof         │ │
 │  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -112,11 +115,14 @@ shabaka-adscreen/
 │   ├── heartbeat_log.py      # Logs connexion
 │   ├── screen_overlay.py     # Bandeaux/overlays
 │   ├── site_setting.py       # Configuration globale
-│   └── registration_request.py # Demandes inscription
+│   ├── registration_request.py # Demandes inscription
+│   ├── invoice.py            # Factures hebdomadaires
+│   ├── payment_proof.py      # Preuves de paiement
+│   └── broadcast.py          # Diffusions centralisées
 │
 ├── routes/                   # Blueprints Flask
 │   ├── auth_routes.py        # Authentification
-│   ├── admin_routes.py       # Superadmin
+│   ├── admin_routes.py       # Superadmin + Broadcasts
 │   ├── org_routes.py         # Établissement
 │   ├── screen_routes.py      # Config écrans
 │   ├── booking_routes.py     # Réservations
@@ -135,11 +141,13 @@ shabaka-adscreen/
 │   ├── image_utils.py        # Traitement images
 │   ├── video_utils.py        # Traitement vidéos
 │   ├── world_data.py         # Données pays/villes (208 pays, 4600+ villes)
-│   └── currencies.py         # Gestion devises et taux de change
+│   ├── currencies.py         # Gestion devises et taux de change
+│   └── countries.py          # Noms des pays pour affichage
 │
 ├── templates/                # Templates Jinja2
 │   ├── base.html
 │   ├── admin/
+│   │   └── broadcasts/       # Gestion diffusions
 │   ├── org/
 │   ├── booking/
 │   └── player/
@@ -148,7 +156,8 @@ shabaka-adscreen/
 │   └── uploads/              # Fichiers uploadés
 │       ├── contents/         # Contenus clients
 │       ├── fillers/          # Contenus filler
-│       └── internal/         # Contenus internes
+│       ├── internal/         # Contenus internes
+│       └── broadcasts/       # Contenus diffusions
 │
 └── docs/                     # Documentation
     ├── architecture.md
@@ -166,18 +175,25 @@ shabaka-adscreen/
 │   User   │──────▶│ Organization │◀──────│ Screen │
 └──────────┘ 1:N   └──────────────┘  1:N  └────────┘
      │               (multi-devise)           │
-     │                                        │
-     │    ┌───────────────────────────────────┼───────────────────────┐
-     │    │              │           │        │          │            │
-     ▼    ▼              ▼           ▼        ▼          ▼            ▼
+     │                     ▲                  │
+     │                     │                  │
+     │    ┌────────────────┼──────────────────┼───────────────────┐
+     │    │                │         │        │          │        │
+     ▼    ▼                ▼         ▼        ▼          ▼        ▼
 ┌─────────────┐   ┌──────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌─────────┐
 │Registration │   │TimeSlot  │ │TimePeriod│ │Content │ │ Filler │ │ Overlay │
 │  Request    │   └──────────┘ └──────────┘ └────────┘ └────────┘ └─────────┘
 └─────────────┘                                │
                                                ▼
-                                          ┌─────────┐
-                                          │ Booking │
-                                          └─────────┘
+      ┌─────────────┐                     ┌─────────┐
+      │  Broadcast  │────────────────────▶│ Booking │
+      │ (ciblage)   │                     └─────────┘
+      └─────────────┘
+           │
+           ├── Par pays (country)
+           ├── Par ville (city)
+           ├── Par établissement (organization)
+           └── Par écran (screen)
 ```
 
 ### Relations principales
@@ -192,6 +208,22 @@ shabaka-adscreen/
 | Screen → ScreenOverlay | 1:N | Un écran peut avoir plusieurs overlays |
 | Content → Booking | 1:1 | Un contenu a une réservation |
 | Organization → currency | 1:1 | Chaque organisation a sa devise (EUR, MAD, XOF, TND) |
+| Broadcast → Screen/Org/Country/City | 1:N | Une diffusion cible des écrans via hiérarchie |
+
+### Système de diffusion (Broadcast)
+
+Le modèle `Broadcast` permet aux superadmins de pousser du contenu vers les écrans :
+
+| Ciblage | Description | Exemple |
+|---------|-------------|---------|
+| country | Tous les écrans d'un pays | FR → 5 écrans |
+| city | Tous les écrans d'une ville | Marrakech → 2 écrans |
+| organization | Tous les écrans d'un établissement | Atlantis → 2 écrans |
+| screen | Un écran spécifique | Écran Beach Bar → 1 écran |
+
+Types de diffusion :
+- **Overlay** : Bandeau défilant (ticker), image, coin
+- **Content** : Contenu intégré à la playlist (priorité 200)
 
 ### Devises supportées
 
@@ -241,7 +273,7 @@ Client                    Serveur                   Base de données
    │◀────────────────────────│                            │
 ```
 
-### 2. Player écran avec overlays
+### 2. Player écran avec overlays et broadcasts
 
 ```
 Player                    Serveur                   Base de données
@@ -257,8 +289,10 @@ Player                    Serveur                   Base de données
    │────────────────────────▶│                            │
    │                         │  Génération playlist       │
    │                         │  + overlays actifs         │
+   │                         │  + broadcasts actifs       │
    │                         │───────────────────────────▶│
    │   JSON playlist+overlay │◀───────────────────────────│
+   │   + broadcast           │                            │
    │◀────────────────────────│                            │
    │                         │                            │
    │  POST /api/heartbeat    │                            │
@@ -270,7 +304,30 @@ Player                    Serveur                   Base de données
    │◀────────────────────────│                            │
 ```
 
-### 3. Génération reçu thermal
+### 3. Diffusion broadcast
+
+```
+Superadmin                Serveur                   Player(s)
+   │                         │                            │
+   │  POST /admin/broadcast  │                            │
+   │  (création diffusion)   │                            │
+   │────────────────────────▶│                            │
+   │                         │  INSERT broadcast          │
+   │                         │  (ciblage: FR)             │
+   │                         │───────────────────────────▶│
+   │   Diffusion créée       │                            │
+   │◀────────────────────────│                            │
+   │                         │                            │
+   │                         │     [Prochain refresh]     │
+   │                         │◀───────────────────────────│
+   │                         │  GET /api/playlist         │
+   │                         │  (écran FR)                │
+   │                         │───────────────────────────▶│
+   │                         │  Playlist + broadcast      │
+   │                         │◀───────────────────────────│
+```
+
+### 4. Génération reçu thermal
 
 ```
 Client                    Serveur                   Services
@@ -301,6 +358,7 @@ Client                    Serveur                   Services
 - **Vérification de rôle** dans les routes admin/org
 - **Isolation des données** par organisation
 - **Validation CSRF** sur les formulaires
+- **Broadcasts** réservés aux superadmins uniquement
 
 ### Upload de fichiers
 
@@ -318,6 +376,7 @@ Client                    Serveur                   Services
 - **Indexes** sur les colonnes fréquemment requêtées
 - **Streaming** des images reçu (pas de stockage temporaire)
 - **Cache-Control** headers anti-cache pour les reçus
+- **Lazy loading** des broadcasts (chargement à la demande)
 
 ### Améliorations futures
 
@@ -325,6 +384,7 @@ Client                    Serveur                   Services
 - CDN pour les fichiers statiques
 - Pagination sur les listes longues
 - Compression des réponses
+- Cache des compteurs d'écrans ciblés par broadcast
 
 ## Monitoring
 
@@ -342,3 +402,5 @@ Client                    Serveur                   Services
 - Utilisation mémoire/CPU
 - Uptime des écrans
 - Revenus par devise
+- Nombre de broadcasts actifs
+- Écrans ciblés par broadcast

@@ -62,10 +62,11 @@ uv sync
 # Créer la base de données PostgreSQL
 createdb shabaka_adscreen
 
-# Initialiser les tables
+# Initialiser les tables (inclut Broadcast)
 python init_db.py
 
-# Optionnel : créer les données de démonstration (6 organisations, 9 écrans)
+# Optionnel : créer les données de démonstration
+# (6 organisations, 9 écrans, 4 diffusions)
 python init_db_demo.py
 ```
 
@@ -75,6 +76,7 @@ python init_db_demo.py
 mkdir -p static/uploads/contents
 mkdir -p static/uploads/fillers
 mkdir -p static/uploads/internal
+mkdir -p static/uploads/broadcasts
 chmod -R 755 static/uploads
 ```
 
@@ -198,6 +200,7 @@ gunicorn main:app 2>&1 | tee -a /var/log/shabaka-adscreen/app.log
 
 - **Santé** : `GET /` doit retourner 200
 - **Player** : `GET /player` doit afficher le formulaire de connexion
+- **Admin** : `GET /admin` doit rediriger vers login
 - **Base de données** : `python init_db.py --check`
 
 ### Métriques clés
@@ -206,6 +209,7 @@ gunicorn main:app 2>&1 | tee -a /var/log/shabaka-adscreen/app.log
 - Nombre de réservations par jour
 - Revenus par devise (EUR, MAD, XOF, TND)
 - Temps de validation des contenus
+- Diffusions actives et écrans ciblés
 
 ## Troubleshooting
 
@@ -223,7 +227,7 @@ python init_db.py --check
 ### Erreur d'upload de fichiers
 
 Vérifiez que :
-1. Les dossiers `static/uploads/*` existent
+1. Les dossiers `static/uploads/*` existent (contents, fillers, internal, broadcasts)
 2. Les permissions sont correctes (755)
 3. `MAX_CONTENT_LENGTH` est suffisant dans `app.py`
 
@@ -247,6 +251,14 @@ Vérifiez que :
 1. L'organisation a une devise configurée (currency)
 2. Le pays est défini (country)
 3. Les symboles sont corrects dans `models/organization.py`
+
+### Diffusions non affichées sur le player
+
+Vérifiez que :
+1. La diffusion est active (`is_active = True`)
+2. Les dates de début/fin sont valides (ou nulles)
+3. Le ciblage correspond à l'écran (pays, ville, établissement, écran)
+4. Le player a rafraîchi sa playlist (toutes les 30 secondes)
 
 ## Support
 

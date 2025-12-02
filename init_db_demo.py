@@ -17,7 +17,8 @@ def create_demo_data():
     from models import (
         User, Organization, Screen, TimeSlot, TimePeriod,
         Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof
+        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
+        Broadcast
     )
     
     with app.app_context():
@@ -590,6 +591,77 @@ def create_demo_data():
         )
         db.session.add(overlay7)
         
+        logger.info("📡 Création des diffusions (broadcasts) de démonstration...")
+        
+        broadcast1 = Broadcast(
+            name='Promotion Été France',
+            target_type='country',
+            target_country='FR',
+            broadcast_type='overlay',
+            overlay_type='ticker',
+            overlay_message='🌞 Soldes d\'été -30% sur toutes les publicités! Réservez maintenant!',
+            overlay_position='header',
+            overlay_background_color='#f97316',
+            overlay_text_color='#ffffff',
+            overlay_font_size=28,
+            overlay_scroll_speed=60,
+            is_active=True,
+            created_by=superadmin.id
+        )
+        db.session.add(broadcast1)
+        
+        broadcast2 = Broadcast(
+            name='Message Marrakech',
+            target_type='city',
+            target_country='MA',
+            target_city='Marrakech',
+            broadcast_type='overlay',
+            overlay_type='ticker',
+            overlay_message='مراكش ترحب بكم - Marrakech vous accueille! Festival des arts 2024',
+            overlay_position='footer',
+            overlay_background_color='#dc2626',
+            overlay_text_color='#ffffff',
+            overlay_font_size=26,
+            overlay_scroll_speed=50,
+            is_active=True,
+            created_by=superadmin.id
+        )
+        db.session.add(broadcast2)
+        
+        broadcast3 = Broadcast(
+            name='Promo Centre Atlantis',
+            target_type='organization',
+            target_organization_id=org3.id,
+            broadcast_type='overlay',
+            overlay_type='ticker',
+            overlay_message='Centre Commercial Atlantis - Nouveau magasin Apple ouvert! Venez découvrir.',
+            overlay_position='body',
+            overlay_background_color='#2563eb',
+            overlay_text_color='#ffffff',
+            overlay_font_size=30,
+            overlay_scroll_speed=55,
+            is_active=True,
+            created_by=superadmin.id
+        )
+        db.session.add(broadcast3)
+        
+        broadcast4 = Broadcast(
+            name='Info Écran Beach',
+            target_type='screen',
+            target_screen_id=screen8.id,
+            broadcast_type='overlay',
+            overlay_type='ticker',
+            overlay_message='🏖️ Soirée spéciale ce soir! DJ set à partir de 20h - Teranga Beach Bar',
+            overlay_position='header',
+            overlay_background_color='#16a34a',
+            overlay_text_color='#ffffff',
+            overlay_font_size=24,
+            overlay_scroll_speed=65,
+            is_active=True,
+            created_by=superadmin.id
+        )
+        db.session.add(broadcast4)
+        
         db.session.commit()
         
         print("""
@@ -637,6 +709,12 @@ def create_demo_data():
        • Beach Bar Dakar (header) - Happy Hour FCFA
        • Café Habib Tunis (footer) - Services
     
+    📡 DIFFUSIONS (BROADCASTS) DE DÉMONSTRATION (4):
+       • Promotion Été France (pays: FR) - Bandeau header
+       • Message Marrakech (ville: Marrakech) - Bandeau footer
+       • Promo Centre Atlantis (établissement) - Bandeau body
+       • Info Écran Beach (écran spécifique) - Bandeau header
+    
     ════════════════════════════════════════════════════════════════
         """)
         
@@ -653,7 +731,7 @@ def clear_demo_data():
         
         # Drop tables in correct order to avoid circular dependency
         tables_to_drop = [
-            'payment_proofs', 'invoices',
+            'broadcasts', 'payment_proofs', 'invoices',
             'stat_logs', 'heartbeat_logs', 'screen_overlays',
             'contents', 'bookings', 'fillers', 'internal_contents',
             'time_slots', 'time_periods', 'screens',

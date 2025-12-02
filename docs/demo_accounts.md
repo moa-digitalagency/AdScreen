@@ -19,7 +19,7 @@ python init_db_demo.py --clear
 
 ### Superadmin
 
-Accès complet à la plateforme : gestion des établissements, statistiques globales, configuration.
+Accès complet à la plateforme : gestion des établissements, statistiques globales, configuration, diffusions (broadcasts).
 
 | Champ | Valeur |
 |-------|--------|
@@ -33,7 +33,7 @@ Accès complet à la plateforme : gestion des établissements, statistiques glob
 
 Chaque établissement a son propre compte pour gérer ses écrans. **Mot de passe commun : `demo123`**
 
-#### 🇫🇷 France (EUR - €)
+#### France (EUR)
 
 | Établissement | Email | Plan | Commission | Écrans |
 |--------------|-------|------|------------|--------|
@@ -41,19 +41,19 @@ Chaque établissement a son propre compte pour gérer ses écrans. **Mot de pass
 | Bar Le Central | manager@bar-lyon.fr | Basic | 12% | 1 |
 | Centre Commercial Atlantis | manager@atlantis-mall.fr | Enterprise | 8% | 2 |
 
-#### 🇲🇦 Maroc (MAD - DH)
+#### Maroc (MAD)
 
 | Établissement | Email | Plan | Commission | Écrans |
 |--------------|-------|------|------------|--------|
 | Café Marrakech | manager@cafe-marrakech.ma | Premium | 10% | 2 |
 
-#### 🇸🇳 Sénégal (XOF - FCFA)
+#### Sénégal (XOF)
 
 | Établissement | Email | Plan | Commission | Écrans |
 |--------------|-------|------|------------|--------|
 | Restaurant Dakar Beach | manager@dakar-beach.sn | Basic | 12% | 1 |
 
-#### 🇹🇳 Tunisie (TND - DT)
+#### Tunisie (TND)
 
 | Établissement | Email | Plan | Commission | Écrans |
 |--------------|-------|------|------------|--------|
@@ -139,6 +139,35 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 | Beach Bar Dakar | Header | Happy Hour FCFA |
 | Café Habib Tunis | Footer | Services WiFi |
 
+## Diffusions (Broadcasts) de démonstration
+
+4 diffusions centralisées créées par le superadmin :
+
+| Nom | Type de ciblage | Cible | Type overlay | Position |
+|-----|----------------|-------|--------------|----------|
+| Promotion Été France | Pays | France (FR) | Ticker | Header |
+| Message Marrakech | Ville | Marrakech (MA) | Ticker | Footer |
+| Promo Centre Atlantis | Établissement | Centre Commercial Atlantis | Ticker | Body |
+| Info Écran Beach | Écran | Écran Beach Bar (Dakar) | Ticker | Header |
+
+### Détail des diffusions
+
+1. **Promotion Été France** (pays: FR)
+   - Message: "Soldes d'été -30% sur toutes les publicités!"
+   - Affecte: 5 écrans (Le Bistrot Parisien, Bar Le Central, Atlantis)
+
+2. **Message Marrakech** (ville: Marrakech)
+   - Message bilingue arabe/français
+   - Affecte: 2 écrans (Café Marrakech)
+
+3. **Promo Centre Atlantis** (établissement)
+   - Message: Nouveau magasin Apple ouvert
+   - Affecte: 2 écrans (Totem Hall A, Food Court)
+
+4. **Info Écran Beach** (écran spécifique)
+   - Message: Soirée spéciale DJ set
+   - Affecte: 1 écran (Beach Bar Dakar)
+
 ## Scénarios de test
 
 ### 1. Test Superadmin
@@ -147,8 +176,18 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 2. Consultez la liste des établissements (6 établissements, 4 pays)
 3. Visualisez les statistiques globales
 4. Créez un nouvel établissement
+5. Accédez au menu "Diffusion" pour gérer les broadcasts
 
-### 2. Test Établissement
+### 2. Test Diffusion (Broadcast)
+
+1. Connectez-vous en superadmin
+2. Allez dans "Diffusion" dans le menu
+3. Consultez les 4 diffusions de démonstration
+4. Créez une nouvelle diffusion ciblant un pays
+5. Activez/désactivez une diffusion existante
+6. Vérifiez sur le player que la diffusion apparaît
+
+### 3. Test Établissement
 
 1. Connectez-vous avec manager@restaurant-paris.fr / demo123
 2. Consultez vos écrans (2 écrans)
@@ -156,7 +195,7 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 4. Téléchargez le QR code d'un écran
 5. Gérez les overlays (bandeaux défilants)
 
-### 3. Test Client (Annonceur)
+### 4. Test Client (Annonceur)
 
 1. Scannez un QR code ou accédez au lien d'un écran
 2. Consultez les specs (résolution, prix en devise locale)
@@ -164,15 +203,16 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 4. Uploadez un contenu (image ou vidéo)
 5. Téléchargez votre reçu (image thermique ou PDF)
 
-### 4. Test Player
+### 5. Test Player
 
 1. Accédez à `/player`
 2. Entrez le code unique d'un écran
 3. Entrez le mot de passe : screen123
 4. Lancez la playlist en mode plein écran
-5. Vérifiez l'affichage des overlays
+5. Vérifiez l'affichage des overlays locaux
+6. Vérifiez l'affichage des diffusions (broadcasts)
 
-### 5. Test Multi-devises
+### 6. Test Multi-devises
 
 1. Réservez sur un écran français (prix en €)
 2. Réservez sur un écran marocain (prix en DH)
@@ -194,3 +234,4 @@ python init_db_demo.py --force
 - Les données de démonstration sont destinées uniquement aux tests
 - Après les tests, utilisez `--clear` pour supprimer toutes les données avant la mise en production
 - Les devises sont configurées par organisation et affectent tous les écrans de l'établissement
+- Les diffusions (broadcasts) sont globales et gérées uniquement par les superadmins

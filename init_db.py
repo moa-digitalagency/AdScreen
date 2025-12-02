@@ -33,7 +33,8 @@ def init_database(drop_existing=False):
         from models import (
             User, Organization, Screen, TimeSlot, TimePeriod,
             Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-            SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof
+            SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
+            Broadcast
         )
         
         tables = [
@@ -53,6 +54,7 @@ def init_database(drop_existing=False):
             ('🔲 screen_overlays', ScreenOverlay),
             ('🧾 invoices', Invoice),
             ('💳 payment_proofs', PaymentProof),
+            ('📡 broadcasts', Broadcast),
         ]
         
         logger.info("\n📋 Tables créées :")

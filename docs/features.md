@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. La plateforme supporte les opérations multi-pays et multi-devises.
+Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. La plateforme supporte les opérations multi-pays et multi-devises, ainsi qu'un système de diffusion centralisé pour les superadmins.
 
 ## Rôles utilisateurs
 
@@ -12,16 +12,18 @@ Gestion globale de la plateforme.
 
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
-| Gestion établissements | ✅ Disponible | Créer, modifier, suspendre des établissements |
-| Configuration commissions | ✅ Disponible | Définir le taux de commission par établissement |
-| Plans d'abonnement | ✅ Disponible | Assigner des plans (basic, premium, enterprise) |
-| Multi-devises | ✅ Disponible | Support EUR, MAD, XOF, TND |
-| Statistiques globales | ✅ Disponible | Revenus totaux, écrans actifs, uptime moyen |
-| Configuration WhatsApp | ✅ Disponible | Numéro pour demandes d'inscription |
-| Paramètres SEO | ✅ Disponible | Titre, description du site |
-| Mode maintenance | ✅ Disponible | Activation/désactivation |
-| Liste noire contenus | 🔄 Prévu | Bloquer des contenus ou IP abusives |
-| Audit logs | 🔄 Prévu | Traçabilité des actions |
+| Gestion établissements | Disponible | Créer, modifier, suspendre des établissements |
+| Configuration commissions | Disponible | Définir le taux de commission par établissement |
+| Plans d'abonnement | Disponible | Assigner des plans (basic, premium, enterprise) |
+| Multi-devises | Disponible | Support EUR, MAD, XOF, TND |
+| Statistiques globales | Disponible | Revenus totaux, écrans actifs, uptime moyen |
+| Configuration WhatsApp | Disponible | Numéro pour demandes d'inscription |
+| Paramètres SEO | Disponible | Titre, description du site |
+| Mode maintenance | Disponible | Activation/désactivation |
+| **Diffusion (Broadcast)** | Disponible | Pousser du contenu vers les écrans ciblés |
+| Facturation hebdomadaire | Disponible | Génération automatique des factures |
+| Liste noire contenus | Prévu | Bloquer des contenus ou IP abusives |
+| Audit logs | Prévu | Traçabilité des actions |
 
 ### 2. Établissement (Organisation)
 
@@ -29,18 +31,18 @@ Gestion des écrans et contenus pour un établissement.
 
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
-| Gestion écrans | ✅ Disponible | Créer, configurer, activer/désactiver des écrans |
-| Configuration résolution | ✅ Disponible | Définir largeur, hauteur, orientation |
-| Types de contenu | ✅ Disponible | Activer/désactiver images, vidéos |
-| Créneaux horaires | ✅ Disponible | Définir durées et prix par type de contenu |
-| Périodes journée | ✅ Disponible | Multiplicateurs de prix (matin, soir, etc.) |
-| QR Codes | ✅ Disponible | Génération automatique par écran |
-| Validation contenus | ✅ Disponible | File d'attente, aperçu, validation/refus |
-| Contenus fillers | ✅ Disponible | Images de remplissage générées automatiquement |
-| Contenus internes | ✅ Disponible | Promos établissement prioritaires |
-| **Overlays/Bandeaux** | ✅ Disponible | Textes défilants superposés sur le player |
-| Statistiques | ✅ Disponible | Revenus par écran/période, diffusions |
-| État temps réel | ✅ Disponible | Online/offline, dernière activité |
+| Gestion écrans | Disponible | Créer, configurer, activer/désactiver des écrans |
+| Configuration résolution | Disponible | Définir largeur, hauteur, orientation |
+| Types de contenu | Disponible | Activer/désactiver images, vidéos |
+| Créneaux horaires | Disponible | Définir durées et prix par type de contenu |
+| Périodes journée | Disponible | Multiplicateurs de prix (matin, soir, etc.) |
+| QR Codes | Disponible | Génération automatique par écran |
+| Validation contenus | Disponible | File d'attente, aperçu, validation/refus |
+| Contenus fillers | Disponible | Images de remplissage générées automatiquement |
+| Contenus internes | Disponible | Promos établissement prioritaires |
+| **Overlays/Bandeaux** | Disponible | Textes défilants superposés sur le player |
+| Statistiques | Disponible | Revenus par écran/période, diffusions |
+| État temps réel | Disponible | Online/offline, dernière activité |
 
 ### 3. Client / Annonceur
 
@@ -48,16 +50,16 @@ Accès public via QR code ou lien pour réserver de l'espace publicitaire.
 
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
-| Consultation écran | ✅ Disponible | Voir specs, résolution, prix en devise locale |
-| Sélection créneau | ✅ Disponible | Choisir durée, période, nombre de diffusions |
-| Upload contenu | ✅ Disponible | Images et vidéos avec validation |
-| Validation format | ✅ Disponible | Vérification résolution, ratio, durée |
-| Calcul prix | ✅ Disponible | Prix dynamique selon choix (multi-devise) |
-| Suivi réservation | ✅ Disponible | Statut en attente, validé, refusé |
-| **Reçu thermique** | ✅ Disponible | Image style ticket de caisse |
-| **Reçu PDF** | ✅ Disponible | PDF imprimable |
-| Paiement en ligne | 🔄 Prévu | Intégration Stripe |
-| Notifications email | 🔄 Prévu | Validation, refus, rapports |
+| Consultation écran | Disponible | Voir specs, résolution, prix en devise locale |
+| Sélection créneau | Disponible | Choisir durée, période, nombre de diffusions |
+| Upload contenu | Disponible | Images et vidéos avec validation |
+| Validation format | Disponible | Vérification résolution, ratio, durée |
+| Calcul prix | Disponible | Prix dynamique selon choix (multi-devise) |
+| Suivi réservation | Disponible | Statut en attente, validé, refusé |
+| **Reçu thermique** | Disponible | Image style ticket de caisse |
+| **Reçu PDF** | Disponible | PDF imprimable |
+| Paiement en ligne | Prévu | Intégration Stripe |
+| Notifications email | Prévu | Validation, refus, rapports |
 
 ### 4. Écran (Player)
 
@@ -65,19 +67,20 @@ Interface de diffusion pour les écrans publicitaires.
 
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
-| Login écran | ✅ Disponible | Authentification par code et mot de passe |
-| Récupération playlist | ✅ Disponible | API JSON des contenus à diffuser |
-| Mode plein écran | ✅ Disponible | Affichage optimisé fullscreen |
-| Loop automatique | ✅ Disponible | Enchaînement des contenus |
-| **Overlays temps réel** | ✅ Disponible | Affichage des bandeaux défilants |
-| Heartbeat | ✅ Disponible | Ping régulier pour statut online |
-| Logging diffusions | ✅ Disponible | Enregistrement des passages |
+| Login écran | Disponible | Authentification par code et mot de passe |
+| Récupération playlist | Disponible | API JSON des contenus à diffuser |
+| Mode plein écran | Disponible | Affichage optimisé fullscreen |
+| Loop automatique | Disponible | Enchaînement des contenus |
+| **Overlays temps réel** | Disponible | Affichage des bandeaux défilants |
+| **Diffusions (Broadcasts)** | Disponible | Réception des diffusions centralisées |
+| Heartbeat | Disponible | Ping régulier pour statut online |
+| Logging diffusions | Disponible | Enregistrement des passages |
 
 ## Détail des fonctionnalités
 
 ### Multi-devises
 
-La plateforme supporte 4 devises selon le pays de l'établissement :
+La plateforme supporte 4 devises principales selon le pays de l'établissement :
 
 | Pays | Devise | Symbole | Exemple |
 |------|--------|---------|---------|
@@ -122,7 +125,7 @@ Multiplicateurs de prix selon l'heure :
 
 **Prix final** = Prix de base × Multiplicateur période
 
-### Système d'overlays
+### Système d'overlays (par établissement)
 
 Les overlays permettent d'afficher des informations superposées sur le player :
 
@@ -140,6 +143,41 @@ Les overlays permettent d'afficher des informations superposées sur le player :
 **Fréquence d'affichage**
 - Par durée : Afficher pendant X secondes
 - Par passage : Afficher X fois par jour/période
+
+### Système de diffusion (Broadcast) - NOUVEAU
+
+Les superadmins peuvent diffuser du contenu vers plusieurs écrans simultanément :
+
+**Types de ciblage**
+
+| Ciblage | Description | Portée |
+|---------|-------------|--------|
+| Pays | Tous les écrans d'un pays | Large |
+| Ville | Tous les écrans d'une ville | Moyenne |
+| Établissement | Tous les écrans d'un établissement | Précise |
+| Écran | Un écran spécifique | Ciblée |
+
+**Types de diffusion**
+
+| Type | Description | Priorité playlist |
+|------|-------------|------------------|
+| Overlay | Bandeau défilant superposé | N/A (superposition) |
+| Contenu | S'intègre dans la playlist | 200 (haute priorité) |
+
+**Types d'overlay disponibles**
+- Ticker : Bandeau défilant horizontal
+- Image : Image en position fixe
+- Corner : Logo/image en coin d'écran
+
+**Programmation**
+- Date/heure de début (optionnel)
+- Date/heure de fin (optionnel)
+- Activation/désactivation manuelle
+
+**Cascade hiérarchique**
+- Sélectionner "France" affecte tous les écrans en France
+- Les diffusions s'additionnent aux overlays locaux
+- Priorité : Broadcasts > Overlays locaux pour éviter les conflits
 
 ### Génération de reçus
 
@@ -175,12 +213,16 @@ Workflow :
 
 ### Playlist et priorités
 
-Ordre de diffusion :
-1. **Contenus payants validés** (priorité 100)
-2. **Contenus internes** (priorité 80)
-3. **Fillers / démos** (priorité 20)
+Ordre de diffusion (du plus prioritaire au moins prioritaire) :
 
-Le player récupère la playlist via API et enchaîne les contenus avec les overlays actifs.
+| Type de contenu | Priorité | Source |
+|-----------------|----------|--------|
+| **Diffusions (Broadcasts)** | 200 | Superadmin |
+| Contenus payants validés | 100 | Clients |
+| Contenus internes | 80 | Établissement |
+| Fillers / démos | 20 | Auto-généré |
+
+Le player récupère la playlist via API et enchaîne les contenus avec les overlays actifs (locaux + broadcasts).
 
 ### Fillers automatiques
 
@@ -199,26 +241,6 @@ Données disponibles par établissement :
 - Uptime des écrans
 - Temps moyen de validation
 - Réservations en attente
-
-## Roadmap
-
-### Phase 2 (à venir)
-
-- [ ] Intégration paiement Stripe multi-devise
-- [ ] Notifications email automatiques
-- [ ] WebSocket temps réel pour état écrans
-- [ ] Dashboard client avec historique
-- [ ] Rapports PDF téléchargeables
-- [ ] Overlay type image (logo fixe)
-
-### Phase 3 (futur)
-
-- [ ] Marketplace inter-établissements
-- [ ] API publique pour intégrations
-- [ ] Application mobile player
-- [ ] Analytics avancés
-- [ ] Multi-langue interface
-- [ ] Campagnes programmées
 
 ### Sélection Pays et Ville
 
@@ -245,6 +267,26 @@ La plateforme intègre un système complet de sélection géographique :
 | Amérique | 35+ | 20-30 |
 | Océanie | 14+ | 15-20 |
 
+## Roadmap
+
+### Phase 2 (à venir)
+
+- [ ] Intégration paiement Stripe multi-devise
+- [ ] Notifications email automatiques
+- [ ] WebSocket temps réel pour état écrans
+- [ ] Dashboard client avec historique
+- [ ] Rapports PDF téléchargeables
+- [ ] Overlay type image (logo fixe) pour établissements
+
+### Phase 3 (futur)
+
+- [ ] Marketplace inter-établissements
+- [ ] API publique pour intégrations
+- [ ] Application mobile player
+- [ ] Analytics avancés
+- [ ] Multi-langue interface
+- [ ] Campagnes programmées multi-écrans
+
 ## Limites techniques
 
 | Paramètre | Limite |
@@ -257,3 +299,5 @@ La plateforme intègre un système complet de sélection géographique :
 | Devises supportées | EUR, MAD, XOF, TND (+ 200 autres via pays) |
 | Pays supportés | 208 pays (couverture mondiale) |
 | Villes par pays | 1-30 (moyenne 22) |
+| Diffusions simultanées | Illimité |
+| Ciblages par diffusion | 1 (pays, ville, établissement ou écran) |
