@@ -663,7 +663,7 @@ def create_demo_data():
             overlay_scroll_speed=60,
             is_active=True,
             schedule_mode='immediate',
-            priority=100,
+            schedule_priority=100,
             created_by=superadmin.id
         )
         db.session.add(broadcast1)
@@ -683,7 +683,7 @@ def create_demo_data():
             overlay_scroll_speed=50,
             is_active=True,
             schedule_mode='immediate',
-            priority=100,
+            schedule_priority=100,
             created_by=superadmin.id
         )
         db.session.add(broadcast2)
@@ -703,7 +703,7 @@ def create_demo_data():
             is_active=True,
             schedule_mode='scheduled',
             scheduled_datetime=datetime.now() + timedelta(hours=2),
-            priority=150,
+            schedule_priority=150,
             override_playlist=True,
             recurrence_type='daily',
             recurrence_interval=1,
@@ -727,7 +727,7 @@ def create_demo_data():
             is_active=True,
             schedule_mode='scheduled',
             scheduled_datetime=datetime.now() + timedelta(days=1),
-            priority=200,
+            schedule_priority=200,
             recurrence_type='weekly',
             recurrence_interval=1,
             recurrence_days_of_week='friday,saturday',
@@ -751,7 +751,7 @@ def create_demo_data():
             is_active=True,
             schedule_mode='scheduled',
             scheduled_datetime=datetime.now().replace(day=1) + timedelta(days=30),
-            priority=120,
+            schedule_priority=120,
             recurrence_type='monthly',
             recurrence_interval=1,
             recurrence_time=dt_time(9, 0, 0),
