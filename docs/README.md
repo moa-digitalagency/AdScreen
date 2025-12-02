@@ -31,7 +31,9 @@ gunicorn --bind 0.0.0.0:5000 --reload main:app
 ### Accès
 
 - **Application** : http://localhost:5000
-- **Login Superadmin** : admin@shabaka-adscreen.com / admin123
+- **Login Superadmin** : Utilisez les identifiants configurés dans `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD`
+
+**Important** : Configurez toujours les identifiants du superadmin via les variables d'environnement pour la sécurité.
 
 ## Fonctionnalités principales
 

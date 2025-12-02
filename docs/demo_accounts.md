@@ -21,11 +21,15 @@ python init_db_demo.py --clear
 
 Accès complet à la plateforme : gestion des établissements, statistiques globales, configuration, diffusions (broadcasts).
 
+**Pour la démonstration uniquement** (créé par `init_db_demo.py`) :
+
 | Champ | Valeur |
 |-------|--------|
 | Email | admin@shabaka-adscreen.com |
 | Mot de passe | admin123 |
 | Rôle | superadmin |
+
+> **Production** : En environnement de production, les identifiants du superadmin doivent être configurés via les variables d'environnement `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD`. Ne jamais utiliser les identifiants de démo en production.
 
 **Accès** : `/admin`
 

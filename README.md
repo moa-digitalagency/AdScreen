@@ -132,13 +132,15 @@ L'application sera accessible sur `http://localhost:5000`
 
 ## Comptes de démonstration
 
-Après avoir exécuté `init_db_demo.py` :
+Après avoir exécuté `init_db_demo.py` (pour test uniquement) :
 
-### Superadmin
+### Superadmin (démo)
 
 | Email | Mot de passe |
 |-------|--------------|
 | admin@shabaka-adscreen.com | admin123 |
+
+> **Note** : En production, utilisez les variables d'environnement `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD`.
 
 ### Établissements (mot de passe: demo123)
 
