@@ -31,7 +31,7 @@ def org_required(f):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.login'))
         if current_user.is_superadmin():
-            return redirect(url_for('admin.billing'))
+            return redirect(url_for('admin.dashboard'))
         if not current_user.organization_id:
             flash('Vous devez être associé à un établissement.', 'error')
             return redirect(url_for('auth.logout'))
