@@ -76,7 +76,7 @@ createdb shabaka_adscreen
 python init_db.py
 
 # Optionnel : créer les données de démonstration
-# (6 organisations, 9 écrans, 4 diffusions)
+# (7 organisations dont 1 gratuit, 10 écrans, 5 diffusions)
 python init_db_demo.py
 ```
 

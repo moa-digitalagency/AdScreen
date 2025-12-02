@@ -112,7 +112,7 @@ SUPERADMIN_PASSWORD=mot-de-passe-securise
 # Créer les tables
 python init_db.py
 
-# Créer les données de démonstration (6 organisations, 9 écrans, 4 pays, 4 diffusions)
+# Créer les données de démonstration (7 organisations, 10 écrans, 4 pays, 5 diffusions)
 python init_db_demo.py
 ```
 
@@ -146,14 +146,15 @@ Après avoir exécuté `init_db_demo.py` (pour test uniquement) :
 
 ### Établissements (mot de passe: demo123)
 
-| Pays | Établissement | Email | Devise |
-|------|--------------|-------|--------|
-| FR | Le Bistrot Parisien | manager@restaurant-paris.fr | EUR |
-| FR | Bar Le Central | manager@bar-lyon.fr | EUR |
-| FR | Centre Commercial Atlantis | manager@atlantis-mall.fr | EUR |
-| MA | Café Marrakech | manager@cafe-marrakech.ma | MAD |
-| SN | Restaurant Dakar Beach | manager@dakar-beach.sn | XOF |
-| TN | Tunisian Café | manager@tunis-cafe.tn | TND |
+| Pays | Établissement | Email | Devise | Type |
+|------|--------------|-------|--------|------|
+| FR | Le Bistrot Parisien | manager@restaurant-paris.fr | EUR | Payant |
+| FR | Bar Le Central | manager@bar-lyon.fr | EUR | Payant |
+| FR | Centre Commercial Atlantis | manager@atlantis-mall.fr | EUR | Payant |
+| MA | Café Marrakech | manager@cafe-marrakech.ma | MAD | Payant |
+| SN | Restaurant Dakar Beach | manager@dakar-beach.sn | XOF | Payant |
+| TN | Tunisian Café | manager@tunis-cafe.tn | TND | Payant |
+| **FR** | **Petit Café Gratuit** | manager@cafe-gratuit.fr | EUR | **Gratuit** |
 
 Mot de passe player pour tous les écrans : `screen123`
 

@@ -39,11 +39,12 @@ Chaque établissement a son propre compte pour gérer ses écrans. **Mot de pass
 
 #### France (EUR)
 
-| Établissement | Email | Plan | Commission | Écrans |
-|--------------|-------|------|------------|--------|
-| Le Bistrot Parisien | manager@restaurant-paris.fr | Premium | 10% | 2 |
-| Bar Le Central | manager@bar-lyon.fr | Basic | 12% | 1 |
-| Centre Commercial Atlantis | manager@atlantis-mall.fr | Enterprise | 8% | 2 |
+| Établissement | Email | Plan | Commission | Écrans | Type |
+|--------------|-------|------|------------|--------|------|
+| Le Bistrot Parisien | manager@restaurant-paris.fr | Premium | 10% | 2 | Payant |
+| Bar Le Central | manager@bar-lyon.fr | Basic | 12% | 1 | Payant |
+| Centre Commercial Atlantis | manager@atlantis-mall.fr | Enterprise | 8% | 2 | Payant |
+| **Petit Café Gratuit** | manager@cafe-gratuit.fr | Free | 0% | 1 | **Gratuit** |
 
 #### Maroc (MAD)
 
@@ -69,13 +70,14 @@ Chaque établissement a son propre compte pour gérer ses écrans. **Mot de pass
 
 ### France
 
-| Établissement | Écran | Résolution | Orientation | Prix/min |
-|--------------|-------|------------|-------------|----------|
-| Le Bistrot Parisien | Écran Entrée | 1920x1080 | Paysage | 2.00 € |
-| Le Bistrot Parisien | Écran Bar | 1080x1920 | Portrait | 1.50 € |
-| Bar Le Central | Écran Principal | 1920x1080 | Paysage | 1.80 € |
-| Centre Commercial Atlantis | Totem Hall A | 1080x1920 | Portrait | 3.00 € |
-| Centre Commercial Atlantis | Écran Géant Food Court | 3840x2160 | Paysage | 5.00 € |
+| Établissement | Écran | Résolution | Orientation | Prix/min | Type |
+|--------------|-------|------------|-------------|----------|------|
+| Le Bistrot Parisien | Écran Entrée | 1920x1080 | Paysage | 2.00 € | Payant |
+| Le Bistrot Parisien | Écran Bar | 1080x1920 | Portrait | 1.50 € | Payant |
+| Bar Le Central | Écran Principal | 1920x1080 | Paysage | 1.80 € | Payant |
+| Centre Commercial Atlantis | Totem Hall A | 1080x1920 | Portrait | 3.00 € | Payant |
+| Centre Commercial Atlantis | Écran Géant Food Court | 3840x2160 | Paysage | 5.00 € | Payant |
+| **Petit Café Gratuit** | Écran Petit Café | 1920x1080 | Paysage | 0.00 € | **Gratuit** |
 
 ### Maroc
 
@@ -192,7 +194,7 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 ### 1. Test Superadmin
 
 1. Connectez-vous avec admin@shabaka-adscreen.com / admin123
-2. Consultez la liste des établissements (6 établissements, 4 pays)
+2. Consultez la liste des établissements (7 établissements, 4 pays, dont 1 gratuit)
 3. Visualisez les statistiques globales
 4. Créez un nouvel établissement
 5. Accédez au menu "Diffusion" pour gérer les broadcasts
@@ -267,6 +269,14 @@ La facturation peut être générée de deux manières :
 3. Consultez vos factures hebdomadaires
 4. Uploadez une preuve de paiement
 
+### 7. Test Établissement Gratuit
+
+1. Connectez-vous avec manager@cafe-gratuit.fr / demo123
+2. Vérifiez l'accès limité : pas de réservations, pas de facturation
+3. Consultez l'écran (Écran Petit Café) avec prix à 0€
+4. Testez la gestion des contenus internes et overlays
+5. Vérifiez que le player affiche les fillers correctement
+
 ## Notes importantes
 
 - Les mots de passe de démonstration sont faibles et ne doivent **jamais** être utilisés en production
@@ -274,3 +284,4 @@ La facturation peut être générée de deux manières :
 - Après les tests, utilisez `--clear` pour supprimer toutes les données avant la mise en production
 - Les devises sont configurées par organisation et affectent tous les écrans de l'établissement
 - Les diffusions (broadcasts) sont globales et gérées uniquement par les superadmins
+- Les établissements gratuits (is_paid=False) ont un accès limité : contenus internes et overlays uniquement
