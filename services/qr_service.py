@@ -52,6 +52,22 @@ def generate_qr_base64(data, box_size=10, border=4):
     return base64.b64encode(img_data).decode()
 
 
+def generate_enhanced_qr_base64(screen, booking_url, platform_name='Shabaka AdScreen'):
+    """
+    Generate enhanced QR code as base64.
+    
+    Args:
+        screen: Screen model instance
+        booking_url: The booking URL to encode
+        platform_name: Name of the platform
+    
+    Returns:
+        str: Base64-encoded PNG image
+    """
+    img_data = generate_enhanced_qr_image(screen, booking_url, platform_name)
+    return base64.b64encode(img_data).decode()
+
+
 def draw_dotted_line(draw, start, end, color, width=2, spacing=8):
     """Draw a dotted line."""
     x1, y1 = start
