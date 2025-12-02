@@ -26,6 +26,24 @@ def org_required(f):
     return decorated_function
 
 
+def paid_org_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.login'))
+        if current_user.is_superadmin():
+            return redirect(url_for('admin.dashboard'))
+        if not current_user.organization_id:
+            flash('Vous devez être associé à un établissement.', 'error')
+            return redirect(url_for('auth.logout'))
+        org = current_user.organization
+        if not org.is_paid:
+            flash('Cette fonctionnalité n\'est pas disponible pour les établissements gratuits.', 'error')
+            return redirect(url_for('org.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @org_bp.route('/dashboard')
 @login_required
 @org_required
@@ -79,7 +97,7 @@ def dashboard():
 
 @org_bp.route('/bookings')
 @login_required
-@org_required
+@paid_org_required
 def booking_history():
     from utils.currencies import get_currency_by_code
     
@@ -447,7 +465,7 @@ def edit_screen(screen_id):
 
 @org_bp.route('/screen/<int:screen_id>/slots', methods=['GET', 'POST'])
 @login_required
-@org_required
+@paid_org_required
 def screen_slots(screen_id):
     from utils.currencies import get_currency_by_code
     
@@ -486,7 +504,7 @@ def screen_slots(screen_id):
 
 @org_bp.route('/screen/<int:screen_id>/periods', methods=['GET', 'POST'])
 @login_required
-@org_required
+@paid_org_required
 def screen_periods(screen_id):
     from utils.currencies import get_currency_by_code
     
@@ -963,7 +981,7 @@ def delete_screen_internal(screen_id, internal_id):
 
 @org_bp.route('/stats')
 @login_required
-@org_required
+@paid_org_required
 def stats():
     org = current_user.organization
     
@@ -1233,7 +1251,7 @@ def add_internal_to_playlist(internal_id):
 
 @org_bp.route('/booking/<int:booking_id>/receipt/image')
 @login_required
-@org_required
+@paid_org_required
 def download_receipt_image(booking_id):
     from flask import send_file, Response
     from services.receipt_generator import generate_receipt_image
@@ -1267,7 +1285,7 @@ def download_receipt_image(booking_id):
 
 @org_bp.route('/booking/<int:booking_id>/receipt/pdf')
 @login_required
-@org_required
+@paid_org_required
 def download_receipt_pdf(booking_id):
     from flask import send_file
     from services.receipt_generator import generate_receipt_pdf
@@ -1297,7 +1315,7 @@ def download_receipt_pdf(booking_id):
 
 @org_bp.route('/screen/<int:screen_id>/availability')
 @login_required
-@org_required
+@paid_org_required
 def screen_availability(screen_id):
     from services.availability_service import calculate_availability, get_period_duration_seconds
     from utils.currencies import get_currency_by_code

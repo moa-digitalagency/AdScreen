@@ -13,6 +13,7 @@ class Organization(db.Model):
     country = db.Column(db.String(5), default='FR')
     city = db.Column(db.String(128), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
+    is_paid = db.Column(db.Boolean, default=True)
     commission_rate = db.Column(db.Float, default=10.0)
     subscription_plan = db.Column(db.String(50), default='basic')
     currency = db.Column(db.String(10), default='EUR')
@@ -67,3 +68,18 @@ class Organization(db.Model):
     
     def has_business_info(self):
         return bool(self.business_name or self.business_registration_number)
+    
+    def can_use_booking(self):
+        return self.is_paid
+    
+    def can_use_billing(self):
+        return self.is_paid
+    
+    def can_use_paid_features(self):
+        return self.is_paid
+    
+    def get_available_features(self):
+        features = ['internal', 'overlay', 'broadcast']
+        if self.is_paid:
+            features.extend(['booking', 'billing', 'slots', 'periods'])
+        return features

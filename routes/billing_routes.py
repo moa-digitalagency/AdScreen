@@ -39,6 +39,24 @@ def org_required(f):
     return decorated_function
 
 
+def paid_org_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.login'))
+        if current_user.is_superadmin():
+            return redirect(url_for('admin.dashboard'))
+        if not current_user.organization_id:
+            flash('Vous devez être associé à un établissement.', 'error')
+            return redirect(url_for('auth.logout'))
+        org = current_user.organization
+        if not org.is_paid:
+            flash('La facturation n\'est pas disponible pour les établissements gratuits.', 'error')
+            return redirect(url_for('org.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def get_week_dates(reference_date=None):
     """Get the start and end dates for the week containing the reference date."""
     if reference_date is None:
@@ -227,7 +245,7 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
 
 @billing_bp.route('/invoices')
 @login_required
-@org_required
+@paid_org_required
 def invoices():
     from utils.currencies import get_currency_by_code
     
@@ -272,7 +290,7 @@ def invoices():
 
 @billing_bp.route('/invoice/<int:invoice_id>')
 @login_required
-@org_required
+@paid_org_required
 def invoice_detail(invoice_id):
     from utils.currencies import get_currency_by_code
     
@@ -306,7 +324,7 @@ def invoice_detail(invoice_id):
 
 @billing_bp.route('/invoice/<int:invoice_id>/regenerate', methods=['POST'])
 @login_required
-@org_required
+@paid_org_required
 def regenerate_invoice(invoice_id):
     org = current_user.organization
     
@@ -327,7 +345,7 @@ def regenerate_invoice(invoice_id):
 
 @billing_bp.route('/invoice/<int:invoice_id>/upload_proof', methods=['POST'])
 @login_required
-@org_required
+@paid_org_required
 def upload_payment_proof(invoice_id):
     org = current_user.organization
     
@@ -387,7 +405,7 @@ def upload_payment_proof(invoice_id):
 
 @billing_bp.route('/invoice/<int:invoice_id>/download')
 @login_required
-@org_required
+@paid_org_required
 def download_invoice(invoice_id):
     from utils.currencies import get_currency_by_code
     

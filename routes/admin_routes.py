@@ -27,9 +27,30 @@ def superadmin_required(f):
     return decorated_function
 
 
+def admin_required(permission=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Veuillez vous connecter.', 'error')
+                return redirect(url_for('auth.login'))
+            
+            if not current_user.is_admin():
+                flash('Accès réservé aux administrateurs.', 'error')
+                return redirect(url_for('auth.login'))
+            
+            if permission and not current_user.has_permission(permission):
+                flash('Vous n\'avez pas accès à cette fonctionnalité.', 'error')
+                return redirect(url_for('admin.dashboard'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 @admin_bp.route('/dashboard')
 @login_required
-@superadmin_required
+@admin_required('dashboard')
 def dashboard():
     from utils.currencies import get_currency_by_code
     
@@ -334,7 +355,7 @@ def dashboard():
 
 @admin_bp.route('/organizations')
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def organizations():
     orgs = Organization.query.order_by(Organization.created_at.desc()).all()
     return render_template('admin/organizations.html', organizations=orgs)
@@ -342,7 +363,7 @@ def organizations():
 
 @admin_bp.route('/organization/<int:org_id>')
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def organization_detail(org_id):
     org = Organization.query.get_or_404(org_id)
     screens = Screen.query.filter_by(organization_id=org_id).all()
@@ -366,7 +387,7 @@ def organization_detail(org_id):
 
 @admin_bp.route('/organization/<int:org_id>/toggle', methods=['POST'])
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def toggle_organization(org_id):
     org = Organization.query.get_or_404(org_id)
     org.is_active = not org.is_active
@@ -379,7 +400,7 @@ def toggle_organization(org_id):
 
 @admin_bp.route('/organization/new', methods=['GET', 'POST'])
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def organization_new():
     from utils.currencies import get_currency_choices, get_country_choices
     currencies = get_currency_choices()
@@ -420,6 +441,8 @@ def organization_new():
             flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
+        is_paid = request.form.get('is_paid', '1') == '1'
+        
         try:
             org = Organization(
                 name=name,
@@ -429,7 +452,8 @@ def organization_new():
                 country=country,
                 city=city,
                 currency=currency,
-                commission_rate=commission_rate,
+                is_paid=is_paid,
+                commission_rate=commission_rate if is_paid else 0,
                 commission_set_by=current_user.id,
                 commission_updated_at=datetime.utcnow()
             )
@@ -459,7 +483,7 @@ def organization_new():
 
 @admin_bp.route('/organization/<int:org_id>/edit', methods=['GET', 'POST'])
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def organization_edit(org_id):
     from utils.currencies import get_currency_choices, get_country_choices
     currencies = get_currency_choices()
@@ -488,6 +512,8 @@ def organization_edit(org_id):
             flash('Un autre établissement avec cet email existe déjà.', 'error')
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
+        is_paid = request.form.get('is_paid', '1') == '1'
+        
         org.name = name
         org.email = email
         org.phone = phone
@@ -495,6 +521,9 @@ def organization_edit(org_id):
         org.country = country
         org.city = city
         org.currency = currency
+        org.is_paid = is_paid
+        if not is_paid:
+            org.commission_rate = 0
         db.session.commit()
         
         flash(f'Établissement "{name}" mis à jour!', 'success')
@@ -505,7 +534,7 @@ def organization_edit(org_id):
 
 @admin_bp.route('/organization/<int:org_id>/delete', methods=['POST'])
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def organization_delete(org_id):
     org = Organization.query.get_or_404(org_id)
     
@@ -532,7 +561,7 @@ def organization_delete(org_id):
 
 @admin_bp.route('/organization/<int:org_id>/commission', methods=['POST'])
 @login_required
-@superadmin_required
+@admin_required('organizations')
 def update_commission(org_id):
     org = Organization.query.get_or_404(org_id)
     
@@ -560,7 +589,7 @@ def update_commission(org_id):
 
 @admin_bp.route('/screens')
 @login_required
-@superadmin_required
+@admin_required('screens')
 def screens():
     all_screens = Screen.query.join(Organization).order_by(Screen.created_at.desc()).all()
     return render_template('admin/screens.html', screens=all_screens)
@@ -568,7 +597,7 @@ def screens():
 
 @admin_bp.route('/refresh-exchange-rates', methods=['POST'])
 @login_required
-@superadmin_required
+@admin_required('settings')
 def refresh_exchange_rates():
     """Force refresh exchange rates from API."""
     result = refresh_rates()
@@ -581,7 +610,7 @@ def refresh_exchange_rates():
 
 @admin_bp.route('/stats')
 @login_required
-@superadmin_required
+@admin_required('stats')
 def stats():
     today = datetime.utcnow().date()
     month_ago = today - timedelta(days=30)
@@ -1426,3 +1455,166 @@ def get_cities_by_country(country_code):
     
     city_list = [city[0] for city in cities if city[0]]
     return jsonify(city_list)
+
+
+@admin_bp.route('/users')
+@login_required
+@superadmin_required
+def admin_users():
+    from models.user import ADMIN_PERMISSIONS
+    admin_users = User.query.filter(User.role.in_(['superadmin', 'admin'])).order_by(User.created_at.desc()).all()
+    return render_template('admin/users.html', 
+                           admin_users=admin_users, 
+                           permissions=ADMIN_PERMISSIONS)
+
+
+@admin_bp.route('/users/new', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def admin_user_new():
+    from models.user import ADMIN_PERMISSIONS
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        selected_permissions = request.form.getlist('permissions')
+        
+        if not username or not email or not password:
+            flash('Tous les champs sont obligatoires.', 'error')
+            return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+        
+        if len(password) < 6:
+            flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+            return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+        
+        if User.query.filter_by(email=email).first():
+            flash('Cet email est déjà utilisé.', 'error')
+            return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+        
+        if User.query.filter_by(username=username).first():
+            flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
+            return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+        
+        try:
+            user = User(
+                username=username,
+                email=email,
+                role='admin',
+                is_active=True
+            )
+            user.set_password(password)
+            user.set_permissions(selected_permissions)
+            db.session.add(user)
+            db.session.commit()
+            
+            flash(f'Administrateur "{username}" créé avec succès!', 'success')
+            return redirect(url_for('admin.admin_users'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la création: {str(e)}', 'error')
+            return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+    
+    return render_template('admin/user_form.html', user=None, permissions=ADMIN_PERMISSIONS)
+
+
+@admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@superadmin_required
+def admin_user_edit(user_id):
+    from models.user import ADMIN_PERMISSIONS
+    
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == 'superadmin' and user.id != current_user.id:
+        flash('Vous ne pouvez pas modifier un autre super administrateur.', 'error')
+        return redirect(url_for('admin.admin_users'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        selected_permissions = request.form.getlist('permissions')
+        is_active = 'is_active' in request.form
+        
+        if not username or not email:
+            flash('Le nom d\'utilisateur et l\'email sont obligatoires.', 'error')
+            return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+        
+        existing_email = User.query.filter(User.email == email, User.id != user_id).first()
+        if existing_email:
+            flash('Cet email est déjà utilisé par un autre utilisateur.', 'error')
+            return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+        
+        existing_username = User.query.filter(User.username == username, User.id != user_id).first()
+        if existing_username:
+            flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
+            return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+        
+        try:
+            user.username = username
+            user.email = email
+            user.is_active = is_active
+            
+            if user.role != 'superadmin':
+                user.set_permissions(selected_permissions)
+            
+            if password and len(password) >= 6:
+                user.set_password(password)
+            elif password and len(password) < 6:
+                flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+                return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+            
+            db.session.commit()
+            flash(f'Administrateur "{username}" mis à jour!', 'success')
+            return redirect(url_for('admin.admin_users'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour: {str(e)}', 'error')
+            return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+    
+    return render_template('admin/user_form.html', user=user, permissions=ADMIN_PERMISSIONS)
+
+
+@admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_user_delete(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == 'superadmin':
+        flash('Impossible de supprimer un super administrateur.', 'error')
+        return redirect(url_for('admin.admin_users'))
+    
+    if user.id == current_user.id:
+        flash('Vous ne pouvez pas supprimer votre propre compte.', 'error')
+        return redirect(url_for('admin.admin_users'))
+    
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    
+    flash(f'Administrateur "{username}" supprimé.', 'success')
+    return redirect(url_for('admin.admin_users'))
+
+
+@admin_bp.route('/users/<int:user_id>/toggle', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_user_toggle(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if user.role == 'superadmin':
+        flash('Impossible de désactiver un super administrateur.', 'error')
+        return redirect(url_for('admin.admin_users'))
+    
+    if user.id == current_user.id:
+        flash('Vous ne pouvez pas désactiver votre propre compte.', 'error')
+        return redirect(url_for('admin.admin_users'))
+    
+    user.is_active = not user.is_active
+    db.session.commit()
+    
+    status = "activé" if user.is_active else "désactivé"
+    flash(f'Administrateur {status}.', 'success')
+    return redirect(url_for('admin.admin_users'))

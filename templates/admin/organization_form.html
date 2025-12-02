@@ -72,13 +72,34 @@
             </div>
         </div>
 
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="font-semibold text-gray-800 mb-4">Type d'établissement</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <label class="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" id="paid-option">
+                    <input type="radio" name="is_paid" value="1" {% if not org or org.is_paid %}checked{% endif %} class="mt-1" onchange="togglePaidFeatures()">
+                    <div>
+                        <div class="font-medium text-gray-800">Établissement Payant</div>
+                        <p class="text-sm text-gray-500 mt-1">Accès complet : réservations, facturation, créneaux, périodes, contenus internes et overlays.</p>
+                    </div>
+                </label>
+                <label class="flex items-start gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" id="free-option">
+                    <input type="radio" name="is_paid" value="0" {% if org and not org.is_paid %}checked{% endif %} class="mt-1" onchange="togglePaidFeatures()">
+                    <div>
+                        <div class="font-medium text-gray-800">Établissement Gratuit</div>
+                        <p class="text-sm text-gray-500 mt-1">Accès limité : contenus internes, overlays et diffusion uniquement. Pas de réservations ni facturation.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
         {% if not org %}
         <div class="border-t border-gray-200 pt-6">
             <h3 class="font-semibold text-gray-800 mb-4">Compte gestionnaire</h3>
             <div class="grid md:grid-cols-2 gap-6">
-                <div>
+                <div id="commission-field">
                     <label class="label">Commission (%)</label>
                     <input type="number" name="commission_rate" value="10" min="0" max="100" step="0.1" class="input-field">
+                    <p class="text-xs text-gray-500 mt-1">Commission sur les réservations (établissements payants uniquement)</p>
                 </div>
                 <div>
                     <label class="label">Email gestionnaire</label>
@@ -110,6 +131,22 @@
 </div>
 
 <script>
+function togglePaidFeatures() {
+    const isPaid = document.querySelector('input[name="is_paid"]:checked').value === '1';
+    const commissionField = document.getElementById('commission-field');
+    const paidOption = document.getElementById('paid-option');
+    const freeOption = document.getElementById('free-option');
+    
+    if (commissionField) {
+        commissionField.style.display = isPaid ? 'block' : 'none';
+    }
+    
+    paidOption.classList.toggle('border-primary-500', isPaid);
+    paidOption.classList.toggle('bg-primary-50', isPaid);
+    freeOption.classList.toggle('border-primary-500', !isPaid);
+    freeOption.classList.toggle('bg-primary-50', !isPaid);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const countrySelect = document.getElementById('country-select');
     const citySelect = document.getElementById('city-select');
@@ -145,6 +182,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (countrySelect.value) {
         loadCities(countrySelect.value, currentCity);
     }
+    
+    togglePaidFeatures();
 });
 </script>
 {% endblock %}

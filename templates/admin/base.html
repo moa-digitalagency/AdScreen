@@ -49,6 +49,11 @@
                 <i class="fas fa-user-plus w-5"></i>
                 <span>Demandes</span>
             </a>
+            <a href="{{ url_for('admin.admin_users') }}" 
+               class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if 'admin_user' in request.endpoint %}bg-gray-800 text-white{% endif %}">
+                <i class="fas fa-users-cog w-5"></i>
+                <span>Utilisateurs Admin</span>
+            </a>
             <a href="{{ url_for('admin.settings') }}" 
                class="flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition text-sm sm:text-base {% if request.endpoint == 'admin.settings' %}bg-gray-800 text-white{% endif %}">
                 <i class="fas fa-cog w-5"></i>

@@ -36,6 +36,37 @@ with app.app_context():
     import models
     db.create_all()
     
+    superadmin_email = os.environ.get("SUPERADMIN_EMAIL")
+    superadmin_password = os.environ.get("SUPERADMIN_PASSWORD")
+    
+    if superadmin_email and superadmin_password:
+        existing_superadmin = models.User.query.filter_by(email=superadmin_email).first()
+        if not existing_superadmin:
+            superadmin = models.User(
+                username='superadmin',
+                email=superadmin_email,
+                role='superadmin',
+                is_active=True
+            )
+            superadmin.set_password(superadmin_password)
+            db.session.add(superadmin)
+            db.session.commit()
+            logging.info(f"Superadmin user created with email: {superadmin_email}")
+        else:
+            updated = False
+            if existing_superadmin.role != 'superadmin':
+                existing_superadmin.role = 'superadmin'
+                updated = True
+                logging.info(f"Updated user {superadmin_email} to superadmin role")
+            
+            if not existing_superadmin.check_password(superadmin_password):
+                existing_superadmin.set_password(superadmin_password)
+                updated = True
+                logging.info(f"Updated superadmin password for {superadmin_email}")
+            
+            if updated:
+                db.session.commit()
+    
     from routes.auth_routes import auth_bp
     from routes.admin_routes import admin_bp
     from routes.org_routes import org_bp
