@@ -235,6 +235,7 @@ Types de diffusion :
 |-------|------|-------------|
 | schedule_mode | VARCHAR(20) | 'immediate' ou 'scheduled' |
 | scheduled_datetime | TIMESTAMP | Date/heure de déclenchement |
+| timezone | VARCHAR(64) | Fuseau horaire cible (défaut: 'UTC') |
 | priority | INTEGER | Priorité 20-200 (défaut: 100) |
 | override_playlist | BOOLEAN | Décaler les contenus existants |
 | recurrence_type | VARCHAR(20) | 'none', 'daily', 'weekly', 'monthly' |

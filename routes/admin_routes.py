@@ -1104,6 +1104,7 @@ def broadcast_new():
     import secrets
     from werkzeug.utils import secure_filename
     from utils.countries import get_all_countries
+    from models.broadcast import COMMON_TIMEZONES
     
     countries = get_all_countries()
     organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
@@ -1123,6 +1124,7 @@ def broadcast_new():
         target_type = request.form.get('target_type', 'country')
         target_org_type = request.form.get('target_org_type', 'all')
         broadcast_type = request.form.get('broadcast_type', 'overlay')
+        timezone = request.form.get('timezone', 'Europe/Paris')
         
         if not name:
             flash('Le nom de la diffusion est obligatoire.', 'error')
@@ -1131,7 +1133,8 @@ def broadcast_new():
                 countries=countries,
                 organizations=organizations,
                 screens=screens,
-                cities_by_country=cities_by_country
+                cities_by_country=cities_by_country,
+                timezones=COMMON_TIMEZONES
             )
         
         broadcast = Broadcast(
@@ -1139,6 +1142,7 @@ def broadcast_new():
             target_type=target_type,
             target_org_type=target_org_type,
             broadcast_type=broadcast_type,
+            timezone=timezone,
             created_by=current_user.id
         )
         
@@ -1286,7 +1290,8 @@ def broadcast_new():
         countries=countries,
         organizations=organizations,
         screens=screens,
-        cities_by_country=cities_by_country
+        cities_by_country=cities_by_country,
+        timezones=COMMON_TIMEZONES
     )
 
 
@@ -1298,6 +1303,7 @@ def broadcast_edit(broadcast_id):
     import secrets
     from werkzeug.utils import secure_filename
     from utils.countries import get_all_countries
+    from models.broadcast import COMMON_TIMEZONES
     
     broadcast = Broadcast.query.get_or_404(broadcast_id)
     countries = get_all_countries()
@@ -1318,6 +1324,7 @@ def broadcast_edit(broadcast_id):
         target_type = request.form.get('target_type', 'country')
         target_org_type = request.form.get('target_org_type', 'all')
         broadcast_type = request.form.get('broadcast_type', 'overlay')
+        timezone = request.form.get('timezone', 'Europe/Paris')
         
         if not name:
             flash('Le nom de la diffusion est obligatoire.', 'error')
@@ -1326,13 +1333,15 @@ def broadcast_edit(broadcast_id):
                 countries=countries,
                 organizations=organizations,
                 screens=screens,
-                cities_by_country=cities_by_country
+                cities_by_country=cities_by_country,
+                timezones=COMMON_TIMEZONES
             )
         
         broadcast.name = name
         broadcast.target_type = target_type
         broadcast.target_org_type = target_org_type
         broadcast.broadcast_type = broadcast_type
+        broadcast.timezone = timezone
         
         broadcast.target_country = None
         broadcast.target_city = None
@@ -1513,7 +1522,8 @@ def broadcast_edit(broadcast_id):
         countries=countries,
         organizations=organizations,
         screens=screens,
-        cities_by_country=cities_by_country
+        cities_by_country=cities_by_country,
+        timezones=COMMON_TIMEZONES
     )
 
 

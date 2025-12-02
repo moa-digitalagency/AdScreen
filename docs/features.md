@@ -204,12 +204,25 @@ Les superadmins peuvent diffuser du contenu vers plusieurs écrans simultanémen
 - Image : Image en position fixe
 - Corner : Logo/image en coin d'écran
 
-**Modes de programmation (NOUVEAU)**
+**Modes de programmation**
 
 | Mode | Description | Usage |
 |------|-------------|-------|
 | Immédiat | Diffusion instantanée dès activation | Annonces urgentes |
 | Programmé | Déclenchement à date/heure précise | Événements planifiés |
+
+**Fuseau horaire (NOUVEAU)**
+
+Les diffusions programmées supportent désormais un fuseau horaire cible pour assurer la synchronisation avec les écrans dans différentes régions :
+
+| Région | Fuseaux horaires supportés |
+|--------|---------------------------|
+| Europe | Paris, London, Berlin, Madrid, Rome, Brussels, Zurich |
+| Afrique | Casablanca, Tunis, Algiers, Dakar, Abidjan, Lagos, Johannesburg, Cairo |
+| Amérique | New York, Chicago, Los Angeles, Toronto, Sao Paulo |
+| Asie/Océanie | Dubai, Riyadh, Tokyo, Shanghai, Singapore, Sydney |
+
+Le fuseau horaire par défaut est Europe/Paris.
 
 **Système de récurrence (NOUVEAU)**
 

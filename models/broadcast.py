@@ -1,5 +1,37 @@
 from app import db
 from datetime import datetime, timedelta
+import zoneinfo
+
+
+COMMON_TIMEZONES = [
+    ('UTC', 'UTC (Temps universel coordonné)'),
+    ('Europe/Paris', 'Europe/Paris (France)'),
+    ('Europe/London', 'Europe/London (Royaume-Uni)'),
+    ('Europe/Berlin', 'Europe/Berlin (Allemagne)'),
+    ('Europe/Madrid', 'Europe/Madrid (Espagne)'),
+    ('Europe/Rome', 'Europe/Rome (Italie)'),
+    ('Europe/Brussels', 'Europe/Brussels (Belgique)'),
+    ('Europe/Zurich', 'Europe/Zurich (Suisse)'),
+    ('Africa/Casablanca', 'Africa/Casablanca (Maroc)'),
+    ('Africa/Tunis', 'Africa/Tunis (Tunisie)'),
+    ('Africa/Algiers', 'Africa/Algiers (Algérie)'),
+    ('Africa/Dakar', 'Africa/Dakar (Sénégal)'),
+    ('Africa/Abidjan', 'Africa/Abidjan (Côte d\'Ivoire)'),
+    ('Africa/Lagos', 'Africa/Lagos (Nigeria)'),
+    ('Africa/Johannesburg', 'Africa/Johannesburg (Afrique du Sud)'),
+    ('Africa/Cairo', 'Africa/Cairo (Égypte)'),
+    ('America/New_York', 'America/New_York (Est USA)'),
+    ('America/Chicago', 'America/Chicago (Centre USA)'),
+    ('America/Los_Angeles', 'America/Los_Angeles (Ouest USA)'),
+    ('America/Toronto', 'America/Toronto (Canada)'),
+    ('America/Sao_Paulo', 'America/Sao_Paulo (Brésil)'),
+    ('Asia/Dubai', 'Asia/Dubai (Émirats Arabes Unis)'),
+    ('Asia/Riyadh', 'Asia/Riyadh (Arabie Saoudite)'),
+    ('Asia/Tokyo', 'Asia/Tokyo (Japon)'),
+    ('Asia/Shanghai', 'Asia/Shanghai (Chine)'),
+    ('Asia/Singapore', 'Asia/Singapore (Singapour)'),
+    ('Australia/Sydney', 'Australia/Sydney (Australie)'),
+]
 
 
 class Broadcast(db.Model):
@@ -7,6 +39,8 @@ class Broadcast(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256), nullable=False)
+    
+    timezone = db.Column(db.String(64), default='Europe/Paris', nullable=False)
     
     TARGET_COUNTRY = 'country'
     TARGET_CITY = 'city'
