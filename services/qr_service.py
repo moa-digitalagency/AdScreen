@@ -68,24 +68,20 @@ def generate_enhanced_qr_base64(screen, booking_url, platform_name='Shabaka AdSc
     return base64.b64encode(img_data).decode()
 
 
-def draw_dotted_line(draw, start, end, color, width=2, spacing=8):
-    """Draw a dotted line."""
-    x1, y1 = start
-    x2, y2 = end
-    distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
-    num_dots = int(distance / spacing)
-    
-    for i in range(num_dots):
-        t = i / max(1, num_dots)
-        x = int(x1 + (x2 - x1) * t)
-        y = int(y1 + (y2 - y1) * t)
-        draw.ellipse([(x-width, y-width), (x+width, y+width)], fill=color)
+def draw_gradient_vertical(draw, width, height, color_start, color_end):
+    """Draw a smooth vertical gradient."""
+    for y in range(height):
+        ratio = y / height
+        r = int(color_start[0] + (color_end[0] - color_start[0]) * ratio)
+        g = int(color_start[1] + (color_end[1] - color_start[1]) * ratio)
+        b = int(color_start[2] + (color_end[2] - color_start[2]) * ratio)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
 
 
 def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScreen'):
     """
     Generate a professional light-theme enhanced QR code image.
-    Features large visible QR code, emerald gradients, no blocking elements.
+    QR code proportional to screen resolution (max 30% of screen).
     
     Args:
         screen: Screen model instance
@@ -96,21 +92,32 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
         bytes: PNG image data
     """
     qr = qrcode.QRCode(
-        version=2,
+        version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
+        box_size=8,
         border=2,
     )
     qr.add_data(booking_url)
     qr.make(fit=True)
     
-    qr_img = qr.make_image(fill_color="#059669", back_color="white").convert('RGBA')
-    qr_size = qr_img.size[0]
+    qr_img_temp = qr.make_image(fill_color="#059669", back_color="white").convert('RGB')
+    qr_base_size = qr_img_temp.size[0]
     
-    # Professional proportions - portrait layout
-    canvas_width = 600
-    canvas_height = 900
-    padding = 40
+    # Responsive canvas size based on aspect ratio
+    aspect_ratio = screen.resolution_width / screen.resolution_height
+    
+    if aspect_ratio >= 1:  # Landscape
+        canvas_width = min(800, screen.resolution_width)
+        canvas_height = int(canvas_width / aspect_ratio)
+    else:  # Portrait
+        canvas_height = min(800, screen.resolution_height)
+        canvas_width = int(canvas_height * aspect_ratio)
+    
+    # Ensure minimum size
+    canvas_width = max(canvas_width, 400)
+    canvas_height = max(canvas_height, 400)
+    
+    padding = int(canvas_width * 0.06)
     
     # Light theme background
     canvas = Image.new('RGB', (canvas_width, canvas_height), '#ffffff')
@@ -121,107 +128,108 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     gradient_end = (20, 184, 166)    # #14b8a6
     accent_light = (209, 250, 229)   # #d1fae5
     accent_dark = (5, 150, 105)      # #059669
+    text_dark = (15, 23, 42)         # #0f172a
+    text_muted = (107, 114, 128)     # #6b7280
     
-    # Decorative dotted border at top
-    for i in range(0, canvas_width, 15):
-        draw.ellipse([(i, 15), (i+4, 19)], fill=gradient_start)
+    # Subtle dotted pattern
+    dot_spacing = int(canvas_width * 0.1)
+    for x in range(0, canvas_width, dot_spacing):
+        for y in range(0, canvas_height, dot_spacing):
+            if (x + y) // dot_spacing % 3 == 0:
+                draw.ellipse([(x-1, y-1), (x+2, y+2)], fill=(240, 245, 240))
     
-    # Subtle gradient header bar
-    header_height = 80
-    for y in range(header_height):
-        ratio = y / header_height
-        r = int(gradient_start[0] + (accent_light[0] - gradient_start[0]) * ratio)
-        g = int(gradient_start[1] + (accent_light[1] - gradient_start[1]) * ratio)
-        b = int(gradient_start[2] + (accent_light[2] - gradient_start[2]) * ratio)
-        draw.line([(0, y), (canvas_width, y)], fill=(r, g, b))
+    # Header gradient
+    header_height = max(int(canvas_height * 0.15), 60)
+    draw_gradient_vertical(draw, canvas_width, header_height, gradient_start, gradient_end)
     
     # Platform name in header
     try:
-        header_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
-        qr_label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
-        info_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        footer_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+        header_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
+                                        max(int(canvas_width * 0.04), 16))
+        label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
+                                       max(int(canvas_width * 0.035), 14))
+        info_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 
+                                      max(int(canvas_width * 0.025), 11))
+        footer_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
+                                        max(int(canvas_width * 0.02), 10))
     except:
         header_font = ImageFont.load_default()
-        qr_label_font = header_font
+        label_font = header_font
         info_font = header_font
         footer_font = header_font
     
-    # Platform name centered in header
+    # Platform name
     platform_bbox = draw.textbbox((0, 0), platform_name, font=header_font)
     platform_x = (canvas_width - (platform_bbox[2] - platform_bbox[0])) // 2
-    draw.text((platform_x, 25), platform_name, fill='#ffffff', font=header_font)
+    platform_y = int(header_height * 0.2)
+    draw.text((platform_x, platform_y), platform_name, fill='#ffffff', font=header_font)
     
-    # QR Code section - LARGE AND CENTERED
-    qr_label_y = header_height + 30
-    qr_label_bbox = draw.textbbox((0, 0), "Scannez pour réserver", font=qr_label_font)
+    # QR code section
+    qr_label_y = header_height + int(canvas_height * 0.04)
+    qr_label_bbox = draw.textbbox((0, 0), "Scannez", font=label_font)
     qr_label_x = (canvas_width - (qr_label_bbox[2] - qr_label_bbox[0])) // 2
-    draw.text((qr_label_x, qr_label_y), "Scannez pour réserver", fill=accent_dark, font=qr_label_font)
+    draw.text((qr_label_x, qr_label_y), "Scannez", fill=accent_dark, font=label_font)
     
-    # QR code placement - LARGE AND VISIBLE
-    qr_bg_size = qr_size + 60
+    # QR code - PROPORTIONAL (25% of canvas height max)
+    max_qr_height = int(canvas_height * 0.25)
+    qr_size = min(max_qr_height, 280)
+    
+    try:
+        qr_img = qr_img_temp.resize((qr_size, qr_size), Image.LANCZOS)
+    except AttributeError:
+        qr_img = qr_img_temp.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+    
+    # Center QR code
+    qr_bg_pad = int(qr_size * 0.15)
+    qr_bg_size = qr_size + qr_bg_pad * 2
     qr_bg_x = (canvas_width - qr_bg_size) // 2
-    qr_bg_y = qr_label_y + 50
+    qr_bg_y = qr_label_y + int(canvas_height * 0.08)
     
-    # Light background for QR
+    # Light background
     draw.rectangle(
         [(qr_bg_x, qr_bg_y), (qr_bg_x + qr_bg_size, qr_bg_y + qr_bg_size)],
         fill=accent_light,
         outline=gradient_start,
-        width=2
+        width=1
     )
     
-    # Add subtle corner decorations
-    corner_size = 15
-    corners = [
-        (qr_bg_x, qr_bg_y),
-        (qr_bg_x + qr_bg_size - corner_size, qr_bg_y),
-        (qr_bg_x, qr_bg_y + qr_bg_size - corner_size),
-        (qr_bg_x + qr_bg_size - corner_size, qr_bg_y + qr_bg_size - corner_size),
-    ]
-    for cx, cy in corners:
-        draw.ellipse([(cx, cy), (cx + corner_size, cy + corner_size)], fill=gradient_start)
-    
-    # Place QR code
+    # Place QR
     qr_x = (canvas_width - qr_size) // 2
-    qr_y = qr_bg_y + 30
+    qr_y = qr_bg_y + qr_bg_pad
     canvas.paste(qr_img, (qr_x, qr_y))
     
-    # Information section
-    info_y = qr_bg_y + qr_bg_size + 40
+    # Info section below QR
+    info_y = qr_bg_y + qr_bg_size + int(canvas_height * 0.04)
     
-    # Organization name
     org_name = screen.organization.name if screen.organization else 'Établissement'
     org_bbox = draw.textbbox((0, 0), org_name, font=info_font)
     org_x = (canvas_width - (org_bbox[2] - org_bbox[0])) // 2
-    draw.text((org_x, info_y), org_name, fill=accent_dark, font=info_font)
+    draw.text((org_x, info_y), org_name, fill=text_dark, font=info_font)
     
     # Screen name
     screen_name = screen.name
     screen_bbox = draw.textbbox((0, 0), screen_name, font=info_font)
     screen_x = (canvas_width - (screen_bbox[2] - screen_bbox[0])) // 2
-    draw.text((screen_x, info_y + 35), screen_name, fill='#666666', font=info_font)
+    draw.text((screen_x, info_y + int(canvas_height * 0.04)), screen_name, fill=text_muted, font=info_font)
     
     # Resolution
     resolution_text = f"{screen.resolution_width}x{screen.resolution_height}"
     res_bbox = draw.textbbox((0, 0), resolution_text, font=info_font)
     res_x = (canvas_width - (res_bbox[2] - res_bbox[0])) // 2
-    draw.text((res_x, info_y + 70), resolution_text, fill='#999999', font=info_font)
+    draw.text((res_x, info_y + int(canvas_height * 0.08)), resolution_text, fill=text_muted, font=info_font)
     
-    # Footer with dotted line separator
-    footer_y = canvas_height - 100
+    # Footer
+    footer_height = max(int(canvas_height * 0.1), 50)
+    footer_y = canvas_height - footer_height
     
-    # Dotted line
-    for i in range(padding, canvas_width - padding, 12):
-        draw.ellipse([(i, footer_y - 15), (i+3, footer_y - 12)], fill=gradient_start)
+    draw_gradient_vertical(draw, canvas_width, footer_height, accent_light, gradient_start)
     
-    # Website URL
     website_url = "www.shabaka-adscreen.com"
     website_bbox = draw.textbbox((0, 0), website_url, font=footer_font)
     website_x = (canvas_width - (website_bbox[2] - website_bbox[0])) // 2
-    draw.text((website_x, footer_y), website_url, fill=gradient_start, font=footer_font)
+    website_y = footer_y + (footer_height - (website_bbox[3] - website_bbox[1])) // 2
+    draw.text((website_x, website_y), website_url, fill='#ffffff', font=footer_font)
     
-    # Convert to RGB for PNG
     canvas = canvas.convert('RGB')
     
     buffer = io.BytesIO()

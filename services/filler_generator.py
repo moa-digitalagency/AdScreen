@@ -6,17 +6,6 @@ import qrcode
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_dotted_pattern(draw, width, height, color, spacing=30, dot_size=3):
-    """Draw a subtle dotted pattern background."""
-    for x in range(0, width, spacing):
-        for y in range(0, height, spacing):
-            if (x + y) // spacing % 2 == 0:
-                draw.ellipse(
-                    [(x-dot_size, y-dot_size), (x+dot_size, y+dot_size)],
-                    fill=color
-                )
-
-
 def draw_gradient_vertical(draw, width, height, color_start, color_end):
     """Draw a smooth vertical gradient."""
     for y in range(height):
@@ -30,7 +19,7 @@ def draw_gradient_vertical(draw, width, height, color_start, color_end):
 def generate_default_filler(screen, booking_url=None, platform_url=None, platform_name=None, base_url=None):
     """
     Generate a professional light-theme default filler image.
-    Features emerald gradients, clean layout, no blocking elements.
+    QR code proportional to screen resolution.
     
     Args:
         screen: Screen model instance
@@ -62,32 +51,28 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     text_dark = (15, 23, 42)         # #0f172a
     text_muted = (107, 114, 128)     # #6b7280
     
-    # Subtle dotted pattern - very light
-    draw_dotted_pattern(draw, width, height, (240, 245, 240), spacing=50, dot_size=2)
+    # Subtle dotted pattern
+    dot_spacing = int(min(width, height) * 0.08)
+    for x in range(0, width, dot_spacing):
+        for y in range(0, height, dot_spacing):
+            if (x + y) // dot_spacing % 3 == 0:
+                draw.ellipse([(x-1, y-1), (x+2, y+2)], fill=(240, 245, 240))
     
-    # Top gradient header (20% of height)
-    header_height = int(height * 0.20)
+    # Top gradient header (15% of height)
+    header_height = max(int(height * 0.12), 80)
     draw_gradient_vertical(draw, width, header_height, gradient_start, gradient_end)
-    
-    # Decorative wave separator
-    wave_points = []
-    for x in range(width + 1):
-        wave_y = header_height + int(10 * math.sin(x * 0.01))
-        wave_points.append((x, wave_y))
-    wave_points.append((width, header_height + 40))
-    wave_points.append((0, header_height + 40))
-    draw.polygon(wave_points, fill=accent_light)
     
     # Organization name in header
     try:
-        org_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
-                                     max(int(width * 0.06), 36))
-        subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 
-                                          max(int(width * 0.04), 24))
-        info_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 
-                                       max(int(width * 0.03), 18))
-        footer_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
-                                        max(int(width * 0.025), 16))
+        org_font_size = max(int(width * 0.05), 28)
+        subtitle_font_size = max(int(width * 0.035), 20)
+        info_font_size = max(int(width * 0.025), 14)
+        footer_font_size = max(int(width * 0.022), 12)
+        
+        org_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", org_font_size)
+        subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", subtitle_font_size)
+        info_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", info_font_size)
+        footer_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", footer_font_size)
     except:
         org_font = ImageFont.load_default()
         subtitle_font = org_font
@@ -98,14 +83,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     org_bbox = draw.textbbox((0, 0), org_name, font=org_font)
     org_x = (width - (org_bbox[2] - org_bbox[0])) // 2
     org_y = int(header_height * 0.15)
-    
-    # Org name with subtle shadow
-    draw.text((org_x + 2, org_y + 2), org_name, fill=(0, 0, 0, 30), font=org_font)
     draw.text((org_x, org_y), org_name, fill='#ffffff', font=org_font)
     
     # Content section
-    content_y = header_height + 50
-    content_height = height - content_y - int(height * 0.12)
+    content_y = header_height + int(height * 0.05)
     
     # Screen name
     screen_name = screen.name
@@ -113,31 +94,26 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     screen_x = (width - (screen_bbox[2] - screen_bbox[0])) // 2
     draw.text((screen_x, content_y), screen_name, fill=text_dark, font=subtitle_font)
     
-    # Small decorative line under screen name
-    line_width = min(int((screen_bbox[2] - screen_bbox[0]) * 0.4), width - 100)
+    # Decorative line under name
+    line_width = min(int((screen_bbox[2] - screen_bbox[0]) * 0.3), width - 100)
     line_x = (width - line_width) // 2
-    line_y = content_y + (screen_bbox[3] - screen_bbox[1]) + 15
-    draw.rounded_rectangle(
-        [(line_x, line_y), (line_x + line_width, line_y + 3)],
-        radius=1,
-        fill=gradient_start
-    )
+    line_y = content_y + (screen_bbox[3] - screen_bbox[1]) + 10
+    draw.rounded_rectangle([(line_x, line_y), (line_x + line_width, line_y + 2)], radius=1, fill=gradient_start)
     
-    # Resolution info centered
+    # Resolution
     resolution_text = f"{screen.resolution_width} x {screen.resolution_height}"
     resolution_bbox = draw.textbbox((0, 0), resolution_text, font=info_font)
     res_x = (width - (resolution_bbox[2] - resolution_bbox[0])) // 2
-    res_y = line_y + 30
+    res_y = line_y + 20
     draw.text((res_x, res_y), resolution_text, fill=text_muted, font=info_font)
     
-    # QR code section - if booking URL provided
+    # Generate proportional QR code
     if not booking_url:
         if base_url:
             booking_url = f"{base_url}/book/{screen.unique_code}"
         else:
             booking_url = f"https://shabaka-adscreen.com/book/{screen.unique_code}"
     
-    # Generate small QR code
     try:
         qr = qrcode.QRCode(
             version=1,
@@ -149,7 +125,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
         qr.make(fit=True)
         
         qr_img_pil = qr.make_image(fill_color="#059669", back_color="white").convert('RGB')
-        qr_size = min(int(width * 0.15), 180)
+        
+        # QR size = 20% of screen width (max)
+        max_qr_size = int(width * 0.20)
+        qr_size = min(max_qr_size, 200)
         
         try:
             qr_img_pil = qr_img_pil.resize((qr_size, qr_size), Image.LANCZOS)
@@ -158,10 +137,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
         
         # Center QR code
         qr_x = (width - qr_size) // 2
-        qr_y = res_y + 60
+        qr_y = res_y + int(height * 0.08)
         
         # Light background for QR
-        bg_pad = 10
+        bg_pad = 8
         draw.rectangle(
             [(qr_x - bg_pad, qr_y - bg_pad), (qr_x + qr_size + bg_pad, qr_y + qr_size + bg_pad)],
             fill=accent_light,
@@ -171,17 +150,17 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
         
         canvas.paste(qr_img_pil, (qr_x, qr_y))
         
-        # "Réservez" text under QR
+        # Text under QR
         reserve_text = "Réservez un créneau"
         reserve_bbox = draw.textbbox((0, 0), reserve_text, font=info_font)
         reserve_x = (width - (reserve_bbox[2] - reserve_bbox[0])) // 2
-        reserve_y = qr_y + qr_size + 20
+        reserve_y = qr_y + qr_size + 15
         draw.text((reserve_x, reserve_y), reserve_text, fill=gradient_start, font=info_font)
     except:
         pass
     
     # Footer section
-    footer_height = int(height * 0.12)
+    footer_height = max(int(height * 0.10), 60)
     footer_y = height - footer_height
     
     # Gradient footer
