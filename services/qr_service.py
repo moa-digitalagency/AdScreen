@@ -81,7 +81,7 @@ def draw_gradient_vertical(draw, width, height, color_start, color_end):
 def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScreen'):
     """
     Generate a professional light-theme enhanced QR code image.
-    QR code proportional to screen resolution (max 30% of screen).
+    Full resolution image matching screen size.
     
     Args:
         screen: Screen model instance
@@ -91,6 +91,11 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     Returns:
         bytes: PNG image data
     """
+    # Use actual screen resolution
+    canvas_width = screen.resolution_width
+    canvas_height = screen.resolution_height
+    
+    # Generate QR code
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -101,23 +106,6 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     qr.make(fit=True)
     
     qr_img_temp = qr.make_image(fill_color="#059669", back_color="white").convert('RGB')
-    qr_base_size = qr_img_temp.size[0]
-    
-    # Responsive canvas size based on aspect ratio
-    aspect_ratio = screen.resolution_width / screen.resolution_height
-    
-    if aspect_ratio >= 1:  # Landscape
-        canvas_width = min(800, screen.resolution_width)
-        canvas_height = int(canvas_width / aspect_ratio)
-    else:  # Portrait
-        canvas_height = min(800, screen.resolution_height)
-        canvas_width = int(canvas_height * aspect_ratio)
-    
-    # Ensure minimum size
-    canvas_width = max(canvas_width, 400)
-    canvas_height = max(canvas_height, 400)
-    
-    padding = int(canvas_width * 0.06)
     
     # Light theme background
     canvas = Image.new('RGB', (canvas_width, canvas_height), '#ffffff')
@@ -138,20 +126,20 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
             if (x + y) // dot_spacing % 3 == 0:
                 draw.ellipse([(x-1, y-1), (x+2, y+2)], fill=(240, 245, 240))
     
-    # Header gradient
-    header_height = max(int(canvas_height * 0.15), 60)
+    # Header gradient - 12% of height
+    header_height = int(canvas_height * 0.12)
     draw_gradient_vertical(draw, canvas_width, header_height, gradient_start, gradient_end)
     
     # Platform name in header
     try:
         header_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
-                                        max(int(canvas_width * 0.04), 16))
+                                        int(canvas_height * 0.04))
         label_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
-                                       max(int(canvas_width * 0.035), 14))
+                                       int(canvas_height * 0.035))
         info_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 
-                                      max(int(canvas_width * 0.025), 11))
+                                      int(canvas_height * 0.025))
         footer_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
-                                        max(int(canvas_width * 0.02), 10))
+                                        int(canvas_height * 0.02))
     except:
         header_font = ImageFont.load_default()
         label_font = header_font
@@ -171,8 +159,7 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     draw.text((qr_label_x, qr_label_y), "Scannez", fill=accent_dark, font=label_font)
     
     # QR code - PROPORTIONAL (25% of canvas height max)
-    max_qr_height = int(canvas_height * 0.25)
-    qr_size = min(max_qr_height, 280)
+    qr_size = int(canvas_height * 0.25)
     
     try:
         qr_img = qr_img_temp.resize((qr_size, qr_size), Image.LANCZOS)
