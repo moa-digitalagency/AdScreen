@@ -37,6 +37,8 @@ Accès complet à la plateforme : gestion des établissements, statistiques glob
 
 Chaque établissement a son propre compte pour gérer ses écrans. **Mot de passe commun : `demo123`**
 
+> **Note** : L'email de connexion (manager@...) est distinct de l'email de contact de l'établissement (contact@... ou info@...).
+
 #### France (EUR)
 
 | Établissement | Email | Plan | Commission | Écrans | Type |
