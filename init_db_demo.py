@@ -137,6 +137,22 @@ def create_demo_data():
         )
         db.session.add(org6)
         
+        org7 = Organization(
+            name='Petit Café Gratuit',
+            email='contact@cafe-gratuit.fr',
+            phone='+33 1 55 00 00 00',
+            address='12 Rue de la Liberté, 75011 Paris',
+            country='FR',
+            city='Paris',
+            currency='EUR',
+            timezone='Europe/Paris',
+            commission_rate=0.0,
+            subscription_plan='free',
+            is_paid=False,
+            registration_number_label='SIRET'
+        )
+        db.session.add(org7)
+        
         db.session.flush()
         
         logger.info("👥 Création des utilisateurs établissement...")
@@ -194,6 +210,26 @@ def create_demo_data():
         )
         user6.set_password('demo123')
         db.session.add(user6)
+        
+        user7 = User(
+            username='Café Gratuit Manager',
+            email='manager@cafe-gratuit.fr',
+            role='org',
+            organization_id=org7.id
+        )
+        user7.set_password('demo123')
+        db.session.add(user7)
+        
+        logger.info("👮 Création d'un administrateur avec permissions limitées...")
+        
+        admin_user = User(
+            username='Admin Démo',
+            email='admin-demo@shabaka-adscreen.com',
+            role='admin'
+        )
+        admin_user.set_password('admin123')
+        admin_user.set_permissions(['dashboard', 'organizations', 'screens', 'stats'])
+        db.session.add(admin_user)
         
         logger.info("📺 Création des écrans...")
         
@@ -355,13 +391,31 @@ def create_demo_data():
         screen9.set_password('screen123')
         db.session.add(screen9)
         
+        screen10 = Screen(
+            name='Écran Petit Café',
+            location='Comptoir',
+            latitude=48.8566,
+            longitude=2.3522,
+            resolution_width=1920,
+            resolution_height=1080,
+            orientation='landscape',
+            accepts_images=True,
+            accepts_videos=True,
+            max_file_size_mb=30,
+            price_per_minute=0.0,
+            organization_id=org7.id
+        )
+        screen10.set_password('screen123')
+        db.session.add(screen10)
+        
         db.session.flush()
         
-        all_screens = [screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9]
+        all_screens = [screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9, screen10]
+        paid_screens = [screen1, screen2, screen3, screen4, screen5, screen6, screen7, screen8, screen9]
         
-        logger.info("⏱️  Création des créneaux horaires (prix auto-calculés)...")
+        logger.info("⏱️  Création des créneaux horaires (prix auto-calculés) pour établissements payants...")
         
-        for screen in all_screens:
+        for screen in paid_screens:
             slot_durations = [
                 ('image', 10),
                 ('image', 15),
@@ -383,9 +437,9 @@ def create_demo_data():
                 )
                 db.session.add(slot)
         
-        logger.info("🕐 Création des périodes horaires...")
+        logger.info("🕐 Création des périodes horaires pour établissements payants...")
         
-        for screen in all_screens:
+        for screen in paid_screens:
             periods = [
                 ('Matin', 6, 12, 0.8),
                 ('Midi', 12, 14, 1.5),
@@ -672,11 +726,16 @@ def create_demo_data():
     👤 COMPTES CRÉÉS:
     ════════════════════════════════════════════════════════════════
     
-    👑 SUPERADMIN:
+    👑 SUPERADMIN (accès complet):
        📧 Email: admin@shabaka-adscreen.com
        🔑 Mot de passe: admin123
     
-    🏢 ÉTABLISSEMENTS (mot de passe: demo123):
+    👮 ADMIN DÉMO (permissions limitées):
+       📧 Email: admin-demo@shabaka-adscreen.com
+       🔑 Mot de passe: admin123
+       📋 Permissions: dashboard, organizations, screens, stats
+    
+    🏢 ÉTABLISSEMENTS PAYANTS (mot de passe: demo123):
     
     🇫🇷 FRANCE (EUR):
        1️⃣  Le Bistrot Parisien - manager@restaurant-paris.fr
@@ -692,6 +751,10 @@ def create_demo_data():
     🇹🇳 TUNISIE (TND):
        6️⃣  Tunisian Café - manager@tunis-cafe.tn
     
+    🆓 ÉTABLISSEMENT GRATUIT (mot de passe: demo123):
+       7️⃣  Petit Café Gratuit - manager@cafe-gratuit.fr (FR)
+       ⚠️  Fonctionnalités limitées: contenus internes et overlays uniquement
+    
     📺 ÉCRANS (mot de passe player: screen123):
        • Le Bistrot Parisien: 2 écrans (FR)
        • Bar Le Central: 1 écran (FR)
@@ -699,6 +762,7 @@ def create_demo_data():
        • Café Marrakech: 2 écrans (MA)
        • Restaurant Dakar Beach: 1 écran (SN)
        • Tunisian Café: 1 écran (TN)
+       • Petit Café Gratuit: 1 écran (FR) - sans créneaux payants
     
     🔲 OVERLAYS DE DÉMONSTRATION (7 bandeaux):
        • Écran Entrée (footer) - Happy Hour
