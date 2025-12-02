@@ -1121,6 +1121,7 @@ def broadcast_new():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         target_type = request.form.get('target_type', 'country')
+        target_org_type = request.form.get('target_org_type', 'all')
         broadcast_type = request.form.get('broadcast_type', 'overlay')
         
         if not name:
@@ -1136,6 +1137,7 @@ def broadcast_new():
         broadcast = Broadcast(
             name=name,
             target_type=target_type,
+            target_org_type=target_org_type,
             broadcast_type=broadcast_type,
             created_by=current_user.id
         )
@@ -1272,6 +1274,7 @@ def broadcast_edit(broadcast_id):
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         target_type = request.form.get('target_type', 'country')
+        target_org_type = request.form.get('target_org_type', 'all')
         broadcast_type = request.form.get('broadcast_type', 'overlay')
         
         if not name:
@@ -1286,6 +1289,7 @@ def broadcast_edit(broadcast_id):
         
         broadcast.name = name
         broadcast.target_type = target_type
+        broadcast.target_org_type = target_org_type
         broadcast.broadcast_type = broadcast_type
         
         broadcast.target_country = None

@@ -19,6 +19,12 @@ class Broadcast(db.Model):
     target_organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
     target_screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=True)
     
+    ORG_TYPE_ALL = 'all'
+    ORG_TYPE_PAID = 'paid'
+    ORG_TYPE_FREE = 'free'
+    
+    target_org_type = db.Column(db.String(10), default=ORG_TYPE_ALL)
+    
     BROADCAST_TYPE_OVERLAY = 'overlay'
     BROADCAST_TYPE_CONTENT = 'content'
     
@@ -73,11 +79,26 @@ class Broadcast(db.Model):
         
         return True
     
+    def _matches_org_type(self, org):
+        if not org:
+            return False
+        if self.target_org_type == self.ORG_TYPE_ALL:
+            return True
+        if self.target_org_type == self.ORG_TYPE_PAID:
+            return org.is_paid
+        if self.target_org_type == self.ORG_TYPE_FREE:
+            return not org.is_paid
+        return True
+    
     def applies_to_screen(self, screen):
         if not self.is_currently_active():
             return False
         
         if not screen.is_active:
+            return False
+        
+        org = screen.organization
+        if not self._matches_org_type(org):
             return False
         
         if self.target_type == self.TARGET_SCREEN:
@@ -87,7 +108,6 @@ class Broadcast(db.Model):
             return self.target_organization_id == screen.organization_id
         
         if self.target_type == self.TARGET_CITY:
-            org = screen.organization
             if org:
                 return (org.country == self.target_country and 
                         org.city and 
@@ -95,12 +115,18 @@ class Broadcast(db.Model):
             return False
         
         if self.target_type == self.TARGET_COUNTRY:
-            org = screen.organization
             if org:
                 return org.country == self.target_country
             return False
         
         return False
+    
+    def _apply_org_type_filter(self, query, Organization):
+        if self.target_org_type == self.ORG_TYPE_PAID:
+            return query.filter(Organization.is_paid == True)
+        elif self.target_org_type == self.ORG_TYPE_FREE:
+            return query.filter(Organization.is_paid == False)
+        return query
     
     def get_target_screens(self):
         from models import Screen, Organization
@@ -110,31 +136,49 @@ class Broadcast(db.Model):
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id)
-            return [screen] if screen and screen.is_active else []
+            if screen and screen.is_active and self._matches_org_type(screen.organization):
+                return [screen]
+            return []
         
         if self.target_type == self.TARGET_ORGANIZATION:
-            return Screen.query.filter_by(
-                organization_id=self.target_organization_id,
-                is_active=True
-            ).all()
+            org = Organization.query.get(self.target_organization_id)
+            if org and self._matches_org_type(org):
+                return Screen.query.filter_by(
+                    organization_id=self.target_organization_id,
+                    is_active=True
+                ).all()
+            return []
         
         if self.target_type == self.TARGET_CITY:
-            return Screen.query.join(Organization).filter(
+            query = Screen.query.join(Organization).filter(
                 Organization.country == self.target_country,
                 Organization.city == self.target_city,
                 Screen.is_active == True
-            ).all()
+            )
+            return self._apply_org_type_filter(query, Organization).all()
         
         if self.target_type == self.TARGET_COUNTRY:
-            return Screen.query.join(Organization).filter(
+            query = Screen.query.join(Organization).filter(
                 Organization.country == self.target_country,
                 Screen.is_active == True
-            ).all()
+            )
+            return self._apply_org_type_filter(query, Organization).all()
         
         return []
     
+    def get_org_type_display(self):
+        if self.target_org_type == self.ORG_TYPE_PAID:
+            return "Payants uniquement"
+        elif self.target_org_type == self.ORG_TYPE_FREE:
+            return "Gratuits uniquement"
+        return "Tous"
+    
     def get_target_display(self):
         from models import Organization, Screen
+        
+        org_type_suffix = ""
+        if self.target_org_type != self.ORG_TYPE_ALL:
+            org_type_suffix = f" ({self.get_org_type_display()})"
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id) if self.target_screen_id else None
@@ -145,12 +189,12 @@ class Broadcast(db.Model):
             return f"Établissement: {org.name}" if org else "Établissement inconnu"
         
         if self.target_type == self.TARGET_CITY:
-            return f"Ville: {self.target_city or 'Non spécifiée'} ({self.target_country or 'Non spécifié'})"
+            return f"Ville: {self.target_city or 'Non spécifiée'} ({self.target_country or 'Non spécifié'}){org_type_suffix}"
         
         if self.target_type == self.TARGET_COUNTRY:
             from utils.countries import get_country_name
             country_name = get_country_name(self.target_country) if self.target_country else 'Non spécifié'
-            return f"Pays: {country_name}"
+            return f"Pays: {country_name}{org_type_suffix}"
         
         return "Cible inconnue"
     

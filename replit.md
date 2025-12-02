@@ -42,10 +42,23 @@ Not specified.
     - **Overlay System**: Comprehensive configuration for tickers (header, body, footer) and image overlays (all positions + custom X/Y, size, opacity), with real-time previews.
     - **Broadcast/Diffusion System**: Superadmin feature to push content to connected screens based on geographic and organizational targeting:
         - **Targeting modes**: Country, city, organization, or specific screen
+        - **Organization type targeting**: Filter by paid establishments only, free establishments only, or all
         - **Content types**: Overlay (ticker, image, corner) or playlist content
         - **Scheduling**: Optional start/end datetime for timed broadcasts
         - **Hierarchical targeting**: Selecting a country affects all active screens in that country
         - **Integration**: Broadcasts automatically appear in player API responses when active
+    - **Multi-tenant Support**:
+        - **Paid vs Free Establishments**: `is_paid` flag on organizations controls feature access
+        - **Feature Restrictions**: Free establishments limited to internal content and overlays (no booking, billing, time slots)
+        - **Decorator-based Access Control**: `@paid_org_required` decorator for paid-only routes
+        - **Conditional UI**: Menus dynamically show/hide based on establishment type
+    - **Superadmin Authentication**:
+        - **Environment Variables**: SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD for secure credential storage
+        - **Dynamic Verification**: Credentials verified at login time from environment
+    - **Admin User Management**:
+        - **Role-based Permissions**: ADMIN_PERMISSIONS dictionary with granular access control
+        - **Permission Categories**: broadcasts, organizations, screens, users, reports, settings, bookings, billing
+        - **User CRUD**: Full admin interface for creating, editing, and managing admin users
     - **Featured Screens**: Super-admins can mark screens for homepage display.
     - **Custom QR Codes**: Simple black/white or detailed QR codes with establishment/screen info.
     - **Advanced Site Settings**: SEO (title, description, keywords, OG image, favicon, Google Analytics), social media links, custom `<head>` code injection, contact info.
