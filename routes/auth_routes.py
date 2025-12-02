@@ -165,15 +165,25 @@ def catalog():
         Organization
     ).filter(Organization.is_active == True).all()
     
-    detected_country = detect_country_from_ip(request)
-    country_filter = request.args.get('country', detected_country or 'all')
-    
-    catalog_data = {}
     all_countries = set()
-    
     for screen in screens:
         country_code = screen.organization.country or 'FR'
         all_countries.add(country_code)
+    
+    detected_country = detect_country_from_ip(request)
+    
+    url_country = request.args.get('country')
+    if url_country:
+        country_filter = url_country
+    elif detected_country and detected_country in all_countries:
+        country_filter = detected_country
+    else:
+        country_filter = 'all'
+    
+    catalog_data = {}
+    
+    for screen in screens:
+        country_code = screen.organization.country or 'FR'
         
         if country_filter != 'all' and country_code != country_filter:
             continue
@@ -238,8 +248,28 @@ def catalog():
                          detected_country=detected_country)
 
 
+def get_real_ip(request):
+    """Get the real client IP address from proxy headers."""
+    x_forwarded_for = request.headers.get('X-Forwarded-For')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+        return ip
+    
+    x_real_ip = request.headers.get('X-Real-IP')
+    if x_real_ip:
+        return x_real_ip.strip()
+    
+    cf_connecting_ip = request.headers.get('CF-Connecting-IP')
+    if cf_connecting_ip:
+        return cf_connecting_ip.strip()
+    
+    return request.remote_addr
+
+
 def detect_country_from_ip(request):
-    """Detect country from IP address using CF-IPCountry header or other methods."""
+    """Detect country from IP address using geolocation API."""
+    import logging
+    
     cf_country = request.headers.get('CF-IPCountry')
     if cf_country and cf_country != 'XX':
         return cf_country
@@ -247,6 +277,23 @@ def detect_country_from_ip(request):
     x_country = request.headers.get('X-Country-Code')
     if x_country:
         return x_country
+    
+    real_ip = get_real_ip(request)
+    
+    if real_ip and not real_ip.startswith(('127.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.', '192.168.', '::1', 'localhost')):
+        try:
+            import urllib.request
+            import json
+            
+            api_url = f"http://ip-api.com/json/{real_ip}?fields=countryCode,status"
+            req = urllib.request.Request(api_url, headers={'User-Agent': 'Mozilla/5.0'})
+            
+            with urllib.request.urlopen(req, timeout=2) as response:
+                data = json.loads(response.read().decode())
+                if data.get('status') == 'success' and data.get('countryCode'):
+                    return data['countryCode']
+        except Exception as e:
+            logging.debug(f"IP geolocation failed for {real_ip}: {e}")
     
     accept_language = request.headers.get('Accept-Language', '')
     if accept_language:
