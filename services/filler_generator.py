@@ -2,7 +2,12 @@ import io
 import os
 import secrets
 import math
-from qrcode import QRCode, constants
+try:
+    from qrcode import QRCode
+    from qrcode.constants import ERROR_CORRECT_H
+except ImportError:
+    QRCode = None  # type: ignore
+    ERROR_CORRECT_H = None  # type: ignore
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -126,7 +131,7 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     
     qr = QRCode(
         version=1,
-        error_correction=constants.ERROR_CORRECT_H,
+        error_correction=ERROR_CORRECT_H,
         box_size=10,
         border=2,
     )
@@ -134,9 +139,10 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="#059669", back_color="white").convert('RGB')
     try:
-        qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+        resample = Image.LANCZOS  # type: ignore
     except AttributeError:
-        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+        resample = Image.Resampling.LANCZOS  # type: ignore
+    qr_img = qr_img.resize((qr_size, qr_size), resample)
     
     content_start = header_height + wave_amplitude + 20
     content_end = footer_y - 20
