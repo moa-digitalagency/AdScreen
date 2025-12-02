@@ -2,7 +2,7 @@ import io
 import os
 import secrets
 import math
-import qrcode
+from qrcode import QRCode, constants
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -124,16 +124,19 @@ def generate_default_filler(screen, booking_url=None, platform_url=None, platfor
         else:
             booking_url = f"https://shabaka-adscreen.com/book/{screen.unique_code}"
     
-    qr = qrcode.QRCode(
+    qr = QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        error_correction=constants.ERROR_CORRECT_H,
         box_size=10,
         border=2,
     )
     qr.add_data(booking_url)
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="#059669", back_color="white").convert('RGB')
-    qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS if hasattr(Image, 'LANCZOS') else Image.Resampling.LANCZOS)
+    try:
+        qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+    except AttributeError:
+        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
     
     content_start = header_height + wave_amplitude + 20
     content_end = footer_y - 20

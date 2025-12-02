@@ -1,4 +1,4 @@
-import qrcode
+from qrcode import QRCode, constants
 import io
 import base64
 import math
@@ -18,9 +18,9 @@ def generate_qr_code(data, box_size=10, border=4):
     Returns:
         bytes: PNG image data
     """
-    qr = qrcode.QRCode(
+    qr = QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        error_correction=constants.ERROR_CORRECT_L,
         box_size=box_size,
         border=border,
     )
@@ -65,9 +65,9 @@ def generate_enhanced_qr_image(screen, booking_url, platform_name='Shabaka AdScr
     Returns:
         bytes: PNG image data
     """
-    qr = qrcode.QRCode(
+    qr = QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        error_correction=constants.ERROR_CORRECT_H,
         box_size=8,
         border=2,
     )
