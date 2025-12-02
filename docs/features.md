@@ -269,6 +269,43 @@ La plateforme intègre un système complet de sélection géographique :
 
 ## Roadmap
 
+### Facturation hebdomadaire
+
+Le système génère des factures chaque semaine via plusieurs mécanismes :
+
+**Processus de facturation**
+- Génération on-demand lorsqu'une organisation accède à la page "Factures"
+- Endpoint cron disponible (`/billing/cron/generate-invoices`) pour automatisation externe
+- Une facture par organisation avec tous les écrans combinés
+- Calcul automatique de la commission basée sur le taux de l'organisation
+
+**Configuration cron externe (recommandé)**
+```bash
+# Ajouter au crontab pour générer les factures chaque dimanche à 23h
+59 23 * * 0 curl -X POST https://votre-domaine.com/billing/cron/generate-invoices
+```
+
+**Statuts des factures**
+
+| Statut | Description |
+|--------|-------------|
+| pending | En attente de paiement |
+| paid | Payé (preuve uploadée) |
+| validated | Validé par superadmin |
+| cancelled | Annulé |
+
+**Preuves de paiement**
+- Upload par l'organisation (PDF, PNG, JPG)
+- Validation par le superadmin
+- Historique conservé
+
+**Calculs**
+- Commission = Revenu brut × Taux commission organisation
+- TVA calculée sur la commission (taux plateforme configurable)
+- Total = Commission + TVA
+
+## Roadmap
+
 ### Phase 2 (à venir)
 
 - [ ] Intégration paiement Stripe multi-devise

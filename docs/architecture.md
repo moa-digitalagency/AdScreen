@@ -49,6 +49,9 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 │  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
 │  │  Broadcast    │ │   Invoice   │ │     PaymentProof         │ │
 │  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
+│  ┌───────────────┐                                              │
+│  │ HeartbeatLog  │                                              │
+│  └───────────────┘                                              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -126,6 +129,7 @@ shabaka-adscreen/
 │   ├── org_routes.py         # Établissement
 │   ├── screen_routes.py      # Config écrans
 │   ├── booking_routes.py     # Réservations
+│   ├── billing_routes.py     # Facturation hebdomadaire
 │   ├── player_routes.py      # Player API
 │   └── api_routes.py         # API REST
 │

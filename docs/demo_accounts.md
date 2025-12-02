@@ -228,6 +228,26 @@ Pour revenir à un état propre :
 python init_db_demo.py --force
 ```
 
+## Facturation hebdomadaire
+
+La facturation peut être générée de deux manières :
+1. **On-demand** : Lorsqu'une organisation accède à sa page "Factures"
+2. **Via cron externe** : En appelant l'endpoint `/billing/cron/generate-invoices`
+
+### Test de la facturation
+
+1. Connectez-vous en superadmin
+2. Allez dans "Facturation" dans le menu admin
+3. Consultez les factures par organisation
+4. Téléchargez ou validez les preuves de paiement
+
+### Test côté établissement
+
+1. Connectez-vous en tant que manager
+2. Allez dans "Factures" dans le menu
+3. Consultez vos factures hebdomadaires
+4. Uploadez une preuve de paiement
+
 ## Notes importantes
 
 - Les mots de passe de démonstration sont faibles et ne doivent **jamais** être utilisés en production
