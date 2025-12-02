@@ -4,9 +4,9 @@ Bienvenue dans la documentation technique de Shabaka AdScreen, la plateforme Saa
 
 ## Table des matières
 
-1. [Architecture](architecture.md) - Structure technique du projet (17 modèles de base de données)
+1. [Architecture](architecture.md) - Structure technique du projet
 2. [Déploiement](deployment.md) - Guide de mise en production
-3. [Comptes de démonstration](demo_accounts.md) - Données de test (6 organisations, 9 écrans, 4 devises)
+3. [Comptes de démonstration](demo_accounts.md) - Données de test et configuration
 4. [Fonctionnalités](features.md) - Liste des fonctionnalités
 5. [Algorithme de Playlist](Algo.md) - Calcul des playlists et priorités
 
@@ -31,18 +31,18 @@ gunicorn --bind 0.0.0.0:5000 --reload main:app
 ### Accès
 
 - **Application** : http://localhost:5000
-- **Login Superadmin** : Utilisez les identifiants configurés dans `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD`
+- **Authentification** : Utilisez les identifiants configurés dans les variables d'environnement
 
-**Important** : Configurez toujours les identifiants du superadmin via les variables d'environnement pour la sécurité.
+**Important** : Configurez les identifiants du superadmin via les variables d'environnement `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD` pour la sécurité.
 
 ## Fonctionnalités principales
 
-- Multi-devises : EUR, MAD, XOF, TND (208 pays supportés)
-- Gestion multi-établissements avec commissions personnalisables
+- Multi-devises : Support de 200+ devises à travers 208 pays
+- Gestion multi-établissements avec commissions configurables
 - Système de diffusion (Broadcast) pour ciblage géographique
-- Facturation hebdomadaire automatique avec preuves de paiement
+- Facturation hebdomadaire automatique
 - Player web fullscreen avec overlays temps réel
-- Génération de reçus thermiques (style ticket de caisse) et PDF
+- Génération de reçus (image thermique et PDF)
 
 ## Support
 

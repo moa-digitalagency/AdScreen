@@ -4,44 +4,18 @@
 Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, restaurants, shopping centers) to monetize their advertising screens through a self-service rental system. Advertisers can access the platform via a link or QR code, select time slots, upload appropriate content, make payments, and receive performance reports. The project aims to provide a comprehensive solution for screen monetization, offering flexibility and detailed control for both establishments and advertisers.
 
 ## Current State (December 2025)
-- **7 demo organizations**: 6 paid establishments + 1 free (Petit Café Gratuit)
-- **10 screens** across 4 countries (France, Morocco, Senegal, Tunisia)
-- **5 broadcast examples** demonstrating immediate and scheduled modes
+- **Database initialized**: Schema ready for data
 - **Multi-currency support**: EUR, MAD, XOF, TND + 200 other currencies
 - **208 countries** with 4,600+ cities for geographic targeting
 - **Admin permissions**: Granular access control for sub-admins
-
-## Demo Accounts & Data Documentation
-
-### Organizations (7 Total)
-1. **Le Petit Café** (Marseille, France) - EUR - Paid establishment
-2. **Les Halles du Marché** (Casablanca, Morocco) - MAD - Paid establishment
-3. **Café Continental** (Paris, France) - EUR - Paid establishment
-4. **Établissement Riad** (Marrakech, Morocco) - MAD - Paid establishment
-5. **Café Dakar** (Dakar, Senegal) - XOF - Paid establishment
-6. **Café Tunis** (Tunis, Tunisia) - TND - Paid establishment
-7. **Petit Café Gratuit** (Lyon, France) - EUR - Free establishment (no booking/billing features)
-
-### Screens (10 Total)
-- **France (4 screens)**: Paris, Marseille, Lyon locations with EUR pricing
-- **Morocco (2 screens)**: Casablanca, Marrakech locations with MAD pricing
-- **Senegal (2 screens)**: Dakar locations with XOF pricing
-- **Tunisia (2 screens)**: Tunis locations with TND pricing
 
 ### Design Standards (Generated Images)
 
 #### QR Code Complet (Full Page)
 - **Resolution**: Full screen resolution (responsive to device)
 - **Layout**: Professional light-theme with emerald gradients
-- **QR Size**: 25% of screen height (max ~280px on standard displays)
-- **Styling**: 
-  - Header gradient: #10b981 to #14b8a6 (12% of height)
-  - Platform name: "Shabaka AdScreen" centered in header
-  - QR label: "Scannez" above QR code
-  - QR code: Centered with light #d1fae5 background border
-  - Info section: Organization name, screen name, resolution
-  - Footer gradient: #d1fae5 to #10b981 (10% of height)
-  - Website URL: "www.shabaka-adscreen.com" centered in footer
+- **QR Size**: 25% of screen height
+- **Styling**: Header/footer gradients (#10b981 to #14b8a6), centered QR with info
 - **Colors**: Emerald theme (#10b981), accent light (#d1fae5), text dark (#0f172a)
 - **Pattern**: Subtle dotted pattern background
 
@@ -49,16 +23,9 @@ Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, res
 - **Resolution**: Actual screen resolution width × height (matches orientation)
 - **Layout**: Responsive to screen dimensions and aspect ratio
 - **QR Size**: 20% of screen width (proportional sizing)
-- **Styling**:
-  - Header: Gradient #10b981 to #14b8a6 (12% of height)
-  - Organization name: Centered, white text in header
-  - Screen name: Below header with decorative line
-  - Resolution text: Displayed centered
-  - QR section: Centered with light background, text "Réservez un créneau" below
-  - Footer: Gradient #d1fae5 to #10b981 (10% of height)
-  - Website URL: "www.shabaka-adscreen.com" centered in footer
+- **Styling**: Gradient header/footer, centered QR, responsive text
 - **Proportions**: All elements scale intelligently with screen size
-- **Pattern**: Subtle dotted pattern (spacing = 8% of minimum dimension)
+- **Pattern**: Subtle dotted pattern
 
 ## User Preferences
 Not specified.
