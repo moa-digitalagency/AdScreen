@@ -9,8 +9,7 @@
             <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Gestion des Diffusions</h2>
             <p class="text-gray-600 mt-1">Diffusez du contenu sur les écrans connectés</p>
         </div>
-        <a href="{{ url_for('admin.broadcast_new') }}" 
-           class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+        <a href="{{ url_for('admin.broadcast_new') }}" class="btn-primary">
             <i class="fas fa-plus"></i>
             <span>Nouvelle diffusion</span>
         </a>
@@ -196,8 +195,7 @@
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune diffusion</h3>
         <p class="text-gray-500 mb-6">Créez votre première diffusion pour envoyer du contenu sur les écrans.</p>
-        <a href="{{ url_for('admin.broadcast_new') }}" 
-           class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition">
+        <a href="{{ url_for('admin.broadcast_new') }}" class="btn-primary">
             <i class="fas fa-plus"></i>
             <span>Créer une diffusion</span>
         </a>
