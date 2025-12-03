@@ -651,63 +651,24 @@
             player.iptvRetryDelay = 2000;
             player.useProxy = false;
             player.originalIptvUrl = player.iptvUrl;
-            player.triedHlsFormat = false;
             
             let streamUrl = player.iptvUrl;
-            debug('OnlineTV original URL: ' + streamUrl);
+            debug('OnlineTV URL: ' + streamUrl);
             
             updateIptvStatus('loading', 'Connexion...');
             
-            if (canConvertToHls(streamUrl)) {
-                const hlsUrl = convertToHlsFormat(streamUrl);
-                debug('Converting MPEG-TS URL to HLS format: ' + hlsUrl);
-                player.triedHlsFormat = true;
-                loadHlsStream(hlsUrl, false);
-            } else if (isMpegTsStream(streamUrl)) {
-                debug('Detected MPEG-TS stream, using mpegts.js with proxy');
-                loadMpegTsStream(streamUrl, true);
-            } else {
+            if (isHlsStream(streamUrl)) {
+                debug('Detected HLS stream (.m3u8), using hls.js');
                 loadHlsStream(streamUrl, false);
+            } else {
+                debug('Detected MPEG-TS stream, using mpegts.js via proxy');
+                loadMpegTsStream(streamUrl, true);
             }
         }
         
-        function canConvertToHls(url) {
+        function isHlsStream(url) {
             const lowerUrl = url.toLowerCase();
-            return lowerUrl.includes('output=mpegts') && 
-                   (lowerUrl.includes('get.php') || lowerUrl.includes('type=m3u'));
-        }
-        
-        function convertToHlsFormat(url) {
-            return url.replace(/output=mpegts/gi, 'output=m3u8')
-                      .replace(/output=ts/gi, 'output=m3u8');
-        }
-        
-        function isMpegTsStream(url) {
-            const lowerUrl = url.toLowerCase();
-            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('output=m3u8') || 
-                lowerUrl.includes('/playlist.m3u') || lowerUrl.includes('hls')) {
-                return false;
-            }
-            if (lowerUrl.includes('output=mpegts') || 
-                lowerUrl.includes('type=m3u_plus') ||
-                (lowerUrl.includes('.ts') && !lowerUrl.includes('.m3u'))) {
-                return true;
-            }
-            const urlObj = new URL(url, window.location.origin);
-            const path = urlObj.pathname;
-            if (!path.includes('.') || path.match(/\/\d+$/)) {
-                debug('URL without file extension, treating as MPEG-TS: ' + url);
-                return true;
-            }
-            return false;
-        }
-        
-        function fallbackToMpegTs() {
-            if (player.originalIptvUrl && isMpegTsStream(player.originalIptvUrl)) {
-                debug('HLS format failed, falling back to MPEG-TS with proxy');
-                player.iptvRetryCount = 0;
-                loadMpegTsStream(player.originalIptvUrl, true);
-            }
+            return lowerUrl.includes('.m3u8') || lowerUrl.includes('output=m3u8');
         }
         
         function loadMpegTsStream(streamUrl, useProxy = false) {
@@ -979,23 +940,8 @@
                         loadHlsStream(streamUrl, true);
                     }
                 }, 1000);
-            } else if (player.triedHlsFormat && player.originalIptvUrl) {
-                debug('HLS format failed after all retries, falling back to MPEG-TS with proxy');
-                player.iptvRetryCount = 0;
-                player.triedHlsFormat = false;
-                updateIptvStatus('loading', 'Essai format MPEG-TS...');
-                
-                setTimeout(() => {
-                    if (player.mode === 'iptv') {
-                        if (player.hlsInstance) {
-                            player.hlsInstance.destroy();
-                            player.hlsInstance = null;
-                        }
-                        loadMpegTsStream(player.originalIptvUrl, true);
-                    }
-                }, 1000);
             } else {
-                debug('Max retries reached (including proxy), showing error');
+                debug('Max retries reached, showing error');
                 updateIptvStatus('error', 'Chaîne indisponible');
                 showIptvError('La chaîne n\'est pas accessible. Causes possibles :<br><br>• La chaîne est hors ligne ou protégée<br>• L\'URL du stream n\'est plus valide<br>• Le serveur bloque les connexions externes<br><br>Essayez une autre chaîne ou vérifiez l\'URL M3U.');
             }
@@ -1061,17 +1007,13 @@
         function retryIptvStream() {
             hideIptvError();
             player.iptvRetryCount = 0;
-            player.triedHlsFormat = false;
             if (player.iptvUrl) {
-                if (canConvertToHls(player.iptvUrl)) {
-                    const hlsUrl = convertToHlsFormat(player.iptvUrl);
-                    debug('Retry: Converting to HLS format: ' + hlsUrl);
-                    player.triedHlsFormat = true;
-                    loadHlsStream(hlsUrl, false);
-                } else if (isMpegTsStream(player.iptvUrl)) {
-                    loadMpegTsStream(player.iptvUrl, true);
+                if (isHlsStream(player.iptvUrl)) {
+                    debug('Retry: HLS stream');
+                    loadHlsStream(player.iptvUrl, false);
                 } else {
-                    loadHlsStream(player.iptvUrl);
+                    debug('Retry: MPEG-TS stream via proxy');
+                    loadMpegTsStream(player.iptvUrl, true);
                 }
             }
         }

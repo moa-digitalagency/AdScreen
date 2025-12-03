@@ -90,38 +90,14 @@ class Screen(db.Model):
             return self.organization.currency or 'EUR'
         return 'EUR'
     
-    def get_iptv_url_hls(self):
-        """Transform MPEG-TS URL to HLS format for better browser compatibility.
+    def get_iptv_url(self):
+        """Return the IPTV channel URL as-is for playback.
         
-        Handles multiple IPTV URL formats:
-        1. get.php?...&output=mpegts -> output=m3u8
-        2. Direct stream /username/password/channel_id -> add .m3u8 extension
-        3. Already HLS (.m3u8) -> return as-is
+        The player JavaScript will detect the stream type and use:
+        - hls.js for .m3u8 streams
+        - mpegts.js for MPEG-TS streams (direct or via proxy)
+        
+        We no longer try to transform URLs since external IPTV servers
+        may not support the m3u8 output format.
         """
-        import re
-        from urllib.parse import urlparse
-        
-        if not self.current_iptv_channel:
-            return None
-        
-        url = self.current_iptv_channel
-        
-        if '.m3u8' in url.lower():
-            return url
-        
-        if 'output=mpegts' in url.lower():
-            url = re.sub(r'output=mpegts', 'output=m3u8', url, flags=re.IGNORECASE)
-            return url
-        
-        if 'output=ts' in url.lower():
-            url = re.sub(r'output=ts', 'output=m3u8', url, flags=re.IGNORECASE)
-            return url
-        
-        parsed = urlparse(url)
-        path = parsed.path
-        
-        if re.match(r'^/[^/]+/[^/]+/\d+$', path) or re.match(r'^/live/[^/]+/[^/]+/\d+$', path):
-            if not path.endswith('.m3u8'):
-                url = url.rstrip('/') + '.m3u8'
-        
-        return url
+        return self.current_iptv_channel

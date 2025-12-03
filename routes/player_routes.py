@@ -75,7 +75,7 @@ def get_screen_mode():
     return jsonify({
         'mode': screen.current_mode or 'playlist',
         'iptv_enabled': screen.iptv_enabled,
-        'iptv_channel_url': screen.get_iptv_url_hls() if screen.current_mode == 'iptv' else None,
+        'iptv_channel_url': screen.get_iptv_url() if screen.current_mode == 'iptv' else None,
         'iptv_channel_name': screen.current_iptv_channel_name if screen.current_mode == 'iptv' else None,
         'timestamp': datetime.utcnow().isoformat()
     })
@@ -100,7 +100,7 @@ def get_playlist():
             },
             'mode': 'iptv',
             'iptv': {
-                'url': screen.get_iptv_url_hls(),
+                'url': screen.get_iptv_url(),
                 'name': screen.current_iptv_channel_name
             },
             'playlist': [],
