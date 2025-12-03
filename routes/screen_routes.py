@@ -70,18 +70,25 @@ def set_mode(screen_id):
     ).first_or_404()
     
     mode = request.form.get('mode', 'playlist')
+    redirect_dashboard = request.form.get('redirect_dashboard', '')
+    
     if mode not in ['playlist', 'iptv']:
         mode = 'playlist'
     
     if mode == 'iptv' and not screen.iptv_enabled:
-        flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
-        return redirect(url_for('org.screen_detail', screen_id=screen_id))
+        flash('OnlineTV n\'est pas activé pour cet écran. Activez-le dans les paramètres.', 'error')
+        if redirect_dashboard:
+            return redirect(url_for('org.dashboard'))
+        return redirect(url_for('org.screen_iptv', screen_id=screen_id))
     
     screen.current_mode = mode
     db.session.commit()
     
     mode_label = 'OnlineTV' if mode == 'iptv' else 'Playlist'
-    flash(f'Mode {mode_label} activé.', 'success')
+    flash(f'Mode {mode_label} activé pour {screen.name}.', 'success')
+    
+    if redirect_dashboard:
+        return redirect(url_for('org.dashboard'))
     return redirect(request.referrer or url_for('org.screen_detail', screen_id=screen_id))
 
 

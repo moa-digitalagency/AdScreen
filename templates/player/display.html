@@ -639,12 +639,25 @@
             }
             
             player.iptvEl.style.display = 'block';
+            player.iptvRetryCount = 0;
+            player.iptvMaxRetries = 5;
+            player.iptvRetryDelay = 3000;
             
             const streamUrl = player.iptvUrl;
             debug('OnlineTV stream URL: ' + streamUrl);
             
+            updateIptvStatus('loading', 'Connexion...');
+            loadHlsStream(streamUrl);
+        }
+        
+        function loadHlsStream(streamUrl) {
+            if (player.hlsInstance) {
+                player.hlsInstance.destroy();
+                player.hlsInstance = null;
+            }
+            
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                debug('Using HLS.js for OnlineTV stream');
+                debug('Using HLS.js for OnlineTV stream (attempt ' + (player.iptvRetryCount + 1) + ')');
                 player.hlsInstance = new Hls({
                     debug: false,
                     enableWorker: true,
@@ -654,9 +667,13 @@
                     maxMaxBufferLength: 600,
                     maxBufferSize: 60 * 1000 * 1000,
                     maxBufferHole: 0.5,
-                    fragLoadingTimeOut: 20000,
-                    manifestLoadingTimeOut: 20000,
-                    levelLoadingTimeOut: 20000
+                    fragLoadingTimeOut: 30000,
+                    manifestLoadingTimeOut: 30000,
+                    levelLoadingTimeOut: 30000,
+                    startFragPrefetch: true,
+                    xhrSetup: function(xhr, url) {
+                        xhr.withCredentials = false;
+                    }
                 });
                 
                 player.hlsInstance.loadSource(streamUrl);
@@ -664,24 +681,33 @@
                 
                 player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
                     debug('HLS manifest parsed, starting playback');
+                    player.iptvRetryCount = 0;
+                    updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
                     player.iptvEl.play().then(() => {
                         debug('OnlineTV stream started');
                         player.state = PlayerState.PLAYING;
                     }).catch(e => {
                         debug('OnlineTV play error: ' + e.message);
+                        updateIptvStatus('error', 'Lecture impossible');
                     });
+                });
+                
+                player.hlsInstance.on(Hls.Events.MANIFEST_LOADING, function() {
+                    debug('Loading HLS manifest...');
+                    updateIptvStatus('loading', 'Chargement...');
                 });
                 
                 player.hlsInstance.on(Hls.Events.ERROR, function(event, data) {
                     debug('HLS Error: ' + data.type + ' - ' + data.details);
+                    
                     if (data.fatal) {
                         switch(data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                debug('Network error, trying to recover...');
-                                player.hlsInstance.startLoad();
+                                handleNetworkError(streamUrl, data);
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 debug('Media error, trying to recover...');
+                                updateIptvStatus('recovering', 'Récupération...');
                                 player.hlsInstance.recoverMediaError();
                                 break;
                             default:
@@ -691,16 +717,26 @@
                                 tryDirectPlayback(streamUrl);
                                 break;
                         }
+                    } else if (data.details === 'manifestLoadError' || data.details === 'manifestParsingError') {
+                        handleNetworkError(streamUrl, data);
                     }
                 });
+                
+                player.hlsInstance.on(Hls.Events.FRAG_LOADED, function() {
+                    player.iptvRetryCount = 0;
+                    updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+                });
+                
             } else if (player.iptvEl.canPlayType('application/vnd.apple.mpegurl')) {
                 debug('Using native HLS support');
                 player.iptvEl.src = streamUrl;
                 player.iptvEl.play().then(() => {
                     debug('OnlineTV stream started (native)');
                     player.state = PlayerState.PLAYING;
+                    updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
                 }).catch(e => {
                     debug('OnlineTV native play error: ' + e.message);
+                    updateIptvStatus('error', 'Erreur de lecture');
                 });
             } else {
                 debug('No HLS support, trying direct playback');
@@ -708,21 +744,119 @@
             }
             
             document.getElementById('iptvInfo').style.display = 'block';
-            document.getElementById('iptvChannelName').textContent = player.iptvChannelName || 'OnlineTV';
-            
             document.getElementById('info').style.display = 'none';
             
             renderOverlays();
         }
         
+        function handleNetworkError(streamUrl, data) {
+            player.iptvRetryCount++;
+            
+            if (player.iptvRetryCount <= player.iptvMaxRetries) {
+                const delay = player.iptvRetryDelay * player.iptvRetryCount;
+                debug('Network error (' + data.details + '), retry ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + ' in ' + (delay/1000) + 's');
+                updateIptvStatus('retrying', 'Reconnexion ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + '...');
+                
+                setTimeout(() => {
+                    if (player.mode === 'iptv') {
+                        if (player.hlsInstance) {
+                            player.hlsInstance.destroy();
+                            player.hlsInstance = null;
+                        }
+                        loadHlsStream(streamUrl);
+                    }
+                }, delay);
+            } else {
+                debug('Max retries reached, showing error');
+                updateIptvStatus('error', 'Chaîne indisponible');
+                showIptvError('La chaîne n\'est pas accessible. Vérifiez votre connexion ou choisissez une autre chaîne.');
+            }
+        }
+        
+        function updateIptvStatus(status, message) {
+            const infoEl = document.getElementById('iptvInfo');
+            const nameEl = document.getElementById('iptvChannelName');
+            
+            if (!infoEl || !nameEl) return;
+            
+            nameEl.textContent = message;
+            
+            infoEl.className = '';
+            infoEl.style.cssText = 'display: block; position: fixed; top: 20px; left: 20px; backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 8px; color: white; font-family: sans-serif; font-size: 14px; z-index: 60;';
+            
+            switch(status) {
+                case 'loading':
+                case 'retrying':
+                case 'recovering':
+                    infoEl.style.background = 'rgba(245, 158, 11, 0.9)';
+                    break;
+                case 'error':
+                    infoEl.style.background = 'rgba(239, 68, 68, 0.9)';
+                    break;
+                case 'playing':
+                default:
+                    infoEl.style.background = 'rgba(0,0,0,0.7)';
+                    break;
+            }
+        }
+        
+        function showIptvError(message) {
+            let errorEl = document.getElementById('iptvError');
+            if (!errorEl) {
+                errorEl = document.createElement('div');
+                errorEl.id = 'iptvError';
+                errorEl.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px 40px; border-radius: 16px; text-align: center; color: white; font-family: sans-serif; z-index: 100; max-width: 400px;';
+                document.body.appendChild(errorEl);
+            }
+            
+            errorEl.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 16px;">📺</div>
+                <h3 style="font-size: 18px; margin-bottom: 8px;">Erreur de diffusion</h3>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">${message}</p>
+                <button onclick="retryIptvStream()" style="background: #3b82f6; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 8px;">
+                    🔄 Réessayer
+                </button>
+                <button onclick="switchToPlaylistFromError()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    📺 Playlist
+                </button>
+            `;
+            errorEl.style.display = 'block';
+        }
+        
+        function hideIptvError() {
+            const errorEl = document.getElementById('iptvError');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+            }
+        }
+        
+        function retryIptvStream() {
+            hideIptvError();
+            player.iptvRetryCount = 0;
+            if (player.iptvUrl) {
+                loadHlsStream(player.iptvUrl);
+            }
+        }
+        
+        function switchToPlaylistFromError() {
+            hideIptvError();
+            switchToPlaylistMode();
+            fetchPlaylist();
+        }
+        
         function tryDirectPlayback(streamUrl) {
+            debug('Trying direct video playback');
+            updateIptvStatus('loading', 'Lecture directe...');
+            
             player.iptvEl.src = streamUrl;
             player.iptvEl.play().then(() => {
                 debug('OnlineTV direct stream started');
                 player.state = PlayerState.PLAYING;
+                updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
             }).catch(e => {
                 debug('OnlineTV direct play error: ' + e.message);
-                document.getElementById('iptvChannelName').textContent = 'Erreur de lecture';
+                updateIptvStatus('error', 'Lecture impossible');
+                showIptvError('Format de flux non supporté. Essayez une autre chaîne.');
             });
         }
         
