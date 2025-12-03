@@ -40,3 +40,4 @@ pyjwt
 qrcode
 sqlalchemy
 werkzeug
+gevent

@@ -651,8 +651,8 @@
             updateIptvStatus('loading', 'Connexion...');
             
             if (isMpegTsStream(streamUrl)) {
-                debug('Detected MPEG-TS stream, using direct playback');
-                loadMpegTsStream(streamUrl, false);
+                debug('Detected MPEG-TS stream, using proxy playback');
+                loadMpegTsStream(streamUrl, true);
             } else {
                 loadHlsStream(streamUrl, false);
             }
@@ -660,12 +660,22 @@
         
         function isMpegTsStream(url) {
             const lowerUrl = url.toLowerCase();
-            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('type=m3u8')) {
+            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('type=m3u8') || 
+                lowerUrl.includes('/playlist.m3u') || lowerUrl.includes('hls')) {
                 return false;
             }
-            return lowerUrl.includes('output=mpegts') || 
-                   lowerUrl.includes('type=m3u_plus') ||
-                   (lowerUrl.includes('.ts') && !lowerUrl.includes('.m3u'));
+            if (lowerUrl.includes('output=mpegts') || 
+                lowerUrl.includes('type=m3u_plus') ||
+                (lowerUrl.includes('.ts') && !lowerUrl.includes('.m3u'))) {
+                return true;
+            }
+            const urlObj = new URL(url, window.location.origin);
+            const path = urlObj.pathname;
+            if (!path.includes('.') || path.match(/\/\d+$/)) {
+                debug('URL without file extension, treating as MPEG-TS: ' + url);
+                return true;
+            }
+            return false;
         }
         
         function loadMpegTsStream(streamUrl, useProxy = false) {

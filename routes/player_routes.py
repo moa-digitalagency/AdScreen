@@ -5,7 +5,9 @@ from models import Screen, Content, Booking, Filler, InternalContent, StatLog, H
 from datetime import datetime
 import urllib.request
 import urllib.error
+import urllib.parse
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -303,7 +305,15 @@ def stream_proxy():
     
     is_manifest = '.m3u' in url.lower() or '.m3u8' in url.lower()
     is_ts_segment = '.ts' in url.lower()
-    is_mpegts_stream = 'output=mpegts' in url.lower() or 'type=m3u' in url.lower()
+    is_mpegts_stream = 'output=mpegts' in url.lower() or 'type=m3u_plus' in url.lower()
+    
+    url_path = urllib.parse.urlparse(url).path
+    has_no_extension = '.' not in url_path.split('/')[-1] if '/' in url_path else '.' not in url_path
+    is_numeric_ending = bool(re.match(r'.*\/\d+$', url_path))
+    
+    if has_no_extension or is_numeric_ending:
+        is_mpegts_stream = True
+        logger.info(f"Detected MPEG-TS stream (no extension/numeric ending): {url}")
     
     try:
         headers = {
@@ -348,13 +358,18 @@ def stream_proxy():
         else:
             def generate_stream():
                 try:
-                    with urllib.request.urlopen(req, timeout=30) as response:
-                        chunk_size = 65536
+                    stream_timeout = 120 if is_mpegts_stream else 30
+                    with urllib.request.urlopen(req, timeout=stream_timeout) as response:
+                        chunk_size = 32768
                         while True:
-                            chunk = response.read(chunk_size)
-                            if not chunk:
+                            try:
+                                chunk = response.read(chunk_size)
+                                if not chunk:
+                                    break
+                                yield chunk
+                            except Exception as read_error:
+                                logger.warning(f"Stream read interrupted: {str(read_error)}")
                                 break
-                            yield chunk
                 except Exception as e:
                     logger.error(f"Stream error: {str(e)}")
                     return
