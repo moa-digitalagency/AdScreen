@@ -585,12 +585,22 @@
                 if (newMode === 'iptv' && data.iptv) {
                     player.mode = 'iptv';
                     const newIptvUrl = data.iptv.url;
+                    const channelName = data.iptv.name;
+                    
+                    console.log('[IPTV DEBUG] Current URL:', player.iptvUrl);
+                    console.log('[IPTV DEBUG] New URL:', newIptvUrl);
+                    console.log('[IPTV DEBUG] Channel:', channelName);
+                    console.log('[IPTV DEBUG] Previous mode:', previousMode);
+                    console.log('[IPTV DEBUG] URLs equal:', player.iptvUrl === newIptvUrl);
                     
                     if (previousMode !== 'iptv' || player.iptvUrl !== newIptvUrl) {
-                        debug(`Switching to OnlineTV mode: ${data.iptv.name}`);
+                        console.log('[IPTV DEBUG] *** SWITCHING CHANNEL ***');
+                        debug(`Switching to OnlineTV mode: ${channelName}`);
                         player.iptvUrl = newIptvUrl;
-                        player.iptvChannelName = data.iptv.name;
+                        player.iptvChannelName = channelName;
                         switchToIptvMode();
+                    } else {
+                        console.log('[IPTV DEBUG] Same channel, no switch needed');
                     }
                     return;
                 }
@@ -630,6 +640,10 @@
         }
         
         async function switchToIptvMode() {
+            console.log('[IPTV DEBUG] switchToIptvMode() called');
+            console.log('[IPTV DEBUG] Current player.iptvUrl:', player.iptvUrl);
+            console.log('[IPTV DEBUG] Current player.iptvChannelName:', player.iptvChannelName);
+            
             clearTimer();
             
             player.imageEl.style.display = 'none';
@@ -637,21 +651,26 @@
             player.videoEl.style.display = 'none';
             
             if (player.hlsInstance) {
+                console.log('[IPTV DEBUG] Destroying existing HLS instance');
                 player.hlsInstance.destroy();
                 player.hlsInstance = null;
             }
             
             if (player.mpegtsPlayer) {
+                console.log('[IPTV DEBUG] Destroying existing MPEG-TS player');
                 player.mpegtsPlayer.destroy();
                 player.mpegtsPlayer = null;
             }
             
             try {
+                console.log('[IPTV DEBUG] Stopping previous stream on server...');
                 debug('Stopping previous stream on server...');
                 await fetch('/player/tv-stop/' + player.screenCode, { method: 'POST' });
+                console.log('[IPTV DEBUG] Previous stream stopped, waiting 500ms...');
                 debug('Previous stream stopped');
                 await new Promise(resolve => setTimeout(resolve, 500));
             } catch (e) {
+                console.log('[IPTV DEBUG] Stop request error:', e.message);
                 debug('Stop request error (continuing): ' + e.message);
             }
             

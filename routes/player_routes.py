@@ -497,12 +497,16 @@ def tv_segment(screen_code, segment_name):
         return jsonify({'error': 'Segment not found'}), 404
     
     try:
-        return send_file(
+        resp = send_file(
             segment_path,
             mimetype='video/mp2t',
             as_attachment=False,
-            max_age=3600
+            max_age=0
         )
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
     except Exception as e:
         logger.error(f'[{screen_code}] Segment error: {e}')
         return jsonify({'error': 'Segment error'}), 500
