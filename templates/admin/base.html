@@ -137,5 +137,54 @@ window.addEventListener('resize', function() {
         closeMobileMenu();
     }
 });
+
+// Force sidebar text color on load and scroll
+(function() {
+    function forceSidebarColors() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.querySelectorAll('*').forEach(function(el) {
+                if (!el.closest('main') && !el.closest('header')) {
+                    el.style.setProperty('color', 'rgba(255, 255, 255, 0.9)', 'important');
+                }
+            });
+            sidebar.querySelectorAll('.admin-nav-link.active, .admin-nav-link.active *').forEach(function(el) {
+                el.style.setProperty('color', '#ffffff', 'important');
+            });
+        }
+    }
+    
+    forceSidebarColors();
+    document.addEventListener('scroll', forceSidebarColors, { passive: true });
+    window.addEventListener('resize', forceSidebarColors, { passive: true });
+    
+    // MutationObserver to catch any Tailwind dynamic changes
+    const observer = new MutationObserver(forceSidebarColors);
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        observer.observe(sidebar, { attributes: true, childList: true, subtree: true, attributeFilter: ['class', 'style'] });
+    }
+})();
 </script>
+
+<style>
+    #sidebar.admin-sidebar-gradient,
+    #sidebar.admin-sidebar-gradient *:not(main *):not(header *) {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    #sidebar.admin-sidebar-gradient .admin-nav-link.active,
+    #sidebar.admin-sidebar-gradient .admin-nav-link.active * {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
+    #sidebar.admin-sidebar-gradient .admin-nav-link:hover,
+    #sidebar.admin-sidebar-gradient .admin-nav-link:hover * {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    #sidebar.admin-sidebar-gradient {
+        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
+        isolation: isolate;
+    }
+</style>
 {% endblock %}
