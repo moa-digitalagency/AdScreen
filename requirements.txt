@@ -28,3 +28,9 @@ reportlab
 requests
 sqlalchemy
 werkzeug
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
+gevent
