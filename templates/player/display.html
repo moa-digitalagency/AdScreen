@@ -692,7 +692,10 @@
                 player.mpegtsPlayer = null;
             }
             
-            const hlsConvertUrl = '/player/tv-stream/' + player.screenCode;
+            player.iptvEl.src = '';
+            player.iptvEl.load();
+            
+            const hlsConvertUrl = '/player/tv-stream/' + player.screenCode + '?t=' + Date.now();
             player.useProxy = useHlsConvert;
             
             if (useHlsConvert) {
@@ -799,7 +802,15 @@
                 player.hlsInstance = null;
             }
             
-            const effectiveUrl = useProxy ? getProxyUrl(streamUrl) : streamUrl;
+            player.iptvEl.src = '';
+            player.iptvEl.load();
+            
+            let effectiveUrl = useProxy ? getProxyUrl(streamUrl) : streamUrl;
+            if (effectiveUrl.includes('?')) {
+                effectiveUrl += '&t=' + Date.now();
+            } else {
+                effectiveUrl += '?t=' + Date.now();
+            }
             player.useProxy = useProxy;
             
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {

@@ -429,6 +429,8 @@ def tv_stream(screen_code):
     """
     from services.hls_converter import HLSConverter
     
+    db.session.expire_all()
+    
     screen = Screen.query.filter_by(unique_code=screen_code).first()
     
     if not screen:
@@ -441,10 +443,19 @@ def tv_stream(screen_code):
         return jsonify({'error': 'Écran pas en mode IPTV'}), 400
     
     source_url = screen.current_iptv_channel
+    channel_name = screen.current_iptv_channel_name or 'Unknown'
+    
+    logger.info(f'[{screen_code}] TV stream request for channel: {channel_name}')
+    logger.info(f'[{screen_code}] Channel URL: {source_url[:80]}...')
+    
+    current_url = HLSConverter.get_current_url(screen_code)
+    if current_url and current_url != source_url:
+        logger.info(f'[{screen_code}] CHANNEL CHANGED! Stopping old stream...')
+        HLSConverter.stop_stream(screen_code)
     
     try:
         if not HLSConverter.is_running(screen_code):
-            logger.info(f'[{screen_code}] Starting new HLS conversion')
+            logger.info(f'[{screen_code}] Starting new HLS conversion for: {channel_name}')
             HLSConverter.start_conversion(source_url, screen_code)
         
         manifest_content = HLSConverter.get_fresh_manifest(screen_code)
