@@ -3,11 +3,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from datetime import datetime
-import urllib.request
-import urllib.error
 import urllib.parse
 import logging
 import re
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +291,7 @@ def stream_proxy():
     """
     Proxy for IPTV/HLS streams to bypass CORS restrictions.
     Handles both HLS manifests (buffered) and MPEG-TS streams (chunked streaming).
+    Uses requests library for better streaming support.
     """
     if 'screen_id' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
@@ -317,79 +317,74 @@ def stream_proxy():
     
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
             'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
-            'Referer': url,
-            'Origin': url.rsplit('/', 1)[0] if '/' in url else url
+            'Connection': 'keep-alive',
         }
         
-        req = urllib.request.Request(url, headers=headers)
-        
         if is_manifest:
-            with urllib.request.urlopen(req, timeout=30) as response:
-                content = response.read()
-                content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
-                
-                try:
-                    text_content = content.decode('utf-8')
-                except UnicodeDecodeError:
-                    text_content = content.decode('latin-1')
-                
-                base_url = url.rsplit('/', 1)[0] + '/'
-                lines = text_content.split('\n')
-                modified_lines = []
-                
-                for line in lines:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        if not line.startswith(('http://', 'https://')):
-                            line = base_url + line
-                    modified_lines.append(line)
-                
-                content = '\n'.join(modified_lines).encode('utf-8')
-                
-                resp = Response(content, content_type=content_type)
-                resp.headers['Access-Control-Allow-Origin'] = '*'
-                resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-                resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-                resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-                return resp
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
+            
+            try:
+                text_content = response.text
+            except Exception:
+                text_content = response.content.decode('latin-1')
+            
+            base_url = url.rsplit('/', 1)[0] + '/'
+            lines = text_content.split('\n')
+            modified_lines = []
+            
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    if not line.startswith(('http://', 'https://')):
+                        line = base_url + line
+                modified_lines.append(line)
+            
+            content = '\n'.join(modified_lines).encode('utf-8')
+            
+            resp = Response(content, content_type=content_type)
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+            resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Range'
+            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            return resp
         else:
             def generate_stream():
                 try:
-                    stream_timeout = 120 if is_mpegts_stream else 30
-                    with urllib.request.urlopen(req, timeout=stream_timeout) as response:
-                        chunk_size = 32768
-                        while True:
-                            try:
-                                chunk = response.read(chunk_size)
-                                if not chunk:
-                                    break
+                    with requests.get(url, headers=headers, stream=True, timeout=(10, None)) as r:
+                        r.raise_for_status()
+                        for chunk in r.iter_content(chunk_size=65536):
+                            if chunk:
                                 yield chunk
-                            except Exception as read_error:
-                                logger.warning(f"Stream read interrupted: {str(read_error)}")
-                                break
+                except requests.exceptions.RequestException as e:
+                    logger.error(f"Stream request error: {str(e)}")
                 except Exception as e:
                     logger.error(f"Stream error: {str(e)}")
-                    return
             
             content_type = 'video/mp2t' if (is_ts_segment or is_mpegts_stream) else 'application/octet-stream'
             
             resp = Response(generate_stream(), content_type=content_type)
             resp.headers['Access-Control-Allow-Origin'] = '*'
             resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-            resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Range'
+            resp.headers['Access-Control-Expose-Headers'] = 'Content-Length, Content-Range'
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            resp.headers['Transfer-Encoding'] = 'chunked'
+            resp.headers['X-Content-Type-Options'] = 'nosniff'
             return resp
             
-    except urllib.error.HTTPError as e:
-        logger.error(f"HTTP error proxying stream: {e.code} - {e.reason}")
-        return jsonify({'error': f'HTTP {e.code}: {e.reason}'}), e.code
-    except urllib.error.URLError as e:
-        logger.error(f"URL error proxying stream: {e.reason}")
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error proxying stream: {e}")
+        return jsonify({'error': f'HTTP error: {str(e)}'}), 502
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Connection error proxying stream: {e}")
         return jsonify({'error': 'Impossible de joindre le serveur de stream'}), 502
+    except requests.exceptions.Timeout as e:
+        logger.error(f"Timeout error proxying stream: {e}")
+        return jsonify({'error': 'Timeout lors de la connexion'}), 504
     except Exception as e:
         logger.error(f"Error proxying stream: {str(e)}")
         return jsonify({'error': 'Erreur lors du chargement du stream'}), 500
