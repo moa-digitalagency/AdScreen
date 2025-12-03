@@ -432,6 +432,7 @@ def tv_stream(screen_code):
     Returns M3U8 manifest with rewritten segment URLs.
     """
     from services.hls_converter import HLSConverter
+    import time
     
     db.session.expire_all()
     
@@ -449,18 +450,27 @@ def tv_stream(screen_code):
     source_url = screen.current_iptv_channel
     channel_name = screen.current_iptv_channel_name or 'Unknown'
     
-    logger.info(f'[{screen_code}] TV stream request for channel: {channel_name}')
-    logger.info(f'[{screen_code}] Channel URL: {source_url[:80]}...')
-    
     current_url = HLSConverter.get_current_url(screen_code)
     if current_url and current_url != source_url:
         logger.info(f'[{screen_code}] CHANNEL CHANGED! Stopping old stream...')
-        HLSConverter.stop_stream(screen_code)
+        HLSConverter.stop_existing_process(screen_code)
+        time.sleep(0.3)
     
     try:
         if not HLSConverter.is_running(screen_code):
             logger.info(f'[{screen_code}] Starting new HLS conversion for: {channel_name}')
             HLSConverter.start_conversion(source_url, screen_code)
+        
+        manifest_path = HLSConverter.get_manifest_path(screen_code)
+        
+        for _ in range(30):
+            if manifest_path.exists():
+                break
+            time.sleep(0.1)
+        
+        if not manifest_path.exists():
+            logger.error(f'[{screen_code}] Manifest still not found')
+            return jsonify({'error': 'Manifest not available'}), 503
         
         manifest_content = HLSConverter.get_fresh_manifest(screen_code)
         
@@ -469,14 +479,12 @@ def tv_stream(screen_code):
         
         manifest_content = HLSConverter.rewrite_manifest(manifest_content, screen_code)
         
-        available_segments = HLSConverter.list_available_segments(screen_code)
-        logger.debug(f'[{screen_code}] Available segments: {available_segments}')
-        
         resp = Response(manifest_content, content_type='application/vnd.apple.mpegurl')
         resp.headers['Access-Control-Allow-Origin'] = '*'
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         resp.headers['Pragma'] = 'no-cache'
         resp.headers['Expires'] = '0'
+        resp.headers['X-Accel-Buffering'] = 'no'
         return resp
         
     except Exception as e:
@@ -523,4 +531,58 @@ def stop_tv_stream(screen_code):
         return jsonify({'status': 'stopped', 'screen_code': screen_code}), 200
     except Exception as e:
         logger.error(f'[{screen_code}] Stop error: {e}')
+        return jsonify({'error': str(e)}), 500
+
+
+@player_bp.route('/change-channel/<screen_code>', methods=['POST'])
+def change_channel(screen_code):
+    """Change la chaîne TV - attend que FFmpeg soit prêt"""
+    from services.hls_converter import HLSConverter
+    import time
+    
+    try:
+        data = request.get_json()
+        channel_url = data.get('channel_url')
+        channel_name = data.get('channel_name')
+        
+        if not channel_url:
+            return jsonify({'error': 'No channel URL'}), 400
+        
+        screen = Screen.query.filter_by(unique_code=screen_code).first()
+        if not screen:
+            return jsonify({'error': 'Screen not found'}), 404
+        
+        logger.info(f'[{screen_code}] Channel change request: {channel_name}')
+        
+        logger.info(f'[{screen_code}] Stopping old FFmpeg process...')
+        HLSConverter.stop_existing_process(screen_code)
+        time.sleep(0.5)
+        
+        logger.info(f'[{screen_code}] Starting new FFmpeg process...')
+        try:
+            manifest_path = HLSConverter.convert_mpegts_to_hls_file(
+                channel_url,
+                screen_code,
+                wait_for_manifest=True
+            )
+            logger.info(f'[{screen_code}] FFmpeg ready with manifest')
+        except Exception as e:
+            logger.error(f'[{screen_code}] FFmpeg failed: {e}')
+            return jsonify({'error': f'FFmpeg failed: {str(e)}'}), 500
+        
+        screen.current_iptv_channel = channel_url
+        screen.current_iptv_channel_name = channel_name
+        screen.current_mode = 'iptv'
+        db.session.commit()
+        logger.info(f'[{screen_code}] Database updated')
+        
+        return jsonify({
+            'status': 'ready',
+            'channel': channel_name,
+            'message': 'New channel ready'
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'[{screen_code}] Error: {e}')
         return jsonify({'error': str(e)}), 500
