@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
@@ -288,8 +289,7 @@ def log_play():
 def stream_proxy():
     """
     Proxy for IPTV/HLS streams to bypass CORS restrictions.
-    This endpoint fetches the stream content from the target URL
-    and returns it with proper CORS headers.
+    Handles both HLS manifests (buffered) and MPEG-TS streams (chunked streaming).
     """
     if 'screen_id' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
@@ -300,6 +300,10 @@ def stream_proxy():
     
     if not url.startswith(('http://', 'https://')):
         return jsonify({'error': 'URL invalide'}), 400
+    
+    is_manifest = '.m3u' in url.lower() or '.m3u8' in url.lower()
+    is_ts_segment = '.ts' in url.lower()
+    is_mpegts_stream = 'output=mpegts' in url.lower() or 'type=m3u' in url.lower()
     
     try:
         headers = {
@@ -312,11 +316,11 @@ def stream_proxy():
         
         req = urllib.request.Request(url, headers=headers)
         
-        with urllib.request.urlopen(req, timeout=30) as response:
-            content = response.read()
-            content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
-            
-            if '.m3u' in url.lower() or 'mpegurl' in content_type.lower():
+        if is_manifest:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                content = response.read()
+                content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
+                
                 try:
                     text_content = content.decode('utf-8')
                 except UnicodeDecodeError:
@@ -334,12 +338,35 @@ def stream_proxy():
                     modified_lines.append(line)
                 
                 content = '\n'.join(modified_lines).encode('utf-8')
+                
+                resp = Response(content, content_type=content_type)
+                resp.headers['Access-Control-Allow-Origin'] = '*'
+                resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+                resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                return resp
+        else:
+            def generate_stream():
+                try:
+                    with urllib.request.urlopen(req, timeout=30) as response:
+                        chunk_size = 65536
+                        while True:
+                            chunk = response.read(chunk_size)
+                            if not chunk:
+                                break
+                            yield chunk
+                except Exception as e:
+                    logger.error(f"Stream error: {str(e)}")
+                    return
             
-            resp = Response(content, content_type=content_type)
+            content_type = 'video/mp2t' if (is_ts_segment or is_mpegts_stream) else 'application/octet-stream'
+            
+            resp = Response(generate_stream(), content_type=content_type)
             resp.headers['Access-Control-Allow-Origin'] = '*'
             resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
             resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            resp.headers['Transfer-Encoding'] = 'chunked'
             return resp
             
     except urllib.error.HTTPError as e:

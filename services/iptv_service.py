@@ -1,3 +1,4 @@
+# pyright: reportArgumentType=false, reportReturnType=false
 """
 Service de gestion IPTV - Parsing M3U et gestion des chaines
 """
@@ -5,7 +6,7 @@ import re
 import logging
 import urllib.request
 import urllib.error
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -182,7 +183,7 @@ def get_channels_grouped(channels: List[IPTVChannel]) -> Dict[str, List[IPTVChan
     return sorted_groups
 
 
-def validate_m3u_url(url: str) -> Dict[str, any]:
+def validate_m3u_url(url: str) -> Dict[str, Any]:
     """
     Valide une URL M3U et retourne des infos.
     

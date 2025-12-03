@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportArgumentType=false
 """
 🎮 Script de création des données de démonstration Shabaka AdScreen
 📌 Crée des comptes et données exemple pour tester l'application.

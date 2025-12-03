@@ -649,7 +649,76 @@
             debug('OnlineTV stream URL: ' + streamUrl);
             
             updateIptvStatus('loading', 'Connexion...');
-            loadHlsStream(streamUrl, false);
+            
+            if (isMpegTsStream(streamUrl)) {
+                debug('Detected MPEG-TS stream, using direct playback');
+                loadMpegTsStream(streamUrl, false);
+            } else {
+                loadHlsStream(streamUrl, false);
+            }
+        }
+        
+        function isMpegTsStream(url) {
+            const lowerUrl = url.toLowerCase();
+            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('type=m3u8')) {
+                return false;
+            }
+            return lowerUrl.includes('output=mpegts') || 
+                   lowerUrl.includes('type=m3u_plus') ||
+                   (lowerUrl.includes('.ts') && !lowerUrl.includes('.m3u'));
+        }
+        
+        function loadMpegTsStream(streamUrl, useProxy = false) {
+            if (player.hlsInstance) {
+                player.hlsInstance.destroy();
+                player.hlsInstance = null;
+            }
+            
+            const effectiveUrl = useProxy ? getProxyUrl(streamUrl) : streamUrl;
+            player.useProxy = useProxy;
+            
+            debug('Loading MPEG-TS stream' + (useProxy ? ' via proxy' : ' directly') + ': ' + effectiveUrl);
+            updateIptvStatus('loading', 'Chargement MPEG-TS...');
+            
+            player.iptvEl.src = effectiveUrl;
+            player.iptvEl.load();
+            
+            const playPromise = player.iptvEl.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    debug('MPEG-TS stream started' + (useProxy ? ' (via proxy)' : ''));
+                    player.state = PlayerState.PLAYING;
+                    player.iptvRetryCount = 0;
+                    hideIptvError();
+                    updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+                }).catch(e => {
+                    debug('MPEG-TS play error: ' + e.message);
+                    if (!useProxy && player.iptvRetryCount < player.iptvMaxRetries) {
+                        player.iptvRetryCount++;
+                        debug('Retrying MPEG-TS with proxy (attempt ' + player.iptvRetryCount + ')');
+                        updateIptvStatus('retrying', 'Reconnexion via proxy...');
+                        setTimeout(() => loadMpegTsStream(streamUrl, true), 1000);
+                    } else if (useProxy && player.iptvRetryCount < player.iptvMaxRetries) {
+                        player.iptvRetryCount++;
+                        debug('Retrying MPEG-TS (attempt ' + player.iptvRetryCount + ')');
+                        updateIptvStatus('retrying', 'Reconnexion ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + '...');
+                        setTimeout(() => loadMpegTsStream(streamUrl, true), player.iptvRetryDelay);
+                    } else {
+                        updateIptvStatus('error', 'Lecture impossible');
+                        showIptvError('Impossible de lire le flux MPEG-TS. Le serveur peut bloquer les connexions externes ou le flux n\'est pas disponible.');
+                    }
+                });
+            }
+            
+            player.iptvEl.onerror = function(e) {
+                debug('MPEG-TS video error: ' + (e.message || 'Unknown error'));
+                if (!useProxy) {
+                    debug('Trying MPEG-TS with proxy...');
+                    loadMpegTsStream(streamUrl, true);
+                } else {
+                    updateIptvStatus('error', 'Erreur de flux');
+                }
+            };
         }
         
         function getProxyUrl(originalUrl) {
