@@ -424,16 +424,10 @@ def stream_proxy_options():
 @player_bp.route('/tv-stream/<screen_code>')
 def tv_stream(screen_code):
     """
-    Convert MPEG-TS stream to HLS on-the-fly using FFmpeg.
-    This route provides better browser compatibility for MPEG-TS streams.
+    Convert MPEG-TS stream to HLS and save segments to disk.
+    Returns M3U8 manifest with rewritten segment URLs.
     """
-    from flask import stream_with_context
-    import subprocess
-    import os
-    import tempfile
-    import shutil
-    import time
-    import threading
+    from services.hls_converter import HLSConverter
     
     screen = Screen.query.filter_by(unique_code=screen_code).first()
     
@@ -447,91 +441,53 @@ def tv_stream(screen_code):
         return jsonify({'error': 'Écran pas en mode IPTV'}), 400
     
     source_url = screen.current_iptv_channel
-    logger.info(f'Starting MPEG-TS to HLS conversion for screen {screen_code}')
-    logger.info(f'Source URL: {source_url[:80]}...' if len(source_url) > 80 else f'Source URL: {source_url}')
     
     try:
-        temp_dir = tempfile.mkdtemp(prefix='hls_')
-        playlist_path = os.path.join(temp_dir, 'stream.m3u8')
+        if not HLSConverter.is_running(screen_code):
+            logger.info(f'[{screen_code}] Starting new HLS conversion')
+            HLSConverter.start_conversion(source_url, screen_code)
         
-        ffmpeg_cmd = [
-            'ffmpeg',
-            '-y',
-            '-hide_banner',
-            '-loglevel', 'warning',
-            '-fflags', '+genpts+discardcorrupt',
-            '-user_agent', 'VLC/3.0.18 LibVLC/3.0.18',
-            '-i', source_url,
-            '-c:v', 'copy',
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-f', 'hls',
-            '-hls_time', '4',
-            '-hls_list_size', '3',
-            '-hls_flags', 'delete_segments+append_list+independent_segments',
-            '-hls_segment_filename', os.path.join(temp_dir, 'segment_%03d.ts'),
-            playlist_path
-        ]
+        manifest_content = HLSConverter.get_fresh_manifest(screen_code)
         
-        process = subprocess.Popen(
-            ffmpeg_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        if not manifest_content:
+            return jsonify({'error': 'Manifest not available yet'}), 503
         
-        for _ in range(50):
-            if os.path.exists(playlist_path) and os.path.getsize(playlist_path) > 0:
-                break
-            time.sleep(0.1)
-        else:
-            process.terminate()
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            logger.error('FFmpeg timeout: HLS playlist not created')
-            return jsonify({'error': 'Timeout lors de la conversion du flux'}), 500
+        manifest_content = HLSConverter.rewrite_manifest(manifest_content, screen_code)
         
-        def cleanup_later():
-            time.sleep(30)
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except Exception:
-                process.kill()
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            logger.info(f'Cleaned up temp dir {temp_dir}')
+        available_segments = HLSConverter.list_available_segments(screen_code)
+        logger.debug(f'[{screen_code}] Available segments: {available_segments}')
         
-        cleanup_thread = threading.Thread(target=cleanup_later, daemon=True)
-        cleanup_thread.start()
-        
-        with open(playlist_path, 'r') as f:
-            playlist_content = f.read()
-        
-        resp = Response(playlist_content, content_type='application/vnd.apple.mpegurl')
+        resp = Response(manifest_content, content_type='application/vnd.apple.mpegurl')
         resp.headers['Access-Control-Allow-Origin'] = '*'
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
         return resp
         
     except Exception as e:
-        logger.error(f'Stream conversion failed: {str(e)}')
+        logger.error(f'[{screen_code}] Stream conversion failed: {str(e)}')
         return jsonify({'error': f'Erreur de conversion: {str(e)}'}), 500
 
 
-@player_bp.route('/tv-stream/<screen_code>/segment/<segment_name>')
-def tv_stream_segment(screen_code, segment_name):
-    """Serve HLS segments for the tv-stream."""
-    import os
-    import tempfile
+@player_bp.route('/tv-segment/<screen_code>/<segment_name>')
+def tv_segment(screen_code, segment_name):
+    """Serve HLS segments (.ts files) from disk."""
+    from flask import send_file
+    from services.hls_converter import HLSConverter
     
-    temp_base = tempfile.gettempdir()
+    segment_path = HLSConverter.get_segment_path(screen_code, segment_name)
     
-    for dir_name in os.listdir(temp_base):
-        if dir_name.startswith('hls_'):
-            segment_path = os.path.join(temp_base, dir_name, segment_name)
-            if os.path.exists(segment_path):
-                with open(segment_path, 'rb') as f:
-                    content = f.read()
-                resp = Response(content, content_type='video/mp2t')
-                resp.headers['Access-Control-Allow-Origin'] = '*'
-                resp.headers['Cache-Control'] = 'no-cache'
-                return resp
+    if not segment_path:
+        logger.warning(f'[{screen_code}] Segment not found: {segment_name}')
+        return jsonify({'error': 'Segment not found'}), 404
     
-    return jsonify({'error': 'Segment not found'}), 404
+    try:
+        return send_file(
+            segment_path,
+            mimetype='video/mp2t',
+            as_attachment=False,
+            max_age=3600
+        )
+    except Exception as e:
+        logger.error(f'[{screen_code}] Segment error: {e}')
+        return jsonify({'error': 'Segment error'}), 500

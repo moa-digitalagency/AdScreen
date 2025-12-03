@@ -73,10 +73,12 @@ Not specified.
     - **Booking System**: Unique reservation numbers, detailed receipts with QR codes, content adaptation, status tracking, precise time selection.
     - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
     - **OnlineTV Mode**: Stream live TV channels via M3U/HLS with HLS.js library, overlays remain active during streaming, automatic fallback for compatibility.
-        - **MPEG-TS Support** (December 2025): Full support for M3U playlists with MPEG-TS output (`type=m3u_plus&output=mpegts`)
-        - **Smart Stream Detection**: Auto-detects MPEG-TS vs HLS based on URL patterns (no extension, numeric endings, explicit markers)
-        - **Proxy Streaming**: CORS-bypassing proxy with chunked transfer for continuous MPEG-TS streams
-        - **Async Workers**: Gunicorn with gevent workers for handling long-lived streaming connections
+    - **MPEG-TS to HLS Conversion**: Server-side FFmpeg conversion for MPEG-TS streams that don't play natively in browsers.
+    - **HLS Converter Service**: `services/hls_converter.py` manages FFmpeg processes, segment storage, and manifest rewriting.
+    - **Segment Routes**: `/player/tv-stream/<code>` (manifest) and `/player/tv-segment/<code>/<segment>` (segments).
+    - **Fallback Strategy**: Player tries direct MPEG-TS first via mpegts.js, then falls back to HLS conversion if needed.
+    - **Smart Stream Detection**: Auto-detects MPEG-TS vs HLS based on URL patterns.
+    - **Segment Persistence**: Segments are kept on disk (not deleted) to ensure player can fetch them reliably.
     - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
     - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
