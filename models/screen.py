@@ -89,3 +89,16 @@ class Screen(db.Model):
         if self.organization:
             return self.organization.currency or 'EUR'
         return 'EUR'
+    
+    def get_iptv_url_hls(self):
+        """Transform MPEG-TS URL to HLS format for better browser compatibility.
+        Changes output=mpegts to output=m3u8 for IPTV providers that support both formats.
+        """
+        import re
+        if not self.current_iptv_channel:
+            return None
+        
+        url = self.current_iptv_channel
+        url = re.sub(r'output=mpegts', 'output=m3u8', url, flags=re.IGNORECASE)
+        url = re.sub(r'output=ts', 'output=m3u8', url, flags=re.IGNORECASE)
+        return url
