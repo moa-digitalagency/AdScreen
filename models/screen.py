@@ -29,6 +29,11 @@ class Screen(db.Model):
     screen_image = db.Column(db.String(512), nullable=True)  # Optional image of the physical screen
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    iptv_enabled = db.Column(db.Boolean, default=False)
+    current_mode = db.Column(db.String(20), default='playlist')  # 'playlist' or 'iptv'
+    current_iptv_channel = db.Column(db.String(512), nullable=True)
+    current_iptv_channel_name = db.Column(db.String(256), nullable=True)
+    
     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False)
     organization = db.relationship('Organization', back_populates='screens')
     

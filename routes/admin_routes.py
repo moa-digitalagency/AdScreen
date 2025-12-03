@@ -442,6 +442,8 @@ def organization_new():
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         is_paid = request.form.get('is_paid', '1') == '1'
+        has_iptv = 'has_iptv' in request.form
+        iptv_m3u_url = request.form.get('iptv_m3u_url', '').strip() if has_iptv else None
         
         try:
             org = Organization(
@@ -455,7 +457,9 @@ def organization_new():
                 is_paid=is_paid,
                 commission_rate=commission_rate if is_paid else 0,
                 commission_set_by=current_user.id,
-                commission_updated_at=datetime.utcnow()
+                commission_updated_at=datetime.utcnow(),
+                has_iptv=has_iptv,
+                iptv_m3u_url=iptv_m3u_url
             )
             db.session.add(org)
             db.session.flush()
@@ -513,6 +517,8 @@ def organization_edit(org_id):
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
         is_paid = request.form.get('is_paid', '1') == '1'
+        has_iptv = 'has_iptv' in request.form
+        iptv_m3u_url = request.form.get('iptv_m3u_url', '').strip() if has_iptv else None
         
         org.name = name
         org.email = email
@@ -522,6 +528,8 @@ def organization_edit(org_id):
         org.city = city
         org.currency = currency
         org.is_paid = is_paid
+        org.has_iptv = has_iptv
+        org.iptv_m3u_url = iptv_m3u_url
         if not is_paid:
             org.commission_rate = 0
         db.session.commit()

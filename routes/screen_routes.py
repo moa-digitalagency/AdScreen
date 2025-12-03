@@ -59,3 +59,51 @@ def delete_screen(screen_id):
     
     flash('Écran supprimé.', 'success')
     return redirect(url_for('org.screens'))
+
+
+@screen_bp.route('/<int:screen_id>/mode', methods=['POST'])
+@login_required
+def set_mode(screen_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    mode = request.form.get('mode', 'playlist')
+    if mode not in ['playlist', 'iptv']:
+        mode = 'playlist'
+    
+    if mode == 'iptv' and not screen.iptv_enabled:
+        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        return redirect(url_for('org.screen_detail', screen_id=screen_id))
+    
+    screen.current_mode = mode
+    db.session.commit()
+    
+    mode_label = 'IPTV' if mode == 'iptv' else 'Playlist'
+    flash(f'Mode {mode_label} activé.', 'success')
+    return redirect(request.referrer or url_for('org.screen_detail', screen_id=screen_id))
+
+
+@screen_bp.route('/<int:screen_id>/iptv/channel', methods=['POST'])
+@login_required
+def set_iptv_channel(screen_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    if not screen.iptv_enabled:
+        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        return redirect(url_for('org.screen_detail', screen_id=screen_id))
+    
+    channel_url = request.form.get('channel_url', '')
+    channel_name = request.form.get('channel_name', '')
+    
+    screen.current_iptv_channel = channel_url
+    screen.current_iptv_channel_name = channel_name
+    screen.current_mode = 'iptv'
+    db.session.commit()
+    
+    flash(f'Chaîne "{channel_name}" sélectionnée.', 'success')
+    return redirect(url_for('org.screen_iptv', screen_id=screen_id))

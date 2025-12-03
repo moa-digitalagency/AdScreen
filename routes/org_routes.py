@@ -261,6 +261,8 @@ def screens():
 def new_screen():
     from utils.currencies import get_currency_by_code
     
+    org = current_user.organization
+    
     if request.method == 'POST':
         name = request.form.get('name')
         location = request.form.get('location')
@@ -272,6 +274,7 @@ def new_screen():
         max_file_size = int(request.form.get('max_file_size', 50))
         password = request.form.get('password')
         price_per_minute = float(request.form.get('price_per_minute', 2.0))
+        iptv_enabled = 'iptv_enabled' in request.form and org.has_iptv
         
         screen = Screen(
             name=name,
@@ -283,7 +286,8 @@ def new_screen():
             accepts_videos=accepts_videos,
             max_file_size_mb=max_file_size,
             price_per_minute=price_per_minute,
-            organization_id=current_user.organization_id
+            organization_id=current_user.organization_id,
+            iptv_enabled=iptv_enabled
         )
         screen.set_password(password)
         
@@ -345,11 +349,10 @@ def new_screen():
         flash('Écran créé avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
-    org = current_user.organization
     currency_info = get_currency_by_code(org.currency or 'EUR')
     currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
     
-    return render_template('org/screen_form.html', screen=None, currency_symbol=currency_symbol)
+    return render_template('org/screen_form.html', screen=None, currency_symbol=currency_symbol, org_has_iptv=org.has_iptv)
 
 
 @org_bp.route('/screen/<int:screen_id>')
@@ -396,7 +399,8 @@ def screen_detail(screen_id):
         weekly_revenue=weekly_revenue,
         total_plays=total_plays,
         pending_count=pending_count,
-        currency_symbol=currency_symbol
+        currency_symbol=currency_symbol,
+        org_has_iptv=org.has_iptv
     )
 
 
@@ -405,6 +409,8 @@ def screen_detail(screen_id):
 @org_required
 def edit_screen(screen_id):
     from utils.currencies import get_currency_by_code
+    
+    org = current_user.organization
     
     screen = Screen.query.filter_by(
         id=screen_id,
@@ -420,6 +426,7 @@ def edit_screen(screen_id):
         screen.accepts_images = 'accepts_images' in request.form
         screen.accepts_videos = 'accepts_videos' in request.form
         screen.max_file_size_mb = int(request.form.get('max_file_size', 50))
+        screen.iptv_enabled = 'iptv_enabled' in request.form and org.has_iptv
         
         new_price_per_minute = float(request.form.get('price_per_minute', 2.0))
         screen.price_per_minute = new_price_per_minute
@@ -456,11 +463,10 @@ def edit_screen(screen_id):
         flash('Écran mis à jour avec succès!', 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
-    org = current_user.organization
     currency_info = get_currency_by_code(org.currency or 'EUR')
     currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
     
-    return render_template('org/screen_form.html', screen=screen, currency_symbol=currency_symbol)
+    return render_template('org/screen_form.html', screen=screen, currency_symbol=currency_symbol, org_has_iptv=org.has_iptv)
 
 
 @org_bp.route('/screen/<int:screen_id>/slots', methods=['GET', 'POST'])
@@ -615,6 +621,37 @@ def delete_filler(screen_id, filler_id):
     
     flash('Filler supprimé.', 'success')
     return redirect(url_for('org.screen_fillers', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/iptv')
+@login_required
+@org_required
+def screen_iptv(screen_id):
+    from services.iptv_service import get_channels_from_organization, get_channels_grouped
+    
+    org = current_user.organization
+    
+    if not org.has_iptv:
+        flash('IPTV n\'est pas activé pour votre établissement.', 'error')
+        return redirect(url_for('org.screen_detail', screen_id=screen_id))
+    
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    if not screen.iptv_enabled:
+        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        return redirect(url_for('org.screen_detail', screen_id=screen_id))
+    
+    channels = get_channels_from_organization(org)
+    grouped_channels = get_channels_grouped(channels) if channels else {}
+    
+    return render_template('org/screen_iptv.html',
+        screen=screen,
+        channels=channels,
+        grouped_channels=grouped_channels
+    )
 
 
 @org_bp.route('/screen/<int:screen_id>/internal', methods=['GET', 'POST'])

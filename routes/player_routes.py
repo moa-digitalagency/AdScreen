@@ -54,6 +54,24 @@ def logout():
     return redirect(url_for('player.login'))
 
 
+@player_bp.route('/api/screen-mode')
+def get_screen_mode():
+    if 'screen_id' not in session:
+        return jsonify({'error': 'Non authentifié'}), 401
+    
+    screen = Screen.query.get(session['screen_id'])
+    if not screen:
+        return jsonify({'error': 'Écran non trouvé'}), 404
+    
+    return jsonify({
+        'mode': screen.current_mode or 'playlist',
+        'iptv_enabled': screen.iptv_enabled,
+        'iptv_channel_url': screen.current_iptv_channel if screen.current_mode == 'iptv' else None,
+        'iptv_channel_name': screen.current_iptv_channel_name if screen.current_mode == 'iptv' else None,
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+
 @player_bp.route('/api/playlist')
 def get_playlist():
     if 'screen_id' not in session:
@@ -62,6 +80,24 @@ def get_playlist():
     screen = Screen.query.get(session['screen_id'])
     if not screen:
         return jsonify({'error': 'Écran non trouvé'}), 404
+    
+    if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
+        return jsonify({
+            'screen': {
+                'id': screen.id,
+                'name': screen.name,
+                'resolution': f'{screen.resolution_width}x{screen.resolution_height}',
+                'orientation': screen.orientation
+            },
+            'mode': 'iptv',
+            'iptv': {
+                'url': screen.current_iptv_channel,
+                'name': screen.current_iptv_channel_name
+            },
+            'playlist': [],
+            'overlays': [],
+            'timestamp': datetime.utcnow().isoformat()
+        })
     
     playlist = []
     
@@ -169,6 +205,7 @@ def get_playlist():
             'resolution': f'{screen.resolution_width}x{screen.resolution_height}',
             'orientation': screen.orientation
         },
+        'mode': 'playlist',
         'playlist': playlist,
         'overlays': active_overlays,
         'timestamp': datetime.utcnow().isoformat()

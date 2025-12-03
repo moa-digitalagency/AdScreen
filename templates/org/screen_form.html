@@ -166,6 +166,24 @@
                 </div>
             </div>
 
+            {% if org_has_iptv %}
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-purple-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-tv"></i>
+                    IPTV
+                </h3>
+                <label class="flex items-center gap-3 p-3 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition bg-white">
+                    <input type="checkbox" name="iptv_enabled" value="1"
+                        {% if screen and screen.iptv_enabled %}checked{% endif %}
+                        class="w-5 h-5 text-purple-600 border-purple-300 rounded focus:ring-purple-500">
+                    <div>
+                        <span class="font-medium text-purple-800">Activer IPTV sur cet écran</span>
+                        <p class="text-sm text-purple-600 mt-0.5">Permet de diffuser des chaines IPTV sur cet écran</p>
+                    </div>
+                </label>
+            </div>
+            {% endif %}
+
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
                     Mot de passe Player

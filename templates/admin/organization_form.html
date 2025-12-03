@@ -92,6 +92,27 @@
             </div>
         </div>
 
+        <div class="border-t border-gray-200 pt-6">
+            <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-tv text-purple-600"></i>
+                IPTV
+            </h3>
+            <div class="space-y-4">
+                <label class="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition" id="iptv-option">
+                    <input type="checkbox" name="has_iptv" value="1" {% if org and org.has_iptv %}checked{% endif %} class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500" onchange="toggleIPTVField()">
+                    <div>
+                        <div class="font-medium text-gray-800">Activer IPTV</div>
+                        <p class="text-sm text-gray-500 mt-1">Permet de diffuser des chaines IPTV sur les écrans de l'établissement.</p>
+                    </div>
+                </label>
+                <div id="iptv-url-field" class="{% if not org or not org.has_iptv %}hidden{% endif %}">
+                    <label class="label">Lien M3U IPTV</label>
+                    <input type="url" name="iptv_m3u_url" value="{{ org.iptv_m3u_url if org else '' }}" class="input-field" placeholder="https://exemple.com/playlist.m3u">
+                    <p class="text-xs text-gray-500 mt-1">Collez le lien M3U de votre fournisseur IPTV</p>
+                </div>
+            </div>
+        </div>
+
         {% if not org %}
         <div class="border-t border-gray-200 pt-6">
             <h3 class="font-semibold text-gray-800 mb-4">Compte gestionnaire</h3>
@@ -147,6 +168,19 @@ function togglePaidFeatures() {
     freeOption.classList.toggle('bg-primary-50', !isPaid);
 }
 
+function toggleIPTVField() {
+    const hasIPTV = document.querySelector('input[name="has_iptv"]').checked;
+    const iptvField = document.getElementById('iptv-url-field');
+    const iptvOption = document.getElementById('iptv-option');
+    
+    if (iptvField) {
+        iptvField.classList.toggle('hidden', !hasIPTV);
+    }
+    
+    iptvOption.classList.toggle('border-purple-500', hasIPTV);
+    iptvOption.classList.toggle('bg-purple-50', hasIPTV);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const countrySelect = document.getElementById('country-select');
     const citySelect = document.getElementById('city-select');
@@ -184,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     togglePaidFeatures();
+    toggleIPTVField();
 });
 </script>
 {% endblock %}

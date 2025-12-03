@@ -28,6 +28,9 @@ class Organization(db.Model):
     vat_number = db.Column(db.String(50), nullable=True)
     timezone = db.Column(db.String(50), default='UTC')
     
+    has_iptv = db.Column(db.Boolean, default=False)
+    iptv_m3u_url = db.Column(db.Text, nullable=True)
+    
     users = db.relationship('User', back_populates='organization', foreign_keys='User.organization_id')
     screens = db.relationship('Screen', back_populates='organization', cascade='all, delete-orphan')
     

@@ -279,6 +279,14 @@
     <div id="player">
         <img id="imageContent" style="display: none;" />
         <video id="videoContent" style="display: none;" muted playsinline></video>
+        <video id="iptvContent" style="display: none;" autoplay muted playsinline></video>
+    </div>
+    
+    <div id="iptvInfo" style="display: none; position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 8px; color: white; font-family: sans-serif; font-size: 14px; z-index: 60;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #a855f7;">📺</span>
+            <span id="iptvChannelName">IPTV</span>
+        </div>
     </div>
     
     <div id="overlayFooter" class="overlay-footer" style="display: none;"></div>
@@ -320,6 +328,9 @@
             overlays: [],
             currentIndex: 0,
             state: PlayerState.IDLE,
+            mode: 'playlist',
+            iptvUrl: null,
+            iptvChannelName: null,
             timerId: null,
             heartbeatInterval: null,
             refreshInterval: null,
@@ -332,6 +343,7 @@
             
             imageEl: null,
             videoEl: null,
+            iptvEl: null,
             debugEl: null
         };
 
@@ -561,6 +573,28 @@
                     return;
                 }
                 
+                const newMode = data.mode || 'playlist';
+                const previousMode = player.mode;
+                
+                if (newMode === 'iptv' && data.iptv) {
+                    player.mode = 'iptv';
+                    const newIptvUrl = data.iptv.url;
+                    
+                    if (previousMode !== 'iptv' || player.iptvUrl !== newIptvUrl) {
+                        debug(`Switching to IPTV mode: ${data.iptv.name}`);
+                        player.iptvUrl = newIptvUrl;
+                        player.iptvChannelName = data.iptv.name;
+                        switchToIptvMode();
+                    }
+                    return;
+                }
+                
+                if (previousMode === 'iptv' && newMode === 'playlist') {
+                    debug('Switching from IPTV to playlist mode');
+                    switchToPlaylistMode();
+                }
+                
+                player.mode = 'playlist';
                 const newPlaylist = data.playlist || [];
                 player.overlays = data.overlays || [];
                 
@@ -587,6 +621,45 @@
             } catch (error) {
                 debug('Fetch playlist error: ' + error.message);
             }
+        }
+        
+        function switchToIptvMode() {
+            clearTimer();
+            
+            player.imageEl.style.display = 'none';
+            player.videoEl.pause();
+            player.videoEl.style.display = 'none';
+            
+            player.iptvEl.style.display = 'block';
+            player.iptvEl.src = player.iptvUrl;
+            
+            player.iptvEl.play().then(() => {
+                debug('IPTV stream started');
+                player.state = PlayerState.PLAYING;
+            }).catch(e => {
+                debug('IPTV play error: ' + e.message);
+            });
+            
+            document.getElementById('iptvInfo').style.display = 'block';
+            document.getElementById('iptvChannelName').textContent = player.iptvChannelName || 'IPTV';
+            
+            document.getElementById('info').style.display = 'none';
+            
+            document.getElementById('overlayHeader').style.display = 'none';
+            document.getElementById('overlayFooter').style.display = 'none';
+        }
+        
+        function switchToPlaylistMode() {
+            player.iptvEl.pause();
+            player.iptvEl.removeAttribute('src');
+            player.iptvEl.style.display = 'none';
+            
+            document.getElementById('iptvInfo').style.display = 'none';
+            document.getElementById('info').style.display = '';
+            
+            player.iptvUrl = null;
+            player.iptvChannelName = null;
+            player.state = PlayerState.IDLE;
         }
 
         async function logPlay(item) {
@@ -701,6 +774,7 @@
             
             player.imageEl = document.getElementById('imageContent');
             player.videoEl = document.getElementById('videoContent');
+            player.iptvEl = document.getElementById('iptvContent');
             player.debugEl = document.getElementById('debugInfo');
             
             debug('Player starting...');
