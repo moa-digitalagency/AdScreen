@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class HLSConverter:
     HLS_TEMP_DIR = Path(tempfile.gettempdir()) / 'adscreen_hls'
     _processes = {}
+    _current_urls = {}
     _lock = threading.Lock()
     
     @classmethod
@@ -51,6 +52,8 @@ class HLSConverter:
                     except:
                         pass
                 del cls._processes[screen_code]
+            if screen_code in cls._current_urls:
+                del cls._current_urls[screen_code]
         
         output_dir = cls.get_output_dir(screen_code)
         if output_dir.exists():
@@ -61,13 +64,61 @@ class HLSConverter:
                 logger.warning(f'[{screen_code}] Cleanup error: {e}')
     
     @classmethod
+    def stop_stream(cls, screen_code):
+        logger.info(f'[{screen_code}] Stopping stream...')
+        with cls._lock:
+            if screen_code in cls._processes:
+                proc = cls._processes[screen_code]
+                try:
+                    logger.info(f'[{screen_code}] Terminating FFmpeg process (PID: {proc.pid})')
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        logger.warning(f'[{screen_code}] Force killing FFmpeg process')
+                        proc.kill()
+                        proc.wait()
+                    logger.info(f'[{screen_code}] FFmpeg process stopped')
+                except Exception as e:
+                    logger.error(f'[{screen_code}] Error stopping process: {e}')
+                del cls._processes[screen_code]
+            if screen_code in cls._current_urls:
+                del cls._current_urls[screen_code]
+        
+        output_dir = cls.get_output_dir(screen_code)
+        if output_dir.exists():
+            for f in output_dir.glob('*.ts'):
+                try:
+                    f.unlink()
+                except:
+                    pass
+            for f in output_dir.glob('*.m3u8'):
+                try:
+                    f.unlink()
+                except:
+                    pass
+            logger.info(f'[{screen_code}] Cleaned up HLS segments')
+    
+    @classmethod
+    def get_current_url(cls, screen_code):
+        with cls._lock:
+            return cls._current_urls.get(screen_code)
+    
+    @classmethod
     def start_conversion(cls, source_url, screen_code):
         cls.init()
+        
+        current_url = cls.get_current_url(screen_code)
+        if current_url and current_url != source_url:
+            logger.info(f'[{screen_code}] Channel changed, stopping previous stream')
+            logger.info(f'[{screen_code}] Old URL: {current_url[:60]}...')
+            logger.info(f'[{screen_code}] New URL: {source_url[:60]}...')
+            cls.stop_stream(screen_code)
         
         if cls.is_running(screen_code):
             manifest_path = cls.get_manifest_path(screen_code)
             if manifest_path.exists():
-                logger.info(f'[{screen_code}] FFmpeg already running, using existing manifest')
+                logger.info(f'[{screen_code}] FFmpeg already running with same channel, using existing manifest')
                 return str(manifest_path)
         
         output_dir = cls.get_output_dir(screen_code)
@@ -127,6 +178,7 @@ class HLSConverter:
                     except:
                         pass
                 cls._processes[screen_code] = process
+                cls._current_urls[screen_code] = source_url
             
             def monitor_process():
                 stdout, stderr = process.communicate()
@@ -138,6 +190,8 @@ class HLSConverter:
                 with cls._lock:
                     if screen_code in cls._processes and cls._processes[screen_code] == process:
                         del cls._processes[screen_code]
+                    if screen_code in cls._current_urls:
+                        del cls._current_urls[screen_code]
             
             thread = threading.Thread(target=monitor_process, daemon=True)
             thread.start()

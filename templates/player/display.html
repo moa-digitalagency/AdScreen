@@ -629,7 +629,7 @@
             }
         }
         
-        function switchToIptvMode() {
+        async function switchToIptvMode() {
             clearTimer();
             
             player.imageEl.style.display = 'none';
@@ -644,6 +644,15 @@
             if (player.mpegtsPlayer) {
                 player.mpegtsPlayer.destroy();
                 player.mpegtsPlayer = null;
+            }
+            
+            try {
+                debug('Stopping previous stream on server...');
+                await fetch('/player/tv-stop/' + player.screenCode, { method: 'POST' });
+                debug('Previous stream stopped');
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (e) {
+                debug('Stop request error (continuing): ' + e.message);
             }
             
             player.iptvEl.style.display = 'block';

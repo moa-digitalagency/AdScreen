@@ -491,3 +491,17 @@ def tv_segment(screen_code, segment_name):
     except Exception as e:
         logger.error(f'[{screen_code}] Segment error: {e}')
         return jsonify({'error': 'Segment error'}), 500
+
+
+@player_bp.route('/tv-stop/<screen_code>', methods=['POST'])
+def stop_tv_stream(screen_code):
+    """Stop the TV stream for a screen (kill FFmpeg process)."""
+    from services.hls_converter import HLSConverter
+    
+    try:
+        logger.info(f'[{screen_code}] Received stop request')
+        HLSConverter.stop_stream(screen_code)
+        return jsonify({'status': 'stopped', 'screen_code': screen_code}), 200
+    except Exception as e:
+        logger.error(f'[{screen_code}] Stop error: {e}')
+        return jsonify({'error': str(e)}), 500
