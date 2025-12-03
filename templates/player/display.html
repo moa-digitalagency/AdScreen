@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ screen.name }} - Shabaka AdScreen Player</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon-player.svg">
     <style>
         * {
             margin: 0;
@@ -275,6 +276,7 @@
     </div>
 
     <div id="overlayHeader" class="overlay-header" style="display: none;"></div>
+    <div id="overlayBody" class="overlay-body" style="display: none;"></div>
     
     <div id="player">
         <img id="imageContent" style="display: none;" />
@@ -1166,16 +1168,33 @@
         function renderOverlays() {
             const headerEl = document.getElementById('overlayHeader');
             const footerEl = document.getElementById('overlayFooter');
+            const bodyEl = document.getElementById('overlayBody');
             
             headerEl.style.display = 'none';
             footerEl.style.display = 'none';
+            bodyEl.style.display = 'none';
             headerEl.innerHTML = '';
             footerEl.innerHTML = '';
+            bodyEl.innerHTML = '';
             
-            (player.overlays || []).forEach(overlay => {
-                if (!overlay.is_active) return;
+            const overlays = player.overlays || [];
+            debug('Rendering ' + overlays.length + ' overlays');
+            
+            overlays.forEach(overlay => {
+                if (!overlay.is_active) {
+                    debug('Skipping inactive overlay: ' + overlay.id);
+                    return;
+                }
                 
-                const container = overlay.position === 'header' ? headerEl : footerEl;
+                let container;
+                if (overlay.position === 'header') {
+                    container = headerEl;
+                } else if (overlay.position === 'footer') {
+                    container = footerEl;
+                } else {
+                    container = bodyEl;
+                }
+                
                 container.style.display = 'block';
                 container.style.backgroundColor = overlay.background_color || '#000000';
                 
@@ -1191,6 +1210,8 @@
                 } else if (overlay.type === 'image' && overlay.image_path) {
                     container.innerHTML = `<img src="/${overlay.image_path}" class="overlay-image" />`;
                 }
+                
+                debug('Rendered overlay: id=' + overlay.id + ', type=' + overlay.type + ', position=' + overlay.position);
             });
         }
 
