@@ -8,6 +8,7 @@ Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, res
 - **Multi-currency support**: EUR, MAD, XOF, TND + 200 other currencies
 - **208 countries** with 4,600+ cities for geographic targeting
 - **Admin permissions**: Granular access control for sub-admins
+- **OnlineTV streaming**: HLS.js integration for M3U/M3U8 stream playback with overlays support
 
 ### Design Standards (Generated Images)
 
@@ -60,6 +61,7 @@ Not specified.
     - **Content Management**: Strict upload validation, content queues, internal establishment content, filler/demo content, content action controls (suspend, activate, delete), resolution-adaptive previews, real-time admin playlist view.
     - **Booking System**: Unique reservation numbers, detailed receipts with QR codes, content adaptation, status tracking, precise time selection.
     - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
+    - **OnlineTV Mode**: Stream live TV channels via M3U/HLS with HLS.js library, overlays remain active during streaming, automatic fallback for compatibility.
     - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
     - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
@@ -108,3 +110,4 @@ Not specified.
 - **European Central Bank (ECB) API**: For real-time currency exchange rates, used in the admin dashboard for currency conversion.
 - **WhatsApp**: For admin notifications regarding registration requests and contact.
 - **Gunicorn**: Production WSGI HTTP Server.
+- **HLS.js**: JavaScript library for HTTP Live Streaming (HLS) in browsers, used for OnlineTV M3U stream playback.
