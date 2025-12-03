@@ -92,13 +92,36 @@ class Screen(db.Model):
     
     def get_iptv_url_hls(self):
         """Transform MPEG-TS URL to HLS format for better browser compatibility.
-        Changes output=mpegts to output=m3u8 for IPTV providers that support both formats.
+        
+        Handles multiple IPTV URL formats:
+        1. get.php?...&output=mpegts -> output=m3u8
+        2. Direct stream /username/password/channel_id -> add .m3u8 extension
+        3. Already HLS (.m3u8) -> return as-is
         """
         import re
+        from urllib.parse import urlparse
+        
         if not self.current_iptv_channel:
             return None
         
         url = self.current_iptv_channel
-        url = re.sub(r'output=mpegts', 'output=m3u8', url, flags=re.IGNORECASE)
-        url = re.sub(r'output=ts', 'output=m3u8', url, flags=re.IGNORECASE)
+        
+        if '.m3u8' in url.lower():
+            return url
+        
+        if 'output=mpegts' in url.lower():
+            url = re.sub(r'output=mpegts', 'output=m3u8', url, flags=re.IGNORECASE)
+            return url
+        
+        if 'output=ts' in url.lower():
+            url = re.sub(r'output=ts', 'output=m3u8', url, flags=re.IGNORECASE)
+            return url
+        
+        parsed = urlparse(url)
+        path = parsed.path
+        
+        if re.match(r'^/[^/]+/[^/]+/\d+$', path) or re.match(r'^/live/[^/]+/[^/]+/\d+$', path):
+            if not path.endswith('.m3u8'):
+                url = url.rstrip('/') + '.m3u8'
+        
         return url
