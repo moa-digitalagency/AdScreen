@@ -1,39 +1,6 @@
 {% extends "base.html" %}
 
 {% block body %}
-<style>
-    #sidebar.admin-sidebar-gradient {
-        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
-    }
-    #sidebar.admin-sidebar-gradient * {
-        color: rgba(255, 255, 255, 0.85) !important;
-    }
-    #sidebar.admin-sidebar-gradient .admin-nav-link {
-        color: rgba(255, 255, 255, 0.85) !important;
-        background: transparent !important;
-    }
-    #sidebar.admin-sidebar-gradient .admin-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: #ffffff !important;
-    }
-    #sidebar.admin-sidebar-gradient .admin-nav-link.active {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: #ffffff !important;
-    }
-    #sidebar.admin-sidebar-gradient .admin-nav-link.active * {
-        color: #ffffff !important;
-    }
-    #sidebar.admin-sidebar-gradient .admin-border {
-        border-color: rgba(255, 255, 255, 0.15) !important;
-    }
-    #sidebar.admin-sidebar-gradient .text-primary-400 {
-        color: #6ee7b7 !important;
-    }
-    #sidebar.admin-sidebar-gradient .bg-primary-500 {
-        background-color: #10b981 !important;
-        color: #ffffff !important;
-    }
-</style>
 <div class="flex min-h-screen">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
