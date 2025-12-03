@@ -1,7 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from datetime import datetime
+import urllib.request
+import urllib.error
+import logging
+
+logger = logging.getLogger(__name__)
 
 player_bp = Blueprint('player', __name__)
 
@@ -277,3 +282,82 @@ def log_play():
     db.session.commit()
     
     return jsonify({'success': True, 'exhausted': exhausted})
+
+
+@player_bp.route('/api/stream-proxy')
+def stream_proxy():
+    """
+    Proxy for IPTV/HLS streams to bypass CORS restrictions.
+    This endpoint fetches the stream content from the target URL
+    and returns it with proper CORS headers.
+    """
+    if 'screen_id' not in session:
+        return jsonify({'error': 'Non authentifié'}), 401
+    
+    url = request.args.get('url')
+    if not url:
+        return jsonify({'error': 'URL manquante'}), 400
+    
+    if not url.startswith(('http://', 'https://')):
+        return jsonify({'error': 'URL invalide'}), 400
+    
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+            'Referer': url,
+            'Origin': url.rsplit('/', 1)[0] if '/' in url else url
+        }
+        
+        req = urllib.request.Request(url, headers=headers)
+        
+        with urllib.request.urlopen(req, timeout=30) as response:
+            content = response.read()
+            content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
+            
+            if '.m3u' in url.lower() or 'mpegurl' in content_type.lower():
+                try:
+                    text_content = content.decode('utf-8')
+                except UnicodeDecodeError:
+                    text_content = content.decode('latin-1')
+                
+                base_url = url.rsplit('/', 1)[0] + '/'
+                lines = text_content.split('\n')
+                modified_lines = []
+                
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        if not line.startswith(('http://', 'https://')):
+                            line = base_url + line
+                    modified_lines.append(line)
+                
+                content = '\n'.join(modified_lines).encode('utf-8')
+            
+            resp = Response(content, content_type=content_type)
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+            resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            return resp
+            
+    except urllib.error.HTTPError as e:
+        logger.error(f"HTTP error proxying stream: {e.code} - {e.reason}")
+        return jsonify({'error': f'HTTP {e.code}: {e.reason}'}), e.code
+    except urllib.error.URLError as e:
+        logger.error(f"URL error proxying stream: {e.reason}")
+        return jsonify({'error': 'Impossible de joindre le serveur de stream'}), 502
+    except Exception as e:
+        logger.error(f"Error proxying stream: {str(e)}")
+        return jsonify({'error': 'Erreur lors du chargement du stream'}), 500
+
+
+@player_bp.route('/api/stream-proxy', methods=['OPTIONS'])
+def stream_proxy_options():
+    """Handle CORS preflight requests for the stream proxy."""
+    resp = Response('')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return resp

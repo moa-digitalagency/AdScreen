@@ -640,24 +640,33 @@
             
             player.iptvEl.style.display = 'block';
             player.iptvRetryCount = 0;
-            player.iptvMaxRetries = 5;
-            player.iptvRetryDelay = 3000;
+            player.iptvMaxRetries = 3;
+            player.iptvRetryDelay = 2000;
+            player.useProxy = false;
+            player.originalIptvUrl = player.iptvUrl;
             
             const streamUrl = player.iptvUrl;
             debug('OnlineTV stream URL: ' + streamUrl);
             
             updateIptvStatus('loading', 'Connexion...');
-            loadHlsStream(streamUrl);
+            loadHlsStream(streamUrl, false);
         }
         
-        function loadHlsStream(streamUrl) {
+        function getProxyUrl(originalUrl) {
+            return '/player/api/stream-proxy?url=' + encodeURIComponent(originalUrl);
+        }
+        
+        function loadHlsStream(streamUrl, useProxy = false) {
             if (player.hlsInstance) {
                 player.hlsInstance.destroy();
                 player.hlsInstance = null;
             }
             
+            const effectiveUrl = useProxy ? getProxyUrl(streamUrl) : streamUrl;
+            player.useProxy = useProxy;
+            
             if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                debug('Using HLS.js for OnlineTV stream (attempt ' + (player.iptvRetryCount + 1) + ')');
+                debug('Using HLS.js for OnlineTV stream (attempt ' + (player.iptvRetryCount + 1) + ', proxy: ' + useProxy + ')');
                 player.hlsInstance = new Hls({
                     debug: false,
                     enableWorker: true,
@@ -676,15 +685,16 @@
                     }
                 });
                 
-                player.hlsInstance.loadSource(streamUrl);
+                player.hlsInstance.loadSource(effectiveUrl);
                 player.hlsInstance.attachMedia(player.iptvEl);
                 
                 player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
                     debug('HLS manifest parsed, starting playback');
                     player.iptvRetryCount = 0;
+                    hideIptvError();
                     updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
                     player.iptvEl.play().then(() => {
-                        debug('OnlineTV stream started');
+                        debug('OnlineTV stream started' + (useProxy ? ' (via proxy)' : ''));
                         player.state = PlayerState.PLAYING;
                     }).catch(e => {
                         debug('OnlineTV play error: ' + e.message);
@@ -703,7 +713,7 @@
                     if (data.fatal) {
                         switch(data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                handleNetworkError(streamUrl, data);
+                                handleNetworkError(streamUrl, data, useProxy);
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 debug('Media error, trying to recover...');
@@ -718,7 +728,7 @@
                                 break;
                         }
                     } else if (data.details === 'manifestLoadError' || data.details === 'manifestParsingError') {
-                        handleNetworkError(streamUrl, data);
+                        handleNetworkError(streamUrl, data, useProxy);
                     }
                 });
                 
@@ -729,14 +739,19 @@
                 
             } else if (player.iptvEl.canPlayType('application/vnd.apple.mpegurl')) {
                 debug('Using native HLS support');
-                player.iptvEl.src = streamUrl;
+                player.iptvEl.src = effectiveUrl;
                 player.iptvEl.play().then(() => {
                     debug('OnlineTV stream started (native)');
                     player.state = PlayerState.PLAYING;
                     updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
                 }).catch(e => {
                     debug('OnlineTV native play error: ' + e.message);
-                    updateIptvStatus('error', 'Erreur de lecture');
+                    if (!useProxy) {
+                        debug('Trying with proxy...');
+                        loadHlsStream(streamUrl, true);
+                    } else {
+                        updateIptvStatus('error', 'Erreur de lecture');
+                    }
                 });
             } else {
                 debug('No HLS support, trying direct playback');
@@ -749,11 +764,11 @@
             renderOverlays();
         }
         
-        function handleNetworkError(streamUrl, data) {
+        function handleNetworkError(streamUrl, data, currentlyUsingProxy = false) {
             player.iptvRetryCount++;
             
             if (player.iptvRetryCount <= player.iptvMaxRetries) {
-                const delay = player.iptvRetryDelay * player.iptvRetryCount;
+                const delay = player.iptvRetryDelay;
                 debug('Network error (' + data.details + '), retry ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + ' in ' + (delay/1000) + 's');
                 updateIptvStatus('retrying', 'Reconnexion ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + '...');
                 
@@ -763,13 +778,27 @@
                             player.hlsInstance.destroy();
                             player.hlsInstance = null;
                         }
-                        loadHlsStream(streamUrl);
+                        loadHlsStream(streamUrl, currentlyUsingProxy);
                     }
                 }, delay);
+            } else if (!currentlyUsingProxy) {
+                debug('Direct connection failed, trying with CORS proxy...');
+                player.iptvRetryCount = 0;
+                updateIptvStatus('loading', 'Connexion via proxy...');
+                
+                setTimeout(() => {
+                    if (player.mode === 'iptv') {
+                        if (player.hlsInstance) {
+                            player.hlsInstance.destroy();
+                            player.hlsInstance = null;
+                        }
+                        loadHlsStream(streamUrl, true);
+                    }
+                }, 1000);
             } else {
-                debug('Max retries reached, showing error');
+                debug('Max retries reached (including proxy), showing error');
                 updateIptvStatus('error', 'Chaîne indisponible');
-                showIptvError('La chaîne n\'est pas accessible. Vérifiez votre connexion ou choisissez une autre chaîne.');
+                showIptvError('La chaîne n\'est pas accessible. Causes possibles :<br><br>• La chaîne est hors ligne ou protégée<br>• L\'URL du stream n\'est plus valide<br>• Le serveur bloque les connexions externes<br><br>Essayez une autre chaîne ou vérifiez l\'URL M3U.');
             }
         }
         
