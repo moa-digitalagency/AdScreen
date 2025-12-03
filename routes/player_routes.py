@@ -95,6 +95,18 @@ def get_playlist():
         return jsonify({'error': 'Écran non trouvé'}), 404
     
     if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
+        iptv_overlays = []
+        fresh_overlays = ScreenOverlay.query.filter_by(screen_id=screen.id).all()
+        for overlay in fresh_overlays:
+            if overlay.is_currently_active():
+                iptv_overlays.append(overlay.to_dict())
+        
+        active_broadcasts = Broadcast.query.filter_by(is_active=True).all()
+        for broadcast in active_broadcasts:
+            if broadcast.applies_to_screen(screen):
+                if broadcast.broadcast_type == 'overlay':
+                    iptv_overlays.append(broadcast.to_overlay_dict())
+        
         return jsonify({
             'screen': {
                 'id': screen.id,
@@ -108,7 +120,7 @@ def get_playlist():
                 'name': screen.current_iptv_channel_name
             },
             'playlist': [],
-            'overlays': [],
+            'overlays': iptv_overlays,
             'timestamp': datetime.utcnow().isoformat()
         })
     
@@ -197,7 +209,8 @@ def get_playlist():
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
     active_overlays = []
-    for overlay in screen.overlays:
+    fresh_overlays = ScreenOverlay.query.filter_by(screen_id=screen.id).all()
+    for overlay in fresh_overlays:
         if overlay.is_currently_active():
             active_overlays.append(overlay.to_dict())
     
