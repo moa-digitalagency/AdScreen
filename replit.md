@@ -73,6 +73,10 @@ Not specified.
     - **Booking System**: Unique reservation numbers, detailed receipts with QR codes, content adaptation, status tracking, precise time selection.
     - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
     - **OnlineTV Mode**: Stream live TV channels via M3U/HLS with HLS.js library, overlays remain active during streaming, automatic fallback for compatibility.
+        - **MPEG-TS Support** (December 2025): Full support for M3U playlists with MPEG-TS output (`type=m3u_plus&output=mpegts`)
+        - **Smart Stream Detection**: Auto-detects MPEG-TS vs HLS based on URL patterns (no extension, numeric endings, explicit markers)
+        - **Proxy Streaming**: CORS-bypassing proxy with chunked transfer for continuous MPEG-TS streams
+        - **Async Workers**: Gunicorn with gevent workers for handling long-lived streaming connections
     - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
     - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
