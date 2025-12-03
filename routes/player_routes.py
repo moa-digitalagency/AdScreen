@@ -68,6 +68,8 @@ def get_screen_mode():
     if 'screen_id' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
     
+    db.session.expire_all()
+    
     screen = Screen.query.get(session['screen_id'])
     if not screen:
         return jsonify({'error': 'Écran non trouvé'}), 404
@@ -85,6 +87,8 @@ def get_screen_mode():
 def get_playlist():
     if 'screen_id' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
+    
+    db.session.expire_all()
     
     screen = Screen.query.get(session['screen_id'])
     if not screen:
