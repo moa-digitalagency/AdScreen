@@ -54,7 +54,7 @@
             {% if screen.iptv_enabled and org_has_iptv %}
             <a href="{{ url_for('org.screen_iptv', screen_id=screen.id) }}" class="btn-primary btn-sm bg-purple-600 hover:bg-purple-700 border-purple-600">
                 <i class="fas fa-tv"></i>
-                IPTV
+                OnlineTV
             </a>
             {% endif %}
             <a href="{{ url_for('org.edit_screen', screen_id=screen.id) }}" class="btn-secondary btn-sm">
@@ -151,7 +151,7 @@
                     <input type="hidden" name="mode" value="iptv">
                     <button type="submit" class="w-full btn-sm justify-center {% if screen.current_mode == 'iptv' %}bg-purple-600 hover:bg-purple-700 text-white border-purple-600{% else %}btn-secondary{% endif %}">
                         <i class="fas fa-tv"></i>
-                        Lancer IPTV
+                        Lancer OnlineTV
                     </button>
                 </form>
                 {% endif %}

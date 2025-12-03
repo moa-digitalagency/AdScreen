@@ -632,7 +632,7 @@ def screen_iptv(screen_id):
     org = current_user.organization
     
     if not org.has_iptv:
-        flash('IPTV n\'est pas activé pour votre établissement.', 'error')
+        flash('OnlineTV n\'est pas activé pour votre établissement.', 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     screen = Screen.query.filter_by(
@@ -641,7 +641,7 @@ def screen_iptv(screen_id):
     ).first_or_404()
     
     if not screen.iptv_enabled:
-        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     channels = get_channels_from_organization(org)

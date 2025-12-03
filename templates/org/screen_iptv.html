@@ -1,6 +1,6 @@
 {% extends "org/base.html" %}
 
-{% block page_title %}IPTV - {{ screen.name }}{% endblock %}
+{% block page_title %}OnlineTV - {{ screen.name }}{% endblock %}
 
 {% block main_content %}
 <div class="mb-6">
@@ -16,13 +16,13 @@
                 <i class="fas fa-tv text-purple-600 text-xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-gray-800">IPTV - {{ screen.name }}</h2>
-                <p class="text-gray-500">Gérer les chaînes IPTV de cet écran</p>
+                <h2 class="text-xl font-bold text-gray-800">OnlineTV - {{ screen.name }}</h2>
+                <p class="text-gray-500">Gérer les chaînes OnlineTV de cet écran</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
             <span class="px-3 py-1 rounded-full text-sm font-medium {% if screen.current_mode == 'iptv' %}bg-purple-100 text-purple-700{% else %}bg-gray-100 text-gray-700{% endif %}">
-                Mode: {{ 'IPTV' if screen.current_mode == 'iptv' else 'Playlist' }}
+                Mode: {{ 'OnlineTV' if screen.current_mode == 'iptv' else 'Playlist' }}
             </span>
         </div>
     </div>
@@ -50,8 +50,8 @@
                     <i class="fas fa-tv"></i>
                 </div>
                 <div class="text-left">
-                    <div class="font-semibold text-gray-800">Lancer IPTV</div>
-                    <p class="text-sm text-gray-500">Diffuser une chaîne IPTV</p>
+                    <div class="font-semibold text-gray-800">Lancer OnlineTV</div>
+                    <p class="text-sm text-gray-500">Diffuser une chaîne OnlineTV</p>
                 </div>
                 {% if screen.current_mode == 'iptv' %}
                 <span class="ml-auto px-2 py-1 bg-purple-500 text-white rounded text-xs font-medium">Actif</span>
@@ -76,7 +76,7 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
     <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <i class="fas fa-satellite-dish text-purple-600"></i>
-        Liste des chaînes ({{ channels|length }})
+        Liste des chaînes OnlineTV ({{ channels|length }})
     </h3>
 
     {% if channels %}

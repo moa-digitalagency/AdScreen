@@ -58,6 +58,28 @@
                 <p class="text-sm text-gray-500 mb-1">Adresse</p>
                 <p class="font-medium text-gray-800">{{ org.address or '-' }}</p>
             </div>
+            {% if org.has_iptv %}
+            <div class="md:col-span-2 mt-2">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tv text-purple-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-purple-800">OnlineTV activé</p>
+                            {% if org.iptv_m3u_url %}
+                            <p class="text-sm text-purple-600 truncate">{{ org.iptv_m3u_url[:60] }}{% if org.iptv_m3u_url|length > 60 %}...{% endif %}</p>
+                            {% else %}
+                            <p class="text-sm text-purple-500">Aucun lien M3U configuré</p>
+                            {% endif %}
+                        </div>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                            <i class="fas fa-check-circle mr-1"></i>Actif
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 

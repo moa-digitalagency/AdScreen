@@ -74,13 +74,13 @@ def set_mode(screen_id):
         mode = 'playlist'
     
     if mode == 'iptv' and not screen.iptv_enabled:
-        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     screen.current_mode = mode
     db.session.commit()
     
-    mode_label = 'IPTV' if mode == 'iptv' else 'Playlist'
+    mode_label = 'OnlineTV' if mode == 'iptv' else 'Playlist'
     flash(f'Mode {mode_label} activé.', 'success')
     return redirect(request.referrer or url_for('org.screen_detail', screen_id=screen_id))
 
@@ -94,7 +94,7 @@ def set_iptv_channel(screen_id):
     ).first_or_404()
     
     if not screen.iptv_enabled:
-        flash('IPTV n\'est pas activé pour cet écran.', 'error')
+        flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     channel_url = request.form.get('channel_url', '')
