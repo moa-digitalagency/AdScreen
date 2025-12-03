@@ -4,11 +4,22 @@
 Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, restaurants, shopping centers) to monetize their advertising screens through a self-service rental system. Advertisers can access the platform via a link or QR code, select time slots, upload appropriate content, make payments, and receive performance reports. The project aims to provide a comprehensive solution for screen monetization, offering flexibility and detailed control for both establishments and advertisers.
 
 ## Current State (December 2025)
-- **Database initialized**: Schema ready for data
+- **Database initialized**: Schema ready for data with demo accounts
+- **Demo data loaded**: 7 organizations, 10 screens, 4 countries, 5 broadcasts
 - **Multi-currency support**: EUR, MAD, XOF, TND + 200 other currencies
 - **208 countries** with 4,600+ cities for geographic targeting
 - **Admin permissions**: Granular access control for sub-admins
 - **OnlineTV streaming**: HLS.js integration for M3U/M3U8 stream playback with overlays support
+
+### Demo Accounts (created by init_db_demo.py)
+- **Superadmin**: admin@shabaka-adscreen.com / admin123
+- **Admin Démo**: admin-demo@shabaka-adscreen.com / admin123
+- **Establishments** (password: demo123):
+  - FR: manager@restaurant-paris.fr, manager@bar-lyon.fr, manager@atlantis-mall.fr, manager@cafe-gratuit.fr (free)
+  - MA: manager@cafe-marrakech.ma
+  - SN: manager@dakar-beach.sn
+  - TN: manager@tunis-cafe.tn
+- **Player password**: screen123
 
 ### Design Standards (Generated Images)
 

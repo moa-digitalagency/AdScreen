@@ -55,3 +55,36 @@ Jour 1 matin (6h=21600s):
 CLIENT2 arrive après :
 - Matin jour1: 21600s - 300s = 21300s libres
 - 21300/15 = 1420 slots 15s DISPONIBLES
+
+=================
+MODE ONLINETV
+=================
+
+LOGIQUE ONLINETV
+----------------
+1. ACTIVATION : L'établissement active OnlineTV et configure une URL M3U
+2. PAR ÉCRAN : Chaque écran peut avoir OnlineTV activé/désactivé
+3. BASCULE : Mode "playlist" (défaut) ou "iptv" (OnlineTV)
+4. OVERLAYS : Restent actifs en mode OnlineTV (bandeaux, diffusions)
+
+FLUX TECHNIQUE
+--------------
+1. Établissement configure URL M3U (liste de chaînes)
+2. Service iptv_service.py parse le M3U → liste de chaînes
+3. Manager sélectionne une chaîne pour un écran
+4. Player détecte mode "iptv" via API playlist
+5. HLS.js charge le stream M3U/HLS
+6. Overlays continuent à s'afficher par-dessus le stream
+
+PRIORITÉS EN MODE ONLINETV
+--------------------------
+- Le stream OnlineTV remplace la playlist
+- Les overlays locaux (établissement) restent actifs
+- Les diffusions (broadcasts) restent actives
+- Les heartbeats continuent normalement
+
+FALLBACK
+--------
+- Si stream échoue → HLS.js tente récupération automatique
+- Si récupération échoue → affichage message erreur
+- Possibilité de repasser en mode playlist manuellement

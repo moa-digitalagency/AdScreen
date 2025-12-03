@@ -452,6 +452,29 @@
 | 📡 **Heartbeat** | Ping régulier (statut online) |
 | 🎭 **Overlays temps réel** | Bandeaux + broadcasts |
 | 🖥️ **Mode Plein Écran** | Affichage optimisé |
+| 📺 **Mode OnlineTV** | Streaming M3U/HLS avec overlays actifs |
+
+### 12. 📺 Mode OnlineTV (Streaming TV)
+
+> *Diffusion de chaînes TV en direct sur les écrans*
+
+#### Fonctionnalités
+
+| Fonction | Description |
+|----------|-------------|
+| 📡 **Streaming M3U/HLS** | Support des flux M3U, M3U8 et HLS via HLS.js |
+| 🔄 **Bascule Playlist/TV** | Changement instantané entre modes |
+| 🎭 **Overlays Actifs** | Les bandeaux restent visibles en mode TV |
+| 📋 **Gestion Chaînes** | Liste de chaînes par établissement |
+| ⚡ **Fallback Auto** | Repli automatique en cas d'erreur stream |
+
+#### Avantages OnlineTV
+
+| Pour | Bénéfice |
+|------|----------|
+| 🏪 **Établissement** | Diffuse TV quand pas de pub, garde l'attention |
+| 📢 **Annonceur** | Overlays visibles même pendant la TV |
+| 🌐 **Opérateur** | Contrôle centralisé des chaînes autorisées |
 
 ---
 

@@ -242,6 +242,16 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 3. Réservez sur un écran sénégalais (prix en FCFA)
 4. Vérifiez que les reçus affichent la bonne devise
 
+### 7. Test Mode OnlineTV
+
+1. Connectez-vous en tant que manager d'un établissement avec OnlineTV activé
+2. Allez dans "OnlineTV" sur un écran
+3. Configurez une URL de liste M3U
+4. Sélectionnez une chaîne
+5. Basculez l'écran en mode OnlineTV
+6. Vérifiez sur le player que le stream est diffusé
+7. Vérifiez que les overlays restent visibles pendant la diffusion TV
+
 ## Réinitialisation
 
 Pour revenir à un état propre :
@@ -271,7 +281,7 @@ La facturation peut être générée de deux manières :
 3. Consultez vos factures hebdomadaires
 4. Uploadez une preuve de paiement
 
-### 7. Test Établissement Gratuit
+### 8. Test Établissement Gratuit
 
 1. Connectez-vous avec manager@cafe-gratuit.fr / demo123
 2. Vérifiez l'accès limité : pas de réservations, pas de facturation

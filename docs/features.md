@@ -78,6 +78,7 @@ Interface de diffusion pour les écrans publicitaires.
 | **Diffusions (Broadcasts)** | Disponible | Réception des diffusions centralisées |
 | Heartbeat | Disponible | Ping régulier pour statut online |
 | Logging diffusions | Disponible | Enregistrement des passages |
+| **Mode OnlineTV** | Disponible | Streaming M3U/HLS avec overlays actifs |
 
 ## Détail des fonctionnalités
 
@@ -293,6 +294,30 @@ Ordre de diffusion (du plus prioritaire au moins prioritaire) :
 | Fillers / démos | 20 | Auto-généré |
 
 Le player récupère la playlist via API et enchaîne les contenus avec les overlays actifs (locaux + broadcasts).
+
+### Mode OnlineTV
+
+Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
+
+**Fonctionnalités**
+| Fonction | Description |
+|----------|-------------|
+| Streaming M3U/HLS | Support des flux M3U, M3U8 via HLS.js |
+| Bascule instantanée | Changement rapide entre playlist et TV |
+| Overlays actifs | Les bandeaux restent visibles pendant la TV |
+| Gestion chaînes | Liste personnalisable par établissement |
+| Fallback automatique | Repli en cas d'erreur de stream |
+
+**Configuration par établissement**
+- Activation OnlineTV au niveau de l'établissement
+- Activation par écran (chaque écran peut avoir le mode activé ou non)
+- URL de la liste M3U configurable
+- Sélection de la chaîne active par écran
+
+**Avantages**
+- Garde l'attention des visiteurs quand il n'y a pas de publicité
+- Les overlays et diffusions restent visibles
+- Bascule automatique ou manuelle entre modes
 
 ### Fillers automatiques
 

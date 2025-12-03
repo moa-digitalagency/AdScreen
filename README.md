@@ -62,6 +62,7 @@ Plateforme SaaS permettant aux établissements (bars, restaurants, centres comme
 - Affichage des overlays en temps réel
 - Réception des diffusions (broadcasts) centralisées
 - Heartbeat et statuts temps réel
+- **Mode OnlineTV** : Streaming M3U/HLS avec HLS.js, overlays actifs pendant la diffusion TV
 
 ### Statistiques
 - Tracking des passages et revenus
@@ -225,8 +226,16 @@ Dans l'espace admin (`/admin`), vous pouvez configurer :
 
 ### Types d'établissements
 
-- **Payant** : Accès complet (réservations, facturation, créneaux, périodes, contenus internes, overlays)
+- **Payant** : Accès complet (réservations, facturation, créneaux, périodes, contenus internes, overlays, OnlineTV)
 - **Gratuit** : Fonctionnalités limitées (contenus internes et overlays uniquement)
+
+### Mode OnlineTV
+
+Les établissements peuvent activer le mode OnlineTV pour diffuser des chaînes TV en direct :
+- Streaming M3U/M3U8/HLS via la bibliothèque HLS.js
+- Les overlays restent actifs pendant la diffusion TV
+- Bascule instantanée entre mode playlist et mode TV
+- Gestion des chaînes par établissement
 
 ### Gestion des administrateurs
 

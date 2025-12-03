@@ -49,9 +49,9 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 │  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
 │  │  Broadcast    │ │   Invoice   │ │     PaymentProof         │ │
 │  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
-│  ┌───────────────┐                                              │
-│  │ HeartbeatLog  │                                              │
-│  └───────────────┘                                              │
+│  ┌───────────────┐ ┌─────────────┐                              │
+│  │ HeartbeatLog  │ │ IPTVChannel │                              │
+│  └───────────────┘ └─────────────┘                              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -93,6 +93,7 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 | ReportLab | PDF | Génération reçus PDF |
 | ffmpeg | Système | Validation vidéos |
 | qrcode | Python | Génération QR codes |
+| HLS.js | JavaScript | Streaming M3U/HLS pour OnlineTV |
 
 ## Structure des fichiers
 
@@ -139,7 +140,8 @@ shabaka-adscreen/
 │   ├── qr_service.py         # Génération QR codes
 │   ├── receipt_generator.py  # Reçus thermiques (image/PDF)
 │   ├── filler_generator.py   # Génération fillers par défaut
-│   └── currency_service.py   # Gestion multi-devises
+│   ├── currency_service.py   # Gestion multi-devises
+│   └── iptv_service.py       # Parsing M3U et gestion OnlineTV
 │
 ├── utils/                    # Utilitaires
 │   ├── image_utils.py        # Traitement images
@@ -213,6 +215,8 @@ shabaka-adscreen/
 | Content → Booking | 1:1 | Un contenu a une réservation |
 | Organization → currency | 1:1 | Chaque organisation a sa devise (EUR, MAD, XOF, TND) |
 | Broadcast → Screen/Org/Country/City | 1:N | Une diffusion cible des écrans via hiérarchie |
+| Organization → has_iptv | 1:1 | Activation OnlineTV par établissement |
+| Screen → iptv_enabled | 1:1 | Activation OnlineTV par écran |
 
 ### Système de diffusion (Broadcast)
 
