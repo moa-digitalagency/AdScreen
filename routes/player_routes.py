@@ -4,9 +4,11 @@ from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from datetime import datetime
 import urllib.parse
+import urllib3
 import logging
 import re
-import requests
+
+urllib3.disable_warnings()
 
 logger = logging.getLogger(__name__)
 
@@ -290,9 +292,10 @@ def log_play():
 def stream_proxy():
     """
     Proxy for IPTV/HLS streams to bypass CORS restrictions.
-    Handles both HLS manifests (buffered) and MPEG-TS streams (chunked streaming).
-    Uses requests library for better streaming support.
+    Uses urllib3 for better gevent compatibility with stream_with_context.
     """
+    from flask import stream_with_context
+    
     if 'screen_id' not in session:
         return jsonify({'error': 'Non authentifié'}), 401
     
@@ -313,9 +316,14 @@ def stream_proxy():
     
     if has_no_extension or is_numeric_ending:
         is_mpegts_stream = True
-        logger.info(f"Detected MPEG-TS stream (no extension/numeric ending): {url}")
+        logger.info(f"Detected MPEG-TS stream: {url}")
     
     try:
+        http = urllib3.PoolManager(
+            timeout=urllib3.Timeout(connect=10.0, read=None),
+            retries=urllib3.Retry(total=3, redirect=10)
+        )
+        
         headers = {
             'User-Agent': 'VLC/3.0.18 LibVLC/3.0.18',
             'Accept': '*/*',
@@ -323,15 +331,14 @@ def stream_proxy():
         }
         
         if is_manifest:
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
+            response = http.request('GET', url, headers=headers, timeout=30)
             
             content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
             
             try:
-                text_content = response.text
+                text_content = response.data.decode('utf-8')
             except Exception:
-                text_content = response.content.decode('latin-1')
+                text_content = response.data.decode('latin-1')
             
             base_url = url.rsplit('/', 1)[0] + '/'
             lines = text_content.split('\n')
@@ -353,38 +360,52 @@ def stream_proxy():
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return resp
         else:
+            logger.info(f"Starting stream proxy for: {url}")
+            
+            upstream_response = http.request(
+                'GET', url, 
+                headers=headers, 
+                preload_content=False,
+                timeout=urllib3.Timeout(connect=15.0, read=None)
+            )
+            
+            logger.info(f"Upstream response status: {upstream_response.status}")
+            
             def generate_stream():
+                bytes_sent = 0
                 try:
-                    with requests.get(url, headers=headers, stream=True, timeout=(10, None)) as r:
-                        r.raise_for_status()
-                        for chunk in r.iter_content(chunk_size=65536):
-                            if chunk:
-                                yield chunk
-                except requests.exceptions.RequestException as e:
-                    logger.error(f"Stream request error: {str(e)}")
+                    while True:
+                        chunk = upstream_response.read(32768)
+                        if not chunk:
+                            logger.info(f"Stream ended after {bytes_sent} bytes")
+                            break
+                        bytes_sent += len(chunk)
+                        yield chunk
+                except GeneratorExit:
+                    logger.info(f"Client disconnected after {bytes_sent} bytes")
                 except Exception as e:
-                    logger.error(f"Stream error: {str(e)}")
+                    logger.error(f"Stream error after {bytes_sent} bytes: {str(e)}")
+                finally:
+                    try:
+                        upstream_response.release_conn()
+                    except Exception:
+                        pass
             
             content_type = 'video/mp2t' if (is_ts_segment or is_mpegts_stream) else 'application/octet-stream'
             
-            resp = Response(generate_stream(), content_type=content_type)
+            resp = Response(
+                stream_with_context(generate_stream()), 
+                content_type=content_type,
+                direct_passthrough=True
+            )
             resp.headers['Access-Control-Allow-Origin'] = '*'
             resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
             resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Range'
             resp.headers['Access-Control-Expose-Headers'] = 'Content-Length, Content-Range'
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            resp.headers['X-Content-Type-Options'] = 'nosniff'
+            resp.headers['Transfer-Encoding'] = 'chunked'
             return resp
             
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"HTTP error proxying stream: {e}")
-        return jsonify({'error': f'HTTP error: {str(e)}'}), 502
-    except requests.exceptions.ConnectionError as e:
-        logger.error(f"Connection error proxying stream: {e}")
-        return jsonify({'error': 'Impossible de joindre le serveur de stream'}), 502
-    except requests.exceptions.Timeout as e:
-        logger.error(f"Timeout error proxying stream: {e}")
-        return jsonify({'error': 'Timeout lors de la connexion'}), 504
     except Exception as e:
         logger.error(f"Error proxying stream: {str(e)}")
         return jsonify({'error': 'Erreur lors du chargement du stream'}), 500
