@@ -459,15 +459,16 @@ def tv_stream(screen_code):
             '-y',
             '-hide_banner',
             '-loglevel', 'warning',
+            '-fflags', '+genpts+discardcorrupt',
             '-user_agent', 'VLC/3.0.18 LibVLC/3.0.18',
             '-i', source_url,
             '-c:v', 'copy',
             '-c:a', 'aac',
             '-b:a', '128k',
             '-f', 'hls',
-            '-hls_time', '2',
+            '-hls_time', '4',
             '-hls_list_size', '3',
-            '-hls_flags', 'delete_segments+append_list',
+            '-hls_flags', 'delete_segments+append_list+independent_segments',
             '-hls_segment_filename', os.path.join(temp_dir, 'segment_%03d.ts'),
             playlist_path
         ]

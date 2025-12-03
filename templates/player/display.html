@@ -798,16 +798,22 @@
                 player.hlsInstance = new Hls({
                     debug: false,
                     enableWorker: true,
-                    lowLatencyMode: false,
-                    backBufferLength: 90,
-                    maxBufferLength: 30,
-                    maxMaxBufferLength: 600,
-                    maxBufferSize: 60 * 1000 * 1000,
+                    lowLatencyMode: true,
+                    backBufferLength: 30,
+                    maxBufferLength: 10,
+                    maxMaxBufferLength: 30,
+                    maxBufferSize: 30 * 1000 * 1000,
                     maxBufferHole: 0.5,
-                    fragLoadingTimeOut: 30000,
-                    manifestLoadingTimeOut: 30000,
-                    levelLoadingTimeOut: 30000,
+                    fragLoadingTimeOut: 20000,
+                    manifestLoadingTimeOut: 15000,
+                    levelLoadingTimeOut: 15000,
                     startFragPrefetch: true,
+                    startLevel: 0,
+                    abrMaxWithRealBitrate: true,
+                    manifestLoadingMaxRetry: 5,
+                    fragLoadingMaxRetry: 5,
+                    fragLoadingRetryDelay: 1000,
+                    levelLoadingMaxRetry: 4,
                     xhrSetup: function(xhr, url) {
                         xhr.withCredentials = false;
                     }
@@ -815,6 +821,7 @@
                 
                 player.hlsInstance.loadSource(effectiveUrl);
                 player.hlsInstance.attachMedia(player.iptvEl);
+                player.hlsInstance.startLoad();
                 
                 player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
                     debug('HLS manifest parsed, starting playback');
@@ -841,7 +848,13 @@
                     if (data.fatal) {
                         switch(data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
-                                handleNetworkError(streamUrl, data, useProxy);
+                                debug('Network error, retrying in 2s...');
+                                updateIptvStatus('retrying', 'Reconnexion...');
+                                setTimeout(function() {
+                                    if (player.hlsInstance) {
+                                        player.hlsInstance.startLoad();
+                                    }
+                                }, 2000);
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 debug('Media error, trying to recover...');
@@ -855,6 +868,8 @@
                                 tryDirectPlayback(streamUrl);
                                 break;
                         }
+                    } else if (data.details === 'fragLoadError') {
+                        debug('Fragment load error (non-fatal), continuing...');
                     } else if (data.details === 'manifestLoadError' || data.details === 'manifestParsingError') {
                         handleNetworkError(streamUrl, data, useProxy);
                     }
