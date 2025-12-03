@@ -1,5 +1,5 @@
 # pyright: reportArgumentType=false
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response, make_response
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from datetime import datetime
@@ -107,7 +107,7 @@ def get_playlist():
                 if broadcast.broadcast_type == 'overlay':
                     iptv_overlays.append(broadcast.to_overlay_dict())
         
-        return jsonify({
+        response = make_response(jsonify({
             'screen': {
                 'id': screen.id,
                 'name': screen.name,
@@ -122,7 +122,11 @@ def get_playlist():
             'playlist': [],
             'overlays': iptv_overlays,
             'timestamp': datetime.utcnow().isoformat()
-        })
+        }))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     
     playlist = []
     
@@ -224,7 +228,7 @@ def get_playlist():
     
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
-    return jsonify({
+    response = make_response(jsonify({
         'screen': {
             'id': screen.id,
             'name': screen.name,
@@ -235,7 +239,11 @@ def get_playlist():
         'playlist': playlist,
         'overlays': active_overlays,
         'timestamp': datetime.utcnow().isoformat()
-    })
+    }))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @player_bp.route('/api/heartbeat', methods=['POST'])
