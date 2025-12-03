@@ -791,6 +791,59 @@ def settings():
     )
 
 
+@admin_bp.route('/clean-database', methods=['POST'])
+@login_required
+@superadmin_required
+def clean_database():
+    """Clean all data except superadmin accounts"""
+    import os
+    import shutil
+    from models import (
+        Organization, Screen, TimeSlot, TimePeriod,
+        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
+        RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
+        Broadcast
+    )
+    
+    try:
+        HeartbeatLog.query.delete()
+        StatLog.query.delete()
+        PaymentProof.query.delete()
+        Invoice.query.delete()
+        Booking.query.delete()
+        Content.query.delete()
+        ScreenOverlay.query.delete()
+        Broadcast.query.delete()
+        InternalContent.query.delete()
+        Filler.query.delete()
+        TimePeriod.query.delete()
+        TimeSlot.query.delete()
+        Screen.query.delete()
+        
+        User.query.filter(User.role != 'superadmin').delete()
+        
+        Organization.query.delete()
+        
+        RegistrationRequest.query.delete()
+        
+        db.session.commit()
+        
+        uploads_dir = 'static/uploads'
+        if os.path.exists(uploads_dir):
+            for folder in ['contents', 'fillers', 'internal']:
+                folder_path = os.path.join(uploads_dir, folder)
+                if os.path.exists(folder_path):
+                    shutil.rmtree(folder_path)
+                    os.makedirs(folder_path, exist_ok=True)
+        
+        flash('Base de données nettoyée avec succès. Seuls les comptes superadmin ont été conservés.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors du nettoyage: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.settings'))
+
+
 @admin_bp.route('/screen/<int:screen_id>/toggle-featured', methods=['POST'])
 @login_required
 @superadmin_required

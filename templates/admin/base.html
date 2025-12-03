@@ -3,21 +3,34 @@
 {% block body %}
 <style>
     .admin-sidebar-gradient {
-        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%);
+        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
     }
-    .admin-sidebar-gradient .admin-nav-link {
-        color: rgba(255, 255, 255, 0.75);
+    .admin-sidebar-gradient .admin-nav-link,
+    .admin-sidebar-gradient .admin-nav-link span,
+    .admin-sidebar-gradient .admin-nav-link i {
+        color: rgba(255, 255, 255, 0.8) !important;
+        text-decoration: none !important;
     }
-    .admin-sidebar-gradient .admin-nav-link:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
+    .admin-sidebar-gradient .admin-nav-link:hover,
+    .admin-sidebar-gradient .admin-nav-link:hover span,
+    .admin-sidebar-gradient .admin-nav-link:hover i {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
     }
-    .admin-sidebar-gradient .admin-nav-link.active {
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
+    .admin-sidebar-gradient .admin-nav-link.active,
+    .admin-sidebar-gradient .admin-nav-link.active span,
+    .admin-sidebar-gradient .admin-nav-link.active i {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
     }
     .admin-sidebar-gradient .admin-border {
-        border-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+    .admin-sidebar-gradient a,
+    .admin-sidebar-gradient a:visited,
+    .admin-sidebar-gradient a:hover,
+    .admin-sidebar-gradient a:active {
+        text-decoration: none !important;
     }
 </style>
 <div class="flex min-h-screen">
