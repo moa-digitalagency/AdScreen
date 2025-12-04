@@ -140,12 +140,13 @@ def fetch_m3u_from_url(url: str, timeout: int = 30) -> Optional[str]:
         return None
 
 
-def get_channels_from_organization(organization) -> List[IPTVChannel]:
+def get_channels_from_organization(organization, limit: Optional[int] = None) -> List[IPTVChannel]:
     """
     Recupere la liste des chaines IPTV d'une organisation.
     
     Args:
         organization: Instance Organization avec iptv_m3u_url
+        limit: Nombre maximum de chaines a retourner (None = toutes)
         
     Returns:
         Liste de chaines IPTVChannel
@@ -157,7 +158,33 @@ def get_channels_from_organization(organization) -> List[IPTVChannel]:
     if not content:
         return []
     
-    return parse_m3u_content(content)
+    channels = parse_m3u_content(content)
+    
+    if limit and len(channels) > limit:
+        return channels[:limit]
+    
+    return channels
+
+
+def get_total_channel_count(organization) -> int:
+    """
+    Recupere le nombre total de chaines sans les charger toutes.
+    
+    Args:
+        organization: Instance Organization avec iptv_m3u_url
+        
+    Returns:
+        Nombre de chaines
+    """
+    if not organization.has_iptv or not organization.iptv_m3u_url:
+        return 0
+    
+    content = fetch_m3u_from_url(organization.iptv_m3u_url)
+    if not content:
+        return 0
+    
+    count = content.count('#EXTINF:')
+    return count
 
 
 def get_channels_grouped(channels: List[IPTVChannel]) -> Dict[str, List[IPTVChannel]]:

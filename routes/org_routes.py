@@ -644,13 +644,32 @@ def screen_iptv(screen_id):
         flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
-    channels = get_channels_from_organization(org)
+    page = request.args.get('page', 1, type=int)
+    per_page = 500
+    search_query = request.args.get('q', '').strip().lower()
+    
+    all_channels = get_channels_from_organization(org)
+    total_channels = len(all_channels)
+    
+    if search_query:
+        all_channels = [c for c in all_channels if search_query in c.name.lower() or (c.group and search_query in c.group.lower())]
+    
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    channels = all_channels[start_idx:end_idx]
+    
+    total_pages = (len(all_channels) + per_page - 1) // per_page
     grouped_channels = get_channels_grouped(channels) if channels else {}
     
     return render_template('org/screen_iptv.html',
         screen=screen,
         channels=channels,
-        grouped_channels=grouped_channels
+        grouped_channels=grouped_channels,
+        total_channels=total_channels,
+        current_page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        search_query=search_query
     )
 
 
