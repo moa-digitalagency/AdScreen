@@ -621,6 +621,9 @@
                 const newPlaylist = data.playlist || [];
                 player.overlays = data.overlays || [];
                 
+                console.log('[OVERLAY DEBUG] Received overlays:', JSON.stringify(player.overlays, null, 2));
+                debug(`Overlays received: ${player.overlays.length}`);
+                
                 if (player.playlist.length !== newPlaylist.length) {
                     debug(`Playlist updated: ${player.playlist.length} -> ${newPlaylist.length} items`);
                 }
@@ -1171,6 +1174,7 @@
         }
 
         function renderOverlays() {
+            console.log('[OVERLAY DEBUG] renderOverlays() called');
             const headerEl = document.getElementById('overlayHeader');
             const footerEl = document.getElementById('overlayFooter');
             const bodyEl = document.getElementById('overlayBody');
@@ -1181,6 +1185,7 @@
             const customEl = document.getElementById('overlayCustom');
             
             const allContainers = [headerEl, footerEl, bodyEl, topLeftEl, topRightEl, bottomLeftEl, bottomRightEl, customEl];
+            console.log('[OVERLAY DEBUG] Clearing all ' + allContainers.length + ' containers');
             allContainers.forEach(el => {
                 if (el) {
                     el.style.display = 'none';
@@ -1189,6 +1194,7 @@
             });
             
             const overlays = player.overlays || [];
+            console.log('[OVERLAY DEBUG] Will render ' + overlays.length + ' overlays');
             debug('Rendering ' + overlays.length + ' overlays');
             
             overlays.forEach(overlay => {
