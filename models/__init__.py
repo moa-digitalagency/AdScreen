@@ -16,6 +16,7 @@ from models.registration_request import RegistrationRequest
 from models.screen_overlay import ScreenOverlay
 from models.invoice import Invoice, PaymentProof
 from models.broadcast import Broadcast
+from models.ad_content import AdContent, AdContentInvoice, AdContentStat
 
 __all__ = [
     'db',
@@ -36,4 +37,7 @@ __all__ = [
     'Invoice',
     'PaymentProof',
     'Broadcast',
+    'AdContent',
+    'AdContentInvoice',
+    'AdContentStat',
 ]
