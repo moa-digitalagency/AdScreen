@@ -315,6 +315,22 @@
                     </div>
                 </div>
 
+                <div class="border-t border-gray-100 pt-4">
+                    <h4 class="font-medium text-gray-800 mb-3 text-sm flex items-center gap-2">
+                        <i class="fas fa-sort-amount-up text-orange-500"></i>
+                        Priorité
+                    </h4>
+                    <div>
+                        <label class="label">Niveau de priorité (1-100)</label>
+                        <div class="flex items-center gap-3">
+                            <input type="range" name="priority" id="priority" min="1" max="100" value="50" 
+                                class="flex-1" oninput="updatePriorityLabel()">
+                            <span id="priorityLabel" class="text-sm font-mono w-12 text-right">50</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Plus la valeur est élevée, plus l'overlay est prioritaire</p>
+                    </div>
+                </div>
+
                 <div class="flex items-center gap-3">
                     <input type="checkbox" name="is_active" id="is_active" checked class="w-4 h-4 text-emerald-600 rounded border-gray-300">
                     <label for="is_active" class="text-sm text-gray-700">Activer immédiatement</label>
@@ -515,6 +531,10 @@ function updateSpeedLabel() {
 
 function updateImageSizeLabel() {
     document.getElementById('imageSizeLabel').textContent = document.getElementById('imageSize').value + '%';
+}
+
+function updatePriorityLabel() {
+    document.getElementById('priorityLabel').textContent = document.getElementById('priority').value;
 }
 
 function updateOpacityLabel() {
