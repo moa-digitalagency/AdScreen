@@ -594,6 +594,11 @@
                     const newIptvUrl = data.iptv.url;
                     const channelName = data.iptv.name;
                     
+                    player.overlays = data.overlays || [];
+                    console.log('[OVERLAY DEBUG] IPTV mode - Received overlays:', JSON.stringify(player.overlays, null, 2));
+                    debug(`IPTV mode - Overlays received: ${player.overlays.length}`);
+                    renderOverlays();
+                    
                     console.log('[IPTV DEBUG] Current URL:', player.iptvUrl);
                     console.log('[IPTV DEBUG] New URL:', newIptvUrl);
                     console.log('[IPTV DEBUG] Channel:', channelName);
