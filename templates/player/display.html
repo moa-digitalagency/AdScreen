@@ -277,6 +277,11 @@
 
     <div id="overlayHeader" class="overlay-header" style="display: none;"></div>
     <div id="overlayBody" class="overlay-body" style="display: none;"></div>
+    <div id="overlayTopLeft" class="overlay-corner" style="display: none; position: fixed; top: 10px; left: 10px; z-index: 50;"></div>
+    <div id="overlayTopRight" class="overlay-corner" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 50;"></div>
+    <div id="overlayBottomLeft" class="overlay-corner" style="display: none; position: fixed; bottom: 10px; left: 10px; z-index: 50;"></div>
+    <div id="overlayBottomRight" class="overlay-corner" style="display: none; position: fixed; bottom: 10px; right: 10px; z-index: 50;"></div>
+    <div id="overlayCustom" class="overlay-custom" style="display: none; position: fixed; z-index: 50;"></div>
     
     <div id="player">
         <img id="imageContent" style="display: none;" />
@@ -1169,13 +1174,19 @@
             const headerEl = document.getElementById('overlayHeader');
             const footerEl = document.getElementById('overlayFooter');
             const bodyEl = document.getElementById('overlayBody');
+            const topLeftEl = document.getElementById('overlayTopLeft');
+            const topRightEl = document.getElementById('overlayTopRight');
+            const bottomLeftEl = document.getElementById('overlayBottomLeft');
+            const bottomRightEl = document.getElementById('overlayBottomRight');
+            const customEl = document.getElementById('overlayCustom');
             
-            headerEl.style.display = 'none';
-            footerEl.style.display = 'none';
-            bodyEl.style.display = 'none';
-            headerEl.innerHTML = '';
-            footerEl.innerHTML = '';
-            bodyEl.innerHTML = '';
+            const allContainers = [headerEl, footerEl, bodyEl, topLeftEl, topRightEl, bottomLeftEl, bottomRightEl, customEl];
+            allContainers.forEach(el => {
+                if (el) {
+                    el.style.display = 'none';
+                    el.innerHTML = '';
+                }
+            });
             
             const overlays = player.overlays || [];
             debug('Rendering ' + overlays.length + ' overlays');
@@ -1187,18 +1198,50 @@
                 }
                 
                 let container;
-                if (overlay.position === 'header') {
+                let position = overlay.position || 'footer';
+                const positionMode = overlay.position_mode || 'linear';
+                const cornerPosition = overlay.corner_position || 'top_left';
+                
+                if (position === 'corner' && cornerPosition) {
+                    position = cornerPosition;
+                }
+                
+                if (position === 'header') {
                     container = headerEl;
-                } else if (overlay.position === 'footer') {
+                } else if (position === 'footer') {
                     container = footerEl;
+                } else if (position === 'body') {
+                    container = bodyEl;
+                } else if (position === 'top_left') {
+                    container = topLeftEl;
+                } else if (position === 'top_right') {
+                    container = topRightEl;
+                } else if (position === 'bottom_left') {
+                    container = bottomLeftEl;
+                } else if (position === 'bottom_right') {
+                    container = bottomRightEl;
+                } else if (position === 'custom') {
+                    container = customEl;
+                    if (customEl) {
+                        const posX = overlay.image_pos_x || 50;
+                        const posY = overlay.image_pos_y || 50;
+                        customEl.style.left = posX + '%';
+                        customEl.style.top = posY + '%';
+                        customEl.style.transform = 'translate(-50%, -50%)';
+                    }
                 } else {
                     container = bodyEl;
                 }
                 
+                if (!container) {
+                    debug('Container not found for position: ' + position);
+                    return;
+                }
+                
                 container.style.display = 'block';
-                container.style.backgroundColor = overlay.background_color || '#000000';
                 
                 if (overlay.type === 'ticker') {
+                    container.style.backgroundColor = overlay.background_color || '#000000';
                     const duration = Math.max(10, (overlay.message?.length || 50) / (overlay.scroll_speed / 10));
                     container.innerHTML = `
                         <div class="overlay-ticker" style="
@@ -1208,10 +1251,22 @@
                         ">${overlay.message || ''}</div>
                     `;
                 } else if (overlay.type === 'image' && overlay.image_path) {
-                    container.innerHTML = `<img src="/${overlay.image_path}" class="overlay-image" />`;
+                    const opacity = overlay.image_opacity !== undefined ? overlay.image_opacity : 1;
+                    const widthPercent = overlay.image_width_percent || 20;
+                    
+                    if (position === 'header' || position === 'footer' || position === 'body') {
+                        container.innerHTML = `<img src="/${overlay.image_path}" class="overlay-image" style="opacity: ${opacity}; max-width: ${widthPercent}%;" />`;
+                    } else {
+                        const cornerSize = overlay.corner_size || 15;
+                        container.innerHTML = `<img src="/${overlay.image_path}" style="opacity: ${opacity}; width: ${widthPercent}vw; max-width: 300px; height: auto;" />`;
+                    }
+                } else if (overlay.type === 'corner' && overlay.image_path) {
+                    const opacity = overlay.image_opacity !== undefined ? overlay.image_opacity : 1;
+                    const cornerSize = overlay.corner_size || 15;
+                    container.innerHTML = `<img src="/${overlay.image_path}" style="opacity: ${opacity}; width: ${cornerSize}vw; max-width: 200px; height: auto;" />`;
                 }
                 
-                debug('Rendered overlay: id=' + overlay.id + ', type=' + overlay.type + ', position=' + overlay.position);
+                debug('Rendered overlay: id=' + overlay.id + ', type=' + overlay.type + ', position=' + position);
             });
         }
 
