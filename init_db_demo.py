@@ -539,7 +539,9 @@ def create_demo_data():
             frequency_type='duration',
             display_duration=15,
             frequency_unit='day',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay1)
         
@@ -556,7 +558,9 @@ def create_demo_data():
             frequency_type='passage',
             passage_limit=20,
             frequency_unit='day',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay2)
         
@@ -573,7 +577,9 @@ def create_demo_data():
             frequency_type='duration',
             display_duration=12,
             frequency_unit='noon',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay3)
         
@@ -590,7 +596,9 @@ def create_demo_data():
             frequency_type='passage',
             passage_limit=15,
             frequency_unit='evening',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay4)
         
@@ -607,7 +615,9 @@ def create_demo_data():
             frequency_type='duration',
             display_duration=15,
             frequency_unit='day',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay5)
         
@@ -624,7 +634,9 @@ def create_demo_data():
             frequency_type='duration',
             display_duration=20,
             frequency_unit='day',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay6)
         
@@ -641,7 +653,9 @@ def create_demo_data():
             frequency_type='passage',
             passage_limit=25,
             frequency_unit='day',
-            is_active=True
+            is_active=True,
+            priority=50,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay7)
         

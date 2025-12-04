@@ -35,6 +35,17 @@ class ScreenOverlay(db.Model):
     current_passage_count = db.Column(db.Integer, default=0)
     last_passage_reset = db.Column(db.DateTime)
     
+    priority = db.Column(db.Integer, default=50)
+    
+    SOURCE_LOCAL = 'local'
+    SOURCE_BROADCAST = 'broadcast'
+    source = db.Column(db.String(20), default=SOURCE_LOCAL)
+    source_broadcast_id = db.Column(db.Integer, db.ForeignKey('broadcasts.id'), nullable=True)
+    
+    is_paused = db.Column(db.Boolean, default=False)
+    paused_by_broadcast_id = db.Column(db.Integer, nullable=True)
+    paused_at = db.Column(db.DateTime, nullable=True)
+    
     is_active = db.Column(db.Boolean, default=True)
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
@@ -43,6 +54,7 @@ class ScreenOverlay(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     screen = db.relationship('Screen', back_populates='overlays')
+    source_broadcast = db.relationship('Broadcast', foreign_keys=[source_broadcast_id], backref='created_overlays')
     
     TYPE_TICKER = 'ticker'
     TYPE_IMAGE = 'image'
@@ -72,6 +84,9 @@ class ScreenOverlay(db.Model):
         if not self.is_active:
             return False
         
+        if self.is_paused:
+            return False
+        
         now = datetime.utcnow()
         if self.start_time and now < self.start_time:
             return False
@@ -79,6 +94,16 @@ class ScreenOverlay(db.Model):
             return False
         
         return True
+    
+    def pause(self, by_broadcast_id=None):
+        self.is_paused = True
+        self.paused_by_broadcast_id = by_broadcast_id
+        self.paused_at = datetime.utcnow()
+    
+    def resume(self):
+        self.is_paused = False
+        self.paused_by_broadcast_id = None
+        self.paused_at = None
     
     def to_dict(self):
         return {
@@ -106,7 +131,11 @@ class ScreenOverlay(db.Model):
             'image_opacity': self.image_opacity,
             'start_time': self.start_time.isoformat() if self.start_time else None,
             'end_time': self.end_time.isoformat() if self.end_time else None,
-            'is_active': self.is_currently_active()
+            'is_active': self.is_currently_active(),
+            'priority': self.priority,
+            'source': self.source,
+            'is_paused': self.is_paused,
+            'is_broadcast': self.source == self.SOURCE_BROADCAST
         }
     
     def _get_current_period(self, hour):

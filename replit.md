@@ -83,6 +83,14 @@ Not specified.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
     - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
     - **Overlay System**: Comprehensive configuration for tickers (header, body, footer) and image overlays (all positions + custom X/Y, size, opacity), with real-time previews.
+    - **Overlay Priority System** (December 2025):
+        - **Priority levels**: Configurable 1-100 (higher priority displays first)
+        - **Source tracking**: LOCAL (organization-created) vs BROADCAST (super-admin pushed)
+        - **Pause/Resume**: Organization users can pause, resume, or delete overlays locally
+        - **Broadcast priority**: Broadcast overlays automatically take priority (priority=100)
+        - **Auto-pause**: When broadcast overlays are active, local overlays with same/lower priority are automatically paused
+        - **Auto-resume**: When broadcast ends, previously paused local overlays automatically resume
+        - **Status indicators**: Visual badges showing paused, broadcast source, and priority level
     - **Broadcast/Diffusion System**: Superadmin feature to push content to connected screens based on geographic and organizational targeting:
         - **Targeting modes**: Country, city, organization, or specific screen
         - **Organization type targeting**: Filter by paid establishments only, free establishments only, or all

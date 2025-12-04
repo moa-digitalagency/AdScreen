@@ -96,18 +96,14 @@ def get_playlist():
         return jsonify({'error': 'Écran non trouvé'}), 404
     
     if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
-        iptv_overlays = []
-        fresh_overlays = db.session.query(ScreenOverlay).filter_by(screen_id=screen.id).all()
-        for overlay in fresh_overlays:
-            db.session.refresh(overlay)
-            if overlay.is_currently_active():
-                iptv_overlays.append(overlay.to_dict())
+        from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
         
-        active_broadcasts = Broadcast.query.filter_by(is_active=True).all()
-        for broadcast in active_broadcasts:
-            if broadcast.applies_to_screen(screen):
-                if broadcast.broadcast_type == 'overlay':
-                    iptv_overlays.append(broadcast.to_overlay_dict())
+        sync_broadcast_overlays(screen)
+        
+        active_overlay_objects = get_active_overlays_for_screen(screen.id)
+        iptv_overlays = [o.to_dict() for o in active_overlay_objects]
+        
+        iptv_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
         
         response = make_response(jsonify({
             'screen': {
@@ -214,19 +210,19 @@ def get_playlist():
     
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
-    active_overlays = []
-    fresh_overlays = db.session.query(ScreenOverlay).filter_by(screen_id=screen.id).all()
-    for overlay in fresh_overlays:
-        db.session.refresh(overlay)
-        if overlay.is_currently_active():
-            active_overlays.append(overlay.to_dict())
+    from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
+    
+    sync_broadcast_overlays(screen)
+    
+    active_overlay_objects = get_active_overlays_for_screen(screen.id)
+    active_overlays = [o.to_dict() for o in active_overlay_objects]
+    
+    active_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
     
     active_broadcasts = Broadcast.query.filter_by(is_active=True).all()
     for broadcast in active_broadcasts:
         if broadcast.applies_to_screen(screen):
-            if broadcast.broadcast_type == 'overlay':
-                active_overlays.append(broadcast.to_overlay_dict())
-            else:
+            if broadcast.broadcast_type == 'content':
                 playlist.append(broadcast.to_content_dict())
     
     playlist.sort(key=lambda x: x['priority'], reverse=True)

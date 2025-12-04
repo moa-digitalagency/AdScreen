@@ -872,6 +872,8 @@ def screen_overlays(screen_id):
         
         corner_size = int(request.form.get('corner_size', 15))
         
+        priority = int(request.form.get('priority', 50))
+        
         overlay = ScreenOverlay(
             screen_id=screen_id,
             overlay_type=overlay_type,
@@ -897,7 +899,9 @@ def screen_overlays(screen_id):
             image_pos_x=image_pos_x,
             image_pos_y=image_pos_y,
             image_opacity=image_opacity,
-            is_active=is_active
+            is_active=is_active,
+            priority=priority,
+            source=ScreenOverlay.SOURCE_LOCAL
         )
         db.session.add(overlay)
         db.session.commit()
@@ -941,10 +945,46 @@ def delete_overlay(screen_id, overlay_id):
     if overlay.image_path and os.path.exists(overlay.image_path):
         os.remove(overlay.image_path)
     
-    db.session.delete(overlay)
-    db.session.commit()
+    from services.overlay_service import delete_overlay as service_delete_overlay
+    service_delete_overlay(overlay_id)
     
     flash('Overlay supprimé.', 'success')
+    return redirect(url_for('org.screen_overlays', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/overlay/<int:overlay_id>/pause', methods=['POST'])
+@login_required
+@org_required
+def pause_overlay(screen_id, overlay_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    overlay = ScreenOverlay.query.filter_by(id=overlay_id, screen_id=screen_id).first_or_404()
+    
+    from services.overlay_service import pause_overlay as service_pause_overlay
+    service_pause_overlay(overlay_id)
+    
+    flash('Overlay mis en pause.', 'success')
+    return redirect(url_for('org.screen_overlays', screen_id=screen_id))
+
+
+@org_bp.route('/screen/<int:screen_id>/overlay/<int:overlay_id>/resume', methods=['POST'])
+@login_required
+@org_required
+def resume_overlay(screen_id, overlay_id):
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    overlay = ScreenOverlay.query.filter_by(id=overlay_id, screen_id=screen_id).first_or_404()
+    
+    from services.overlay_service import resume_overlay as service_resume_overlay
+    service_resume_overlay(overlay_id)
+    
+    flash('Overlay repris.', 'success')
     return redirect(url_for('org.screen_overlays', screen_id=screen_id))
 
 
