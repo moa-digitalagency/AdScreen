@@ -72,3 +72,25 @@ class SiteSetting(db.Model):
             'support_email': cls.get('support_email', ''),
             'maintenance_mode': cls.get('maintenance_mode', False),
         }
+    
+    @classmethod
+    def get_ad_content_settings(cls):
+        """Paramètres pour le contenu publicitaire vendu par le superadmin"""
+        return {
+            'ad_commission_rate': cls.get('ad_commission_rate', 30.0),
+            'ad_min_price_per_day': cls.get('ad_min_price_per_day', 10.0),
+            'ad_auto_invoice': cls.get('ad_auto_invoice', True),
+            'ad_invoice_frequency': cls.get('ad_invoice_frequency', 'monthly'),
+        }
+    
+    @classmethod
+    def set_ad_content_settings(cls, settings):
+        """Sauvegarde les paramètres du contenu publicitaire"""
+        if 'ad_commission_rate' in settings:
+            cls.set('ad_commission_rate', settings['ad_commission_rate'], 'float', 'ad_content', 'Taux de commission pub (%)')
+        if 'ad_min_price_per_day' in settings:
+            cls.set('ad_min_price_per_day', settings['ad_min_price_per_day'], 'float', 'ad_content', 'Prix minimum par jour')
+        if 'ad_auto_invoice' in settings:
+            cls.set('ad_auto_invoice', settings['ad_auto_invoice'], 'boolean', 'ad_content', 'Facturation automatique')
+        if 'ad_invoice_frequency' in settings:
+            cls.set('ad_invoice_frequency', settings['ad_invoice_frequency'], 'string', 'ad_content', 'Fréquence de facturation')
