@@ -18,8 +18,7 @@ def create_demo_data():
     from models import (
         User, Organization, Screen, TimeSlot, TimePeriod,
         Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
-        Broadcast
+        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof
     )
     
     with app.app_context():
@@ -646,120 +645,6 @@ def create_demo_data():
         )
         db.session.add(overlay7)
         
-        logger.info("📡 Création des diffusions (broadcasts) de démonstration...")
-        
-        from datetime import time as dt_time
-        
-        broadcast1 = Broadcast(
-            name='Promotion Été France',
-            target_type='country',
-            target_country='FR',
-            broadcast_type='overlay',
-            overlay_type='ticker',
-            overlay_message='🌞 Soldes d\'été -30% sur toutes les publicités! Réservez maintenant!',
-            overlay_position='header',
-            overlay_background_color='#f97316',
-            overlay_text_color='#ffffff',
-            overlay_font_size=28,
-            overlay_scroll_speed=60,
-            is_active=True,
-            schedule_mode='immediate',
-            schedule_priority=100,
-            created_by=superadmin.id
-        )
-        db.session.add(broadcast1)
-        
-        broadcast2 = Broadcast(
-            name='Message Marrakech',
-            target_type='city',
-            target_country='MA',
-            target_city='Marrakech',
-            broadcast_type='overlay',
-            overlay_type='ticker',
-            overlay_message='مراكش ترحب بكم - Marrakech vous accueille! Festival des arts 2024',
-            overlay_position='footer',
-            overlay_background_color='#dc2626',
-            overlay_text_color='#ffffff',
-            overlay_font_size=26,
-            overlay_scroll_speed=50,
-            is_active=True,
-            schedule_mode='immediate',
-            schedule_priority=100,
-            created_by=superadmin.id
-        )
-        db.session.add(broadcast2)
-        
-        broadcast3 = Broadcast(
-            name='Promo Centre Atlantis',
-            target_type='organization',
-            target_organization_id=org3.id,
-            broadcast_type='overlay',
-            overlay_type='ticker',
-            overlay_message='Centre Commercial Atlantis - Nouveau magasin Apple ouvert! Venez découvrir.',
-            overlay_position='body',
-            overlay_background_color='#2563eb',
-            overlay_text_color='#ffffff',
-            overlay_font_size=30,
-            overlay_scroll_speed=55,
-            is_active=True,
-            schedule_mode='scheduled',
-            scheduled_datetime=datetime.now() + timedelta(hours=2),
-            schedule_priority=150,
-            override_playlist=True,
-            recurrence_type='daily',
-            recurrence_interval=1,
-            recurrence_time=dt_time(12, 0, 0),
-            created_by=superadmin.id
-        )
-        db.session.add(broadcast3)
-        
-        broadcast4 = Broadcast(
-            name='Info Écran Beach',
-            target_type='screen',
-            target_screen_id=screen8.id,
-            broadcast_type='overlay',
-            overlay_type='ticker',
-            overlay_message='🏖️ Soirée spéciale ce soir! DJ set à partir de 20h - Teranga Beach Bar',
-            overlay_position='header',
-            overlay_background_color='#16a34a',
-            overlay_text_color='#ffffff',
-            overlay_font_size=24,
-            overlay_scroll_speed=65,
-            is_active=True,
-            schedule_mode='scheduled',
-            scheduled_datetime=datetime.now() + timedelta(days=1),
-            schedule_priority=200,
-            recurrence_type='weekly',
-            recurrence_interval=1,
-            recurrence_days_of_week='friday,saturday',
-            recurrence_time=dt_time(18, 0, 0),
-            created_by=superadmin.id
-        )
-        db.session.add(broadcast4)
-        
-        broadcast5 = Broadcast(
-            name='Promo Mensuelle Tunisie',
-            target_type='country',
-            target_country='TN',
-            broadcast_type='overlay',
-            overlay_type='ticker',
-            overlay_message='🎁 Offre spéciale du mois - Publicité gratuite le 1er de chaque mois!',
-            overlay_position='footer',
-            overlay_background_color='#7c3aed',
-            overlay_text_color='#ffffff',
-            overlay_font_size=26,
-            overlay_scroll_speed=55,
-            is_active=True,
-            schedule_mode='scheduled',
-            scheduled_datetime=datetime.now().replace(day=1) + timedelta(days=30),
-            schedule_priority=120,
-            recurrence_type='monthly',
-            recurrence_interval=1,
-            recurrence_time=dt_time(9, 0, 0),
-            created_by=superadmin.id
-        )
-        db.session.add(broadcast5)
-        
         db.session.commit()
         
         print("""
@@ -816,13 +701,6 @@ def create_demo_data():
        • Terrasse Marrakech (footer) - Bilingue AR/FR
        • Beach Bar Dakar (header) - Happy Hour FCFA
        • Café Habib Tunis (footer) - Services
-    
-    📡 DIFFUSIONS (BROADCASTS) DE DÉMONSTRATION (5):
-       • Promotion Été France (pays: FR) - Immédiat, priorité 100
-       • Message Marrakech (ville: Marrakech) - Immédiat, priorité 100
-       • Promo Centre Atlantis (établissement) - Programmé, quotidien 12h, priorité 150
-       • Info Écran Beach (écran spécifique) - Programmé, hebdo ven/sam 18h, priorité 200
-       • Promo Mensuelle Tunisie (pays: TN) - Programmé, mensuel 9h, priorité 120
     
     ════════════════════════════════════════════════════════════════
         """)
