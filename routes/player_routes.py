@@ -89,15 +89,17 @@ def get_playlist():
         return jsonify({'error': 'Non authentifié'}), 401
     
     db.session.expire_all()
+    db.session.rollback()
     
-    screen = Screen.query.get(session['screen_id'])
+    screen = db.session.query(Screen).filter_by(id=session['screen_id']).first()
     if not screen:
         return jsonify({'error': 'Écran non trouvé'}), 404
     
     if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
         iptv_overlays = []
-        fresh_overlays = ScreenOverlay.query.filter_by(screen_id=screen.id).all()
+        fresh_overlays = db.session.query(ScreenOverlay).filter_by(screen_id=screen.id).all()
         for overlay in fresh_overlays:
+            db.session.refresh(overlay)
             if overlay.is_currently_active():
                 iptv_overlays.append(overlay.to_dict())
         
@@ -213,8 +215,9 @@ def get_playlist():
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
     active_overlays = []
-    fresh_overlays = ScreenOverlay.query.filter_by(screen_id=screen.id).all()
+    fresh_overlays = db.session.query(ScreenOverlay).filter_by(screen_id=screen.id).all()
     for overlay in fresh_overlays:
+        db.session.refresh(overlay)
         if overlay.is_currently_active():
             active_overlays.append(overlay.to_dict())
     
