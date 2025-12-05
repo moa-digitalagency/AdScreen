@@ -460,10 +460,12 @@ Les établissements conservent le contrôle total sur les publicités diffusées
 | 🔄 **Loop Automatique** | Enchaînement continu |
 | 📡 **Heartbeat** | Ping régulier (statut online) |
 | 🎭 **Overlays temps réel** | Bandeaux + broadcasts |
-| 🖥️ **Mode Plein Écran** | Affichage optimisé |
+| 🖥️ **Mode Plein Écran** | Affichage optimisé (F11) |
 | 📺 **Mode OnlineTV** | Streaming M3U/HLS avec overlays actifs |
+| 🔊 **Contrôle Audio** | Mute/unmute avec touche M |
+| ⌨️ **Raccourcis Clavier** | F11, M, Espace pour contrôle rapide |
 
-### 12. 📺 Mode OnlineTV (Streaming TV)
+### 12. 📺 Mode OnlineTV (Streaming IPTV)
 
 > *Diffusion de chaînes TV en direct sur les écrans*
 
@@ -472,10 +474,12 @@ Les établissements conservent le contrôle total sur les publicités diffusées
 | Fonction | Description |
 |----------|-------------|
 | 📡 **Streaming M3U/HLS** | Support des flux M3U, M3U8 et HLS via HLS.js |
+| 📺 **Fallback MPEG-TS** | Support natif des flux .ts via mpegts.js |
 | 🔄 **Bascule Playlist/TV** | Changement instantané entre modes |
 | 🎭 **Overlays Actifs** | Les bandeaux restent visibles en mode TV |
 | 📋 **Gestion Chaînes** | Liste de chaînes par établissement |
 | ⚡ **Fallback Auto** | Repli automatique en cas d'erreur stream |
+| 🔊 **Audio Synchronisé** | Son activé, contrôle mute unifié |
 
 #### Avantages OnlineTV
 
@@ -484,6 +488,27 @@ Les établissements conservent le contrôle total sur les publicités diffusées
 | 🏪 **Établissement** | Diffuse TV quand pas de pub, garde l'attention |
 | 📢 **Annonceur** | Overlays visibles même pendant la TV |
 | 🌐 **Opérateur** | Contrôle centralisé des chaînes autorisées |
+
+### 13. 🔊 Système Audio Intégré
+
+> *Contrôle audio complet pour vidéos et streams IPTV*
+
+#### Fonctionnalités Audio
+
+| Fonction | Description |
+|----------|-------------|
+| 🔊 **Son par Défaut** | Audio activé au démarrage |
+| 🔇 **Toggle Mute** | Bouton et raccourci clavier (M) |
+| 🔄 **Synchronisation** | État audio partagé entre vidéo et IPTV |
+| 📺 **Persistance** | État conservé lors du changement de mode |
+
+#### Raccourcis Clavier du Player
+
+| Touche | Action |
+|--------|--------|
+| **F11** | Mode plein écran |
+| **M** | Mute / Unmute audio |
+| **Espace** | Pause / Play |
 
 ---
 

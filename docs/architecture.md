@@ -94,6 +94,7 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 | ffmpeg | Système | Validation vidéos |
 | qrcode | Python | Génération QR codes |
 | HLS.js | JavaScript | Streaming M3U/HLS pour OnlineTV |
+| mpegts.js | JavaScript | Fallback MPEG-TS pour streams non-HLS |
 
 ## Structure des fichiers
 

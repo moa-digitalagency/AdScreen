@@ -73,13 +73,15 @@ Interface de diffusion pour les écrans publicitaires.
 |----------------|--------|-------------|
 | Login écran | Disponible | Authentification par code et mot de passe |
 | Récupération playlist | Disponible | API JSON des contenus à diffuser |
-| Mode plein écran | Disponible | Affichage optimisé fullscreen |
+| Mode plein écran | Disponible | Affichage optimisé fullscreen (F11) |
 | Loop automatique | Disponible | Enchaînement des contenus |
 | **Overlays temps réel** | Disponible | Affichage des bandeaux défilants |
 | **Diffusions (Broadcasts)** | Disponible | Réception des diffusions centralisées |
 | Heartbeat | Disponible | Ping régulier pour statut online |
 | Logging diffusions | Disponible | Enregistrement des passages |
 | **Mode OnlineTV** | Disponible | Streaming M3U/HLS avec overlays actifs |
+| **Contrôle audio** | Disponible | Mute/unmute avec bouton et raccourci (M) |
+| **Raccourcis clavier** | Disponible | F11: plein écran, M: mute, Espace: pause |
 
 ## Détail des fonctionnalités
 
@@ -311,7 +313,7 @@ Ordre de diffusion (du plus prioritaire au moins prioritaire) :
 
 Le player récupère la playlist via API et enchaîne les contenus avec les overlays actifs (locaux + broadcasts).
 
-### Mode OnlineTV
+### Mode OnlineTV (IPTV)
 
 Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
 
@@ -319,10 +321,12 @@ Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
 | Fonction | Description |
 |----------|-------------|
 | Streaming M3U/HLS | Support des flux M3U, M3U8 via HLS.js |
+| Fallback MPEG-TS | Support des flux TS via mpegts.js |
 | Bascule instantanée | Changement rapide entre playlist et TV |
 | Overlays actifs | Les bandeaux restent visibles pendant la TV |
 | Gestion chaînes | Liste personnalisable par établissement |
 | Fallback automatique | Repli en cas d'erreur de stream |
+| **Contrôle audio** | Audio activé par défaut, mute/unmute disponible |
 
 **Configuration par établissement**
 - Activation OnlineTV au niveau de l'établissement
@@ -330,10 +334,48 @@ Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
 - URL de la liste M3U configurable
 - Sélection de la chaîne active par écran
 
+**Technologies de streaming**
+| Bibliothèque | Usage | Formats supportés |
+|--------------|-------|-------------------|
+| HLS.js | Streaming principal | M3U8, HLS |
+| mpegts.js | Fallback streaming | MPEG-TS (.ts) |
+
 **Avantages**
 - Garde l'attention des visiteurs quand il n'y a pas de publicité
 - Les overlays et diffusions restent visibles
 - Bascule automatique ou manuelle entre modes
+- Audio synchronisé avec l'état mute/unmute du player
+
+### Contrôle Audio du Player
+
+Le player dispose d'un système de contrôle audio complet :
+
+**État audio**
+| État | Description |
+|------|-------------|
+| Son activé | Audio par défaut au démarrage |
+| Mute | Audio désactivé, icône muet affichée |
+
+**Méthodes de contrôle**
+| Méthode | Action |
+|---------|--------|
+| Bouton | Clic sur l'icône audio en bas à droite |
+| Raccourci | Touche 'M' pour basculer mute/unmute |
+
+**Synchronisation audio**
+- L'état mute est synchronisé entre vidéo et IPTV
+- Changement de mode (playlist ↔ TV) préserve l'état audio
+- L'icône reflète toujours l'état courant
+
+**Raccourcis clavier du Player**
+| Touche | Action |
+|--------|--------|
+| F11 | Mode plein écran |
+| M | Mute / Unmute audio |
+| Espace | Pause / Play |
+
+**Écran d'accueil**
+L'écran d'accueil affiche les raccourcis clavier disponibles pour guider l'utilisateur.
 
 ### Fillers automatiques
 

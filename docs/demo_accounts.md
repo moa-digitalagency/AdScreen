@@ -231,9 +231,11 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 1. Accédez à `/player`
 2. Entrez le code unique d'un écran
 3. Entrez le mot de passe : screen123
-4. Lancez la playlist en mode plein écran
+4. Lancez la playlist en mode plein écran (F11)
 5. Vérifiez l'affichage des overlays locaux
 6. Vérifiez l'affichage des diffusions (broadcasts)
+7. Testez le contrôle audio avec la touche M (mute/unmute)
+8. Vérifiez que le son fonctionne pour les vidéos
 
 ### 6. Test Multi-devises
 
@@ -251,6 +253,8 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 5. Basculez l'écran en mode OnlineTV
 6. Vérifiez sur le player que le stream est diffusé
 7. Vérifiez que les overlays restent visibles pendant la diffusion TV
+8. Testez le contrôle audio avec la touche M (le son du stream doit s'activer/désactiver)
+9. Vérifiez que l'état audio est synchronisé entre mode playlist et mode TV
 
 ## Réinitialisation
 

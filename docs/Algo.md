@@ -86,8 +86,48 @@ PRIORITÉS EN MODE ONLINETV
 FALLBACK
 --------
 - Si stream échoue → HLS.js tente récupération automatique
+- Si HLS échoue → mpegts.js prend le relais pour flux MPEG-TS
 - Si récupération échoue → affichage message erreur
 - Possibilité de repasser en mode playlist manuellement
+
+AUDIO
+-----
+- Son activé par défaut sur tous les flux
+- État audio synchronisé entre vidéo et IPTV
+- Touche 'M' pour basculer mute/unmute
+- Bouton audio visible en bas à droite du player
+
+=================
+CONTRÔLE AUDIO PLAYER
+=================
+
+LOGIQUE AUDIO
+-------------
+1. ÉTAT INITIAL : Audio activé (muted = false)
+2. SYNCHRONISATION : État partagé entre videoEl et iptvEl
+3. BASCULE : Touche 'M' ou clic sur bouton toggle mute/unmute
+4. PERSISTANCE : État conservé lors du changement de mode (playlist ↔ TV)
+
+IMPLÉMENTATION
+--------------
+1. Variable globale `isMuted` gère l'état
+2. Fonction `updateMuteState()` applique l'état aux deux éléments
+3. EventListener sur keydown pour touche 'M'
+4. Bouton avec icône dynamique (fa-volume-up / fa-volume-mute)
+
+SYNCHRONISATION VIDEO/IPTV
+--------------------------
+- Quand on bascule de playlist → IPTV : l'état mute est appliqué au stream
+- Quand on bascule de IPTV → playlist : l'état mute est appliqué à la vidéo
+- L'icône du bouton reflète toujours l'état courant
+
+RACCOURCIS CLAVIER
+------------------
+| Touche | Action |
+|--------|--------|
+| F11 | Mode plein écran |
+| M | Mute / Unmute |
+| Espace | Pause / Play |
 
 =================
 CONTRÔLE PUBLICITÉS
