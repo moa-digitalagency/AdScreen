@@ -3903,3 +3903,347 @@ textarea::placeholder {
   outline: 1px solid ButtonText;
   outline: 1px auto -webkit-focus-ring-color;
 }
+
+/* ================================================
+   OPACITY VARIANT UTILITIES (JIT-style classes)
+   ================================================ */
+
+/* Background White with Opacity */
+.bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.bg-white\/30 {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+.bg-white\/40 {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+.bg-white\/50 {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.bg-white\/60 {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+.bg-white\/70 {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+.bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+.bg-white\/90 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+.bg-white\/95 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Background Black with Opacity */
+.bg-black\/10 {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.bg-black\/30 {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+.bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+.bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+.bg-black\/90 {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Background Gray with Opacity */
+.bg-gray-50\/50 {
+  background-color: rgba(249, 250, 251, 0.5);
+}
+.bg-gray-100\/50 {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+.bg-gray-200\/50 {
+  background-color: rgba(229, 231, 235, 0.5);
+}
+.bg-gray-500\/50 {
+  background-color: rgba(107, 114, 128, 0.5);
+}
+.bg-gray-800\/50 {
+  background-color: rgba(31, 41, 55, 0.5);
+}
+.bg-gray-900\/50 {
+  background-color: rgba(17, 24, 39, 0.5);
+}
+.bg-gray-900\/80 {
+  background-color: rgba(17, 24, 39, 0.8);
+}
+.bg-gray-900\/90 {
+  background-color: rgba(17, 24, 39, 0.9);
+}
+
+/* Background Color with Opacity */
+.bg-red-500\/10 {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+.bg-red-500\/20 {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+.bg-red-500\/30 {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+.bg-blue-50\/30 {
+  background-color: rgba(239, 246, 255, 0.3);
+}
+.bg-blue-50\/50 {
+  background-color: rgba(239, 246, 255, 0.5);
+}
+.bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+.bg-blue-500\/20 {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+.bg-blue-500\/30 {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+.bg-green-500\/10 {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+.bg-green-500\/20 {
+  background-color: rgba(34, 197, 94, 0.2);
+}
+.bg-green-500\/30 {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+.bg-yellow-400\/30 {
+  background-color: rgba(250, 204, 21, 0.3);
+}
+.bg-yellow-500\/10 {
+  background-color: rgba(234, 179, 8, 0.1);
+}
+.bg-yellow-500\/20 {
+  background-color: rgba(234, 179, 8, 0.2);
+}
+.bg-yellow-500\/30 {
+  background-color: rgba(234, 179, 8, 0.3);
+}
+.bg-orange-500\/10 {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+.bg-orange-500\/20 {
+  background-color: rgba(249, 115, 22, 0.2);
+}
+.bg-purple-500\/10 {
+  background-color: rgba(168, 85, 247, 0.1);
+}
+.bg-purple-500\/20 {
+  background-color: rgba(168, 85, 247, 0.2);
+}
+.bg-emerald-50\/50 {
+  background-color: rgba(236, 253, 245, 0.5);
+}
+.bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+.bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+.bg-emerald-500\/30 {
+  background-color: rgba(16, 185, 129, 0.3);
+}
+.bg-primary-50\/50 {
+  background-color: rgba(236, 253, 245, 0.5);
+}
+.bg-primary-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+.bg-primary-500\/20 {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Text Color with Opacity */
+.text-white\/40 {
+  color: rgba(255, 255, 255, 0.4);
+}
+.text-white\/50 {
+  color: rgba(255, 255, 255, 0.5);
+}
+.text-white\/60 {
+  color: rgba(255, 255, 255, 0.6);
+}
+.text-white\/70 {
+  color: rgba(255, 255, 255, 0.7);
+}
+.text-white\/80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+.text-white\/90 {
+  color: rgba(255, 255, 255, 0.9);
+}
+.text-black\/50 {
+  color: rgba(0, 0, 0, 0.5);
+}
+.text-black\/60 {
+  color: rgba(0, 0, 0, 0.6);
+}
+.text-black\/70 {
+  color: rgba(0, 0, 0, 0.7);
+}
+.text-black\/80 {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* Border Color with Opacity */
+.border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.border-white\/30 {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.border-white\/40 {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.border-white\/50 {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.border-black\/10 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.border-black\/20 {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+.border-gray-200\/50 {
+  border-color: rgba(229, 231, 235, 0.5);
+}
+.border-gray-300\/50 {
+  border-color: rgba(209, 213, 219, 0.5);
+}
+
+/* Backdrop Blur Utilities */
+.backdrop-blur-none {
+  --tw-backdrop-blur: blur(0);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-sm {
+  --tw-backdrop-blur: blur(4px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur {
+  --tw-backdrop-blur: blur(8px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-md {
+  --tw-backdrop-blur: blur(12px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-lg {
+  --tw-backdrop-blur: blur(16px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-xl {
+  --tw-backdrop-blur: blur(24px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-2xl {
+  --tw-backdrop-blur: blur(40px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+.backdrop-blur-3xl {
+  --tw-backdrop-blur: blur(64px);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur);
+  backdrop-filter: var(--tw-backdrop-blur);
+}
+
+/* Hover variants for opacity backgrounds */
+.hover\:bg-white\/20:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.hover\:bg-white\/30:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+.hover\:bg-white\/40:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+.hover\:bg-black\/50:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.hover\:bg-black\/60:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.hover\:bg-gray-50\/50:hover {
+  background-color: rgba(249, 250, 251, 0.5);
+}
+.hover\:bg-blue-50\/50:hover {
+  background-color: rgba(239, 246, 255, 0.5);
+}
+
+/* Ring Color with Opacity */
+.ring-white\/10 {
+  --tw-ring-color: rgba(255, 255, 255, 0.1);
+}
+.ring-white\/20 {
+  --tw-ring-color: rgba(255, 255, 255, 0.2);
+}
+.ring-black\/5 {
+  --tw-ring-color: rgba(0, 0, 0, 0.05);
+}
+.ring-black\/10 {
+  --tw-ring-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Divide Color with Opacity */
+.divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.divide-white\/20 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.divide-gray-200\/50 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(229, 231, 235, 0.5);
+}
+
+/* Shadow with opacity */
+.shadow-white\/10 {
+  --tw-shadow-color: rgba(255, 255, 255, 0.1);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+.shadow-black\/10 {
+  --tw-shadow-color: rgba(0, 0, 0, 0.1);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+.shadow-black\/20 {
+  --tw-shadow-color: rgba(0, 0, 0, 0.2);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+/* Placeholder opacity */
+.placeholder\:text-gray-400\/50::placeholder {
+  color: rgba(156, 163, 175, 0.5);
+}
+.placeholder\:text-white\/50::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
