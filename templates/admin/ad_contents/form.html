@@ -501,16 +501,18 @@
     background-color: #ECFDF5;
     color: #047857;
 }
-.org-type-label:has(input:checked) {
-    border-color: #10B981;
-    background-color: #ECFDF5;
+.org-type-selected {
+    border-color: #10B981 !important;
+    background-color: #ECFDF5 !important;
 }
-.screen-item {
-    transition: all 0.2s;
+.screen-item-selected {
+    border-color: #10B981 !important;
+    background-color: #ECFDF5 !important;
 }
-.screen-item:has(input:checked) {
-    border-color: #10B981;
-    background-color: #ECFDF5;
+.preset-selected {
+    border-color: #10B981 !important;
+    background-color: #ECFDF5 !important;
+    color: #047857 !important;
 }
 </style>
 
@@ -610,17 +612,26 @@ function onTargetChange() {
 function onDatesChange() {
 }
 
+let presetUpdateTimer = null;
+function debouncedPresetUpdate() {
+    if (presetUpdateTimer) clearTimeout(presetUpdateTimer);
+    presetUpdateTimer = setTimeout(updatePresetHighlight, 100);
+}
+
 function changeMinPlays(delta) {
     const input = document.getElementById('min_plays');
+    if (!input) return;
     let value = parseInt(input.value) || 10;
     value = Math.max(1, value + delta);
     input.value = value;
-    updatePresetHighlight();
+    debouncedPresetUpdate();
 }
 
 function setMinPlays(value) {
-    document.getElementById('min_plays').value = value;
-    updatePresetHighlight();
+    const input = document.getElementById('min_plays');
+    if (!input) return;
+    input.value = value;
+    debouncedPresetUpdate();
 }
 
 function updatePresetHighlight() {
@@ -628,16 +639,16 @@ function updatePresetHighlight() {
         const minPlaysInput = document.getElementById('min_plays');
         if (!minPlaysInput) return;
         const value = parseInt(minPlaysInput.value) || 0;
-        document.querySelectorAll('.min-plays-preset').forEach(btn => {
+        const buttons = document.querySelectorAll('.min-plays-preset');
+        for (let i = 0; i < buttons.length; i++) {
+            const btn = buttons[i];
             const btnValue = parseInt(btn.dataset.value);
             if (btnValue === value) {
-                btn.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700');
-                btn.classList.remove('border-gray-200');
+                btn.classList.add('preset-selected');
             } else {
-                btn.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700');
-                btn.classList.add('border-gray-200');
+                btn.classList.remove('preset-selected');
             }
-        });
+        }
     } catch (e) {
         console.error('Error in updatePresetHighlight:', e);
     }
