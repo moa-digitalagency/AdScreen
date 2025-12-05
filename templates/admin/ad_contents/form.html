@@ -3,106 +3,165 @@
 {% block page_title %}{% if ad %}Modifier{% else %}Nouveau{% endif %} Contenu Pub{% endblock %}
 
 {% block main_content %}
-<div class="max-w-4xl">
+<div class="max-w-5xl">
     <div class="mb-6">
         <a href="{{ url_for('ad_content.list_ads') }}" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-arrow-left mr-2"></i>Retour aux contenus
         </a>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div class="flex items-center gap-4 mb-6">
-            <div class="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
-                <i class="fas fa-{% if ad %}edit{% else %}plus{% endif %} text-primary-600 text-xl"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">
-                    {% if ad %}Modifier le contenu{% else %}Nouveau contenu publicitaire{% endif %}
-                </h2>
-                <p class="text-gray-500">
-                    {% if ad %}Référence: {{ ad.reference }}{% else %}Créez un contenu pour l'afficher sur les écrans partenaires{% endif %}
-                </p>
-            </div>
+    <div class="bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white mb-6">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
+            {% if ad %}Modifier le contenu publicitaire{% else %}Nouveau contenu publicitaire{% endif %}
+        </h1>
+        <p class="text-white/80 text-sm sm:text-base mb-3 sm:mb-4">
+            {% if ad %}Référence: {{ ad.reference }}{% else %}Diffusez votre contenu sur plusieurs écrans avec ciblage de masse{% endif %}
+        </p>
+        <div class="flex flex-wrap gap-2 sm:gap-3">
+            <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
+                <i class="fas fa-bullseye"></i>
+                Ciblage de masse
+            </span>
+            <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
+                <i class="fas fa-chart-line"></i>
+                Multi-écrans
+            </span>
         </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" class="space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-info-circle text-blue-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Informations générales</h3>
-                    <p class="text-sm text-gray-500">Détails de base du contenu publicitaire</p>
-                </div>
+    <form method="POST" enctype="multipart/form-data" id="ad-content-form" class="space-y-6">
+        <input type="hidden" name="selected_screen_ids" id="selected_screen_ids" value="">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">1</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Informations de la campagne</h2>
             </div>
-            <div class="grid gap-4">
+            <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="label">Nom du contenu *</label>
                     <input type="text" name="name" value="{{ ad.name if ad else '' }}" required
-                           class="input-field"
-                           placeholder="Ex: Campagne été 2024">
+                           class="input-field" placeholder="Ex: Campagne été 2024">
                 </div>
                 <div>
+                    <label class="label">Entreprise annonceur</label>
+                    <input type="text" name="advertiser_company" value="{{ ad.advertiser_company if ad else '' }}"
+                           class="input-field" placeholder="Nom de l'entreprise">
+                </div>
+                <div class="md:col-span-2">
                     <label class="label">Description</label>
-                    <textarea name="description" rows="3" class="input-field"
-                              placeholder="Description du contenu publicitaire...">{{ ad.description if ad else '' }}</textarea>
+                    <textarea name="description" rows="2" class="input-field"
+                              placeholder="Description du contenu...">{{ ad.description if ad else '' }}</textarea>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-crosshairs text-indigo-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Ciblage</h3>
-                    <p class="text-sm text-gray-500">Définissez où votre contenu sera diffusé</p>
-                </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">2</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Type de contenu</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition content-type-label" data-type="image">
+                    <input type="radio" name="content_type" value="image" checked
+                        class="sr-only content-type-radio" onchange="onContentTypeChange()">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-image text-blue-600 text-lg sm:text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 text-sm sm:text-base">Image</p>
+                            <p class="text-xs sm:text-sm text-gray-500">JPG, PNG, GIF, WEBP</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
+                </label>
+                <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition content-type-label" data-type="video">
+                    <input type="radio" name="content_type" value="video"
+                        class="sr-only content-type-radio" onchange="onContentTypeChange()">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-video text-purple-600 text-lg sm:text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800 text-sm sm:text-base">Video</p>
+                            <p class="text-xs sm:text-sm text-gray-500">MP4, WebM, MOV</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
+                </label>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">3</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Durée du créneau</h2>
+            </div>
+            <div class="flex flex-wrap gap-2 sm:gap-3">
+                {% for duration in [10, 15, 20, 30, 60] %}
+                <label class="relative">
+                    <input type="radio" name="slot_duration" value="{{ duration }}" 
+                        {% if duration == 10 %}checked{% endif %}
+                        class="sr-only slot-radio" onchange="onSlotChange()">
+                    <span class="inline-flex items-center gap-2 px-4 py-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 transition slot-label">
+                        <span class="font-medium">{{ duration }}s</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">4</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Ciblage géographique</h2>
             </div>
             
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <div>
                     <label class="label mb-3">Type de ciblage</label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <label class="relative cursor-pointer group">
-                            <input type="radio" name="target_type" value="country" class="peer sr-only" 
-                                   {% if not ad or ad.target_type == 'country' %}checked{% endif %}>
+                            <input type="radio" name="target_type" value="country" class="peer sr-only target-type-radio" 
+                                   {% if not ad or ad.target_type == 'country' %}checked{% endif %}
+                                   onchange="onTargetTypeChange()">
                             <div class="p-4 border-2 border-gray-200 rounded-xl text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 hover:border-gray-300 transition">
-                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center peer-checked:bg-primary-100 group-hover:bg-gray-200 transition">
-                                    <i class="fas fa-globe text-xl text-gray-500 peer-checked:text-primary-600"></i>
+                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-globe text-xl text-gray-500"></i>
                                 </div>
                                 <p class="text-sm font-medium text-gray-700">Pays</p>
                             </div>
                         </label>
                         <label class="relative cursor-pointer group">
-                            <input type="radio" name="target_type" value="city" class="peer sr-only"
-                                   {% if ad and ad.target_type == 'city' %}checked{% endif %}>
+                            <input type="radio" name="target_type" value="city" class="peer sr-only target-type-radio"
+                                   {% if ad and ad.target_type == 'city' %}checked{% endif %}
+                                   onchange="onTargetTypeChange()">
                             <div class="p-4 border-2 border-gray-200 rounded-xl text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 hover:border-gray-300 transition">
-                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center peer-checked:bg-primary-100 group-hover:bg-gray-200 transition">
-                                    <i class="fas fa-city text-xl text-gray-500 peer-checked:text-primary-600"></i>
+                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-city text-xl text-gray-500"></i>
                                 </div>
                                 <p class="text-sm font-medium text-gray-700">Ville</p>
                             </div>
                         </label>
                         <label class="relative cursor-pointer group">
-                            <input type="radio" name="target_type" value="organization" class="peer sr-only"
-                                   {% if ad and ad.target_type == 'organization' %}checked{% endif %}>
+                            <input type="radio" name="target_type" value="organization" class="peer sr-only target-type-radio"
+                                   {% if ad and ad.target_type == 'organization' %}checked{% endif %}
+                                   onchange="onTargetTypeChange()">
                             <div class="p-4 border-2 border-gray-200 rounded-xl text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 hover:border-gray-300 transition">
-                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center peer-checked:bg-primary-100 group-hover:bg-gray-200 transition">
-                                    <i class="fas fa-building text-xl text-gray-500 peer-checked:text-primary-600"></i>
+                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-building text-xl text-gray-500"></i>
                                 </div>
                                 <p class="text-sm font-medium text-gray-700">Établissement</p>
                             </div>
                         </label>
                         <label class="relative cursor-pointer group">
-                            <input type="radio" name="target_type" value="screen" class="peer sr-only"
-                                   {% if ad and ad.target_type == 'screen' %}checked{% endif %}>
+                            <input type="radio" name="target_type" value="screen" class="peer sr-only target-type-radio"
+                                   {% if ad and ad.target_type == 'screen' %}checked{% endif %}
+                                   onchange="onTargetTypeChange()">
                             <div class="p-4 border-2 border-gray-200 rounded-xl text-center peer-checked:border-primary-500 peer-checked:bg-primary-50 hover:border-gray-300 transition">
-                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center peer-checked:bg-primary-100 group-hover:bg-gray-200 transition">
-                                    <i class="fas fa-tv text-xl text-gray-500 peer-checked:text-primary-600"></i>
+                                <div class="w-12 h-12 mx-auto mb-2 bg-gray-100 rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-tv text-xl text-gray-500"></i>
                                 </div>
                                 <p class="text-sm font-medium text-gray-700">Écran</p>
                             </div>
@@ -112,7 +171,7 @@
 
                 <div id="target-country-section" class="target-section">
                     <label class="label">Pays cible</label>
-                    <select name="target_country" class="input-field">
+                    <select name="target_country" id="target_country" class="input-field" onchange="onTargetChange()">
                         {% for code, name in countries %}
                         <option value="{{ code }}" {% if ad and ad.target_country == code %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
@@ -123,7 +182,7 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label class="label">Pays</label>
-                            <select name="target_country_city" id="country-for-city" class="input-field">
+                            <select name="target_country_city" id="country-for-city" class="input-field" onchange="updateCities()">
                                 {% for code, name in countries %}
                                 <option value="{{ code }}" {% if ad and ad.target_country == code %}selected{% endif %}>{{ name }}</option>
                                 {% endfor %}
@@ -131,7 +190,7 @@
                         </div>
                         <div>
                             <label class="label">Ville</label>
-                            <select name="target_city" id="city-select" class="input-field">
+                            <select name="target_city" id="city-select" class="input-field" onchange="onTargetChange()">
                                 <option value="">Sélectionner une ville</option>
                             </select>
                         </div>
@@ -140,7 +199,7 @@
 
                 <div id="target-organization-section" class="target-section hidden">
                     <label class="label">Établissement cible</label>
-                    <select name="target_organization_id" class="input-field">
+                    <select name="target_organization_id" id="target_organization_id" class="input-field" onchange="onTargetChange()">
                         <option value="">Sélectionner un établissement</option>
                         {% for org in organizations %}
                         <option value="{{ org.id }}" {% if ad and ad.target_organization_id == org.id %}selected{% endif %}>{{ org.name }} ({{ org.city or 'N/A' }})</option>
@@ -150,7 +209,7 @@
 
                 <div id="target-screen-section" class="target-section hidden">
                     <label class="label">Écran cible</label>
-                    <select name="target_screen_id" class="input-field">
+                    <select name="target_screen_id" id="target_screen_id" class="input-field" onchange="onTargetChange()">
                         <option value="">Sélectionner un écran</option>
                         {% for screen in screens %}
                         <option value="{{ screen.id }}" {% if ad and ad.target_screen_id == screen.id %}selected{% endif %}>{{ screen.name }} - {{ screen.organization.name }}</option>
@@ -161,228 +220,200 @@
                 <div class="border-t border-gray-200 pt-4">
                     <label class="label mb-3">Type d'établissements</label>
                     <div class="flex flex-wrap gap-3">
-                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition peer-checked:border-primary-500 peer-checked:bg-primary-50" id="org-type-all">
+                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition org-type-label" id="org-type-all">
                             <input type="radio" name="target_org_type" value="all" class="w-4 h-4 text-primary-500 border-gray-300 focus:ring-primary-500"
                                    {% if not ad or ad.target_org_type == 'all' %}checked{% endif %}
-                                   onchange="updateOrgTypeStyle()">
-                            <span class="text-sm font-medium">Tous les établissements</span>
+                                   onchange="onTargetChange()">
+                            <span class="text-sm font-medium">Tous</span>
                         </label>
-                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition" id="org-type-paid">
+                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition org-type-label" id="org-type-paid">
                             <input type="radio" name="target_org_type" value="paid" class="w-4 h-4 text-primary-500 border-gray-300 focus:ring-primary-500"
                                    {% if ad and ad.target_org_type == 'paid' %}checked{% endif %}
-                                   onchange="updateOrgTypeStyle()">
-                            <span class="text-sm font-medium">Payants uniquement</span>
+                                   onchange="onTargetChange()">
+                            <span class="text-sm font-medium">Payants</span>
                         </label>
-                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition" id="org-type-free">
+                        <label class="flex items-center gap-3 px-4 py-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition org-type-label" id="org-type-free">
                             <input type="radio" name="target_org_type" value="free" class="w-4 h-4 text-primary-500 border-gray-300 focus:ring-primary-500"
                                    {% if ad and ad.target_org_type == 'free' %}checked{% endif %}
-                                   onchange="updateOrgTypeStyle()">
-                            <span class="text-sm font-medium">Gratuits uniquement</span>
+                                   onchange="onTargetChange()">
+                            <span class="text-sm font-medium">Gratuits</span>
                         </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-photo-video text-purple-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Contenu média</h3>
-                    <p class="text-sm text-gray-500">Image ou vidéo à diffuser sur les écrans</p>
-                </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">5</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Dates de diffusion</h2>
             </div>
-            
-            <div class="space-y-4">
-                {% if ad and ad.file_path %}
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                    <div class="w-24 h-24 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                        {% if ad.content_type == 'video' %}
-                        <video src="/{{ ad.file_path }}" class="w-full h-full object-cover"></video>
-                        {% else %}
-                        <img src="/{{ ad.file_path }}" alt="" class="w-full h-full object-cover">
-                        {% endif %}
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">Fichier actuel</p>
-                        <p class="font-semibold text-gray-800">{{ ad.content_type|upper }}</p>
-                        <p class="text-sm text-gray-500">{{ "%.2f"|format(ad.file_size / 1024 / 1024) }} Mo</p>
-                    </div>
-                </div>
-                {% endif %}
-                
-                <div>
-                    <label class="label">
-                        {% if ad %}Remplacer le fichier{% else %}Fichier (image ou vidéo) *{% endif %}
-                    </label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-primary-400 transition cursor-pointer" onclick="document.getElementById('content-file-input').click()">
-                        <div class="space-y-2 text-center">
-                            <div class="w-12 h-12 mx-auto bg-gray-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-cloud-upload-alt text-2xl text-gray-400"></i>
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                <span class="text-primary-600 font-medium">Cliquez pour uploader</span>
-                                <span class="text-gray-500"> ou glissez-déposez</span>
-                            </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP, MP4, WEBM, MOV</p>
-                            <p class="text-xs text-gray-400" id="selected-file-name"></p>
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-2 sm:p-3 mb-4 border border-indigo-100">
+                <p class="text-xs sm:text-sm text-indigo-700 flex items-start gap-2">
+                    <i class="fas fa-clock text-indigo-500 mt-0.5 flex-shrink-0"></i>
+                    <span>Sélectionnez les dates pour calculer les écrans disponibles et leurs passages disponibles</span>
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-green-200 shadow-sm">
+                    <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-play text-white text-xs sm:text-sm"></i>
                         </div>
+                        <p class="text-sm sm:text-base font-semibold text-green-800">Début</p>
                     </div>
-                    <input type="file" id="content-file-input" name="content_file" accept="image/*,video/*"
-                           class="hidden" {% if not ad %}required{% endif %}
-                           onchange="document.getElementById('selected-file-name').textContent = this.files[0]?.name || ''">
+                    <input type="date" name="start_date" id="start_date" value="{{ now().strftime('%Y-%m-%d') }}" required
+                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white" 
+                        onchange="onDatesChange()">
                 </div>
-                
-                <div>
-                    <label class="label">Durée d'affichage</label>
-                    <div class="relative w-48">
-                        <input type="number" name="duration" value="{{ ad.duration if ad else 10 }}" min="5" max="120"
-                               class="input-field pr-16">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">secondes</span>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Durée de chaque affichage (5 à 120 secondes)</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-user-tie text-orange-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Annonceur</h3>
-                    <p class="text-sm text-gray-500">Informations sur le client annonceur</p>
-                </div>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label class="label">Nom de l'annonceur</label>
-                    <input type="text" name="advertiser_name" value="{{ ad.advertiser_name if ad else '' }}"
-                           class="input-field" placeholder="Nom du contact">
-                </div>
-                <div>
-                    <label class="label">Entreprise</label>
-                    <input type="text" name="advertiser_company" value="{{ ad.advertiser_company if ad else '' }}"
-                           class="input-field" placeholder="Nom de l'entreprise">
-                </div>
-                <div>
-                    <label class="label">Email</label>
-                    <input type="email" name="advertiser_email" value="{{ ad.advertiser_email if ad else '' }}"
-                           class="input-field" placeholder="email@exemple.com">
-                </div>
-                <div>
-                    <label class="label">Téléphone</label>
-                    <input type="tel" name="advertiser_phone" value="{{ ad.advertiser_phone if ad else '' }}"
-                           class="input-field" placeholder="+33 6 00 00 00 00">
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-calendar-alt text-red-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Programmation</h3>
-                    <p class="text-sm text-gray-500">Quand le contenu sera-t-il diffusé ?</p>
-                </div>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="label mb-3">Mode de diffusion</label>
-                    <div class="grid md:grid-cols-2 gap-3">
-                        <label class="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition" id="schedule-immediate">
-                            <input type="radio" name="schedule_type" value="immediate" class="mt-1 w-4 h-4 text-primary-500"
-                                   {% if not ad or ad.schedule_type == 'immediate' %}checked{% endif %}
-                                   onchange="updateScheduleStyle()">
-                            <div>
-                                <div class="font-medium text-gray-800">Diffusion immédiate</div>
-                                <p class="text-sm text-gray-500 mt-1">Le contenu sera diffusé dès sa création et sans limite de temps</p>
-                            </div>
-                        </label>
-                        <label class="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer hover:bg-gray-50 transition" id="schedule-period">
-                            <input type="radio" name="schedule_type" value="period" class="mt-1 w-4 h-4 text-primary-500"
-                                   {% if ad and ad.schedule_type == 'period' %}checked{% endif %}
-                                   onchange="updateScheduleStyle()">
-                            <div>
-                                <div class="font-medium text-gray-800">Période programmée</div>
-                                <p class="text-sm text-gray-500 mt-1">Définir des dates de début et de fin de diffusion</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="period-section" class="space-y-4 {% if not ad or ad.schedule_type == 'immediate' %}hidden{% endif %}">
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="label">Date de début</label>
-                            <input type="datetime-local" name="start_date" 
-                                   value="{{ ad.start_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.start_date else '' }}"
-                                   class="input-field">
+                <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-red-200 shadow-sm">
+                    <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-stop text-white text-xs sm:text-sm"></i>
                         </div>
-                        <div>
-                            <label class="label">Date de fin</label>
-                            <input type="datetime-local" name="end_date"
-                                   value="{{ ad.end_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.end_date else '' }}"
-                                   class="input-field">
-                        </div>
+                        <p class="text-sm sm:text-base font-semibold text-red-800">Fin</p>
                     </div>
+                    <input type="date" name="end_date" id="end_date" required
+                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white" 
+                        onchange="onDatesChange()">
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-play-circle text-purple-600"></i>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">6</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Nombre minimum de passages</h2>
+            </div>
+            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-3 mb-4 border border-amber-100">
+                <p class="text-xs sm:text-sm text-amber-700 flex items-start gap-2">
+                    <i class="fas fa-filter text-amber-500 mt-0.5 flex-shrink-0"></i>
+                    <span>Seuls les écrans ayant au moins ce nombre de passages disponibles seront affichés</span>
+                </p>
+            </div>
+            <div class="flex items-center justify-center gap-3 sm:gap-5">
+                <button type="button" onclick="changeMinPlays(-10)" 
+                    class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center hover:from-gray-200 hover:to-gray-300 transition shadow-md active:scale-95 text-gray-700">
+                    <i class="fas fa-minus text-lg"></i>
+                </button>
+                <div class="relative">
+                    <input type="number" name="min_plays" id="min_plays" value="10" min="1" max="10000"
+                        class="w-28 sm:w-36 text-center text-2xl sm:text-3xl font-bold border-3 border-primary-200 rounded-2xl py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 bg-white shadow-inner" 
+                        onchange="onMinPlaysChange()">
+                    <span class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">passages min</span>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Nombre de passages</h3>
-                    <p class="text-sm text-gray-500">Combien de fois le contenu sera diffusé par jour</p>
-                </div>
+                <button type="button" onclick="changeMinPlays(10)" 
+                    class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center hover:from-primary-600 hover:to-purple-700 transition shadow-md active:scale-95 text-white">
+                    <i class="fas fa-plus text-lg"></i>
+                </button>
             </div>
             
-            <div class="space-y-4">
-                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                    <p class="text-sm text-purple-700 flex items-start gap-2">
-                        <i class="fas fa-info-circle text-purple-500 mt-0.5"></i>
-                        <span>Définissez le nombre de diffusions souhaitées par jour sur chaque écran ciblé.</span>
-                    </p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="w-48">
-                        <label class="label">Passages par jour</label>
-                        <input type="number" name="plays_per_day" value="{{ ad.plays_per_day if ad else 10 }}" min="1" max="1000"
-                               class="input-field text-center text-lg font-semibold">
-                    </div>
-                    <div class="text-gray-500 text-sm">
-                        <p>par écran ciblé</p>
-                    </div>
-                </div>
+            <div class="mt-4 text-center">
+                <button type="button" onclick="calculateScreens()" id="calculate-btn"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition shadow-lg">
+                    <i class="fas fa-search"></i>
+                    <span>Rechercher les écrans disponibles</span>
+                </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-euro-sign text-green-600"></i>
+        <div id="screens_section" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hidden">
+            <div class="flex items-center justify-between gap-2 sm:gap-3 mb-4">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">7</div>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Écrans disponibles</h2>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Tarification & Commission</h3>
-                    <p class="text-sm text-gray-500">Prix de la campagne et commission pour les établissements</p>
+                <div id="screens_loading" class="hidden">
+                    <i class="fas fa-spinner fa-spin text-primary-500"></i>
                 </div>
             </div>
             
-            <div class="grid md:grid-cols-3 gap-4">
+            <div id="screens_summary" class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 text-center border border-blue-100">
+                    <p class="text-2xl font-bold text-blue-600" id="total_screens_display">0</p>
+                    <p class="text-xs text-gray-500">Écrans</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 text-center border border-green-100">
+                    <p class="text-2xl font-bold text-green-600" id="total_plays_display">0</p>
+                    <p class="text-xs text-gray-500">Passages dispo</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 text-center border border-purple-100">
+                    <p class="text-2xl font-bold text-purple-600" id="num_days_display">0</p>
+                    <p class="text-xs text-gray-500">Jours</p>
+                </div>
+            </div>
+
+            <div class="mb-3 flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="select_all_screens" onchange="toggleSelectAll()" class="w-4 h-4 text-primary-500 rounded">
+                    <span class="text-sm font-medium text-gray-700">Tout sélectionner</span>
+                </label>
+                <span class="text-sm text-gray-500"><span id="selected_count">0</span> sélectionné(s)</span>
+            </div>
+            
+            <div id="screens_list" class="space-y-2 max-h-96 overflow-y-auto">
+            </div>
+            
+            <div id="no_screens_message" class="hidden text-center py-8">
+                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-tv text-3xl text-gray-400"></i>
+                </div>
+                <p class="text-gray-500">Aucun écran ne correspond aux critères avec le nombre de passages minimum requis.</p>
+                <p class="text-sm text-gray-400 mt-2">Essayez de réduire le nombre minimum de passages ou d'élargir le ciblage.</p>
+            </div>
+        </div>
+
+        <div id="media_section" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">8</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Contenu média</h2>
+            </div>
+            
+            {% if ad and ad.file_path %}
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 mb-4">
+                <div class="w-24 h-24 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                    {% if ad.content_type == 'video' %}
+                    <video src="/{{ ad.file_path }}" class="w-full h-full object-cover"></video>
+                    {% else %}
+                    <img src="/{{ ad.file_path }}" alt="" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
                 <div>
-                    <label class="label">Prix total</label>
-                    <input type="number" name="total_price" value="{{ ad.total_price if ad else 0 }}" min="0" step="0.01"
+                    <p class="text-sm text-gray-500">Fichier actuel</p>
+                    <p class="font-semibold text-gray-800">{{ ad.content_type|upper }}</p>
+                    <p class="text-sm text-gray-500">{{ "%.2f"|format(ad.file_size / 1024 / 1024) }} Mo</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-primary-400 transition cursor-pointer" onclick="document.getElementById('content-file-input').click()">
+                <div class="space-y-2 text-center">
+                    <div class="w-12 h-12 mx-auto bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-400"></i>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <span class="text-primary-600 font-medium">Cliquez pour uploader</span>
+                        <span class="text-gray-500"> ou glissez-déposez</span>
+                    </div>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP, MP4, WEBM, MOV</p>
+                    <p class="text-xs text-primary-600 font-medium" id="selected-file-name"></p>
+                </div>
+            </div>
+            <input type="file" id="content-file-input" name="content_file" accept="image/*,video/*"
+                   class="hidden" {% if not ad %}required{% endif %}
+                   onchange="document.getElementById('selected-file-name').textContent = this.files[0]?.name || ''">
+        </div>
+
+        <div id="pricing_section" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">9</div>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Tarification & Commission</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="label">Prix total de la campagne</label>
+                    <input type="number" name="total_price" id="total_price" value="{{ ad.total_price if ad else 0 }}" min="0" step="0.01"
                            class="input-field">
                 </div>
                 <div>
@@ -396,99 +427,312 @@
                     </select>
                 </div>
                 <div>
-                    <label class="label">Commission établissements</label>
-                    <div class="relative">
-                        <input type="number" name="commission_rate" value="{{ ad.commission_rate if ad else ad_settings.ad_commission_rate }}" min="0" max="100" step="0.1"
-                               class="input-field pr-12">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                    <label class="label">Commission établissements (%)</label>
+                    <input type="number" name="commission_rate" id="commission_rate" 
+                           value="{{ ad.commission_rate if ad else ad_settings.get('ad_commission_rate', 30) }}" 
+                           min="0" max="100" step="0.1" class="input-field">
+                </div>
+            </div>
+            
+            <div id="price_summary" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 hidden">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <p class="text-xs text-gray-500">Écrans sélectionnés</p>
+                        <p class="text-xl font-bold text-gray-800" id="summary_screens">0</p>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Pourcentage reversé aux établissements</p>
+                    <div>
+                        <p class="text-xs text-gray-500">Passages total</p>
+                        <p class="text-xl font-bold text-blue-600" id="summary_plays">0</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Commission</p>
+                        <p class="text-xl font-bold text-orange-600" id="summary_commission">0</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Revenu net</p>
+                        <p class="text-xl font-bold text-green-600" id="summary_net">0</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <a href="{{ url_for('ad_content.list_ads') }}" class="btn-secondary">
-                Annuler
-            </a>
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-save mr-2"></i>
-                {% if ad %}Enregistrer les modifications{% else %}Créer le contenu{% endif %}
-            </button>
+        <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold">Prêt à lancer la campagne ?</h3>
+                    <p class="text-white/80 text-sm">Vérifiez les paramètres et cliquez sur créer</p>
+                </div>
+                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-100 transition shadow-lg">
+                    <i class="fas fa-rocket"></i>
+                    <span>{% if ad %}Mettre à jour{% else %}Créer la campagne{% endif %}</span>
+                </button>
+            </div>
         </div>
     </form>
 </div>
 
+<style>
+.content-type-label input:checked + div {
+    border-color: #10B981;
+    background-color: #ECFDF5;
+}
+.content-type-label input:checked ~ .content-type-indicator {
+    background-color: #10B981;
+    border-color: #10B981;
+}
+.slot-label {
+    transition: all 0.2s;
+}
+.slot-radio:checked + .slot-label {
+    border-color: #10B981;
+    background-color: #ECFDF5;
+    color: #047857;
+}
+.org-type-label:has(input:checked) {
+    border-color: #10B981;
+    background-color: #ECFDF5;
+}
+.screen-item {
+    transition: all 0.2s;
+}
+.screen-item:has(input:checked) {
+    border-color: #10B981;
+    background-color: #ECFDF5;
+}
+</style>
+
 <script>
 const citiesByCountry = {{ cities_by_country|tojson|safe }};
+let availableScreens = [];
 
-function updateOrgTypeStyle() {
-    const radios = document.querySelectorAll('input[name="target_org_type"]');
-    radios.forEach(radio => {
-        const label = radio.closest('label');
+function onContentTypeChange() {
+    document.querySelectorAll('.content-type-label').forEach(label => {
+        const radio = label.querySelector('input');
+        const indicator = label.querySelector('.content-type-indicator');
         if (radio.checked) {
             label.classList.add('border-primary-500', 'bg-primary-50');
+            indicator.classList.add('bg-primary-500', 'border-primary-500');
         } else {
             label.classList.remove('border-primary-500', 'bg-primary-50');
+            indicator.classList.remove('bg-primary-500', 'border-primary-500');
         }
     });
 }
 
-function updateScheduleStyle() {
-    const immediateOption = document.getElementById('schedule-immediate');
-    const periodOption = document.getElementById('schedule-period');
-    const periodSection = document.getElementById('period-section');
-    const isImmediate = document.querySelector('input[name="schedule_type"]:checked').value === 'immediate';
+function onSlotChange() {
+}
+
+function onTargetTypeChange() {
+    const targetType = document.querySelector('input[name="target_type"]:checked').value;
     
-    if (isImmediate) {
-        immediateOption.classList.add('border-primary-500', 'bg-primary-50');
-        periodOption.classList.remove('border-primary-500', 'bg-primary-50');
-        periodSection.classList.add('hidden');
-    } else {
-        periodOption.classList.add('border-primary-500', 'bg-primary-50');
-        immediateOption.classList.remove('border-primary-500', 'bg-primary-50');
-        periodSection.classList.remove('hidden');
+    document.querySelectorAll('.target-section').forEach(s => s.classList.add('hidden'));
+    
+    if (targetType === 'country') {
+        document.getElementById('target-country-section').classList.remove('hidden');
+    } else if (targetType === 'city') {
+        document.getElementById('target-city-section').classList.remove('hidden');
+        updateCities();
+    } else if (targetType === 'organization') {
+        document.getElementById('target-organization-section').classList.remove('hidden');
+    } else if (targetType === 'screen') {
+        document.getElementById('target-screen-section').classList.remove('hidden');
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const targetTypeRadios = document.querySelectorAll('input[name="target_type"]');
-    const countryForCity = document.getElementById('country-for-city');
+function updateCities() {
+    const country = document.getElementById('country-for-city').value;
     const citySelect = document.getElementById('city-select');
-
-    function updateTargetSections() {
-        const selectedType = document.querySelector('input[name="target_type"]:checked').value;
-        document.querySelectorAll('.target-section').forEach(section => {
-            section.classList.add('hidden');
-        });
-        document.getElementById('target-' + selectedType + '-section').classList.remove('hidden');
-    }
-
-    function updateCityOptions() {
-        const country = countryForCity.value;
-        const cities = citiesByCountry[country] || [];
-        citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
-        cities.forEach(city => {
+    citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
+    
+    if (citiesByCountry[country]) {
+        citiesByCountry[country].forEach(city => {
             const option = document.createElement('option');
             option.value = city;
             option.textContent = city;
             citySelect.appendChild(option);
         });
-        {% if ad and ad.target_city %}
-        citySelect.value = '{{ ad.target_city }}';
-        {% endif %}
     }
+}
 
-    targetTypeRadios.forEach(radio => {
-        radio.addEventListener('change', updateTargetSections);
+function onTargetChange() {
+}
+
+function onDatesChange() {
+}
+
+function changeMinPlays(delta) {
+    const input = document.getElementById('min_plays');
+    let value = parseInt(input.value) || 10;
+    value = Math.max(1, value + delta);
+    input.value = value;
+}
+
+function onMinPlaysChange() {
+    const input = document.getElementById('min_plays');
+    if (parseInt(input.value) < 1) input.value = 1;
+}
+
+function calculateScreens() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (!startDate || !endDate) {
+        alert('Veuillez sélectionner les dates de début et de fin');
+        return;
+    }
+    
+    const btn = document.getElementById('calculate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recherche en cours...';
+    
+    const targetType = document.querySelector('input[name="target_type"]:checked').value;
+    const contentType = document.querySelector('input[name="content_type"]:checked').value;
+    const slotDuration = document.querySelector('input[name="slot_duration"]:checked').value;
+    const minPlays = document.getElementById('min_plays').value;
+    const targetOrgType = document.querySelector('input[name="target_org_type"]:checked').value;
+    
+    let targetCountry = document.getElementById('target_country').value;
+    let targetCity = '';
+    let targetOrganizationId = '';
+    let targetScreenId = '';
+    
+    if (targetType === 'city') {
+        targetCountry = document.getElementById('country-for-city').value;
+        targetCity = document.getElementById('city-select').value;
+    } else if (targetType === 'organization') {
+        targetOrganizationId = document.getElementById('target_organization_id').value;
+    } else if (targetType === 'screen') {
+        targetScreenId = document.getElementById('target_screen_id').value;
+    }
+    
+    fetch('{{ url_for("ad_content.calculate_available_screens") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            target_type: targetType,
+            target_country: targetCountry,
+            target_city: targetCity,
+            target_organization_id: targetOrganizationId,
+            target_screen_id: targetScreenId,
+            target_org_type: targetOrgType,
+            start_date: startDate,
+            end_date: endDate,
+            slot_duration: parseInt(slotDuration),
+            content_type: contentType,
+            min_plays: parseInt(minPlays)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Rechercher les écrans disponibles';
+        
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        
+        availableScreens = data.screens;
+        displayScreens(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> Rechercher les écrans disponibles';
+        alert('Une erreur est survenue');
     });
+}
 
-    countryForCity.addEventListener('change', updateCityOptions);
+function displayScreens(data) {
+    const section = document.getElementById('screens_section');
+    const list = document.getElementById('screens_list');
+    const noScreens = document.getElementById('no_screens_message');
+    
+    section.classList.remove('hidden');
+    
+    document.getElementById('total_screens_display').textContent = data.total_screens;
+    document.getElementById('total_plays_display').textContent = data.total_available_plays.toLocaleString();
+    document.getElementById('num_days_display').textContent = data.num_days;
+    
+    if (data.screens.length === 0) {
+        list.classList.add('hidden');
+        noScreens.classList.remove('hidden');
+        return;
+    }
+    
+    list.classList.remove('hidden');
+    noScreens.classList.add('hidden');
+    
+    list.innerHTML = data.screens.map(screen => `
+        <label class="screen-item flex items-center gap-3 p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
+            <input type="checkbox" name="screen_ids" value="${screen.id}" checked 
+                   class="w-5 h-5 text-primary-500 rounded screen-checkbox" onchange="updateSelectedCount()">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="font-semibold text-gray-800 truncate">${screen.name}</span>
+                    <span class="text-xs px-2 py-0.5 bg-gray-100 rounded-full text-gray-600">${screen.resolution}</span>
+                </div>
+                <p class="text-sm text-gray-500 truncate">${screen.organization_name} - ${screen.organization_city || 'N/A'}</p>
+            </div>
+            <div class="text-right flex-shrink-0">
+                <p class="text-lg font-bold text-green-600">${screen.available_plays.toLocaleString()}</p>
+                <p class="text-xs text-gray-500">passages dispo</p>
+            </div>
+        </label>
+    `).join('');
+    
+    updateSelectedCount();
+    document.getElementById('price_summary').classList.remove('hidden');
+    updatePriceSummary();
+}
 
-    updateTargetSections();
-    updateCityOptions();
-    updateOrgTypeStyle();
-    updateScheduleStyle();
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select_all_screens').checked;
+    document.querySelectorAll('.screen-checkbox').forEach(cb => {
+        cb.checked = selectAll;
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selected = document.querySelectorAll('.screen-checkbox:checked').length;
+    document.getElementById('selected_count').textContent = selected;
+    
+    const selectedIds = Array.from(document.querySelectorAll('.screen-checkbox:checked')).map(cb => cb.value);
+    document.getElementById('selected_screen_ids').value = selectedIds.join(',');
+    
+    updatePriceSummary();
+}
+
+function updatePriceSummary() {
+    const selectedCheckboxes = document.querySelectorAll('.screen-checkbox:checked');
+    const minPlays = parseInt(document.getElementById('min_plays').value) || 10;
+    const commissionRate = parseFloat(document.getElementById('commission_rate').value) || 30;
+    const totalPrice = parseFloat(document.getElementById('total_price').value) || 0;
+    
+    const numScreens = selectedCheckboxes.length;
+    const totalPlays = numScreens * minPlays;
+    const commission = totalPrice * (commissionRate / 100);
+    const netRevenue = totalPrice - commission;
+    
+    document.getElementById('summary_screens').textContent = numScreens;
+    document.getElementById('summary_plays').textContent = totalPlays.toLocaleString();
+    document.getElementById('summary_commission').textContent = commission.toFixed(2) + ' €';
+    document.getElementById('summary_net').textContent = netRevenue.toFixed(2) + ' €';
+}
+
+document.getElementById('total_price').addEventListener('input', updatePriceSummary);
+document.getElementById('commission_rate').addEventListener('input', updatePriceSummary);
+
+document.addEventListener('DOMContentLoaded', function() {
+    onContentTypeChange();
+    onTargetTypeChange();
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 7);
+    document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
 });
 </script>
 {% endblock %}

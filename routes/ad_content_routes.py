@@ -6,10 +6,12 @@ from flask_login import login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
 from app import db
-from models import Organization, Screen, SiteSetting
+from models import Organization, Screen, SiteSetting, TimePeriod, TimeSlot, Booking
 from models.ad_content import AdContent, AdContentInvoice, AdContentStat
 from utils.countries import get_all_countries
-from sqlalchemy import func
+from utils.currencies import get_currency_by_code
+from services.availability_service import calculate_availability
+from sqlalchemy import func, or_
 
 ad_content_bp = Blueprint('ad_content', __name__)
 
@@ -127,6 +129,13 @@ def create():
             screen_id = request.form.get('target_screen_id')
             ad.target_screen_id = int(screen_id) if screen_id else None
         
+        selected_screen_ids_str = request.form.get('selected_screen_ids', '')
+        if selected_screen_ids_str:
+            screen_ids = [int(x) for x in selected_screen_ids_str.split(',') if x.strip()]
+            if screen_ids:
+                ad.target_type = AdContent.TARGET_SCREENS
+                ad.set_selected_screen_ids(screen_ids)
+        
         ad.advertiser_name = request.form.get('advertiser_name', '').strip()
         ad.advertiser_email = request.form.get('advertiser_email', '').strip()
         ad.advertiser_phone = request.form.get('advertiser_phone', '').strip()
@@ -140,31 +149,31 @@ def create():
         if commission_rate:
             ad.commission_rate = float(commission_rate)
         
-        schedule_type = request.form.get('schedule_type', 'immediate')
-        ad.schedule_type = schedule_type
+        start_date_str = request.form.get('start_date', '')
+        end_date_str = request.form.get('end_date', '')
         
-        if schedule_type == 'period':
-            start_date_str = request.form.get('start_date', '')
-            end_date_str = request.form.get('end_date', '')
+        if start_date_str and end_date_str:
+            ad.schedule_type = AdContent.SCHEDULE_PERIOD
+            try:
+                ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            except ValueError:
+                ad.start_date = datetime.now()
             
-            if start_date_str:
-                try:
-                    ad.start_date = datetime.fromisoformat(start_date_str)
-                except ValueError:
-                    pass
+            try:
+                ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            except ValueError:
+                ad.end_date = datetime.now() + timedelta(days=7)
             
-            if end_date_str:
-                try:
-                    ad.end_date = datetime.fromisoformat(end_date_str)
-                except ValueError:
-                    pass
+            min_plays = request.form.get('min_plays', '10')
+            ad.plays_per_day = int(min_plays) if min_plays else 10
             
-            plays_per_day = request.form.get('plays_per_day', '10')
-            ad.plays_per_day = int(plays_per_day) if plays_per_day else 10
-            
-            ad.status = AdContent.STATUS_SCHEDULED
+            if ad.start_date <= datetime.now():
+                ad.status = AdContent.STATUS_ACTIVE
+            else:
+                ad.status = AdContent.STATUS_SCHEDULED
         else:
-            ad.plays_per_day = 0
+            ad.schedule_type = AdContent.SCHEDULE_IMMEDIATE
+            ad.plays_per_day = int(request.form.get('min_plays', '10'))
             ad.status = AdContent.STATUS_ACTIVE
         
         if 'content_file' in request.files:
@@ -185,9 +194,12 @@ def create():
                     ad.content_type = 'image'
                 
                 ad.file_size = os.path.getsize(file_path)
+        else:
+            content_type = request.form.get('content_type', 'image')
+            ad.content_type = content_type
         
-        duration = request.form.get('duration', '10')
-        ad.duration = int(duration) if duration else 10
+        slot_duration = request.form.get('slot_duration', '10')
+        ad.duration = int(slot_duration) if slot_duration else 10
         
         db.session.add(ad)
         db.session.commit()
@@ -669,3 +681,212 @@ def global_stats():
         top_orgs=top_orgs,
         days_back=days_back
     )
+
+
+@ad_content_bp.route('/ad-content/calculate-screens', methods=['POST'])
+@login_required
+@superadmin_required
+def calculate_available_screens():
+    """
+    Calculate available screens based on targeting criteria, dates, and minimum plays.
+    This implements mass targeting logic for superadmin ad content creation.
+    """
+    data = request.get_json()
+    
+    target_type = data.get('target_type', 'country')
+    target_country = data.get('target_country', 'FR')
+    target_city = data.get('target_city', '')
+    target_organization_id = data.get('target_organization_id')
+    target_screen_id = data.get('target_screen_id')
+    target_org_type = data.get('target_org_type', 'all')
+    
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    slot_duration = int(data.get('slot_duration', 10))
+    content_type = data.get('content_type', 'image')
+    min_plays = int(data.get('min_plays', 10))
+    
+    if not start_date or not end_date:
+        return jsonify({'error': 'Dates de debut et de fin requises'}), 400
+    
+    try:
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Format de date invalide'}), 400
+    
+    num_days = (end_dt - start_dt).days + 1
+    if num_days <= 0:
+        return jsonify({'error': 'La date de fin doit etre apres la date de debut'}), 400
+    
+    query = Screen.query.filter_by(is_active=True).join(Organization).filter(Organization.is_active == True)
+    
+    if target_org_type == 'paid':
+        query = query.filter(Organization.is_paid == True)
+    elif target_org_type == 'free':
+        query = query.filter(Organization.is_paid == False)
+    
+    if target_type == 'country':
+        query = query.filter(Organization.country == target_country)
+    elif target_type == 'city':
+        query = query.filter(
+            Organization.country == target_country,
+            Organization.city == target_city
+        )
+    elif target_type == 'organization':
+        if target_organization_id:
+            query = query.filter(Screen.organization_id == int(target_organization_id))
+    elif target_type == 'screen':
+        if target_screen_id:
+            query = query.filter(Screen.id == int(target_screen_id))
+    
+    all_screens = query.all()
+    
+    available_screens = []
+    total_available_plays = 0
+    
+    for screen in all_screens:
+        if content_type == 'image' and not screen.accepts_images:
+            continue
+        if content_type == 'video' and not screen.accepts_videos:
+            continue
+        
+        availability = calculate_availability(
+            screen, start_date, end_date, None, slot_duration, content_type
+        )
+        
+        screen_available_plays = availability['available_plays']
+        
+        if screen_available_plays >= min_plays:
+            org = screen.organization
+            org_currency = org.currency if org and org.currency else 'EUR'
+            currency_info = get_currency_by_code(org_currency)
+            
+            slot = TimeSlot.query.filter_by(
+                screen_id=screen.id,
+                content_type=content_type,
+                duration_seconds=slot_duration
+            ).first()
+            
+            price_per_play = slot.price_per_play if slot else 0.0
+            estimated_price = price_per_play * min_plays
+            
+            available_screens.append({
+                'id': screen.id,
+                'name': screen.name,
+                'location': screen.location or '',
+                'organization_id': screen.organization_id,
+                'organization_name': org.name if org else 'N/A',
+                'organization_city': org.city if org else '',
+                'organization_country': org.country if org else '',
+                'resolution': f"{screen.resolution_width}x{screen.resolution_height}",
+                'orientation': screen.orientation,
+                'available_plays': screen_available_plays,
+                'price_per_play': round(price_per_play, 2),
+                'estimated_price': round(estimated_price, 2),
+                'currency': org_currency,
+                'currency_symbol': currency_info.get('symbol', org_currency),
+                'accepts_images': screen.accepts_images,
+                'accepts_videos': screen.accepts_videos,
+                'periods': [
+                    {
+                        'id': p.id,
+                        'name': p.name,
+                        'start_hour': p.start_hour,
+                        'end_hour': p.end_hour,
+                        'price_multiplier': p.price_multiplier
+                    } for p in screen.time_periods
+                ]
+            })
+            total_available_plays += screen_available_plays
+    
+    return jsonify({
+        'screens': available_screens,
+        'total_screens': len(available_screens),
+        'total_available_plays': total_available_plays,
+        'num_days': num_days,
+        'min_plays_requested': min_plays
+    })
+
+
+@ad_content_bp.route('/ad-content/calculate-price', methods=['POST'])
+@login_required
+@superadmin_required
+def calculate_ad_price():
+    """
+    Calculate price for a set of screens based on number of plays.
+    """
+    data = request.get_json()
+    
+    screen_ids = data.get('screen_ids', [])
+    num_plays = int(data.get('num_plays', 10))
+    slot_duration = int(data.get('slot_duration', 10))
+    content_type = data.get('content_type', 'image')
+    commission_rate = float(data.get('commission_rate', 30))
+    
+    if not screen_ids:
+        return jsonify({'error': 'Aucun ecran selectionne'}), 400
+    
+    screens = Screen.query.filter(Screen.id.in_(screen_ids)).all()
+    
+    total_price = 0
+    screen_prices = []
+    
+    for screen in screens:
+        org = screen.organization
+        org_currency = org.currency if org and org.currency else 'EUR'
+        
+        slot = TimeSlot.query.filter_by(
+            screen_id=screen.id,
+            content_type=content_type,
+            duration_seconds=slot_duration
+        ).first()
+        
+        price_per_play = slot.price_per_play if slot else 0.0
+        screen_total = price_per_play * num_plays
+        
+        screen_prices.append({
+            'screen_id': screen.id,
+            'screen_name': screen.name,
+            'organization_name': org.name if org else 'N/A',
+            'price_per_play': round(price_per_play, 2),
+            'total_price': round(screen_total, 2),
+            'currency': org_currency
+        })
+        
+        total_price += screen_total
+    
+    commission_amount = total_price * (commission_rate / 100)
+    net_revenue = total_price - commission_amount
+    
+    return jsonify({
+        'screens': screen_prices,
+        'num_screens': len(screens),
+        'num_plays_per_screen': num_plays,
+        'total_plays': num_plays * len(screens),
+        'total_price': round(total_price, 2),
+        'commission_rate': commission_rate,
+        'commission_amount': round(commission_amount, 2),
+        'net_revenue': round(net_revenue, 2)
+    })
+
+
+@ad_content_bp.route('/ad-content/get-periods/<int:screen_id>')
+@login_required
+@superadmin_required
+def get_screen_periods(screen_id):
+    """Get time periods for a specific screen."""
+    screen = Screen.query.get_or_404(screen_id)
+    
+    periods = [
+        {
+            'id': p.id,
+            'name': p.name,
+            'start_hour': p.start_hour,
+            'end_hour': p.end_hour,
+            'price_multiplier': p.price_multiplier
+        }
+        for p in screen.time_periods
+    ]
+    
+    return jsonify({'periods': periods})

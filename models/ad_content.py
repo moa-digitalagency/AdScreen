@@ -1,5 +1,6 @@
 from datetime import datetime
 import secrets
+import json
 from app import db
 
 
@@ -16,12 +17,14 @@ class AdContent(db.Model):
     TARGET_CITY = 'city'
     TARGET_ORGANIZATION = 'organization'
     TARGET_SCREEN = 'screen'
+    TARGET_SCREENS = 'screens'
     
     target_type = db.Column(db.String(20), default=TARGET_COUNTRY)
     target_country = db.Column(db.String(5), nullable=True)
     target_city = db.Column(db.String(128), nullable=True)
     target_organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
     target_screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=True)
+    selected_screen_ids = db.Column(db.Text, nullable=True)
     
     ORG_TYPE_ALL = 'all'
     ORG_TYPE_PAID = 'paid'
@@ -135,6 +138,10 @@ class AdContent(db.Model):
         if not self._matches_org_type(org):
             return False
         
+        if self.target_type == self.TARGET_SCREENS:
+            screen_ids = self.get_selected_screen_ids()
+            return screen.id in screen_ids
+        
         if self.target_type == self.TARGET_SCREEN:
             return self.target_screen_id == screen.id
         
@@ -155,11 +162,36 @@ class AdContent(db.Model):
         
         return False
     
+    def get_selected_screen_ids(self):
+        """Parse the selected_screen_ids field and return a list of integers"""
+        if not self.selected_screen_ids:
+            return []
+        try:
+            return [int(x) for x in self.selected_screen_ids.split(',') if x.strip()]
+        except (ValueError, AttributeError):
+            return []
+    
+    def set_selected_screen_ids(self, screen_ids):
+        """Set the selected_screen_ids field from a list of integers"""
+        if not screen_ids:
+            self.selected_screen_ids = None
+        else:
+            self.selected_screen_ids = ','.join(str(x) for x in screen_ids)
+    
     def get_target_screens(self):
         from models import Screen, Organization
         
         if not self.is_currently_active():
             return []
+        
+        if self.target_type == self.TARGET_SCREENS:
+            screen_ids = self.get_selected_screen_ids()
+            if not screen_ids:
+                return []
+            return Screen.query.filter(
+                Screen.id.in_(screen_ids),
+                Screen.is_active == True
+            ).all()
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id)
@@ -204,6 +236,10 @@ class AdContent(db.Model):
                 org_type_suffix = " (Payants)"
             else:
                 org_type_suffix = " (Gratuits)"
+        
+        if self.target_type == self.TARGET_SCREENS:
+            screen_ids = self.get_selected_screen_ids()
+            return f"{len(screen_ids)} écrans sélectionnés"
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id) if self.target_screen_id else None
