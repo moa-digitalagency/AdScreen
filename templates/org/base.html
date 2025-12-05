@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block body %}
-<div class="flex min-h-screen">
+<div class="flex min-h-screen bg-gray-50">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed top-0 left-0 h-screen z-50 flex flex-col sidebar-mobile-hidden lg:sidebar-mobile-visible">
         <div class="p-4 sm:p-6 border-b border-gray-100 flex-shrink-0">
             <a href="{{ url_for('org.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-600 text-lg sm:text-xl"></i>
@@ -105,28 +105,28 @@
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    const isOpen = sidebar.classList.contains('sidebar-mobile-visible');
     
     if (isOpen) {
-        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('sidebar-mobile-visible');
+        sidebar.classList.add('sidebar-mobile-hidden');
         overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-        document.documentElement.classList.remove('overflow-hidden');
+        document.body.style.overflow = '';
     } else {
-        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.remove('sidebar-mobile-hidden');
+        sidebar.classList.add('sidebar-mobile-visible');
         overlay.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
-        document.documentElement.classList.add('overflow-hidden');
+        document.body.style.overflow = 'hidden';
     }
 }
 
 function closeMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('sidebar-mobile-visible');
+    sidebar.classList.add('sidebar-mobile-hidden');
     overlay.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-    document.documentElement.classList.remove('overflow-hidden');
+    document.body.style.overflow = '';
 }
 
 window.addEventListener('resize', function() {
@@ -136,8 +136,7 @@ window.addEventListener('resize', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.body.classList.remove('overflow-hidden');
-    document.documentElement.classList.remove('overflow-hidden');
+    document.body.style.overflow = '';
 });
 </script>
 
@@ -145,14 +144,23 @@ document.addEventListener('DOMContentLoaded', function() {
     #sidebar {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        transform: translateZ(0);
-        will-change: transform;
-        backface-visibility: hidden;
     }
+    
+    .sidebar-mobile-hidden {
+        transform: translateX(-100%);
+    }
+    .sidebar-mobile-visible {
+        transform: translateX(0);
+    }
+    @media (min-width: 1024px) {
+        .lg\:sidebar-mobile-visible {
+            transform: translateX(0) !important;
+        }
+    }
+    
     #sidebar nav {
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(0,0,0,0.2) transparent;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
     #sidebar nav::-webkit-scrollbar {
         width: 6px;
