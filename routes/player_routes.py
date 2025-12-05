@@ -229,12 +229,19 @@ def get_playlist():
     active_ad_contents = AdContent.query.filter(
         AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
     ).all()
+    status_changed = False
     for ad in active_ad_contents:
+        old_status = ad.status
         ad.update_status()
-        if ad.applies_to_screen(screen):
+        if ad.status != old_status:
+            status_changed = True
+        if ad.is_currently_active() and ad.applies_to_screen(screen):
             ad_dict = ad.to_content_dict()
             ad_dict['priority'] = 50
             playlist.append(ad_dict)
+    
+    if status_changed:
+        db.session.commit()
     
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
