@@ -48,7 +48,7 @@ Not specified.
 
 ### UI/UX Decisions
 - **Templates**: Jinja2 for dynamic content.
-- **Styling**: Tailwind CSS (CDN) for a utility-first approach to design.
+- **Styling**: Tailwind CSS v3.4 (compiled via CLI) for a utility-first approach to design. Build with `npm run build:css`.
 - **Icons**: Font Awesome for a rich icon library.
 - **Fonts**: Inter and JetBrains Mono (Google Fonts) for modern typography.
 - **Design Elements**:
