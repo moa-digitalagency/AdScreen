@@ -57,3 +57,8 @@ gevent
 PyMuPDF
 reportlab
 requests
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
