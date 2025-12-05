@@ -17,6 +17,19 @@ from services.currency_service import (
 admin_bp = Blueprint('admin', __name__)
 
 
+def parse_float_safe(value, default=0.0):
+    """Safely parse a float value, returning default if invalid."""
+    if value is None or value == '':
+        return default
+    try:
+        result = float(str(value).replace(',', '.'))
+        if math.isnan(result) or math.isinf(result):
+            return default
+        return result
+    except (ValueError, TypeError):
+        return default
+
+
 def superadmin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -646,18 +659,6 @@ def stats():
         daily_stats=daily_stats,
         org_stats=org_stats
     )
-
-
-def parse_float_safe(value, default=0.0):
-    if value is None or value == '':
-        return default
-    try:
-        result = float(str(value).replace(',', '.'))
-        if math.isnan(result) or math.isinf(result):
-            return default
-        return result
-    except (ValueError, TypeError):
-        return default
 
 
 @admin_bp.route('/settings', methods=['GET', 'POST'])
