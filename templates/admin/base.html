@@ -166,6 +166,16 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+    #sidebar {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+    }
+    #sidebar.admin-sidebar-gradient {
+        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
+    }
     #sidebar.admin-sidebar-gradient,
     #sidebar.admin-sidebar-gradient *:not(main *):not(header *) {
         color: rgba(255, 255, 255, 0.9) !important;
@@ -180,9 +190,20 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #ffffff !important;
         background: rgba(255, 255, 255, 0.1) !important;
     }
-    #sidebar.admin-sidebar-gradient {
-        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
-        isolation: isolate;
+    #sidebar nav {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.3) transparent;
+    }
+    #sidebar nav::-webkit-scrollbar {
+        width: 6px;
+    }
+    #sidebar nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #sidebar nav::-webkit-scrollbar-thumb {
+        background-color: rgba(255,255,255,0.3);
+        border-radius: 3px;
     }
 </style>
 {% endblock %}

@@ -105,9 +105,19 @@
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    sidebar.classList.toggle('-translate-x-full');
-    overlay.classList.toggle('hidden');
-    document.body.classList.toggle('overflow-hidden');
+    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    
+    if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        document.documentElement.classList.remove('overflow-hidden');
+    } else {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.documentElement.classList.add('overflow-hidden');
+    }
 }
 
 function closeMobileMenu() {
@@ -116,6 +126,7 @@ function closeMobileMenu() {
     sidebar.classList.add('-translate-x-full');
     overlay.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
+    document.documentElement.classList.remove('overflow-hidden');
 }
 
 window.addEventListener('resize', function() {
@@ -123,6 +134,36 @@ window.addEventListener('resize', function() {
         closeMobileMenu();
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.remove('overflow-hidden');
+    document.documentElement.classList.remove('overflow-hidden');
+});
 </script>
+
+<style>
+    #sidebar {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+    }
+    #sidebar nav {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.2) transparent;
+    }
+    #sidebar nav::-webkit-scrollbar {
+        width: 6px;
+    }
+    #sidebar nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #sidebar nav::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 3px;
+    }
+</style>
 {% block extra_scripts %}{% endblock %}
 {% endblock %}

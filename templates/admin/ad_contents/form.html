@@ -588,19 +588,40 @@ function updateCities() {
     try {
         const countrySelect = document.getElementById('country-for-city');
         const citySelect = document.getElementById('city-select');
-        if (!countrySelect || !citySelect) return;
+        if (!countrySelect || !citySelect) {
+            console.warn('City selects not found');
+            return;
+        }
         
         const country = countrySelect.value;
+        console.log('Updating cities for country:', country);
+        console.log('Available cities data:', citiesByCountry);
+        
         citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
         
-        if (citiesByCountry && citiesByCountry[country]) {
-            citiesByCountry[country].forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                citySelect.appendChild(option);
-            });
+        if (citiesByCountry && typeof citiesByCountry === 'object' && citiesByCountry[country]) {
+            const cities = citiesByCountry[country];
+            console.log('Cities for', country, ':', cities);
+            if (Array.isArray(cities)) {
+                cities.forEach(city => {
+                    if (city) {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        citySelect.appendChild(option);
+                    }
+                });
+            }
+        } else {
+            console.log('No cities found for country:', country);
         }
+        
+        {% if ad and ad.target_city %}
+        const savedCity = "{{ ad.target_city }}";
+        if (savedCity) {
+            citySelect.value = savedCity;
+        }
+        {% endif %}
     } catch (e) {
         console.error('Error in updateCities:', e);
     }
@@ -816,21 +837,27 @@ document.getElementById('commission_rate').addEventListener('input', updatePrice
 
 document.addEventListener('DOMContentLoaded', function() {
     try {
+        console.log('Initializing ad content form...');
+        console.log('citiesByCountry:', JSON.stringify(citiesByCountry));
+        
         onContentTypeChange();
         onTargetTypeChange();
         updatePresetHighlight();
         
-        updateCities();
+        const targetTypeRadio = document.querySelector('input[name="target_type"]:checked');
+        if (targetTypeRadio && targetTypeRadio.value === 'city') {
+            setTimeout(function() {
+                updateCities();
+            }, 100);
+        }
         
         const endDateInput = document.getElementById('end_date');
-        if (endDateInput) {
+        if (endDateInput && !endDateInput.value) {
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + 7);
             const endDateStr = endDate.toISOString().slice(0, 16);
             endDateInput.value = endDateStr;
         }
-        
-        console.log('Cities by country data:', citiesByCountry);
     } catch (e) {
         console.error('Error during initialization:', e);
     }
