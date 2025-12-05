@@ -1166,20 +1166,14 @@ def broadcast_new():
     import secrets
     from werkzeug.utils import secure_filename
     from utils.countries import get_all_countries
+    from utils.world_data import WORLD_CITIES
     from models.broadcast import COMMON_TIMEZONES
     
     countries = get_all_countries()
     organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
     screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
     
-    cities_by_country = {}
-    for org in organizations:
-        country = org.country or 'FR'
-        if country not in cities_by_country:
-            cities_by_country[country] = set()
-        if org.city:
-            cities_by_country[country].add(org.city)
-    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    cities_by_country = WORLD_CITIES
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -1365,6 +1359,7 @@ def broadcast_edit(broadcast_id):
     import secrets
     from werkzeug.utils import secure_filename
     from utils.countries import get_all_countries
+    from utils.world_data import WORLD_CITIES
     from models.broadcast import COMMON_TIMEZONES
     
     broadcast = Broadcast.query.get_or_404(broadcast_id)
@@ -1372,14 +1367,7 @@ def broadcast_edit(broadcast_id):
     organizations = Organization.query.filter_by(is_active=True).order_by(Organization.name).all()
     screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
     
-    cities_by_country = {}
-    for org in organizations:
-        country = org.country or 'FR'
-        if country not in cities_by_country:
-            cities_by_country[country] = set()
-        if org.city:
-            cities_by_country[country].add(org.city)
-    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    cities_by_country = WORLD_CITIES
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()

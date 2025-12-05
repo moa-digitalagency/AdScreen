@@ -10,6 +10,7 @@ from models import Organization, Screen, SiteSetting, TimePeriod, TimeSlot, Book
 from models.ad_content import AdContent, AdContentInvoice, AdContentStat
 from utils.countries import get_all_countries
 from utils.currencies import get_currency_by_code
+from utils.world_data import WORLD_CITIES
 from services.availability_service import calculate_availability
 from sqlalchemy import func, or_
 
@@ -81,14 +82,7 @@ def create():
     screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
     ad_settings = SiteSetting.get_ad_content_settings()
     
-    cities_by_country = {}
-    for org in organizations:
-        country = org.country or 'FR'
-        if country not in cities_by_country:
-            cities_by_country[country] = set()
-        if org.city:
-            cities_by_country[country].add(org.city)
-    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    cities_by_country = WORLD_CITIES
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -233,14 +227,7 @@ def edit(ad_id):
     screens = Screen.query.filter_by(is_active=True).join(Organization).order_by(Organization.name, Screen.name).all()
     ad_settings = SiteSetting.get_ad_content_settings()
     
-    cities_by_country = {}
-    for org in organizations:
-        country = org.country or 'FR'
-        if country not in cities_by_country:
-            cities_by_country[country] = set()
-        if org.city:
-            cities_by_country[country].add(org.city)
-    cities_by_country = {k: sorted(list(v)) for k, v in cities_by_country.items()}
+    cities_by_country = WORLD_CITIES
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
