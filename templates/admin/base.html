@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block body %}
-<div class="h-screen overflow-hidden flex">
+<div class="flex min-h-screen">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <aside id="sidebar" class="w-64 admin-sidebar-gradient text-white flex-shrink-0 h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col fixed lg:relative">
+    <aside id="sidebar" class="w-64 admin-sidebar-gradient text-white fixed h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
         <div class="p-4 sm:p-6 flex-shrink-0">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-400 text-lg sm:text-xl"></i>
@@ -96,7 +96,7 @@
         </div>
     </aside>
 
-    <main class="flex-1 lg:ml-0 min-w-0 h-full overflow-y-auto">
+    <main class="flex-1 lg:ml-64 min-w-0">
         <header class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 sticky top-0 z-10">
             <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
