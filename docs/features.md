@@ -43,7 +43,8 @@ Gestion des écrans et contenus pour un établissement.
 | QR Codes | Disponible | Génération automatique par écran |
 | Validation contenus | Disponible | File d'attente, aperçu, validation/refus |
 | Contenus fillers | Disponible | Images de remplissage générées automatiquement |
-| Contenus internes | Disponible | Promos établissement avec programmation (période + passages/jour) |
+| Contenus internes | Disponible | Promos établissement avec programmation (période + passages total distribués équitablement) |
+| **Calcul disponibilités** | Disponible | Même algorithme que les réservations clients (dates, périodes, créneaux) |
 | **Overlays/Bandeaux** | Disponible | Textes défilants superposés sur le player |
 | Statistiques | Disponible | Revenus par écran/période, diffusions |
 | État temps réel | Disponible | Online/offline, dernière activité |
@@ -376,6 +377,34 @@ Le player dispose d'un système de contrôle audio complet :
 
 **Écran d'accueil**
 L'écran d'accueil affiche les raccourcis clavier disponibles pour guider l'utilisateur.
+
+### Contenus internes (établissement)
+
+Les établissements peuvent créer leurs propres contenus promotionnels :
+
+**Fonctionnalités**
+| Fonction | Description |
+|----------|-------------|
+| Upload fichier | Interface drag & drop avec aperçu temps réel |
+| Aperçu résolution | Simulation à la résolution exacte de l'écran |
+| Sélection période | Même calendrier que les réservations clients |
+| Calcul disponibilités | API identique au système de réservation |
+| Distribution équitable | Passages répartis sur les jours de la période |
+
+**Champs**
+| Champ | Description |
+|-------|-------------|
+| Nom | Identification du contenu |
+| Priorité | 1-100 (défaut 80, plus haut = plus fréquent) |
+| Date début/fin | Période de diffusion |
+| Passages total | Nombre total de diffusions sur la période |
+| Passages/jour | Calculé automatiquement (ceiling division) |
+
+**Calcul distribution**
+```
+passages_par_jour = ceil(passages_total / nombre_jours)
+```
+Exemple : 5 passages sur 7 jours = 1 passage/jour (arrondi supérieur pour ne perdre aucun passage)
 
 ### Fillers automatiques
 

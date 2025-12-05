@@ -81,6 +81,8 @@ Not specified.
     - **Segment Persistence**: Segments are kept on disk (not deleted) to ensure player can fetch them reliably.
     - **Administration**: Site settings (SEO, commissions), configurable admin WhatsApp number, maintenance mode, global statistics.
     - **Weekly Automated Billing**: Automatic invoice generation, revenue/commission summaries, payment proof upload/validation.
+    - **Internal Content Availability**: Same calculation algorithm as client bookings (date range, periods, slot duration).
+    - **Internal Content Distribution**: Ceiling division for plays_per_day ensures no passages are lost (total_plays field stored).
     - **Playlist Priorities**: Paid content (100) > Internal content (80) > Broadcast content (200) > Fillers/Demos (20).
     - **Overlay System**: Comprehensive configuration for tickers (header, body, footer) and image overlays (all positions + custom X/Y, size, opacity), with real-time previews.
     - **Overlay Priority System** (December 2025):
