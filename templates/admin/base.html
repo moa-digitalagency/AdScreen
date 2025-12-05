@@ -4,7 +4,7 @@
 <div class="flex min-h-screen">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <aside id="sidebar" class="w-64 admin-sidebar-gradient text-white fixed h-full z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+    <aside id="sidebar" class="w-64 admin-sidebar-gradient text-white fixed top-0 left-0 h-screen z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
         <div class="p-4 sm:p-6 flex-shrink-0">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-400 text-lg sm:text-xl"></i>
@@ -13,7 +13,7 @@
             </a>
         </div>
 
-        <nav class="mt-4 sm:mt-6 flex-1 overflow-y-auto">
+        <nav class="mt-4 sm:mt-6 flex-1 overflow-y-auto overscroll-contain">
             {% if current_user.has_permission('dashboard') %}
             <a href="{{ url_for('admin.dashboard') }}" 
                class="admin-nav-link flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 transition text-sm sm:text-base {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
@@ -169,14 +169,9 @@ document.addEventListener('DOMContentLoaded', function() {
     #sidebar {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        transform: translateZ(0);
-        will-change: transform;
-        backface-visibility: hidden;
-        overflow: hidden !important;
     }
     #sidebar.admin-sidebar-gradient {
         background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
-        overflow: hidden !important;
     }
     #sidebar.admin-sidebar-gradient,
     #sidebar.admin-sidebar-gradient *:not(main *):not(header *) {
@@ -196,9 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,0.3) transparent;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        overscroll-behavior: contain;
     }
     #sidebar nav::-webkit-scrollbar {
         width: 4px;
