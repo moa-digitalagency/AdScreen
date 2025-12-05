@@ -196,16 +196,18 @@ function updateCities() {
     
     citySelect.innerHTML = '<option value="">Chargement...</option>';
     
-    fetch('/api/cities?country=' + encodeURIComponent(country))
+    fetch('/api/cities/' + encodeURIComponent(country))
         .then(response => response.json())
-        .then(cities => {
+        .then(data => {
             citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                citySelect.appendChild(option);
-            });
+            if (data.cities && data.cities.length > 0) {
+                data.cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            }
         })
         .catch(error => {
             console.error('Error loading cities:', error);
