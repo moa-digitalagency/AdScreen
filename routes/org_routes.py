@@ -219,6 +219,8 @@ def settings():
                 registration_label=registration_label
             )
         
+        allow_ad_content = 'allow_ad_content' in request.form
+        
         org.name = name
         org.phone = phone
         org.address = address
@@ -231,6 +233,7 @@ def settings():
         org.business_registration_number = business_registration_number
         org.vat_number = vat_number
         org.vat_rate = vat_rate
+        org.allow_ad_content = allow_ad_content
         db.session.commit()
         
         flash('Paramètres mis à jour avec succès!', 'success')

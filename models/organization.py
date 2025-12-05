@@ -31,6 +31,8 @@ class Organization(db.Model):
     has_iptv = db.Column(db.Boolean, default=False)
     iptv_m3u_url = db.Column(db.Text, nullable=True)
     
+    allow_ad_content = db.Column(db.Boolean, default=True)
+    
     users = db.relationship('User', back_populates='organization', foreign_keys='User.organization_id')
     screens = db.relationship('Screen', back_populates='organization', cascade='all, delete-orphan')
     

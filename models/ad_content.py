@@ -128,6 +128,9 @@ class AdContent(db.Model):
             return False
         
         org = screen.organization
+        if not org or getattr(org, 'allow_ad_content', True) is False:
+            return False
+        
         if not self._matches_org_type(org):
             return False
         
@@ -160,12 +163,14 @@ class AdContent(db.Model):
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id)
             if screen and screen.is_active and self._matches_org_type(screen.organization):
-                return [screen]
+                org = screen.organization
+                if org and getattr(org, 'allow_ad_content', True) is not False:
+                    return [screen]
             return []
         
         if self.target_type == self.TARGET_ORGANIZATION:
             org = Organization.query.get(self.target_organization_id)
-            if org and self._matches_org_type(org):
+            if org and self._matches_org_type(org) and getattr(org, 'allow_ad_content', True) is not False:
                 return Screen.query.filter_by(
                     organization_id=self.target_organization_id,
                     is_active=True
@@ -176,12 +181,14 @@ class AdContent(db.Model):
             return Screen.query.join(Organization).filter(
                 Organization.country == self.target_country,
                 Organization.city == self.target_city,
+                Organization.allow_ad_content != False,
                 Screen.is_active == True
             ).all()
         
         if self.target_type == self.TARGET_COUNTRY:
             return Screen.query.join(Organization).filter(
                 Organization.country == self.target_country,
+                Organization.allow_ad_content != False,
                 Screen.is_active == True
             ).all()
         
