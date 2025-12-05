@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
@@ -37,14 +37,87 @@
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
                 </div>
             </div>
+            
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Fichier</label>
                 <input type="file" name="file" accept="image/*,video/*" required
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
             </div>
-            <button type="submit" class="btn-primary btn-sm">
-                <i class="fas fa-plus"></i>
-                Ajouter
+
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-primary-500"></i>
+                    Programmation
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Mode de diffusion</label>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <label class="relative flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition" id="schedule-immediate-label">
+                                <input type="radio" name="schedule_type" value="immediate" checked
+                                       class="mt-1 w-4 h-4 text-primary-500" onchange="toggleInternalSchedule()">
+                                <div>
+                                    <div class="font-medium text-gray-800">Diffusion immédiate</div>
+                                    <p class="text-sm text-gray-500 mt-1">Le contenu sera diffusé dès sa création</p>
+                                </div>
+                            </label>
+                            <label class="relative flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition" id="schedule-period-label">
+                                <input type="radio" name="schedule_type" value="period"
+                                       class="mt-1 w-4 h-4 text-primary-500" onchange="toggleInternalSchedule()">
+                                <div>
+                                    <div class="font-medium text-gray-800">Période programmée</div>
+                                    <p class="text-sm text-gray-500 mt-1">Définir des dates de diffusion</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="internal-period-section" class="hidden space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
+                                <input type="date" name="start_date"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin</label>
+                                <input type="date" name="end_date"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-play-circle text-purple-500"></i>
+                    Nombre de passages
+                </h3>
+                
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100 mb-4">
+                    <p class="text-sm text-purple-700 flex items-start gap-2">
+                        <i class="fas fa-info-circle text-purple-500 mt-0.5"></i>
+                        <span>Définissez le nombre de diffusions souhaitées par jour.</span>
+                    </p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="w-48">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Passages par jour</label>
+                        <input type="number" name="plays_per_day" value="10" min="1" max="1000"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-center text-lg font-semibold">
+                    </div>
+                    <div class="text-gray-500 text-sm mt-6">
+                        <p>par jour</p>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                Ajouter le contenu
             </button>
         </form>
     </div>
@@ -124,6 +197,31 @@
 </div>
 
 <script>
+function toggleInternalSchedule() {
+    const isImmediate = document.querySelector('input[name="schedule_type"]:checked').value === 'immediate';
+    const periodSection = document.getElementById('internal-period-section');
+    const immediateLabel = document.getElementById('schedule-immediate-label');
+    const periodLabel = document.getElementById('schedule-period-label');
+    
+    if (isImmediate) {
+        periodSection.classList.add('hidden');
+        immediateLabel.classList.add('border-primary-500', 'bg-primary-50');
+        immediateLabel.classList.remove('border-gray-200');
+        periodLabel.classList.remove('border-primary-500', 'bg-primary-50');
+        periodLabel.classList.add('border-gray-200');
+    } else {
+        periodSection.classList.remove('hidden');
+        periodLabel.classList.add('border-primary-500', 'bg-primary-50');
+        periodLabel.classList.remove('border-gray-200');
+        immediateLabel.classList.remove('border-primary-500', 'bg-primary-50');
+        immediateLabel.classList.add('border-gray-200');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleInternalSchedule();
+});
+
 function openPreviewModal(filePath, contentType, screenWidth, screenHeight) {
     const modal = document.getElementById('previewModal');
     const container = document.getElementById('previewContainer');

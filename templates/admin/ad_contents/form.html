@@ -284,45 +284,6 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-euro-sign text-green-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Tarification & Commission</h3>
-                    <p class="text-sm text-gray-500">Prix de la campagne et commission pour les établissements</p>
-                </div>
-            </div>
-            
-            <div class="grid md:grid-cols-3 gap-4">
-                <div>
-                    <label class="label">Prix total</label>
-                    <input type="number" name="total_price" value="{{ ad.total_price if ad else 0 }}" min="0" step="0.01"
-                           class="input-field">
-                </div>
-                <div>
-                    <label class="label">Devise</label>
-                    <select name="currency" class="input-field">
-                        <option value="EUR" {% if not ad or ad.currency == 'EUR' %}selected{% endif %}>EUR (Euro)</option>
-                        <option value="MAD" {% if ad and ad.currency == 'MAD' %}selected{% endif %}>MAD (Dirham)</option>
-                        <option value="XOF" {% if ad and ad.currency == 'XOF' %}selected{% endif %}>XOF (CFA)</option>
-                        <option value="TND" {% if ad and ad.currency == 'TND' %}selected{% endif %}>TND (Dinar)</option>
-                        <option value="USD" {% if ad and ad.currency == 'USD' %}selected{% endif %}>USD (Dollar)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="label">Commission établissements</label>
-                    <div class="relative">
-                        <input type="number" name="commission_rate" value="{{ ad.commission_rate if ad else ad_settings.ad_commission_rate }}" min="0" max="100" step="0.1"
-                               class="input-field pr-12">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">%</span>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Pourcentage reversé aux établissements</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center gap-3 mb-6">
                 <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-calendar-alt text-red-600"></i>
                 </div>
@@ -357,19 +318,91 @@
                     </div>
                 </div>
 
-                <div id="period-section" class="grid md:grid-cols-2 gap-4 {% if not ad or ad.schedule_type == 'immediate' %}hidden{% endif %}">
-                    <div>
-                        <label class="label">Date de début</label>
-                        <input type="datetime-local" name="start_date" 
-                               value="{{ ad.start_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.start_date else '' }}"
-                               class="input-field">
+                <div id="period-section" class="space-y-4 {% if not ad or ad.schedule_type == 'immediate' %}hidden{% endif %}">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">Date de début</label>
+                            <input type="datetime-local" name="start_date" 
+                                   value="{{ ad.start_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.start_date else '' }}"
+                                   class="input-field">
+                        </div>
+                        <div>
+                            <label class="label">Date de fin</label>
+                            <input type="datetime-local" name="end_date"
+                                   value="{{ ad.end_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.end_date else '' }}"
+                                   class="input-field">
+                        </div>
                     </div>
-                    <div>
-                        <label class="label">Date de fin</label>
-                        <input type="datetime-local" name="end_date"
-                               value="{{ ad.end_date.strftime('%Y-%m-%dT%H:%M') if ad and ad.end_date else '' }}"
-                               class="input-field">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-play-circle text-purple-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Nombre de passages</h3>
+                    <p class="text-sm text-gray-500">Combien de fois le contenu sera diffusé par jour</p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
+                    <p class="text-sm text-purple-700 flex items-start gap-2">
+                        <i class="fas fa-info-circle text-purple-500 mt-0.5"></i>
+                        <span>Définissez le nombre de diffusions souhaitées par jour sur chaque écran ciblé.</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-48">
+                        <label class="label">Passages par jour</label>
+                        <input type="number" name="plays_per_day" value="{{ ad.plays_per_day if ad else 10 }}" min="1" max="1000"
+                               class="input-field text-center text-lg font-semibold">
                     </div>
+                    <div class="text-gray-500 text-sm">
+                        <p>par écran ciblé</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-euro-sign text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Tarification & Commission</h3>
+                    <p class="text-sm text-gray-500">Prix de la campagne et commission pour les établissements</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label class="label">Prix total</label>
+                    <input type="number" name="total_price" value="{{ ad.total_price if ad else 0 }}" min="0" step="0.01"
+                           class="input-field">
+                </div>
+                <div>
+                    <label class="label">Devise</label>
+                    <select name="currency" class="input-field">
+                        <option value="EUR" {% if not ad or ad.currency == 'EUR' %}selected{% endif %}>EUR (Euro)</option>
+                        <option value="MAD" {% if ad and ad.currency == 'MAD' %}selected{% endif %}>MAD (Dirham)</option>
+                        <option value="XOF" {% if ad and ad.currency == 'XOF' %}selected{% endif %}>XOF (CFA)</option>
+                        <option value="TND" {% if ad and ad.currency == 'TND' %}selected{% endif %}>TND (Dinar)</option>
+                        <option value="USD" {% if ad and ad.currency == 'USD' %}selected{% endif %}>USD (Dollar)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Commission établissements</label>
+                    <div class="relative">
+                        <input type="number" name="commission_rate" value="{{ ad.commission_rate if ad else ad_settings.ad_commission_rate }}" min="0" max="100" step="0.1"
+                               class="input-field pr-12">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Pourcentage reversé aux établissements</p>
                 </div>
             </div>
         </div>

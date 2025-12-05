@@ -43,7 +43,7 @@ Gestion des écrans et contenus pour un établissement.
 | QR Codes | Disponible | Génération automatique par écran |
 | Validation contenus | Disponible | File d'attente, aperçu, validation/refus |
 | Contenus fillers | Disponible | Images de remplissage générées automatiquement |
-| Contenus internes | Disponible | Promos établissement prioritaires |
+| Contenus internes | Disponible | Promos établissement avec programmation (période + passages/jour) |
 | **Overlays/Bandeaux** | Disponible | Textes défilants superposés sur le player |
 | Statistiques | Disponible | Revenus par écran/période, diffusions |
 | État temps réel | Disponible | Online/offline, dernière activité |

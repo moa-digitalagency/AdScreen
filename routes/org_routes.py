@@ -690,6 +690,26 @@ def screen_internal(screen_id):
             file = request.files['file']
             name = request.form.get('name', 'Contenu interne')
             priority = int(request.form.get('priority', 80))
+            schedule_type = request.form.get('schedule_type', 'immediate')
+            plays_per_day = int(request.form.get('plays_per_day', 10))
+            
+            start_date = None
+            end_date = None
+            if schedule_type == 'period':
+                start_date_str = request.form.get('start_date', '')
+                end_date_str = request.form.get('end_date', '')
+                if start_date_str:
+                    try:
+                        from datetime import date as date_type
+                        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        pass
+                if end_date_str:
+                    try:
+                        from datetime import date as date_type
+                        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        pass
             
             if file.filename:
                 filename = secure_filename(file.filename)
@@ -721,7 +741,11 @@ def screen_internal(screen_id):
                     content_type=content_type,
                     file_path=file_path,
                     duration_seconds=duration,
-                    priority=priority
+                    priority=priority,
+                    schedule_type=schedule_type,
+                    start_date=start_date,
+                    end_date=end_date,
+                    plays_per_day=plays_per_day
                 )
                 db.session.add(internal)
                 db.session.commit()
