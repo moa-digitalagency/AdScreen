@@ -659,6 +659,91 @@ def create_demo_data():
         )
         db.session.add(overlay7)
         
+        logger.info("📢 Création des contenus publicitaires de démonstration...")
+        
+        from models.ad_content import AdContent
+        
+        ad_upload_dir = 'static/uploads/ad_contents'
+        file_os.makedirs(ad_upload_dir, exist_ok=True)
+        
+        ad1 = AdContent(
+            name='Campagne Été 2025 - Coca-Cola',
+            description='Publicité Coca-Cola été 2025 - Rafraîchissement garanti',
+            target_type=AdContent.TARGET_COUNTRY,
+            target_country='FR',
+            target_org_type=AdContent.ORG_TYPE_ALL,
+            content_type='image',
+            file_path='',
+            duration=15,
+            schedule_type=AdContent.SCHEDULE_PERIOD,
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=30),
+            plays_per_day=100,
+            advertiser_name='Marketing Coca-Cola',
+            advertiser_email='marketing@coca-cola.fr',
+            advertiser_phone='+33 1 40 00 00 00',
+            advertiser_company='Coca-Cola France',
+            total_price=5000.00,
+            currency='EUR',
+            commission_rate=25.0,
+            status=AdContent.STATUS_ACTIVE,
+            created_by=superadmin.id
+        )
+        ad1.generate_reference()
+        db.session.add(ad1)
+        
+        ad2 = AdContent(
+            name='Promo Orange Money - Maroc',
+            description='Campagne Orange Money pour les établissements marocains',
+            target_type=AdContent.TARGET_COUNTRY,
+            target_country='MA',
+            target_org_type=AdContent.ORG_TYPE_PAID,
+            content_type='image',
+            file_path='',
+            duration=10,
+            schedule_type=AdContent.SCHEDULE_PERIOD,
+            start_date=datetime.now() + timedelta(days=5),
+            end_date=datetime.now() + timedelta(days=35),
+            plays_per_day=50,
+            advertiser_name='Orange Money',
+            advertiser_email='pub@orangemoney.ma',
+            advertiser_phone='+212 5 00 00 00 00',
+            advertiser_company='Orange Maroc',
+            total_price=15000.00,
+            currency='MAD',
+            commission_rate=20.0,
+            status=AdContent.STATUS_SCHEDULED,
+            created_by=superadmin.id
+        )
+        ad2.generate_reference()
+        db.session.add(ad2)
+        
+        ad3 = AdContent(
+            name='Campagne Multi-écrans Paris',
+            description='Publicité ciblée sur écrans sélectionnés à Paris',
+            target_type=AdContent.TARGET_SCREENS,
+            target_org_type=AdContent.ORG_TYPE_ALL,
+            content_type='video',
+            file_path='',
+            duration=30,
+            schedule_type=AdContent.SCHEDULE_PERIOD,
+            start_date=datetime.now() - timedelta(hours=2),
+            end_date=datetime.now() + timedelta(days=14),
+            plays_per_day=200,
+            advertiser_name='Agence PubParis',
+            advertiser_email='contact@pubparis.fr',
+            advertiser_phone='+33 1 42 00 00 00',
+            advertiser_company='PubParis Agency',
+            total_price=3500.00,
+            currency='EUR',
+            commission_rate=30.0,
+            status=AdContent.STATUS_ACTIVE,
+            created_by=superadmin.id
+        )
+        ad3.generate_reference()
+        ad3.set_selected_screen_ids([screen1.id, screen2.id])
+        db.session.add(ad3)
+        
         db.session.commit()
         
         print("""

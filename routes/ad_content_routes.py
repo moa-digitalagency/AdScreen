@@ -155,14 +155,20 @@ def create():
         if start_date_str and end_date_str:
             ad.schedule_type = AdContent.SCHEDULE_PERIOD
             try:
-                ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%dT%H:%M')
             except ValueError:
-                ad.start_date = datetime.now()
+                try:
+                    ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                except ValueError:
+                    ad.start_date = datetime.now()
             
             try:
-                ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M')
             except ValueError:
-                ad.end_date = datetime.now() + timedelta(days=7)
+                try:
+                    ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                except ValueError:
+                    ad.end_date = datetime.now() + timedelta(days=7)
             
             min_plays = request.form.get('min_plays', '10')
             ad.plays_per_day = int(min_plays) if min_plays else 10
@@ -297,15 +303,21 @@ def edit(ad_id):
             
             if start_date_str:
                 try:
-                    ad.start_date = datetime.fromisoformat(start_date_str)
+                    ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%dT%H:%M')
                 except ValueError:
-                    pass
+                    try:
+                        ad.start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                    except ValueError:
+                        pass
             
             if end_date_str:
                 try:
-                    ad.end_date = datetime.fromisoformat(end_date_str)
+                    ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M')
                 except ValueError:
-                    pass
+                    try:
+                        ad.end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                    except ValueError:
+                        pass
         
         if 'content_file' in request.files:
             file = request.files['content_file']
