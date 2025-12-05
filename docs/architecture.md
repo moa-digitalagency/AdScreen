@@ -49,9 +49,9 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 │  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
 │  │  Broadcast    │ │   Invoice   │ │     PaymentProof         │ │
 │  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
-│  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
-│  │ HeartbeatLog  │ │ IPTVChannel │ │ AdContent/AdContentStat  │ │
-│  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
+│  ┌───────────────┐ ┌────────────────────────────────────────┐   │
+│  │ HeartbeatLog  │ │ AdContent/AdContentInvoice/AdContentStat│  │
+│  └───────────────┘ └────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -121,8 +121,7 @@ shabaka-adscreen/
 │   ├── screen_overlay.py     # Bandeaux/overlays
 │   ├── site_setting.py       # Configuration globale
 │   ├── registration_request.py # Demandes inscription
-│   ├── invoice.py            # Factures hebdomadaires
-│   ├── payment_proof.py      # Preuves de paiement
+│   ├── invoice.py            # Factures et preuves de paiement
 │   ├── broadcast.py          # Diffusions centralisées
 │   └── ad_content.py         # Contenus publicitaires superadmin
 │
@@ -134,7 +133,8 @@ shabaka-adscreen/
 │   ├── booking_routes.py     # Réservations
 │   ├── billing_routes.py     # Facturation hebdomadaire
 │   ├── player_routes.py      # Player API
-│   └── api_routes.py         # API REST
+│   ├── api_routes.py         # API REST
+│   └── ad_content_routes.py  # Contenus publicitaires centralisés
 │
 ├── services/                 # Logique métier
 │   ├── playlist_service.py   # Génération playlists
@@ -143,7 +143,10 @@ shabaka-adscreen/
 │   ├── receipt_generator.py  # Reçus thermiques (image/PDF)
 │   ├── filler_generator.py   # Génération fillers par défaut
 │   ├── currency_service.py   # Gestion multi-devises
-│   └── iptv_service.py       # Parsing M3U et gestion OnlineTV
+│   ├── iptv_service.py       # Parsing M3U et gestion OnlineTV
+│   ├── availability_service.py # Calcul disponibilités
+│   ├── overlay_service.py    # Gestion des overlays
+│   └── hls_converter.py      # Conversion flux HLS
 │
 ├── utils/                    # Utilitaires
 │   ├── image_utils.py        # Traitement images

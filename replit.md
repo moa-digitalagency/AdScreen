@@ -134,6 +134,43 @@ Not specified.
     - **City Selection**: Organizations can specify their city via dynamic dropdown with autocomplete, populated from `utils/world_data.py`. API endpoint `/api/cities/<country_code>` returns cities for a given country code.
     - **World Data Coverage**: 208 countries with ISO codes, flags, continents and default currencies. Over 4,600 cities with 15-30 cities per country (average 22). Dynamic AJAX-based city loading for better UX.
 
+## CSS Theme System
+The project includes a comprehensive, reusable CSS theme template for consistent styling across components:
+
+### Theme Files
+- **`static/css/styles.css`**: Main application styles using CSS custom properties
+- **`static/css/theme-template.css`**: Standalone theme template for reuse in other projects
+
+### Color Palette (Emerald/Teal)
+```css
+--primary-50: #ecfdf5   /* Lightest */
+--primary-100: #d1fae5
+--primary-200: #a7f3d0
+--primary-300: #6ee7b7
+--primary-400: #34d399
+--primary-500: #10b981  /* Main brand color */
+--primary-600: #059669
+--primary-700: #047857
+--primary-800: #065f46
+--primary-900: #064e3b  /* Darkest */
+```
+
+### Theme Components
+- Buttons (primary, secondary, outline, ghost, danger variants)
+- Cards (elevated, flat, glass)
+- Badges (success, warning, danger, info)
+- Form elements (inputs, labels)
+- Navigation (sidebar, nav links, dropdowns)
+- Toast notifications
+- Modals and overlays
+- Status indicators
+- Pricing cards
+- Step indicators
+- Avatars and logos
+
+### Customization
+To change the color theme, update the `--primary-*` CSS variables in `:root`. Alternative color palettes (blue, purple, orange, rose) are documented in the theme template.
+
 ## External Dependencies
 - **PostgreSQL**: Primary database for all application data.
 - **Pillow**: Python Imaging Library for image processing and validation.
@@ -146,3 +183,4 @@ Not specified.
 - **WhatsApp**: For admin notifications regarding registration requests and contact.
 - **Gunicorn**: Production WSGI HTTP Server.
 - **HLS.js**: JavaScript library for HTTP Live Streaming (HLS) in browsers, used for OnlineTV M3U stream playback.
+- **mpegts.js**: Fallback for MPEG-TS streams that don't support native HLS playback.

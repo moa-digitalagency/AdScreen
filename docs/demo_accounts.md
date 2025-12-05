@@ -161,32 +161,39 @@ Prix calculés automatiquement basé sur le prix par minute de chaque écran.
 
 ### Détail des diffusions
 
+Les diffusions de démonstration illustrent différents modes de programmation :
+
 1. **Promotion Été France** (pays: FR)
    - Mode: Immédiat (actif dès activation)
+   - Type: Overlay bandeau défilant
    - Message: "Soldes d'été -30% sur toutes les publicités!"
-   - Affecte: 5+ écrans en France
+   - Affecte: Tous les écrans en France
    - Priorité: 100 (standard)
 
 2. **Message Marrakech** (ville: Marrakech)
    - Mode: Immédiat
+   - Type: Overlay bandeau défilant
    - Message bilingue arabe/français
    - Affecte: 2 écrans (Café Marrakech)
    - Priorité: 100 (standard)
 
 3. **Promo Centre Atlantis** (établissement)
    - Mode: Programmé avec récurrence quotidienne à 12h
-   - Message: Nouveau magasin Apple ouvert
+   - Type: Overlay bandeau défilant
+   - Message: Nouveau magasin ouvert
    - Affecte: 2 écrans (Totem Hall A, Food Court)
    - Priorité: 150 (haute) + Override playlist activé
 
 4. **Info Écran Beach** (écran spécifique)
    - Mode: Programmé avec récurrence hebdomadaire (vendredi, samedi à 18h)
+   - Type: Overlay bandeau défilant
    - Message: Soirée spéciale DJ set
    - Affecte: 1 écran (Beach Bar Dakar)
    - Priorité: 200 (maximale)
 
 5. **Promo Mensuelle Tunisie** (pays: TN)
    - Mode: Programmé avec récurrence mensuelle à 9h
+   - Type: Overlay bandeau défilant
    - Message: Offre spéciale du 1er du mois
    - Affecte: 1 écran (Tunisian Café)
    - Priorité: 120 (élevée)
