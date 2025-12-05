@@ -1,0 +1,174 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Factures Contenu Pub{% endblock %}
+
+{% block main_content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Factures de Commission</h2>
+            <p class="text-gray-600 mt-1">Gestion des commissions à reverser aux établissements</p>
+        </div>
+        <a href="{{ url_for('ad_content.list') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            <span>Retour aux contenus</span>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-yellow-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ pending_count }}</p>
+                    <p class="text-sm text-gray-500">En attente</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ paid_count }}</p>
+                    <p class="text-sm text-gray-500">Payées</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-euro-sign text-primary-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ "%.2f"|format(total_pending) }}</p>
+                    <p class="text-sm text-gray-500">Total en attente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <form method="GET" class="flex flex-wrap items-center gap-3">
+            <label class="text-sm text-gray-600">Filtrer par statut:</label>
+            <select name="status" onchange="this.form.submit()" class="form-select rounded-lg border-gray-300 text-sm">
+                <option value="">Tous</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>En attente</option>
+                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Payées</option>
+                <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validées</option>
+            </select>
+        </form>
+    </div>
+
+    {% if invoices.items %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">N° Facture</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Établissement</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contenu Pub</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Période</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Stats</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Commission</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Statut</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for invoice in invoices.items %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <p class="font-medium text-gray-900">{{ invoice.invoice_number }}</p>
+                            <p class="text-xs text-gray-500">{{ invoice.generated_at.strftime('%d/%m/%Y') }}</p>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-building text-blue-600 text-sm"></i>
+                                </div>
+                                <span class="font-medium text-gray-900">{{ invoice.organization.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <a href="{{ url_for('ad_content.view', ad_id=invoice.ad_content_id) }}" class="text-primary-600 hover:text-primary-800">
+                                {{ invoice.ad_content.name }}
+                            </a>
+                            <p class="text-xs text-gray-500">{{ invoice.ad_content.reference }}</p>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <div>{{ invoice.period_start.strftime('%d/%m/%Y') }}</div>
+                            <div class="text-xs text-gray-400">au {{ invoice.period_end.strftime('%d/%m/%Y') }}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <p class="text-sm text-gray-900">{{ invoice.total_impressions }} vues</p>
+                            <p class="text-xs text-gray-500">{{ invoice.screens_count }} écran{% if invoice.screens_count > 1 %}s{% endif %}</p>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <p class="font-bold text-primary-600">{{ "%.2f"|format(invoice.commission_amount) }} {{ invoice.get_currency_symbol() }}</p>
+                            <p class="text-xs text-gray-500">{{ invoice.commission_rate }}% de {{ "%.2f"|format(invoice.gross_amount) }}</p>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-{{ invoice.get_status_color() }}-100 text-{{ invoice.get_status_color() }}-700 rounded-full text-xs">
+                                {{ invoice.get_status_label() }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if invoice.status == 'pending' %}
+                                <form action="{{ url_for('ad_content.mark_invoice_paid', invoice_id=invoice.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-400 hover:text-blue-600 transition" title="Marquer comme payée">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if invoice.status == 'paid' %}
+                                <form action="{{ url_for('ad_content.validate_invoice', invoice_id=invoice.id) }}" method="POST" class="inline">
+                                    <button type="submit" class="p-2 text-gray-400 hover:text-green-600 transition" title="Valider">
+                                        <i class="fas fa-check-double"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if invoices.pages > 1 %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                Page {{ invoices.page }} sur {{ invoices.pages }} ({{ invoices.total }} factures)
+            </p>
+            <div class="flex gap-2">
+                {% if invoices.has_prev %}
+                <a href="{{ url_for('ad_content.invoices', page=invoices.prev_num, status=status_filter) }}" class="btn-secondary text-sm">
+                    <i class="fas fa-chevron-left"></i> Précédent
+                </a>
+                {% endif %}
+                {% if invoices.has_next %}
+                <a href="{{ url_for('ad_content.invoices', page=invoices.next_num, status=status_filter) }}" class="btn-secondary text-sm">
+                    Suivant <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-file-invoice-dollar text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucune facture</h3>
+        <p class="text-gray-500">Les factures seront générées lorsque des contenus publicitaires seront diffusés.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

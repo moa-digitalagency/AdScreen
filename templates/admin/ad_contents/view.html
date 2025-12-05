@@ -1,0 +1,241 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Détails Contenu Pub{% endblock %}
+
+{% block main_content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('ad_content.list') }}" class="p-2 text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">{{ ad.name }}</h2>
+                <p class="text-gray-600 mt-1">Référence: {{ ad.reference }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ url_for('ad_content.stats', ad_id=ad.id) }}" class="btn-secondary">
+                <i class="fas fa-chart-bar"></i>
+                <span>Statistiques</span>
+            </a>
+            <a href="{{ url_for('ad_content.edit', ad_id=ad.id) }}" class="btn-primary">
+                <i class="fas fa-edit"></i>
+                <span>Modifier</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 border-b border-gray-200">
+                    <h3 class="font-semibold text-gray-900">Aperçu du contenu</h3>
+                </div>
+                <div class="p-4 bg-gray-100 flex items-center justify-center" style="min-height: 300px;">
+                    {% if ad.file_path %}
+                        {% if ad.content_type == 'video' %}
+                        <video src="/{{ ad.file_path }}" controls class="max-w-full max-h-80 rounded-lg shadow-lg"></video>
+                        {% else %}
+                        <img src="/{{ ad.file_path }}" alt="{{ ad.name }}" class="max-w-full max-h-80 rounded-lg shadow-lg">
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-image text-4xl mb-2"></i>
+                        <p>Aucun fichier</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-tv text-primary-500 mr-2"></i>
+                    Écrans ciblés ({{ screens|length }})
+                </h3>
+                {% if screens %}
+                <div class="space-y-3">
+                    {% for screen in screens %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tv text-primary-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ screen.name }}</p>
+                                <p class="text-xs text-gray-500">{{ screen.organization.name }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right text-sm">
+                            {% set screen_stats = stats_map.get(screen.id, {}) %}
+                            <p class="text-gray-900">{{ screen_stats.get('impressions', 0) }} vues</p>
+                            <p class="text-xs text-gray-500">{{ "%.1f"|format((screen_stats.get('duration', 0) or 0) / 60) }} min</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Aucun écran actif correspondant au ciblage</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-900">
+                        <i class="fas fa-file-invoice-dollar text-green-500 mr-2"></i>
+                        Factures de commission
+                    </h3>
+                    {% if ad.status in ['active', 'expired'] and screens %}
+                    <form action="{{ url_for('ad_content.generate_invoices', ad_id=ad.id) }}" method="POST">
+                        <button type="submit" class="btn-primary text-sm">
+                            <i class="fas fa-file-invoice"></i>
+                            Générer les factures
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if invoices %}
+                <div class="space-y-3">
+                    {% for invoice in invoices %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ invoice.invoice_number }}</p>
+                            <p class="text-xs text-gray-500">{{ invoice.organization.name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-primary-600">{{ "%.2f"|format(invoice.commission_amount) }} {{ invoice.get_currency_symbol() }}</p>
+                            <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-{{ invoice.get_status_color() }}-100 text-{{ invoice.get_status_color() }}-700">
+                                {{ invoice.get_status_label() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">Aucune facture générée</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Statut</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-{{ ad.get_status_color() }}-100 text-{{ ad.get_status_color() }}-700">
+                        <span class="w-2 h-2 bg-{{ ad.get_status_color() }}-500 rounded-full {% if ad.status == 'active' %}animate-pulse{% endif %}"></span>
+                        {{ ad.get_status_display() }}
+                    </span>
+                </div>
+                <form action="{{ url_for('ad_content.toggle', ad_id=ad.id) }}" method="POST">
+                    <button type="submit" class="w-full btn-{% if ad.status == 'active' %}secondary{% else %}primary{% endif %}">
+                        <i class="fas fa-{% if ad.status == 'active' %}pause{% else %}play{% endif %} mr-2"></i>
+                        {% if ad.status == 'active' %}Mettre en pause{% else %}Activer{% endif %}
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Informations</h3>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Type</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.content_type|upper }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Durée</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.duration }}s</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Ciblage</dt>
+                        <dd class="font-medium text-gray-900 text-right text-sm">{{ ad.get_target_display() }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Programmation</dt>
+                        <dd class="font-medium text-gray-900">
+                            {% if ad.schedule_type == 'immediate' %}Immédiate{% else %}Période{% endif %}
+                        </dd>
+                    </div>
+                    {% if ad.schedule_type == 'period' %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Début</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.start_date.strftime('%d/%m/%Y') if ad.start_date else '-' }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Fin</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.end_date.strftime('%d/%m/%Y') if ad.end_date else '-' }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Tarification</h3>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Prix total</dt>
+                        <dd class="font-bold text-lg text-gray-900">{{ "%.2f"|format(ad.total_price) }} {{ ad.get_currency_symbol() }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Commission</dt>
+                        <dd class="font-medium text-primary-600">{{ ad.commission_rate }}%</dd>
+                    </div>
+                    <div class="flex justify-between border-t pt-3">
+                        <dt class="text-gray-500">À reverser</dt>
+                        <dd class="font-bold text-primary-600">{{ "%.2f"|format(ad.total_price * ad.commission_rate / 100) }} {{ ad.get_currency_symbol() }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Statistiques globales</h3>
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Impressions</dt>
+                        <dd class="font-bold text-xl text-gray-900">{{ ad.total_impressions }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Temps diffusé</dt>
+                        <dd class="font-medium text-gray-900">{{ "%.1f"|format(ad.total_duration_played / 60) }} min</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Écrans actifs</dt>
+                        <dd class="font-medium text-gray-900">{{ screens|length }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            {% if ad.advertiser_name or ad.advertiser_company %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Annonceur</h3>
+                <dl class="space-y-3">
+                    {% if ad.advertiser_name %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Nom</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.advertiser_name }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if ad.advertiser_company %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Entreprise</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.advertiser_company }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if ad.advertiser_email %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Email</dt>
+                        <dd class="font-medium text-gray-900 text-sm">{{ ad.advertiser_email }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if ad.advertiser_phone %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Téléphone</dt>
+                        <dd class="font-medium text-gray-900">{{ ad.advertiser_phone }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

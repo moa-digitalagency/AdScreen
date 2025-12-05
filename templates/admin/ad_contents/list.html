@@ -1,0 +1,247 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Contenu Pub{% endblock %}
+
+{% block main_content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Contenu Publicitaire</h2>
+            <p class="text-gray-600 mt-1">Exploitez l'espace publicitaire des écrans partenaires</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ url_for('ad_content.settings') }}" class="btn-secondary">
+                <i class="fas fa-cog"></i>
+                <span>Paramètres</span>
+            </a>
+            <a href="{{ url_for('ad_content.invoices') }}" class="btn-secondary">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Factures</span>
+            </a>
+            <a href="{{ url_for('ad_content.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Nouveau contenu</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-play text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_active }}</p>
+                    <p class="text-sm text-gray-500">Actifs</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_scheduled }}</p>
+                    <p class="text-sm text-gray-500">Programmés</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-history text-gray-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_expired }}</p>
+                    <p class="text-sm text-gray-500">Expirés</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-euro-sign text-primary-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-gray-900">{{ "%.2f"|format(total_revenue) }}</p>
+                    <p class="text-sm text-gray-500">Revenus totaux</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <form method="GET" class="flex flex-wrap items-center gap-3">
+            <label class="text-sm text-gray-600">Filtrer par statut:</label>
+            <select name="status" onchange="this.form.submit()" class="form-select rounded-lg border-gray-300 text-sm">
+                <option value="">Tous</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Actifs</option>
+                <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Programmés</option>
+                <option value="paused" {% if status_filter == 'paused' %}selected{% endif %}>En pause</option>
+                <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expirés</option>
+            </select>
+        </form>
+    </div>
+
+    {% if ads.items %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contenu</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cible</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Annonceur</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Prix / Commission</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Période</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Stats</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Statut</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for ad in ads.items %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                {% if ad.file_path %}
+                                <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                    {% if ad.content_type == 'video' %}
+                                    <video src="/{{ ad.file_path }}" class="w-full h-full object-cover"></video>
+                                    {% else %}
+                                    <img src="/{{ ad.file_path }}" alt="" class="w-full h-full object-cover">
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-image text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ ad.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ ad.reference }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                {% if ad.target_type == 'country' %}
+                                <i class="fas fa-globe text-gray-400"></i>
+                                {% elif ad.target_type == 'city' %}
+                                <i class="fas fa-city text-gray-400"></i>
+                                {% elif ad.target_type == 'organization' %}
+                                <i class="fas fa-building text-gray-400"></i>
+                                {% else %}
+                                <i class="fas fa-tv text-gray-400"></i>
+                                {% endif %}
+                                <span class="text-sm text-gray-700">{{ ad.get_target_display() }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div>
+                                <p class="text-sm text-gray-900">{{ ad.advertiser_name or '-' }}</p>
+                                <p class="text-xs text-gray-500">{{ ad.advertiser_company or '' }}</p>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div>
+                                <p class="font-medium text-gray-900">{{ "%.2f"|format(ad.total_price) }} {{ ad.get_currency_symbol() }}</p>
+                                <p class="text-xs text-primary-600">Commission: {{ ad.commission_rate }}%</p>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if ad.schedule_type == 'period' %}
+                                {% if ad.start_date %}
+                                <div class="text-xs">Du: {{ ad.start_date.strftime('%d/%m/%Y') }}</div>
+                                {% endif %}
+                                {% if ad.end_date %}
+                                <div class="text-xs">Au: {{ ad.end_date.strftime('%d/%m/%Y') }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-primary-600 font-medium">Immédiat</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="text-sm">
+                                <p class="text-gray-900">{{ ad.total_impressions }} vues</p>
+                                <p class="text-xs text-gray-500">{{ "%.1f"|format(ad.total_duration_played / 60) }} min</p>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-{{ ad.get_status_color() }}-100 text-{{ ad.get_status_color() }}-700 rounded-full text-xs">
+                                <span class="w-1.5 h-1.5 bg-{{ ad.get_status_color() }}-500 rounded-full {% if ad.status == 'active' %}animate-pulse{% endif %}"></span>
+                                {{ ad.get_status_display() }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{{ url_for('ad_content.view', ad_id=ad.id) }}" 
+                                   class="p-2 text-gray-400 hover:text-blue-600 transition" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('ad_content.stats', ad_id=ad.id) }}" 
+                                   class="p-2 text-gray-400 hover:text-purple-600 transition" title="Statistiques">
+                                    <i class="fas fa-chart-bar"></i>
+                                </a>
+                                <a href="{{ url_for('ad_content.edit', ad_id=ad.id) }}" 
+                                   class="p-2 text-gray-400 hover:text-primary-600 transition" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ url_for('ad_content.toggle', ad_id=ad.id) }}" method="POST" class="inline">
+                                    <button type="submit" 
+                                            class="p-2 transition {% if ad.status == 'active' %}text-green-500 hover:text-yellow-600{% else %}text-gray-400 hover:text-green-600{% endif %}"
+                                            title="{% if ad.status == 'active' %}Mettre en pause{% else %}Activer{% endif %}">
+                                        <i class="fas {% if ad.status == 'active' %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('ad_content.delete', ad_id=ad.id) }}" method="POST" class="inline"
+                                      onsubmit="return confirm('Supprimer ce contenu publicitaire ?')">
+                                    <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if ads.pages > 1 %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                Page {{ ads.page }} sur {{ ads.pages }} ({{ ads.total }} contenus)
+            </p>
+            <div class="flex gap-2">
+                {% if ads.has_prev %}
+                <a href="{{ url_for('ad_content.list', page=ads.prev_num, status=status_filter) }}" class="btn-secondary text-sm">
+                    <i class="fas fa-chevron-left"></i> Précédent
+                </a>
+                {% endif %}
+                {% if ads.has_next %}
+                <a href="{{ url_for('ad_content.list', page=ads.next_num, status=status_filter) }}" class="btn-secondary text-sm">
+                    Suivant <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-ad text-gray-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Aucun contenu publicitaire</h3>
+        <p class="text-gray-500 mb-6">Créez votre premier contenu pour exploiter l'espace publicitaire des écrans partenaires.</p>
+        <a href="{{ url_for('ad_content.create') }}" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            <span>Créer un contenu</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
