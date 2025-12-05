@@ -159,8 +159,12 @@ def create():
                 except ValueError:
                     pass
             
+            plays_per_day = request.form.get('plays_per_day', '10')
+            ad.plays_per_day = int(plays_per_day) if plays_per_day else 10
+            
             ad.status = AdContent.STATUS_SCHEDULED
         else:
+            ad.plays_per_day = 0
             ad.status = AdContent.STATUS_ACTIVE
         
         if 'content_file' in request.files:

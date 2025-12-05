@@ -42,6 +42,7 @@ class AdContent(db.Model):
     schedule_type = db.Column(db.String(20), default=SCHEDULE_IMMEDIATE)
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
+    plays_per_day = db.Column(db.Integer, default=10)
     
     advertiser_name = db.Column(db.String(256))
     advertiser_email = db.Column(db.String(256))
