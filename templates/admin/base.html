@@ -124,9 +124,19 @@
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
-    sidebar.classList.toggle('-translate-x-full');
-    overlay.classList.toggle('hidden');
-    document.body.classList.toggle('overflow-hidden');
+    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    
+    if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        document.documentElement.classList.remove('overflow-hidden');
+    } else {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        document.documentElement.classList.add('overflow-hidden');
+    }
 }
 
 function closeMobileMenu() {
@@ -135,6 +145,7 @@ function closeMobileMenu() {
     sidebar.classList.add('-translate-x-full');
     overlay.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
+    document.documentElement.classList.remove('overflow-hidden');
 }
 
 window.addEventListener('resize', function() {
@@ -143,13 +154,15 @@ window.addEventListener('resize', function() {
     }
 });
 
-// Force sidebar text color on load only - CSS handles the rest
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.remove('overflow-hidden');
+    document.documentElement.classList.remove('overflow-hidden');
+    
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
         sidebar.classList.add('admin-sidebar-gradient');
     }
-})();
+});
 </script>
 
 <style>
