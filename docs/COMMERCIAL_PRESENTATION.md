@@ -390,6 +390,15 @@
 | 👔 **Admin** | Permissions sélectionnées | Selon permissions |
 | 🏪 **Organisation** | Espace établissement | Son établissement uniquement |
 
+#### Contrôle des Publicités par l'Établissement
+
+| Option | Description | Défaut |
+|--------|-------------|--------|
+| 🔓 **Autoriser Pub Superadmin** | Permet au superadmin de diffuser des publicités | Activé |
+| 🔒 **Désactiver Pub Superadmin** | Bloque les publicités du superadmin | - |
+
+Les établissements conservent le contrôle total sur les publicités diffusées sur leurs écrans.
+
 #### Permissions Granulaires (Admin)
 
 | Permission | Description |

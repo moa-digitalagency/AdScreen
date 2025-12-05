@@ -108,6 +108,12 @@ Not specified.
         - **Feature Restrictions**: Free establishments limited to internal content and overlays (no booking, billing, time slots)
         - **Decorator-based Access Control**: `@paid_org_required` decorator for paid-only routes
         - **Conditional UI**: Menus dynamically show/hide based on establishment type
+    - **Ad Content Control** (December 2025):
+        - **allow_ad_content**: Organization-level toggle to accept/reject superadmin advertising content
+        - **Default behavior**: Opt-in (TRUE by default) - all organizations accept ads unless explicitly disabled
+        - **Settings location**: Toggle in organization settings under "Publicité" section
+        - **Filtering logic**: AdContent targets respect organization preferences during delivery
+        - **NULL handling**: NULL values treated as TRUE to maintain default-on behavior
     - **Superadmin Authentication**:
         - **Environment Variables**: SUPERADMIN_EMAIL and SUPERADMIN_PASSWORD for secure credential storage
         - **Dynamic Verification**: Credentials verified at login time from environment

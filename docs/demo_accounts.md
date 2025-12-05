@@ -297,3 +297,5 @@ La facturation peut être générée de deux manières :
 - Les devises sont configurées par organisation et affectent tous les écrans de l'établissement
 - Les diffusions (broadcasts) sont globales et gérées uniquement par les superadmins
 - Les établissements gratuits (is_paid=False) ont un accès limité : contenus internes et overlays uniquement
+- Par défaut, tous les établissements acceptent les publicités du superadmin (`allow_ad_content=True`)
+- Les établissements peuvent désactiver cette option dans leurs paramètres

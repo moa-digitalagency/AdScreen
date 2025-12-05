@@ -40,6 +40,8 @@ gunicorn --bind 0.0.0.0:5000 --reload main:app
 - Multi-devises : Support de 200+ devises à travers 208 pays
 - Gestion multi-établissements avec commissions configurables
 - Système de diffusion (Broadcast) pour ciblage géographique
+- Contenus publicitaires superadmin avec ciblage avancé
+- Contrôle par établissement des publicités superadmin (opt-in/opt-out)
 - Facturation hebdomadaire automatique
 - Player web fullscreen avec overlays temps réel
 - Génération de reçus (image thermique et PDF)

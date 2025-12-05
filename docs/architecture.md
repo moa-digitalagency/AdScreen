@@ -49,9 +49,9 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 │  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
 │  │  Broadcast    │ │   Invoice   │ │     PaymentProof         │ │
 │  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
-│  ┌───────────────┐ ┌─────────────┐                              │
-│  │ HeartbeatLog  │ │ IPTVChannel │                              │
-│  └───────────────┘ └─────────────┘                              │
+│  ┌───────────────┐ ┌─────────────┐ ┌──────────────────────────┐ │
+│  │ HeartbeatLog  │ │ IPTVChannel │ │ AdContent/AdContentStat  │ │
+│  └───────────────┘ └─────────────┘ └──────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -122,7 +122,8 @@ shabaka-adscreen/
 │   ├── registration_request.py # Demandes inscription
 │   ├── invoice.py            # Factures hebdomadaires
 │   ├── payment_proof.py      # Preuves de paiement
-│   └── broadcast.py          # Diffusions centralisées
+│   ├── broadcast.py          # Diffusions centralisées
+│   └── ad_content.py         # Contenus publicitaires superadmin
 │
 ├── routes/                   # Blueprints Flask
 │   ├── auth_routes.py        # Authentification
@@ -217,6 +218,8 @@ shabaka-adscreen/
 | Broadcast → Screen/Org/Country/City | 1:N | Une diffusion cible des écrans via hiérarchie |
 | Organization → has_iptv | 1:1 | Activation OnlineTV par établissement |
 | Screen → iptv_enabled | 1:1 | Activation OnlineTV par écran |
+| Organization → allow_ad_content | 1:1 | Autorisation des publicités superadmin |
+| AdContent → Screen/Org/Country/City | 1:N | Ciblage des contenus publicitaires |
 
 ### Système de diffusion (Broadcast)
 

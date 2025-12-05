@@ -35,6 +35,7 @@ Gestion des écrans et contenus pour un établissement.
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
 | Gestion écrans | Disponible | Créer, configurer, activer/désactiver des écrans |
+| **Contrôle publicités** | Disponible | Activer/désactiver les publicités superadmin |
 | Configuration résolution | Disponible | Définir largeur, hauteur, orientation |
 | Types de contenu | Disponible | Activer/désactiver images, vidéos |
 | Créneaux horaires | Disponible | Définir durées et prix par type de contenu |
@@ -163,6 +164,21 @@ La plateforme permet de distinguer deux types d'établissements :
 - Pas de réservations ni de facturation
 - Pas de configuration des créneaux payants
 - Commission à 0%
+
+### Contrôle des Publicités Superadmin
+
+Les établissements peuvent contrôler la diffusion des publicités créées par le superadmin sur leurs écrans :
+
+**Option allow_ad_content**
+- Activée par défaut (opt-in)
+- Toggle accessible dans les paramètres de l'établissement
+- Si désactivé, les contenus publicitaires du superadmin ne s'affichent pas sur les écrans de l'établissement
+- N'affecte pas les overlays et broadcasts de l'établissement lui-même
+
+| État | Comportement |
+|------|--------------|
+| Activé (défaut) | Les publicités superadmin s'affichent normalement |
+| Désactivé | Les publicités superadmin sont filtrées |
 
 ### Gestion des Administrateurs
 

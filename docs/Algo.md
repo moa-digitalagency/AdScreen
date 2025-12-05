@@ -88,3 +88,27 @@ FALLBACK
 - Si stream échoue → HLS.js tente récupération automatique
 - Si récupération échoue → affichage message erreur
 - Possibilité de repasser en mode playlist manuellement
+
+=================
+CONTRÔLE PUBLICITÉS
+=================
+
+LOGIQUE ALLOW_AD_CONTENT
+------------------------
+1. Chaque établissement a un paramètre `allow_ad_content` (défaut: TRUE)
+2. Accessible via les paramètres de l'établissement (toggle)
+3. Affecte uniquement les contenus publicitaires du superadmin (AdContent)
+
+FILTRAGE
+--------
+- Si allow_ad_content = TRUE (ou NULL) → Publicités superadmin affichées
+- Si allow_ad_content = FALSE → Publicités superadmin filtrées
+
+CIBLAGE CONCERNÉ
+----------------
+- Ciblage par pays : vérifie allow_ad_content de chaque organisation
+- Ciblage par ville : vérifie allow_ad_content de chaque organisation
+- Ciblage par organisation : vérifie allow_ad_content de l'organisation ciblée
+- Ciblage par écran : vérifie allow_ad_content de l'organisation de l'écran
+
+NOTE: N'affecte pas les overlays, broadcasts et contenus internes de l'établissement

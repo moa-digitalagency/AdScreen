@@ -34,7 +34,7 @@ def init_database(drop_existing=False):
             User, Organization, Screen, TimeSlot, TimePeriod,
             Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
             SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
-            Broadcast
+            Broadcast, AdContent, AdContentInvoice, AdContentStat
         )
         
         tables = [
@@ -55,6 +55,9 @@ def init_database(drop_existing=False):
             ('🧾 invoices', Invoice),
             ('💳 payment_proofs', PaymentProof),
             ('📡 broadcasts', Broadcast),
+            ('📺 ad_contents', AdContent),
+            ('🧾 ad_content_invoices', AdContentInvoice),
+            ('📊 ad_content_stats', AdContentStat),
         ]
         
         logger.info("\n📋 Tables créées :")
