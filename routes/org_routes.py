@@ -690,26 +690,31 @@ def screen_internal(screen_id):
             file = request.files['file']
             name = request.form.get('name', 'Contenu interne')
             priority = int(request.form.get('priority', 80))
-            schedule_type = request.form.get('schedule_type', 'immediate')
+            schedule_type = request.form.get('schedule_type', 'period')
+            
+            total_plays = int(request.form.get('total_plays', 10))
             plays_per_day = int(request.form.get('plays_per_day', 10))
             
             start_date = None
             end_date = None
-            if schedule_type == 'period':
-                start_date_str = request.form.get('start_date', '')
-                end_date_str = request.form.get('end_date', '')
-                if start_date_str:
-                    try:
-                        from datetime import date as date_type
-                        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-                    except ValueError:
-                        pass
-                if end_date_str:
-                    try:
-                        from datetime import date as date_type
-                        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                    except ValueError:
-                        pass
+            start_date_str = request.form.get('start_date', '')
+            end_date_str = request.form.get('end_date', '')
+            
+            if start_date_str:
+                try:
+                    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+            if end_date_str:
+                try:
+                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+            
+            if start_date and end_date:
+                num_days = (end_date - start_date).days + 1
+                if num_days > 0:
+                    plays_per_day = -(-total_plays // num_days)
             
             if file.filename:
                 filename = secure_filename(file.filename)
@@ -745,7 +750,8 @@ def screen_internal(screen_id):
                     schedule_type=schedule_type,
                     start_date=start_date,
                     end_date=end_date,
-                    plays_per_day=plays_per_day
+                    plays_per_day=plays_per_day,
+                    total_plays=total_plays
                 )
                 db.session.add(internal)
                 db.session.commit()
@@ -1494,3 +1500,109 @@ def screen_availability(screen_id):
         week_end=week_end,
         currency_symbol=currency_symbol
     )
+
+
+@org_bp.route('/screen/<int:screen_id>/internal/availability', methods=['POST'])
+@login_required
+@org_required
+def internal_availability(screen_id):
+    """Calculate availability for internal content based on date range."""
+    from flask import jsonify
+    from services.availability_service import calculate_availability, calculate_equitable_distribution
+    
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    data = request.get_json()
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    content_type = data.get('content_type', 'image')
+    slot_duration = data.get('slot_duration', 10)
+    
+    if not start_date or not end_date:
+        return jsonify({'error': 'Dates de début et de fin requises'}), 400
+    
+    try:
+        if slot_duration:
+            slot_duration = int(slot_duration)
+    except (ValueError, TypeError):
+        slot_duration = 10
+    
+    availability = calculate_availability(
+        screen, start_date, end_date, None, slot_duration, content_type
+    )
+    
+    distribution = calculate_equitable_distribution(
+        availability['available_plays'],
+        start_date,
+        end_date,
+        None
+    )
+    
+    return jsonify({
+        'availability': {
+            'total_available_seconds': availability['total_available_seconds'],
+            'available_plays': availability['available_plays'],
+            'slot_duration': availability.get('slot_duration', slot_duration),
+            'num_days': availability['num_days'],
+            'periods': availability['periods']
+        },
+        'distribution': distribution,
+        'recommended_plays': min(availability['available_plays'], max(10, availability['available_plays'] // 10))
+    })
+
+
+@org_bp.route('/screen/<int:screen_id>/internal/calculate', methods=['POST'])
+@login_required
+@org_required
+def internal_calculate(screen_id):
+    """Calculate plays distribution for internal content."""
+    from flask import jsonify
+    from services.availability_service import calculate_availability, calculate_equitable_distribution
+    
+    screen = Screen.query.filter_by(
+        id=screen_id,
+        organization_id=current_user.organization_id
+    ).first_or_404()
+    
+    data = request.get_json()
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+    content_type = data.get('content_type', 'image')
+    slot_duration = int(data.get('slot_duration', 10))
+    plays_per_day = int(data.get('plays_per_day', 10))
+    
+    if not start_date or not end_date:
+        return jsonify({'error': 'Dates requises'}), 400
+    
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Format de date invalide'}), 400
+    
+    num_days = (end - start).days + 1
+    if num_days <= 0:
+        return jsonify({'error': 'La date de fin doit être après la date de début'}), 400
+    
+    total_plays = plays_per_day * num_days
+    
+    availability = calculate_availability(
+        screen, start_date, end_date, None, slot_duration, content_type
+    )
+    
+    if total_plays > availability['available_plays']:
+        total_plays = availability['available_plays']
+        plays_per_day = total_plays // num_days if num_days > 0 else total_plays
+    
+    distribution = calculate_equitable_distribution(total_plays, start_date, end_date, None)
+    
+    return jsonify({
+        'num_days': num_days,
+        'plays_per_day': plays_per_day,
+        'total_plays': total_plays,
+        'max_available_plays': availability['available_plays'],
+        'distribution': distribution['distribution']
+    })

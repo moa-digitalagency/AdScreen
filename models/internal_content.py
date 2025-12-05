@@ -22,6 +22,7 @@ class InternalContent(db.Model):
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
     plays_per_day = db.Column(db.Integer, default=10)
+    total_plays = db.Column(db.Integer, default=0)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

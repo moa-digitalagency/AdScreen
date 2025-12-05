@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6" id="internalForm">
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
@@ -40,57 +40,106 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Fichier</label>
-                <input type="file" name="file" accept="image/*,video/*" required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                <input type="file" name="file" id="fileInput" accept="image/*,video/*" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                    onchange="onFileChange()">
+                <input type="hidden" name="content_type" id="content_type" value="image">
             </div>
 
             <div class="border-t border-gray-200 pt-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-calendar-alt text-primary-500"></i>
-                    Programmation
+                    Période de diffusion
                 </h3>
                 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Mode de diffusion</label>
-                        <div class="grid md:grid-cols-2 gap-3">
-                            <label class="relative flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition" id="schedule-immediate-label">
-                                <input type="radio" name="schedule_type" value="immediate" checked
-                                       class="mt-1 w-4 h-4 text-primary-500" onchange="toggleInternalSchedule()">
-                                <div>
-                                    <div class="font-medium text-gray-800">Diffusion immédiate</div>
-                                    <p class="text-sm text-gray-500 mt-1">Le contenu sera diffusé dès sa création</p>
-                                </div>
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 mb-4 border border-indigo-100">
+                    <p class="text-sm text-indigo-700 flex items-start gap-2">
+                        <i class="fas fa-clock text-indigo-500 mt-0.5"></i>
+                        <span>Sélectionnez les dates pour calculer automatiquement les disponibilités</span>
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 shadow-sm">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-play text-white text-sm"></i>
+                            </div>
+                            <p class="font-semibold text-green-800">Début</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                <i class="fas fa-calendar-alt mr-1 text-green-600"></i>
+                                Date de début <span class="text-red-500">*</span>
                             </label>
-                            <label class="relative flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition" id="schedule-period-label">
-                                <input type="radio" name="schedule_type" value="period"
-                                       class="mt-1 w-4 h-4 text-primary-500" onchange="toggleInternalSchedule()">
-                                <div>
-                                    <div class="font-medium text-gray-800">Période programmée</div>
-                                    <p class="text-sm text-gray-500 mt-1">Définir des dates de diffusion</p>
-                                </div>
-                            </label>
+                            <input type="date" name="start_date" id="start_date" required
+                                value="{{ now().strftime('%Y-%m-%d') }}"
+                                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                                onchange="onDatesChange()">
                         </div>
                     </div>
-
-                    <div id="internal-period-section" class="hidden space-y-4">
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
-                                <input type="date" name="start_date"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-4 border border-red-200 shadow-sm">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-stop text-white text-sm"></i>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin</label>
-                                <input type="date" name="end_date"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                            <p class="font-semibold text-red-800">Fin</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                <i class="fas fa-calendar-alt mr-1 text-red-600"></i>
+                                Date de fin <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" name="end_date" id="end_date" required
+                                class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                                onchange="onDatesChange()">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="availability_section" class="hidden mt-4">
+                    <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-4 border border-blue-200 shadow-sm">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-bar text-white text-sm"></i>
+                                </div>
+                                <span class="font-semibold text-blue-800">Disponibilités</span>
+                            </div>
+                            <span id="loading_indicator" class="hidden">
+                                <div class="flex items-center gap-1 text-blue-500 text-xs">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-blue-100 text-center">
+                                <div class="w-8 h-8 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                                </div>
+                                <p class="text-xl font-bold text-blue-600" id="num_days_display">0</p>
+                                <p class="text-xs text-gray-500 font-medium">Jours</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-green-100 text-center">
+                                <div class="w-8 h-8 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-play-circle text-green-600 text-xs"></i>
+                                </div>
+                                <p class="text-xl font-bold text-green-600" id="available_plays_display">0</p>
+                                <p class="text-xs text-gray-500 font-medium">Passages max</p>
+                            </div>
+                            <div class="bg-white rounded-xl p-3 shadow-sm border border-purple-100 text-center">
+                                <div class="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-stopwatch text-purple-600 text-xs"></i>
+                                </div>
+                                <p class="text-xl font-bold text-purple-600" id="total_seconds_display">0</p>
+                                <p class="text-xs text-gray-500 font-medium">Sec. dispo</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="border-t border-gray-200 pt-6">
+            <div id="plays_section" class="border-t border-gray-200 pt-6 hidden">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-play-circle text-purple-500"></i>
                     Nombre de passages
@@ -98,24 +147,48 @@
                 
                 <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100 mb-4">
                     <p class="text-sm text-purple-700 flex items-start gap-2">
-                        <i class="fas fa-info-circle text-purple-500 mt-0.5"></i>
-                        <span>Définissez le nombre de diffusions souhaitées par jour.</span>
+                        <i class="fas fa-bullhorn text-purple-500 mt-0.5"></i>
+                        <span>Choisissez le nombre de diffusions souhaité (max disponible: <span id="max_plays_text" class="font-bold text-purple-600">0</span>)</span>
                     </p>
                 </div>
                 
-                <div class="flex items-center gap-4">
-                    <div class="w-48">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Passages par jour</label>
-                        <input type="number" name="plays_per_day" value="10" min="1" max="1000"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition text-center text-lg font-semibold">
+                <div class="flex items-center justify-center gap-5 mb-5">
+                    <button type="button" onclick="changePlayCount(-10)" 
+                        class="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center hover:from-gray-200 hover:to-gray-300 transition shadow-md active:scale-95 text-gray-700">
+                        <i class="fas fa-minus text-lg"></i>
+                    </button>
+                    <div class="relative">
+                        <input type="number" name="total_plays" id="total_plays" value="10" min="1" max="100000"
+                            class="w-36 text-center text-3xl font-bold border-3 border-primary-200 rounded-2xl py-4 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 bg-white shadow-inner" 
+                            onchange="validatePlays()">
+                        <span class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">passages</span>
                     </div>
-                    <div class="text-gray-500 text-sm mt-6">
-                        <p>par jour</p>
+                    <button type="button" onclick="changePlayCount(10)" 
+                        class="w-14 h-14 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center hover:from-primary-600 hover:to-purple-700 transition shadow-md active:scale-95 text-white">
+                        <i class="fas fa-plus text-lg"></i>
+                    </button>
+                </div>
+                
+                <input type="hidden" name="plays_per_day" id="plays_per_day_hidden" value="10">
+                <input type="hidden" name="schedule_type" value="period">
+                
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-amber-600"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-amber-800">Répartition équitable</p>
+                            <p class="text-xl font-bold text-amber-700">
+                                <span id="plays_per_day_display">0</span>
+                                <span class="text-sm font-normal">passages/jour</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-primary w-full md:w-auto">
                 <i class="fas fa-plus mr-2"></i>
                 Ajouter le contenu
             </button>
@@ -143,7 +216,19 @@
                 <p class="text-sm text-gray-500">
                     <span class="capitalize">{{ internal.content_type }}</span>
                     {% if internal.duration_seconds %} • {{ "%.1f"|format(internal.duration_seconds) }}s{% endif %}
+                    {% if internal.start_date and internal.end_date %}
+                    • {{ internal.start_date.strftime('%d/%m') }} - {{ internal.end_date.strftime('%d/%m/%Y') }}
+                    {% endif %}
                 </p>
+                {% if internal.total_plays or internal.plays_per_day %}
+                <p class="text-xs text-purple-600 mt-1">
+                    <i class="fas fa-play-circle mr-1"></i>
+                    {% if internal.total_plays %}{{ internal.total_plays }} passages total{% endif %}
+                    {% if internal.total_plays and internal.plays_per_day %} ({% endif %}
+                    {% if internal.plays_per_day %}~{{ internal.plays_per_day }}/jour{% endif %}
+                    {% if internal.total_plays and internal.plays_per_day %}){% endif %}
+                </p>
+                {% endif %}
             </div>
             <div class="text-center px-4">
                 <p class="text-2xl font-bold text-primary-600">{{ internal.priority }}</p>
@@ -197,29 +282,124 @@
 </div>
 
 <script>
-function toggleInternalSchedule() {
-    const isImmediate = document.querySelector('input[name="schedule_type"]:checked').value === 'immediate';
-    const periodSection = document.getElementById('internal-period-section');
-    const immediateLabel = document.getElementById('schedule-immediate-label');
-    const periodLabel = document.getElementById('schedule-period-label');
+const screenId = {{ screen.id }};
+let maxAvailablePlays = 0;
+let currentNumDays = 0;
+
+function onFileChange() {
+    const fileInput = document.getElementById('fileInput');
+    const contentTypeInput = document.getElementById('content_type');
     
-    if (isImmediate) {
-        periodSection.classList.add('hidden');
-        immediateLabel.classList.add('border-primary-500', 'bg-primary-50');
-        immediateLabel.classList.remove('border-gray-200');
-        periodLabel.classList.remove('border-primary-500', 'bg-primary-50');
-        periodLabel.classList.add('border-gray-200');
-    } else {
-        periodSection.classList.remove('hidden');
-        periodLabel.classList.add('border-primary-500', 'bg-primary-50');
-        periodLabel.classList.remove('border-gray-200');
-        immediateLabel.classList.remove('border-primary-500', 'bg-primary-50');
-        immediateLabel.classList.add('border-gray-200');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const ext = file.name.split('.').pop().toLowerCase();
+        
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            contentTypeInput.value = 'image';
+        } else if (['mp4', 'webm', 'mov'].includes(ext)) {
+            contentTypeInput.value = 'video';
+        }
+        
+        onDatesChange();
     }
 }
 
+function onDatesChange() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (!startDate || !endDate) {
+        document.getElementById('availability_section').classList.add('hidden');
+        document.getElementById('plays_section').classList.add('hidden');
+        return;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (end < start) {
+        document.getElementById('availability_section').classList.add('hidden');
+        document.getElementById('plays_section').classList.add('hidden');
+        return;
+    }
+    
+    document.getElementById('availability_section').classList.remove('hidden');
+    document.getElementById('loading_indicator').classList.remove('hidden');
+    
+    const contentType = document.getElementById('content_type').value || 'image';
+    
+    fetch(`/org/screen/${screenId}/internal/availability`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            start_date: startDate,
+            end_date: endDate,
+            content_type: contentType,
+            slot_duration: 10
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loading_indicator').classList.add('hidden');
+        
+        if (data.availability) {
+            const avail = data.availability;
+            currentNumDays = avail.num_days;
+            maxAvailablePlays = avail.available_plays;
+            
+            document.getElementById('num_days_display').textContent = avail.num_days;
+            document.getElementById('available_plays_display').textContent = avail.available_plays.toLocaleString();
+            document.getElementById('total_seconds_display').textContent = Math.round(avail.total_available_seconds).toLocaleString();
+            
+            document.getElementById('max_plays_text').textContent = avail.available_plays.toLocaleString();
+            
+            document.getElementById('plays_section').classList.remove('hidden');
+            
+            const recommendedPlays = data.recommended_plays || Math.min(avail.available_plays, 50);
+            document.getElementById('total_plays').value = recommendedPlays;
+            document.getElementById('total_plays').max = avail.available_plays;
+            
+            updatePlaysPerDay();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('loading_indicator').classList.add('hidden');
+    });
+}
+
+function changePlayCount(delta) {
+    const input = document.getElementById('total_plays');
+    let value = parseInt(input.value) || 0;
+    value = Math.max(1, Math.min(maxAvailablePlays, value + delta));
+    input.value = value;
+    validatePlays();
+}
+
+function validatePlays() {
+    const input = document.getElementById('total_plays');
+    let value = parseInt(input.value) || 1;
+    value = Math.max(1, Math.min(maxAvailablePlays, value));
+    input.value = value;
+    updatePlaysPerDay();
+}
+
+function updatePlaysPerDay() {
+    const totalPlays = parseInt(document.getElementById('total_plays').value) || 0;
+    const playsPerDay = currentNumDays > 0 ? Math.floor(totalPlays / currentNumDays) : totalPlays;
+    
+    document.getElementById('plays_per_day_display').textContent = playsPerDay;
+    document.getElementById('plays_per_day_hidden').value = playsPerDay;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    toggleInternalSchedule();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 7);
+    document.getElementById('end_date').value = tomorrow.toISOString().split('T')[0];
+    
+    onDatesChange();
 });
 
 function openPreviewModal(filePath, contentType, screenWidth, screenHeight) {
