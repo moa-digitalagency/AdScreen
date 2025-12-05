@@ -267,7 +267,7 @@
             ▶ Lancer la playlist
         </button>
         <p style="color: rgba(255,255,255,0.4); margin-top: 30px; font-size: 12px;">
-            Appuyez sur F11 pour le mode plein écran
+            F11: Plein écran | M: Son/Muet | Espace: Pause
         </p>
     </div>
 
@@ -285,8 +285,8 @@
     
     <div id="player">
         <img id="imageContent" style="display: none;" />
-        <video id="videoContent" style="display: none;" muted playsinline></video>
-        <video id="iptvContent" style="display: none;" autoplay muted playsinline></video>
+        <video id="videoContent" style="display: none;" playsinline></video>
+        <video id="iptvContent" style="display: none;" autoplay playsinline></video>
     </div>
     
     <div id="iptvInfo" style="display: none; position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 8px; color: white; font-family: sans-serif; font-size: 14px; z-index: 60;">
@@ -316,6 +316,9 @@
     <div id="controls">
         <button class="control-btn" onclick="togglePause()">
             <span id="pauseIcon">⏸</span> Pause
+        </button>
+        <button class="control-btn" onclick="toggleMute()">
+            <span id="muteIcon">🔊</span> <span id="muteText">Son</span>
         </button>
         <button class="control-btn" onclick="toggleFullscreen()">
             ⛶ Plein écran
@@ -349,6 +352,7 @@
             currentItemStartTime: null,
             hlsInstance: null,
             mpegtsPlayer: null,
+            isMuted: false,
             
             CONTROLS_HIDE_DELAY: 10000,
             PLAYLIST_REFRESH_INTERVAL: 10000,
@@ -488,6 +492,7 @@
             player.videoEl.src = item.url;
             player.videoEl.currentTime = 0;
             player.videoEl.loop = false;
+            player.videoEl.muted = player.isMuted;
             
             let hasLogged = false;
             let videoEnded = false;
@@ -763,6 +768,7 @@
                 });
                 
                 player.mpegtsPlayer.attachMediaElement(player.iptvEl);
+                player.iptvEl.muted = player.isMuted;
                 player.mpegtsPlayer.load();
                 
                 player.mpegtsPlayer.on(mpegts.Events.ERROR, function(errorType, errorDetail, errorInfo) {
@@ -875,6 +881,7 @@
                 
                 player.hlsInstance.loadSource(effectiveUrl);
                 player.hlsInstance.attachMedia(player.iptvEl);
+                player.iptvEl.muted = player.isMuted;
                 player.hlsInstance.startLoad();
                 
                 player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
@@ -937,6 +944,7 @@
             } else if (player.iptvEl.canPlayType('application/vnd.apple.mpegurl')) {
                 debug('Using native HLS support');
                 player.iptvEl.src = effectiveUrl;
+                player.iptvEl.muted = player.isMuted;
                 player.iptvEl.play().then(() => {
                     debug('OnlineTV stream started (native)');
                     player.state = PlayerState.PLAYING;
@@ -1081,6 +1089,7 @@
             updateIptvStatus('loading', 'Lecture directe...');
             
             player.iptvEl.src = streamUrl;
+            player.iptvEl.muted = player.isMuted;
             player.iptvEl.play().then(() => {
                 debug('OnlineTV direct stream started');
                 player.state = PlayerState.PLAYING;
@@ -1289,6 +1298,39 @@
             }
         }
 
+        function toggleMute() {
+            player.isMuted = !player.isMuted;
+            
+            if (player.videoEl) {
+                player.videoEl.muted = player.isMuted;
+            }
+            if (player.iptvEl) {
+                player.iptvEl.muted = player.isMuted;
+            }
+            
+            const muteIcon = document.getElementById('muteIcon');
+            const muteText = document.getElementById('muteText');
+            
+            if (player.isMuted) {
+                muteIcon.textContent = '🔇';
+                muteText.textContent = 'Muet';
+                debug('Audio muted');
+            } else {
+                muteIcon.textContent = '🔊';
+                muteText.textContent = 'Son';
+                debug('Audio unmuted');
+            }
+        }
+
+        function applyMuteState() {
+            if (player.videoEl) {
+                player.videoEl.muted = player.isMuted;
+            }
+            if (player.iptvEl) {
+                player.iptvEl.muted = player.isMuted;
+            }
+        }
+
         function logout() {
             window.location.href = '/player/logout';
         }
@@ -1337,6 +1379,9 @@
                 e.preventDefault();
                 debug('Manual skip');
                 advanceToNext();
+            } else if (e.key === 'm') {
+                e.preventDefault();
+                toggleMute();
             }
         });
 

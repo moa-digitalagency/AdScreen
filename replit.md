@@ -71,7 +71,7 @@ Not specified.
     - **Screen Management**: Naming, live preview, multi-positional overlays (scrolling banners, static images), customizable colors, font sizes, scroll speeds, and overlay durations/frequencies.
     - **Content Management**: Strict upload validation, content queues, internal establishment content, filler/demo content, content action controls (suspend, activate, delete), resolution-adaptive previews, real-time admin playlist view.
     - **Booking System**: Unique reservation numbers, detailed receipts with QR codes, content adaptation, status tracking, precise time selection.
-    - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh.
+    - **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat and status logging, playback statistics, 10-second control timeout, 30-second playlist refresh, audio support with mute toggle.
     - **OnlineTV Mode**: Stream live TV channels via M3U/HLS with HLS.js library, overlays remain active during streaming, automatic fallback for compatibility.
     - **MPEG-TS to HLS Conversion**: Server-side FFmpeg conversion for MPEG-TS streams that don't play natively in browsers.
     - **HLS Converter Service**: `services/hls_converter.py` manages FFmpeg processes, segment storage, and manifest rewriting.
