@@ -4,7 +4,7 @@
 <div class="flex min-h-screen">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <aside id="sidebar" class="w-64 admin-sidebar-gradient text-white fixed top-0 left-0 h-screen z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+    <aside id="sidebar" class="fixed top-0 left-0 h-screen w-64 z-50 flex flex-col overflow-hidden admin-sidebar-gradient text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
         <div class="p-4 sm:p-6 flex-shrink-0">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-400 text-lg sm:text-xl"></i>
@@ -169,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
     #sidebar {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        isolation: isolate;
     }
     #sidebar.admin-sidebar-gradient {
         background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
@@ -189,18 +190,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     #sidebar nav {
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,0.3) transparent;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        overscroll-behavior: contain;
+        scroll-behavior: auto;
     }
     #sidebar nav::-webkit-scrollbar {
-        width: 4px;
-    }
-    #sidebar nav::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    #sidebar nav::-webkit-scrollbar-thumb {
-        background-color: rgba(255,255,255,0.3);
-        border-radius: 2px;
+        display: none;
+        width: 0;
+        height: 0;
     }
 </style>
 {% endblock %}
