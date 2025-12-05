@@ -722,8 +722,18 @@ def calculate_available_screens():
         return jsonify({'error': 'Dates de debut et de fin requises'}), 400
     
     try:
-        start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        if 'T' in start_date:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%dT%H:%M').date()
+        else:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+        
+        if 'T' in end_date:
+            end_dt = datetime.strptime(end_date, '%Y-%m-%dT%H:%M').date()
+        else:
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        start_date_str = start_dt.strftime('%Y-%m-%d')
+        end_date_str = end_dt.strftime('%Y-%m-%d')
     except ValueError:
         return jsonify({'error': 'Format de date invalide'}), 400
     
@@ -764,7 +774,7 @@ def calculate_available_screens():
             continue
         
         availability = calculate_availability(
-            screen, start_date, end_date, None, slot_duration, content_type
+            screen, start_date_str, end_date_str, None, slot_duration, content_type
         )
         
         screen_available_plays = availability['available_plays']

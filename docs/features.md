@@ -388,6 +388,7 @@ Les établissements peuvent créer leurs propres contenus promotionnels :
 | Upload fichier | Interface drag & drop avec aperçu temps réel |
 | Aperçu résolution | Simulation à la résolution exacte de l'écran |
 | Sélection période | Même calendrier que les réservations clients |
+| Sélection heures | Heures de début et fin spécifiques (08:00-22:00 par défaut) |
 | Calcul disponibilités | API identique au système de réservation |
 | Distribution équitable | Passages répartis sur les jours de la période |
 
@@ -397,6 +398,7 @@ Les établissements peuvent créer leurs propres contenus promotionnels :
 | Nom | Identification du contenu |
 | Priorité | 1-100 (défaut 80, plus haut = plus fréquent) |
 | Date début/fin | Période de diffusion |
+| Heure début/fin | Heures de diffusion journalières |
 | Passages total | Nombre total de diffusions sur la période |
 | Passages/jour | Calculé automatiquement (ceiling division) |
 
@@ -485,6 +487,53 @@ Le système génère des factures chaque semaine via plusieurs mécanismes :
 - Commission = Revenu brut × Taux commission organisation
 - TVA calculée sur la commission (taux plateforme configurable)
 - Total = Commission + TVA
+
+### Contenu Publicitaire (Ad Content) - Mass Targeting
+
+Le superadmin peut créer des campagnes publicitaires ciblant plusieurs écrans simultanément :
+
+**Création de campagne**
+
+| Étape | Description |
+|-------|-------------|
+| 1. Informations | Nom, annonceur, description |
+| 2. Type de contenu | Image ou vidéo |
+| 3. Durée créneau | 10s, 15s, 20s, 30s, 60s |
+| 4. Ciblage géographique | Pays, ville, établissement ou écran |
+| 5. Dates et heures | Période de diffusion avec datetime-local |
+| 6. Passages minimum | Filtrage des écrans par disponibilité |
+| 7. Sélection écrans | Liste des écrans éligibles avec tout sélectionner |
+| 8. Upload média | Image ou vidéo |
+| 9. Tarification | Prix total, devise, commission |
+
+**Ciblage multi-niveaux**
+
+| Type | Description | Filtrage supplémentaire |
+|------|-------------|------------------------|
+| Pays | Tous les écrans d'un pays | Type établissement (payant/gratuit/tous) |
+| Ville | Tous les écrans d'une ville | Type établissement |
+| Établissement | Tous les écrans d'un établissement | - |
+| Écran | Un écran spécifique | - |
+
+**Calcul de disponibilité**
+- Utilise le même algorithme que les réservations clients
+- Filtre les écrans ayant au moins le nombre de passages minimum requis
+- Affiche le résumé : nombre d'écrans, passages disponibles, jours
+
+**Facturation des campagnes**
+- Prix total de la campagne configurable
+- Commission établissements configurable (par défaut selon paramètres)
+- Génération de factures par établissement participant
+- Multi-devise selon les établissements ciblés
+
+**Statuts des campagnes**
+
+| Statut | Description |
+|--------|-------------|
+| pending | En attente de validation |
+| active | Campagne en cours de diffusion |
+| completed | Campagne terminée |
+| cancelled | Campagne annulée |
 
 ## Roadmap
 

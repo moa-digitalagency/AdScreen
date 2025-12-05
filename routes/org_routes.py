@@ -1518,6 +1518,8 @@ def internal_availability(screen_id):
     data = request.get_json()
     start_date = data.get('start_date')
     end_date = data.get('end_date')
+    start_time = data.get('start_time', '08:00')
+    end_time = data.get('end_time', '22:00')
     content_type = data.get('content_type', 'image')
     slot_duration = data.get('slot_duration', 10)
     

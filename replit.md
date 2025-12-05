@@ -10,6 +10,8 @@ Shabaka AdScreen is a SaaS platform designed to enable establishments (bars, res
 - **208 countries** with 4,600+ cities for geographic targeting
 - **Admin permissions**: Granular access control for sub-admins
 - **OnlineTV streaming**: HLS.js integration for M3U/M3U8 stream playback with overlays support
+- **Ad Content (Mass Targeting)**: Superadmin can create advertising campaigns targeting multiple screens with datetime-local support
+- **Internal Content Time Selection**: Organizations can now select specific times (start_time/end_time) in addition to dates
 
 ### Demo Accounts (created by init_db_demo.py)
 - **Superadmin**: admin@shabaka-adscreen.com / admin123
