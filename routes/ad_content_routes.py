@@ -34,7 +34,7 @@ def allowed_file(filename):
 @ad_content_bp.route('/ad-contents')
 @login_required
 @superadmin_required
-def list():
+def list_ads():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     status_filter = request.args.get('status', '')
@@ -189,7 +189,7 @@ def create():
         db.session.commit()
         
         flash(f'Contenu publicitaire "{name}" créé avec succès! Référence: {ad.reference}', 'success')
-        return redirect(url_for('ad_content.list'))
+        return redirect(url_for('ad_content.list_ads'))
     
     return render_template('admin/ad_contents/form.html',
         ad=None,
@@ -324,7 +324,7 @@ def edit(ad_id):
         db.session.commit()
         
         flash(f'Contenu publicitaire "{name}" mis à jour avec succès!', 'success')
-        return redirect(url_for('ad_content.list'))
+        return redirect(url_for('ad_content.list_ads'))
     
     return render_template('admin/ad_contents/form.html',
         ad=ad,
@@ -353,7 +353,7 @@ def toggle(ad_id):
         flash(f'Contenu "{ad.name}" activé immédiatement.', 'success')
     
     db.session.commit()
-    return redirect(url_for('ad_content.list'))
+    return redirect(url_for('ad_content.list_ads'))
 
 
 @ad_content_bp.route('/ad-content/<int:ad_id>/delete', methods=['POST'])
@@ -376,7 +376,7 @@ def delete(ad_id):
     db.session.commit()
     
     flash(f'Contenu "{name}" supprimé.', 'success')
-    return redirect(url_for('ad_content.list'))
+    return redirect(url_for('ad_content.list_ads'))
 
 
 @ad_content_bp.route('/ad-content/<int:ad_id>/view')
@@ -611,8 +611,8 @@ def settings():
         flash('Paramètres de contenu publicitaire mis à jour.', 'success')
         return redirect(url_for('ad_content.settings'))
     
-    ad_settings = SiteSetting.get_ad_content_settings()
-    return render_template('admin/ad_contents/settings.html', ad_settings=ad_settings)
+    settings = SiteSetting.get_ad_content_settings()
+    return render_template('admin/ad_contents/settings.html', settings=settings)
 
 
 @ad_content_bp.route('/ad-content/global-stats')

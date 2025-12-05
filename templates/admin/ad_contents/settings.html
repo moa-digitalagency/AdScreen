@@ -5,7 +5,7 @@
 {% block main_content %}
 <div class="max-w-3xl mx-auto space-y-6">
     <div class="flex items-center gap-4">
-        <a href="{{ url_for('ad_content.list') }}" class="p-2 text-gray-400 hover:text-gray-600 transition">
+        <a href="{{ url_for('ad_content.list_ads') }}" class="p-2 text-gray-400 hover:text-gray-600 transition">
             <i class="fas fa-arrow-left"></i>
         </a>
         <div>
@@ -103,7 +103,7 @@
         </div>
 
         <div class="flex justify-end gap-3">
-            <a href="{{ url_for('ad_content.list') }}" class="btn-secondary">
+            <a href="{{ url_for('ad_content.list_ads') }}" class="btn-secondary">
                 Annuler
             </a>
             <button type="submit" class="btn-primary">

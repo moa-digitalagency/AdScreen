@@ -217,12 +217,12 @@
             </p>
             <div class="flex gap-2">
                 {% if ads.has_prev %}
-                <a href="{{ url_for('ad_content.list', page=ads.prev_num, status=status_filter) }}" class="btn-secondary text-sm">
+                <a href="{{ url_for('ad_content.list_ads', page=ads.prev_num, status=status_filter) }}" class="btn-secondary text-sm">
                     <i class="fas fa-chevron-left"></i> Précédent
                 </a>
                 {% endif %}
                 {% if ads.has_next %}
-                <a href="{{ url_for('ad_content.list', page=ads.next_num, status=status_filter) }}" class="btn-secondary text-sm">
+                <a href="{{ url_for('ad_content.list_ads', page=ads.next_num, status=status_filter) }}" class="btn-secondary text-sm">
                     Suivant <i class="fas fa-chevron-right"></i>
                 </a>
                 {% endif %}
