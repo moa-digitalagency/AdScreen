@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
@@ -414,8 +414,6 @@ def stats(ad_id):
     
     days_back = request.args.get('days', 30, type=int)
     start_date = date.today() - timedelta(days=days_back)
-    
-    from datetime import timedelta
     
     daily_stats = db.session.query(
         AdContentStat.date,

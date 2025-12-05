@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response, make_response
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
+from models.ad_content import AdContent, AdContentStat
 from datetime import datetime
 import urllib.parse
 import urllib3
@@ -225,6 +226,16 @@ def get_playlist():
             if broadcast.broadcast_type == 'content':
                 playlist.append(broadcast.to_content_dict())
     
+    active_ad_contents = AdContent.query.filter(
+        AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
+    ).all()
+    for ad in active_ad_contents:
+        ad.update_status()
+        if ad.applies_to_screen(screen):
+            ad_dict = ad.to_content_dict()
+            ad_dict['priority'] = 50
+            playlist.append(ad_dict)
+    
     playlist.sort(key=lambda x: x['priority'], reverse=True)
     
     response = make_response(jsonify({
@@ -306,6 +317,17 @@ def log_play():
             if booking.plays_completed >= booking.num_plays:
                 booking.status = 'completed'
                 exhausted = True
+    
+    if category == 'ad_content' and content_id:
+        ad_id_str = str(content_id)
+        if ad_id_str.startswith('ad_'):
+            ad_id = int(ad_id_str.replace('ad_', ''))
+            AdContentStat.record_impression(
+                ad_content_id=ad_id,
+                screen_id=screen.id,
+                organization_id=screen.organization_id,
+                duration=duration or 0
+            )
     
     db.session.commit()
     
