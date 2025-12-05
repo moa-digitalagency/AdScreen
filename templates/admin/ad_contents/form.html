@@ -517,53 +517,90 @@
 <script>
 const citiesByCountry = {{ cities_by_country|tojson|safe }};
 let availableScreens = [];
+let debounceTimer = null;
+
+function debounce(func, wait) {
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(debounceTimer);
+            func(...args);
+        };
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(later, wait);
+    };
+}
 
 function onContentTypeChange() {
-    document.querySelectorAll('.content-type-label').forEach(label => {
-        const radio = label.querySelector('input');
-        const indicator = label.querySelector('.content-type-indicator');
-        if (radio.checked) {
-            label.classList.add('border-primary-500', 'bg-primary-50');
-            indicator.classList.add('bg-primary-500', 'border-primary-500');
-        } else {
-            label.classList.remove('border-primary-500', 'bg-primary-50');
-            indicator.classList.remove('bg-primary-500', 'border-primary-500');
-        }
-    });
+    try {
+        document.querySelectorAll('.content-type-label').forEach(label => {
+            const radio = label.querySelector('input');
+            const indicator = label.querySelector('.content-type-indicator');
+            if (radio && radio.checked) {
+                label.classList.add('border-primary-500', 'bg-primary-50');
+                if (indicator) {
+                    indicator.classList.add('bg-primary-500', 'border-primary-500');
+                }
+            } else {
+                label.classList.remove('border-primary-500', 'bg-primary-50');
+                if (indicator) {
+                    indicator.classList.remove('bg-primary-500', 'border-primary-500');
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error in onContentTypeChange:', e);
+    }
 }
 
 function onSlotChange() {
 }
 
 function onTargetTypeChange() {
-    const targetType = document.querySelector('input[name="target_type"]:checked').value;
-    
-    document.querySelectorAll('.target-section').forEach(s => s.classList.add('hidden'));
-    
-    if (targetType === 'country') {
-        document.getElementById('target-country-section').classList.remove('hidden');
-    } else if (targetType === 'city') {
-        document.getElementById('target-city-section').classList.remove('hidden');
-        updateCities();
-    } else if (targetType === 'organization') {
-        document.getElementById('target-organization-section').classList.remove('hidden');
-    } else if (targetType === 'screen') {
-        document.getElementById('target-screen-section').classList.remove('hidden');
+    try {
+        const targetTypeRadio = document.querySelector('input[name="target_type"]:checked');
+        if (!targetTypeRadio) return;
+        const targetType = targetTypeRadio.value;
+        
+        document.querySelectorAll('.target-section').forEach(s => s.classList.add('hidden'));
+        
+        const sectionId = {
+            'country': 'target-country-section',
+            'city': 'target-city-section',
+            'organization': 'target-organization-section',
+            'screen': 'target-screen-section'
+        }[targetType];
+        
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.classList.remove('hidden');
+            if (targetType === 'city') {
+                updateCities();
+            }
+        }
+    } catch (e) {
+        console.error('Error in onTargetTypeChange:', e);
     }
 }
 
 function updateCities() {
-    const country = document.getElementById('country-for-city').value;
-    const citySelect = document.getElementById('city-select');
-    citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
-    
-    if (citiesByCountry[country]) {
-        citiesByCountry[country].forEach(city => {
-            const option = document.createElement('option');
-            option.value = city;
-            option.textContent = city;
-            citySelect.appendChild(option);
-        });
+    try {
+        const countrySelect = document.getElementById('country-for-city');
+        const citySelect = document.getElementById('city-select');
+        if (!countrySelect || !citySelect) return;
+        
+        const country = countrySelect.value;
+        citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
+        
+        if (citiesByCountry && citiesByCountry[country]) {
+            citiesByCountry[country].forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        }
+    } catch (e) {
+        console.error('Error in updateCities:', e);
     }
 }
 
@@ -587,17 +624,23 @@ function setMinPlays(value) {
 }
 
 function updatePresetHighlight() {
-    const value = parseInt(document.getElementById('min_plays').value) || 0;
-    document.querySelectorAll('.min-plays-preset').forEach(btn => {
-        const btnValue = parseInt(btn.dataset.value);
-        if (btnValue === value) {
-            btn.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700');
-            btn.classList.remove('border-gray-200');
-        } else {
-            btn.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700');
-            btn.classList.add('border-gray-200');
-        }
-    });
+    try {
+        const minPlaysInput = document.getElementById('min_plays');
+        if (!minPlaysInput) return;
+        const value = parseInt(minPlaysInput.value) || 0;
+        document.querySelectorAll('.min-plays-preset').forEach(btn => {
+            const btnValue = parseInt(btn.dataset.value);
+            if (btnValue === value) {
+                btn.classList.add('border-primary-500', 'bg-primary-50', 'text-primary-700');
+                btn.classList.remove('border-gray-200');
+            } else {
+                btn.classList.remove('border-primary-500', 'bg-primary-50', 'text-primary-700');
+                btn.classList.add('border-gray-200');
+            }
+        });
+    } catch (e) {
+        console.error('Error in updatePresetHighlight:', e);
+    }
 }
 
 function onMinPlaysChange() {
@@ -761,14 +804,21 @@ document.getElementById('total_price').addEventListener('input', updatePriceSumm
 document.getElementById('commission_rate').addEventListener('input', updatePriceSummary);
 
 document.addEventListener('DOMContentLoaded', function() {
-    onContentTypeChange();
-    onTargetTypeChange();
-    updatePresetHighlight();
-    
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 7);
-    const endDateStr = endDate.toISOString().slice(0, 16);
-    document.getElementById('end_date').value = endDateStr;
+    try {
+        onContentTypeChange();
+        onTargetTypeChange();
+        updatePresetHighlight();
+        
+        const endDateInput = document.getElementById('end_date');
+        if (endDateInput) {
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            const endDateStr = endDate.toISOString().slice(0, 16);
+            endDateInput.value = endDateStr;
+        }
+    } catch (e) {
+        console.error('Error during initialization:', e);
+    }
 });
 </script>
 {% endblock %}

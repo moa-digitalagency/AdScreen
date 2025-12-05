@@ -41,7 +41,7 @@ COUNTRIES = {
 
 
 def get_all_countries():
-    return [{'code': code, 'name': name} for code, name in sorted(COUNTRIES.items(), key=lambda x: x[1])]
+    return [(code, name) for code, name in sorted(COUNTRIES.items(), key=lambda x: x[1])]
 
 
 def get_country_name(code):
