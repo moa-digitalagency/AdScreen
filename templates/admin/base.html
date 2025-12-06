@@ -168,6 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
     #sidebar {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        background-color: #022c22;
+        isolation: isolate;
     }
     
     @media (max-width: 1023px) {
@@ -178,6 +180,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .sidebar-mobile-visible {
             transform: translateX(0);
             transition: transform 0.3s ease-in-out;
+        }
+        #sidebar {
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
         }
     }
     
@@ -198,19 +203,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     #sidebar.admin-sidebar-gradient {
-        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%);
+        background: #022c22;
+        background-image: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%);
     }
     #sidebar.admin-sidebar-gradient,
     #sidebar.admin-sidebar-gradient * {
         color: rgba(255, 255, 255, 0.9);
     }
-    #sidebar.admin-sidebar-gradient .admin-nav-link.active,
-    #sidebar.admin-sidebar-gradient .admin-nav-link.active * {
+    #sidebar.admin-sidebar-gradient .admin-nav-link.active {
         color: #ffffff;
         background: rgba(255, 255, 255, 0.15);
     }
-    #sidebar.admin-sidebar-gradient .admin-nav-link:hover,
-    #sidebar.admin-sidebar-gradient .admin-nav-link:hover * {
+    #sidebar.admin-sidebar-gradient .admin-nav-link:hover {
         color: #ffffff;
         background: rgba(255, 255, 255, 0.1);
     }
@@ -231,16 +235,22 @@ document.addEventListener('DOMContentLoaded', function() {
     #sidebar nav {
         overflow-y: auto;
         overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.3) #064e3b;
     }
     #sidebar nav::-webkit-scrollbar {
         width: 6px;
     }
     #sidebar nav::-webkit-scrollbar-track {
-        background: transparent;
+        background: #064e3b;
     }
     #sidebar nav::-webkit-scrollbar-thumb {
         background-color: rgba(255,255,255,0.3);
         border-radius: 3px;
+    }
+    
+    #sidebar > * {
+        background: transparent;
     }
 </style>
 {% endblock %}
