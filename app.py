@@ -27,6 +27,8 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = "auth.login"
