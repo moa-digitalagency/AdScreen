@@ -1,0 +1,17 @@
+╔════════════════════════════════════════════════════════════════╗
+    ║  🖥  Shabaka AdScreen - Initialisation Base de Données  🗄   ║
+    ╚════════════════════════════════════════════════════════════════╝
+    
+2025-12-06 13:47:54,542 - INFO - 🔨 Création des tables...
+2025-12-06 13:47:54,551 - INFO - ✅ Base de données initialisée avec succès!
+2025-12-06 13:47:54,551 - INFO - 
+📋 Tables créées :
+2025-12-06 13:47:54,556 - INFO -   👤 users: 10 enregistrements
+2025-12-06 13:47:54,561 - ERROR - ❌ Erreur lors de l'initialisation : (psycopg2.errors.UndefinedColumn) column organizations.has_iptv does not exist
+LINE 2: ...organizations.timezone AS organizations_timezone, organizati...
+                                                             ^
+
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT organizations.id AS organizations_id, organizations.name AS organizations_name, organizations.email AS organizations_email, organizations.phone AS organizations_phone, organizations.address AS organizations_address, organizations.country AS organizations_country, organizations.city AS organizations_city, organizations.is_active AS organizations_is_active, organizations.is_paid AS organizations_is_paid, organizations.commission_rate AS organizations_commission_rate, organizations.subscription_plan AS organizations_subscription_plan, organizations.currency AS organizations_currency, organizations.created_at AS organizations_created_at, organizations.commission_set_by AS organizations_commission_set_by, organizations.commission_updated_at AS organizations_commission_updated_at, organizations.business_name AS organizations_business_name, organizations.registration_number_label AS organizations_registration_number_label, organizations.business_registration_number AS organizations_business_registration_number, organizations.vat_rate AS organizations_vat_rate, organizations.vat_number AS organizations_vat_number, organizations.timezone AS organizations_timezone, organizations.has_iptv AS organizations_has_iptv, organizations.iptv_m3u_url AS organizations_iptv_m3u_url, organizations.allow_ad_content AS organizations_allow_ad_content 
+FROM organizations) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/f405)
