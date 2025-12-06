@@ -1,19 +1,114 @@
 #!/usr/bin/env python3
 """
-🗄️ Script d'initialisation de la base de données Shabaka AdScreen
-📌 Crée toutes les tables définies dans les modèles SQLAlchemy.
+Script d'initialisation de la base de données Shabaka AdScreen
+Crée toutes les tables définies dans les modèles SQLAlchemy.
+Ajoute automatiquement les colonnes manquantes aux tables existantes.
 """
 import sys
 import argparse
 import logging
+from sqlalchemy import inspect, text
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
+def get_column_type_sql(column):
+    """Convertit le type SQLAlchemy en type SQL pour ALTER TABLE."""
+    from sqlalchemy import Boolean, Integer, Float, String, Text, DateTime, Date
+    
+    col_type = type(column.type)
+    
+    if col_type == Boolean:
+        return "BOOLEAN"
+    elif col_type == Integer:
+        return "INTEGER"
+    elif col_type == Float:
+        return "FLOAT"
+    elif col_type == String:
+        length = getattr(column.type, 'length', 255) or 255
+        return f"VARCHAR({length})"
+    elif col_type == Text:
+        return "TEXT"
+    elif col_type == DateTime:
+        return "TIMESTAMP"
+    elif col_type == Date:
+        return "DATE"
+    else:
+        return "TEXT"
+
+
+def get_default_value_sql(column):
+    """Récupère la valeur par défaut pour une colonne."""
+    if column.default is not None:
+        default = column.default.arg
+        if isinstance(default, bool):
+            return "TRUE" if default else "FALSE"
+        elif isinstance(default, (int, float)):
+            return str(default)
+        elif isinstance(default, str):
+            return f"'{default}'"
+    return None
+
+
+def sync_missing_columns(db):
+    """
+    Synchronise les colonnes manquantes dans les tables existantes.
+    Ajoute automatiquement les colonnes définies dans les modèles mais absentes de la DB.
+    """
+    from models import (
+        User, Organization, Screen, TimeSlot, TimePeriod,
+        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
+        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
+        Broadcast, AdContent, AdContentInvoice, AdContentStat
+    )
+    
+    models = [
+        User, Organization, Screen, TimeSlot, TimePeriod,
+        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
+        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
+        Broadcast, AdContent, AdContentInvoice, AdContentStat
+    ]
+    
+    inspector = inspect(db.engine)
+    existing_tables = inspector.get_table_names()
+    
+    columns_added = 0
+    
+    for model in models:
+        table_name = model.__tablename__
+        
+        if table_name not in existing_tables:
+            continue
+        
+        existing_columns = {col['name'] for col in inspector.get_columns(table_name)}
+        model_columns = {col.name: col for col in model.__table__.columns}
+        
+        for col_name, column in model_columns.items():
+            if col_name not in existing_columns:
+                col_type = get_column_type_sql(column)
+                default_sql = get_default_value_sql(column)
+                
+                alter_sql = f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS "{col_name}" {col_type}'
+                
+                if default_sql:
+                    alter_sql += f" DEFAULT {default_sql}"
+                
+                try:
+                    db.session.execute(text(alter_sql))
+                    db.session.commit()
+                    logger.info(f"  + Colonne ajoutée: {table_name}.{col_name} ({col_type})")
+                    columns_added += 1
+                except Exception as e:
+                    logger.warning(f"  ! Impossible d'ajouter {table_name}.{col_name}: {e}")
+                    db.session.rollback()
+    
+    return columns_added
+
+
 def init_database(drop_existing=False):
     """
-    🚀 Initialise la base de données.
+    Initialise la base de données.
     
     Args:
         drop_existing: Si True, supprime les tables existantes avant de les recréer
@@ -22,13 +117,22 @@ def init_database(drop_existing=False):
     
     with app.app_context():
         if drop_existing:
-            logger.warning("⚠️  Suppression de toutes les tables existantes...")
+            logger.warning("Suppression de toutes les tables existantes...")
             db.drop_all()
-            logger.info("🗑️  Tables supprimées.")
+            logger.info("Tables supprimées.")
         
-        logger.info("🔨 Création des tables...")
+        logger.info("Création des tables...")
         db.create_all()
-        logger.info("✅ Base de données initialisée avec succès!")
+        logger.info("Tables de base créées.")
+        
+        logger.info("Synchronisation des colonnes manquantes...")
+        columns_added = sync_missing_columns(db)
+        if columns_added > 0:
+            logger.info(f"{columns_added} colonne(s) ajoutée(s).")
+        else:
+            logger.info("Toutes les colonnes sont à jour.")
+        
+        logger.info("Base de données initialisée avec succès!")
         
         from models import (
             User, Organization, Screen, TimeSlot, TimePeriod,
@@ -38,32 +142,35 @@ def init_database(drop_existing=False):
         )
         
         tables = [
-            ('👤 users', User),
-            ('🏢 organizations', Organization),
-            ('📺 screens', Screen),
-            ('⏱️  time_slots', TimeSlot),
-            ('🕐 time_periods', TimePeriod),
-            ('🎬 contents', Content),
-            ('📅 bookings', Booking),
-            ('🎨 fillers', Filler),
-            ('📝 internal_contents', InternalContent),
-            ('📊 stat_logs', StatLog),
-            ('💓 heartbeat_logs', HeartbeatLog),
-            ('⚙️  site_settings', SiteSetting),
-            ('📋 registration_requests', RegistrationRequest),
-            ('🔲 screen_overlays', ScreenOverlay),
-            ('🧾 invoices', Invoice),
-            ('💳 payment_proofs', PaymentProof),
-            ('📡 broadcasts', Broadcast),
-            ('📺 ad_contents', AdContent),
-            ('🧾 ad_content_invoices', AdContentInvoice),
-            ('📊 ad_content_stats', AdContentStat),
+            ('users', User),
+            ('organizations', Organization),
+            ('screens', Screen),
+            ('time_slots', TimeSlot),
+            ('time_periods', TimePeriod),
+            ('contents', Content),
+            ('bookings', Booking),
+            ('fillers', Filler),
+            ('internal_contents', InternalContent),
+            ('stat_logs', StatLog),
+            ('heartbeat_logs', HeartbeatLog),
+            ('site_settings', SiteSetting),
+            ('registration_requests', RegistrationRequest),
+            ('screen_overlays', ScreenOverlay),
+            ('invoices', Invoice),
+            ('payment_proofs', PaymentProof),
+            ('broadcasts', Broadcast),
+            ('ad_contents', AdContent),
+            ('ad_content_invoices', AdContentInvoice),
+            ('ad_content_stats', AdContentStat),
         ]
         
-        logger.info("\n📋 Tables créées :")
+        logger.info("\nTables créées :")
         for table_name, model in tables:
-            count = model.query.count()
-            logger.info(f"  {table_name}: {count} enregistrements")
+            try:
+                count = model.query.count()
+                logger.info(f"  {table_name}: {count} enregistrements")
+            except Exception as e:
+                logger.warning(f"  {table_name}: erreur de lecture - {e}")
     
     return True
 
@@ -71,20 +178,20 @@ def init_database(drop_existing=False):
 def main():
     print("""
     ╔════════════════════════════════════════════════════════════════╗
-    ║  🖥️  Shabaka AdScreen - Initialisation Base de Données  🗄️   ║
+    ║     Shabaka AdScreen - Initialisation Base de Données         ║
     ╚════════════════════════════════════════════════════════════════╝
     """)
     
-    parser = argparse.ArgumentParser(description='🗄️ Initialise la base de données Shabaka AdScreen')
+    parser = argparse.ArgumentParser(description='Initialise la base de données Shabaka AdScreen')
     parser.add_argument(
         '--drop',
         action='store_true',
-        help='⚠️ Supprime les tables existantes avant de les recréer (ATTENTION: perte de données)'
+        help='Supprime les tables existantes avant de les recréer (ATTENTION: perte de données)'
     )
     parser.add_argument(
         '--check',
         action='store_true',
-        help='🔍 Vérifie simplement la connexion à la base de données'
+        help='Vérifie simplement la connexion à la base de données'
     )
     
     args = parser.parse_args()
@@ -94,26 +201,26 @@ def main():
             from app import app, db
             with app.app_context():
                 db.engine.connect()
-            logger.info("✅ Connexion à la base de données réussie!")
+            logger.info("Connexion à la base de données réussie!")
             return 0
         except Exception as e:
-            logger.error(f"❌ Erreur de connexion : {e}")
+            logger.error(f"Erreur de connexion : {e}")
             return 1
     
     try:
         if args.drop:
-            response = input("⚠️  ATTENTION: Toutes les données seront perdues. Continuer ? (oui/non) : ")
+            response = input("ATTENTION: Toutes les données seront perdues. Continuer ? (oui/non) : ")
             if response.lower() != 'oui':
-                logger.info("🚫 Opération annulée.")
+                logger.info("Opération annulée.")
                 return 0
         
         success = init_database(drop_existing=args.drop)
         if success:
-            logger.info("\n🎉 Initialisation terminée avec succès!")
+            logger.info("\nInitialisation terminée avec succès!")
         return 0 if success else 1
         
     except Exception as e:
-        logger.error(f"❌ Erreur lors de l'initialisation : {e}")
+        logger.error(f"Erreur lors de l'initialisation : {e}")
         return 1
 
 
