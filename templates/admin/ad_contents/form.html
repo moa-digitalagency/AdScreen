@@ -304,22 +304,24 @@
                 </div>
             </div>
             
-            <div class="flex items-center justify-center gap-3 sm:gap-5 mb-6">
+            <div class="flex items-center justify-center gap-3 sm:gap-5">
                 <button type="button" onclick="changeMinPlays(-10)" 
                     class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center hover:from-gray-200 hover:to-gray-300 transition shadow-md active:scale-95 text-gray-700">
                     <i class="fas fa-minus text-lg"></i>
                 </button>
-                <div class="relative pb-4">
+                <div class="text-center">
                     <input type="number" name="min_plays" id="min_plays" value="10" min="1" max="10000"
                         class="w-28 sm:w-36 text-center text-2xl sm:text-3xl font-bold border-3 border-primary-200 rounded-2xl py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 bg-white shadow-inner" 
                         onchange="onMinPlaysChange()" oninput="updatePresetHighlight()">
-                    <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">passages min</span>
                 </div>
                 <button type="button" onclick="changeMinPlays(10)" 
                     class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center hover:from-primary-600 hover:to-purple-700 transition shadow-md active:scale-95 text-white">
                     <i class="fas fa-plus text-lg"></i>
                 </button>
             </div>
+            <p class="text-center mt-2 mb-4">
+                <span class="inline-block bg-primary-500 text-white text-xs px-3 py-1 rounded-full font-medium">passages min</span>
+            </p>
             
             <div class="text-center">
                 <button type="button" onclick="calculateScreens()" id="calculate-btn"
