@@ -52,4 +52,3 @@ externalPort = 3003
 
 [userenv.shared]
 SUPERADMIN_EMAIL = "admin@example.com"
-SUPERADMIN_PASSWORD = "changeme123"
