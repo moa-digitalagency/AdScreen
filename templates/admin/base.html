@@ -4,10 +4,10 @@
 <div class="flex min-h-screen bg-gray-50">
     <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
     
-    <!-- SIDEBAR AVEC STRUCTURE CORRIGÉE -->
-    <aside id="sidebar" class="text-white">
+    <!-- SIDEBAR AVEC STRUCTURE CORRIGÉE EN 3 PARTIES -->
+    <aside id="admin-sidebar" class="text-white">
         <!-- HEADER STICKY EN HAUT -->
-        <div class="sidebar-header">
+        <div class="admin-sidebar-header">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2">
                 <i class="fas fa-tv text-primary-400 text-lg sm:text-xl"></i>
                 <span class="font-bold text-base sm:text-lg">Shabaka AdScreen</span>
@@ -16,7 +16,7 @@
         </div>
 
         <!-- NAV SCROLLABLE AU MILIEU -->
-        <nav class="sidebar-nav">
+        <nav class="admin-sidebar-nav">
             {% if current_user.has_permission('dashboard') %}
             <a href="{{ url_for('admin.dashboard') }}" 
                class="admin-nav-link flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 transition text-sm sm:text-base {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
@@ -84,7 +84,7 @@
         </nav>
 
         <!-- FOOTER STICKY EN BAS -->
-        <div class="sidebar-footer">
+        <div class="admin-sidebar-footer">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 sm:w-10 sm:h-10 {% if current_user.is_superadmin() %}bg-primary-500{% else %}bg-blue-500{% endif %} rounded-full flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-user-shield text-sm"></i>
@@ -126,7 +126,7 @@
 
 <script>
 function toggleMobileMenu() {
-    const sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
     const isOpen = sidebar.classList.contains('sidebar-mobile-visible');
     
@@ -142,7 +142,7 @@ function toggleMobileMenu() {
 }
 
 function closeMobileMenu() {
-    const sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
     sidebar.classList.remove('sidebar-mobile-visible');
     overlay.classList.add('hidden');
@@ -162,149 +162,190 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
     /* ========================================
-       SIDEBAR BASE - Structure en 3 parties
+       RESET POUR ÉVITER TOUT CONFLIT
        ======================================== */
-    #sidebar {
-        position: fixed;
-        top: 0;
-        width: 16rem;
-        height: 100vh;
-        z-index: 50;
-        display: flex;
-        flex-direction: column;
-        background-color: #022c22;
-        overflow: hidden; /* CRITICAL: Pas de scroll sur le sidebar lui-même */
-    }
-    
-    /* GRADIENT BACKGROUND - Sur le pseudo-élément pour stabilité */
-    #sidebar::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%);
-        z-index: 0;
-    }
-    
-    /* Tous les enfants directs au-dessus du gradient */
-    #sidebar > * {
-        position: relative;
-        z-index: 1;
+    #admin-sidebar,
+    #admin-sidebar *,
+    #admin-sidebar *::before,
+    #admin-sidebar *::after {
+        box-sizing: border-box !important;
     }
     
     /* ========================================
-       HEADER STICKY EN HAUT
+       SIDEBAR CONTAINER - Structure fixe
        ======================================== */
-    .sidebar-header {
-        padding: 1rem 1.5rem;
-        flex-shrink: 0; /* Ne se compresse jamais */
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    #admin-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 16rem !important;
+        height: 100vh !important;
+        height: 100dvh !important; /* Dynamic viewport height pour mobile */
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        z-index: 50 !important;
+        
+        /* Flexbox pour structure en 3 parties */
+        display: flex !important;
+        flex-direction: column !important;
+        
+        /* Empêche tout scroll sur le container */
+        overflow: hidden !important;
+        
+        /* Background de base */
+        background-color: #022c22 !important;
+        
+        /* Isolation pour éviter les conflits */
+        isolation: isolate;
+        contain: layout style;
+        
+        /* Optimisation GPU */
+        transform: translateZ(0);
+        will-change: left;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Gradient en pseudo-élément pour stabilité */
+    #admin-sidebar::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: linear-gradient(180deg, #065f46 0%, #064e3b 50%, #022c22 100%) !important;
+        z-index: -1 !important;
+        pointer-events: none !important;
     }
     
     /* ========================================
-       NAV SCROLLABLE AU MILIEU
+       HEADER - Fixe en haut
        ======================================== */
-    .sidebar-nav {
-        flex: 1; /* Prend tout l'espace disponible */
-        overflow-y: auto; /* Seul cet élément scroll */
-        overflow-x: hidden;
-        padding: 0.5rem 0;
-        /* Optimisations de scroll */
-        overscroll-behavior: contain;
+    .admin-sidebar-header {
+        flex: 0 0 auto !important; /* Ne grandit pas, ne rétrécit pas */
+        padding: 1rem 1.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background: transparent !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+    
+    /* ========================================
+       NAV SCROLLABLE - Prend l'espace restant
+       ======================================== */
+    .admin-sidebar-nav {
+        flex: 1 1 0% !important; /* Prend tout l'espace disponible */
+        min-height: 0 !important; /* CRITIQUE: permet au flex item de rétrécir sous son contenu */
+        
+        /* Scroll uniquement sur la nav */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        
+        padding: 0.5rem 0 !important;
+        background: transparent !important;
+        position: relative !important;
+        z-index: 1 !important;
+        
+        /* Comportement du scroll */
+        overscroll-behavior: contain !important;
+        scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
-        /* GPU acceleration */
-        transform: translate3d(0, 0, 0);
-        backface-visibility: hidden;
-        /* Scrollbar */
+        
+        /* Scrollbar fine */
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,0.2) transparent;
     }
     
-    /* Scrollbar webkit */
-    .sidebar-nav::-webkit-scrollbar {
-        width: 6px;
+    /* Scrollbar Webkit */
+    .admin-sidebar-nav::-webkit-scrollbar {
+        width: 6px !important;
     }
     
-    .sidebar-nav::-webkit-scrollbar-track {
-        background: transparent;
+    .admin-sidebar-nav::-webkit-scrollbar-track {
+        background: transparent !important;
     }
     
-    .sidebar-nav::-webkit-scrollbar-thumb {
-        background-color: rgba(255,255,255,0.2);
-        border-radius: 3px;
-        transition: background-color 0.2s ease;
+    .admin-sidebar-nav::-webkit-scrollbar-thumb {
+        background-color: rgba(255,255,255,0.2) !important;
+        border-radius: 3px !important;
     }
     
-    .sidebar-nav::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(255,255,255,0.35);
+    .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255,255,255,0.4) !important;
     }
     
     /* ========================================
-       FOOTER STICKY EN BAS
+       FOOTER - Fixe en bas
        ======================================== */
-    .sidebar-footer {
-        padding: 1rem 1.5rem;
-        flex-shrink: 0; /* Ne se compresse jamais */
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
+    .admin-sidebar-footer {
+        flex: 0 0 auto !important; /* Ne grandit pas, ne rétrécit pas */
+        padding: 1rem 1.5rem !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: transparent !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
     
     /* ========================================
-       RESPONSIVE
+       RESPONSIVE - Mobile
        ======================================== */
     @media (max-width: 1023px) {
-        #sidebar {
-            left: -16rem;
-            transition: left 0.3s ease-in-out;
-            box-shadow: none;
+        #admin-sidebar {
+            left: -16rem !important;
+            transition: left 0.3s ease-in-out !important;
+            box-shadow: none !important;
         }
-        #sidebar.sidebar-mobile-visible {
-            left: 0;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        
+        #admin-sidebar.sidebar-mobile-visible {
+            left: 0 !important;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3) !important;
         }
     }
     
     @media (min-width: 1024px) {
-        #sidebar {
+        #admin-sidebar {
             left: 0 !important;
+            transition: none !important;
         }
     }
     
     /* ========================================
-       COLORS ET STYLES
+       COULEURS ET STYLES DES LIENS
        ======================================== */
-    #sidebar,
-    #sidebar * {
-        color: rgba(255, 255, 255, 0.9);
+    #admin-sidebar,
+    #admin-sidebar * {
+        color: rgba(255, 255, 255, 0.9) !important;
     }
     
-    .admin-nav-link {
-        border-radius: 0.5rem;
-        margin: 0 0.75rem;
+    #admin-sidebar .admin-nav-link {
+        display: flex !important;
+        border-radius: 0.5rem !important;
+        margin: 0.125rem 0.75rem !important;
+        text-decoration: none !important;
     }
     
-    .admin-nav-link.active {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.15);
+    #admin-sidebar .admin-nav-link.active {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
     }
     
-    .admin-nav-link:hover {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.1);
+    #admin-sidebar .admin-nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
     }
     
-    #sidebar .text-primary-400 {
-        color: #6ee7b7;
+    #admin-sidebar .text-primary-400 {
+        color: #6ee7b7 !important;
     }
     
-    #sidebar .bg-primary-500 {
-        background-color: #10b981;
-        color: #ffffff;
+    #admin-sidebar .bg-primary-500 {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
     }
     
-    #sidebar .text-white\/60 {
-        color: rgba(255, 255, 255, 0.6);
+    #admin-sidebar .text-white\/60 {
+        color: rgba(255, 255, 255, 0.6) !important;
     }
 </style>
 {% endblock %}
