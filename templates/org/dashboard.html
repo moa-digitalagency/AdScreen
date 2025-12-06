@@ -81,15 +81,36 @@
 </div>
 
 {% if screens %}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8">
-    <div class="flex items-center justify-between mb-4">
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8" id="quick-actions-section">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 class="text-base sm:text-lg font-semibold text-gray-800">
             <i class="fas fa-bolt text-yellow-500 mr-2"></i>Actions rapides
         </h2>
+        
+        {% if screens|length > 1 %}
+        <div class="flex items-center gap-2">
+            <label for="quick-action-screen" class="text-xs sm:text-sm text-gray-600 whitespace-nowrap">
+                <i class="fas fa-tv mr-1"></i>Écran:
+            </label>
+            <select id="quick-action-screen" 
+                    class="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]"
+                    onchange="updateQuickActions(this.value)">
+                {% for screen in screens %}
+                <option value="{{ screen.id }}" 
+                        data-name="{{ screen.name }}"
+                        data-status="{{ screen.status }}"
+                        {% if loop.first %}selected{% endif %}>
+                    {{ screen.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
     </div>
     
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="quick-actions-grid">
         <a href="{{ url_for('org.screen_playlist', screen_id=screens[0].id) }}" 
+           id="qa-playlist-link"
            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary-200 bg-primary-50 hover:bg-primary-100 hover:border-primary-300 transition group">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                 <i class="fas fa-list text-white text-lg"></i>
@@ -98,6 +119,7 @@
         </a>
         
         <a href="{{ url_for('org.screen_iptv', screen_id=screens[0].id) }}" 
+           id="qa-iptv-link"
            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-purple-200 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 transition group">
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                 <i class="fas fa-tv text-white text-lg"></i>
@@ -105,7 +127,7 @@
             <span class="text-xs sm:text-sm font-medium text-purple-700 text-center">Voir OnlineTV</span>
         </a>
         
-        <form action="{{ url_for('screen.set_mode', screen_id=screens[0].id) }}" method="POST" class="contents">
+        <form action="{{ url_for('screen.set_mode', screen_id=screens[0].id) }}" method="POST" class="contents" id="qa-playlist-form">
             <input type="hidden" name="mode" value="playlist">
             <input type="hidden" name="redirect_dashboard" value="1">
             <button type="submit" 
@@ -117,7 +139,7 @@
             </button>
         </form>
         
-        <form action="{{ url_for('screen.set_mode', screen_id=screens[0].id) }}" method="POST" class="contents">
+        <form action="{{ url_for('screen.set_mode', screen_id=screens[0].id) }}" method="POST" class="contents" id="qa-iptv-form">
             <input type="hidden" name="mode" value="iptv">
             <input type="hidden" name="redirect_dashboard" value="1">
             <button type="submit" 
@@ -130,30 +152,42 @@
         </form>
     </div>
     
-    {% if screens|length > 1 %}
     <div class="mt-4 pt-4 border-t border-gray-100">
-        <p class="text-xs text-gray-500 mb-3">
+        <p class="text-xs text-gray-500" id="qa-current-screen-info">
             <i class="fas fa-info-circle mr-1"></i>
-            Actions rapides pour: <strong>{{ screens[0].name }}</strong>
+            Actions pour: <strong id="qa-current-screen-name">{{ screens[0].name }}</strong>
+            <span class="status-dot status-{{ screens[0].status }} w-2 h-2 ml-2 inline-block"></span>
         </p>
-        <div class="flex flex-wrap gap-2">
-            {% for screen in screens[1:4] %}
-            <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" 
-               class="px-3 py-1.5 text-xs rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center gap-1">
-                <span class="status-dot status-{{ screen.status }} w-2 h-2"></span>
-                {{ screen.name }}
-            </a>
-            {% endfor %}
-            {% if screens|length > 4 %}
-            <a href="{{ url_for('org.screens') }}" 
-               class="px-3 py-1.5 text-xs rounded-lg bg-primary-100 text-primary-600 hover:bg-primary-200 transition">
-                +{{ screens|length - 4 }} autres
-            </a>
-            {% endif %}
-        </div>
     </div>
-    {% endif %}
 </div>
+
+<script>
+function updateQuickActions(screenId) {
+    const select = document.getElementById('quick-action-screen');
+    const selectedOption = select.options[select.selectedIndex];
+    const screenName = selectedOption.dataset.name;
+    const screenStatus = selectedOption.dataset.status;
+    
+    const playlistLink = document.getElementById('qa-playlist-link');
+    const iptvLink = document.getElementById('qa-iptv-link');
+    const playlistForm = document.getElementById('qa-playlist-form');
+    const iptvForm = document.getElementById('qa-iptv-form');
+    const currentScreenName = document.getElementById('qa-current-screen-name');
+    const currentScreenInfo = document.getElementById('qa-current-screen-info');
+    
+    playlistLink.href = `/org/screen/${screenId}/playlist`;
+    iptvLink.href = `/org/screen/${screenId}/iptv`;
+    playlistForm.action = `/screen/${screenId}/mode`;
+    iptvForm.action = `/screen/${screenId}/mode`;
+    
+    currentScreenName.textContent = screenName;
+    
+    const statusDot = currentScreenInfo.querySelector('.status-dot');
+    if (statusDot) {
+        statusDot.className = `status-dot status-${screenStatus} w-2 h-2 ml-2 inline-block`;
+    }
+}
+</script>
 {% endif %}
 
 <div class="grid lg:grid-cols-3 gap-4 sm:gap-6">

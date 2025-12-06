@@ -35,6 +35,7 @@ Gestion des écrans et contenus pour un établissement.
 | Fonctionnalité | Statut | Description |
 |----------------|--------|-------------|
 | Gestion écrans | Disponible | Créer, configurer, activer/désactiver des écrans |
+| **Actions rapides** | Disponible | Sélecteur d'écran pour appliquer les actions rapides |
 | **Contrôle publicités** | Disponible | Activer/désactiver les publicités superadmin |
 | Configuration résolution | Disponible | Définir largeur, hauteur, orientation |
 | Types de contenu | Disponible | Activer/désactiver images, vidéos |
@@ -415,6 +416,23 @@ Exemple : 5 passages sur 7 jours = 1 passage/jour (arrondi supérieur pour ne pe
 - Texte "Votre publicité ici"
 - Dimensions adaptées à l'écran
 - Peut être remplacé ou désactivé
+
+### Actions rapides du tableau de bord
+
+Le tableau de bord des établissements inclut une section "Actions rapides" permettant d'effectuer des opérations courantes directement :
+
+**Fonctionnalités**
+| Action | Description |
+|--------|-------------|
+| Voir Playlist | Accès direct à la playlist de l'écran sélectionné |
+| Voir OnlineTV | Accès aux chaînes IPTV de l'écran |
+| Lancer Playlist | Bascule l'écran en mode playlist |
+| Lancer OnlineTV | Bascule l'écran en mode TV |
+
+**Sélecteur d'écran**
+- Lorsqu'un établissement possède plusieurs écrans, un menu déroulant permet de choisir l'écran cible
+- Les liens et formulaires s'adaptent dynamiquement à l'écran sélectionné
+- L'état de l'écran (online/offline) est affiché en temps réel
 
 ### Statistiques
 
