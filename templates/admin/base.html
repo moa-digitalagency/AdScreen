@@ -170,15 +170,30 @@ document.addEventListener('DOMContentLoaded', function() {
         -moz-osx-font-smoothing: grayscale;
     }
     
-    .sidebar-mobile-hidden {
-        transform: translateX(-100%);
+    @media (max-width: 1023px) {
+        .sidebar-mobile-hidden {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-mobile-visible {
+            transform: translateX(0);
+            transition: transform 0.3s ease-in-out;
+        }
     }
-    .sidebar-mobile-visible {
-        transform: translateX(0);
-    }
+    
     @media (min-width: 1024px) {
+        #sidebar {
+            transform: none !important;
+            transition: none !important;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+        .sidebar-mobile-hidden,
+        .sidebar-mobile-visible,
         .lg\:sidebar-mobile-visible {
-            transform: translateX(0) !important;
+            transform: none !important;
+            transition: none !important;
         }
     }
     
