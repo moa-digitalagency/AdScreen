@@ -23,6 +23,7 @@
             </div>
 
             <form method="POST" enctype="multipart/form-data" id="overlayForm" class="space-y-4 sm:space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label class="label">Type d'overlay</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -425,23 +426,27 @@
                         <div class="flex items-center gap-1 flex-shrink-0">
                             {% if overlay.is_paused %}
                             <form action="{{ url_for('org.resume_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="p-1.5 text-yellow-600 hover:text-green-600 transition" title="Reprendre">
                                     <i class="fas fa-play text-sm"></i>
                                 </button>
                             </form>
                             {% else %}
                             <form action="{{ url_for('org.pause_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="p-1.5 text-gray-500 hover:text-yellow-600 transition" title="Mettre en pause">
                                     <i class="fas fa-pause text-sm"></i>
                                 </button>
                             </form>
                             {% endif %}
                             <form action="{{ url_for('org.toggle_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="p-1.5 text-gray-500 hover:text-emerald-600 transition" title="{% if overlay.is_active %}Désactiver{% else %}Activer{% endif %}">
                                     <i class="fas {% if overlay.is_active %}fa-toggle-on text-green-500{% else %}fa-toggle-off{% endif %} text-sm"></i>
                                 </button>
                             </form>
                             <form action="{{ url_for('org.delete_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST" onsubmit="return confirm('Supprimer cet overlay ?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 transition" title="Supprimer">
                                     <i class="fas fa-trash text-sm"></i>
                                 </button>

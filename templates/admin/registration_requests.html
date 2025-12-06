@@ -64,6 +64,7 @@
                                 </button>
                                 <form method="POST" action="{{ url_for('admin.reject_registration', request_id=req.id) }}" 
                                     onsubmit="return confirm('Rejeter cette demande ?')" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn-sm btn-error">
                                         <i class="fas fa-times mr-1"></i>Rejeter
                                     </button>
@@ -95,6 +96,7 @@
             <p class="text-sm text-gray-500 mt-1" id="modalOrgName">Établissement</p>
         </div>
         <form id="approveForm" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="label">Commission de la plateforme (%)</label>
                 <input type="number" name="commission_rate" step="0.5" min="0" max="100" value="10"

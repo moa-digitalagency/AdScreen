@@ -87,6 +87,7 @@
                     </h3>
                     {% if ad.status in ['active', 'expired'] and screens %}
                     <form action="{{ url_for('ad_content.generate_invoices', ad_id=ad.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-primary text-sm">
                             <i class="fas fa-file-invoice"></i>
                             Générer les factures
@@ -127,6 +128,7 @@
                     </span>
                 </div>
                 <form action="{{ url_for('ad_content.toggle', ad_id=ad.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full btn-{% if ad.status == 'active' %}secondary{% else %}primary{% endif %}">
                         <i class="fas fa-{% if ad.status == 'active' %}pause{% else %}play{% endif %} mr-2"></i>
                         {% if ad.status == 'active' %}Mettre en pause{% else %}Activer{% endif %}

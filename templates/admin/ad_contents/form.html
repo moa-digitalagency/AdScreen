@@ -30,6 +30,7 @@
     </div>
 
     <form method="POST" enctype="multipart/form-data" id="ad-content-form" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="selected_screen_ids" id="selected_screen_ids" value="">
         
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">

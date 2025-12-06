@@ -1,7 +1,8 @@
 import os
 import logging
+import secrets
 
-from flask import Flask
+from flask import Flask, request, session, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
@@ -103,15 +104,61 @@ def inject_now():
 
 @app.context_processor
 def inject_csrf_token():
-    import secrets
-    from flask import session
-    
     def csrf_token():
         if '_csrf_token' not in session:
             session['_csrf_token'] = secrets.token_hex(32)
         return session['_csrf_token']
     
     return {'csrf_token': csrf_token}
+
+
+CSRF_EXEMPT_ENDPOINTS = [
+    'player.heartbeat',
+    'player.log_play',
+    'player.stream_proxy',
+    'player.stop_tv_stream',
+    'player.change_channel',
+    'api.screen_heartbeat',
+    'api.screen_status',
+    'api.screen_playlist',
+    'api.screen_analytics',
+    'billing.cron_generate_invoices',
+]
+
+CSRF_EXEMPT_PREFIXES = [
+    'api.',
+]
+
+@app.before_request
+def validate_csrf_token():
+    if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
+        if request.endpoint and request.endpoint in CSRF_EXEMPT_ENDPOINTS:
+            return
+        
+        if request.endpoint:
+            for prefix in CSRF_EXEMPT_PREFIXES:
+                if request.endpoint.startswith(prefix):
+                    return
+        
+        if request.is_json or (request.content_type and 'application/json' in request.content_type):
+            return
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return
+        
+        token_from_form = request.form.get('csrf_token')
+        token_from_header = request.headers.get('X-CSRF-Token')
+        submitted_token = token_from_form or token_from_header
+        
+        session_token = session.get('_csrf_token')
+        
+        if not submitted_token or not session_token:
+            logging.warning(f"CSRF token missing for {request.endpoint}")
+            abort(400, description="CSRF token missing. Please refresh the page and try again.")
+        
+        if not secrets.compare_digest(submitted_token, session_token):
+            logging.warning(f"CSRF token mismatch for {request.endpoint}")
+            abort(400, description="CSRF token invalid. Please refresh the page and try again.")
 
 
 @app.context_processor

@@ -33,6 +33,7 @@
             {% endwith %}
 
             <form method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div>
                     <label for="screen_code" class="block text-sm font-medium text-gray-300 mb-2">Code écran</label>
                     <input type="text" id="screen_code" name="screen_code" required

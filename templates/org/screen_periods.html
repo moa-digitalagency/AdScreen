@@ -15,6 +15,7 @@
         <p class="text-gray-500 mb-6">Configurez les tranches horaires et leurs multiplicateurs de prix.</p>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div id="periods-container" class="space-y-4 mb-6">
                 {% for period in screen.time_periods %}
                 <div class="period-row flex items-center gap-4 p-4 bg-gray-50 rounded-lg">

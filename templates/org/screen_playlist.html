@@ -68,6 +68,7 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <form action="{{ url_for('org.remove_content_from_playlist', content_id=content.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
                                 <i class="fas fa-minus-circle"></i>
                             </button>
@@ -105,11 +106,13 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <form action="{{ url_for('org.remove_internal_from_playlist', internal_id=internal.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
                                 <i class="fas fa-minus-circle"></i>
                             </button>
                         </form>
                         <form action="{{ url_for('org.toggle_screen_internal', screen_id=screen.id, internal_id=internal.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Désactiver">
                                 <i class="fas fa-pause"></i>
                             </button>
@@ -147,11 +150,13 @@
                     </div>
                     <div class="flex items-center gap-1">
                         <form action="{{ url_for('org.remove_filler_from_playlist', filler_id=filler.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
                                 <i class="fas fa-minus-circle"></i>
                             </button>
                         </form>
                         <form action="{{ url_for('org.toggle_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Désactiver">
                                 <i class="fas fa-pause"></i>
                             </button>
@@ -181,6 +186,7 @@
                     </div>
                     <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 capitalize">{{ overlay.position }}</span>
                     <form action="{{ url_for('org.toggle_overlay', screen_id=screen.id, overlay_id=overlay.id) }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Désactiver">
                             <i class="fas fa-pause"></i>
                         </button>

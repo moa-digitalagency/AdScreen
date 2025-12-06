@@ -29,6 +29,7 @@
 
     <div class="grid md:grid-cols-2 gap-4 mb-6">
         <form action="{{ url_for('screen.set_mode', screen_id=screen.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="mode" value="playlist">
             <button type="submit" class="w-full p-4 rounded-xl border-2 transition flex items-center gap-3 {% if screen.current_mode == 'playlist' %}border-primary-500 bg-primary-50{% else %}border-gray-200 hover:border-primary-300 hover:bg-gray-50{% endif %}">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if screen.current_mode == 'playlist' %}bg-primary-500 text-white{% else %}bg-gray-100 text-gray-500{% endif %}">
@@ -44,6 +45,7 @@
             </button>
         </form>
         <form action="{{ url_for('screen.set_mode', screen_id=screen.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="mode" value="iptv">
             <button type="submit" class="w-full p-4 rounded-xl border-2 transition flex items-center gap-3 {% if screen.current_mode == 'iptv' %}border-purple-500 bg-purple-50{% else %}border-gray-200 hover:border-purple-300 hover:bg-gray-50{% endif %}">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if screen.current_mode == 'iptv' %}bg-purple-500 text-white{% else %}bg-gray-100 text-gray-500{% endif %}">
@@ -114,6 +116,7 @@
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {% for channel in group_channels %}
                 <form action="{{ url_for('screen.set_iptv_channel', screen_id=screen.id) }}" method="POST" class="channel-item">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="channel_url" value="{{ channel.url }}">
                     <input type="hidden" name="channel_name" value="{{ channel.name }}">
                     <button type="submit" class="w-full p-3 rounded-lg border transition text-left flex items-center gap-3 
@@ -148,6 +151,7 @@
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" id="channels-container">
         {% for channel in channels %}
         <form action="{{ url_for('screen.set_iptv_channel', screen_id=screen.id) }}" method="POST" class="channel-item">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="channel_url" value="{{ channel.url }}">
             <input type="hidden" name="channel_name" value="{{ channel.name }}">
             <button type="submit" class="w-full p-3 rounded-lg border transition text-left flex items-center gap-3 

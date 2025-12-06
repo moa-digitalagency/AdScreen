@@ -37,6 +37,7 @@
                     <i class="fas fa-edit mr-2"></i>Modifier
                 </a>
                 <form action="{{ url_for('admin.toggle_organization', org_id=org.id) }}" method="POST" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="{% if org.is_active %}btn-warning{% else %}btn-primary{% endif %}">
                         <i class="fas fa-{% if org.is_active %}ban{% else %}check{% endif %} mr-2"></i>
                         {% if org.is_active %}Suspendre{% else %}Activer{% endif %}
@@ -87,6 +88,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Commission</h3>
             <form action="{{ url_for('admin.update_commission', org_id=org.id) }}" method="POST" class="flex gap-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="number" name="commission" value="{{ org.commission_rate }}" 
                        min="5" max="15" step="0.5"
                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg">

@@ -5,6 +5,7 @@
 {% block main_content %}
 <div class="max-w-4xl">
     <form method="POST" action="{{ url_for('admin.settings') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -370,6 +371,7 @@
             
             <form method="POST" action="{{ url_for('admin.clean_database') }}" 
                   onsubmit="return confirm('ATTENTION: Cette action est IRRÉVERSIBLE!\n\nToutes les données seront supprimées définitivement.\nSeuls les comptes superadmin seront conservés.\n\nÊtes-vous absolument sûr de vouloir continuer?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-danger">
                     <i class="fas fa-trash-alt mr-2"></i>
                     Nettoyer et réinitialiser la base de données

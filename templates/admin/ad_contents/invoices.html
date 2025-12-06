@@ -121,6 +121,7 @@
                             <div class="flex items-center justify-end gap-2">
                                 {% if invoice.status == 'pending' %}
                                 <form action="{{ url_for('ad_content.mark_invoice_paid', invoice_id=invoice.id) }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="p-2 text-gray-400 hover:text-blue-600 transition" title="Marquer comme payée">
                                         <i class="fas fa-check"></i>
                                     </button>
@@ -128,6 +129,7 @@
                                 {% endif %}
                                 {% if invoice.status == 'paid' %}
                                 <form action="{{ url_for('ad_content.validate_invoice', invoice_id=invoice.id) }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="p-2 text-gray-400 hover:text-green-600 transition" title="Valider">
                                         <i class="fas fa-check-double"></i>
                                     </button>

@@ -141,6 +141,7 @@
             <div class="space-y-3">
                 {% if screen.iptv_enabled and org_has_iptv %}
                 <form action="{{ url_for('screen.set_mode', screen_id=screen.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="mode" value="playlist">
                     <button type="submit" class="w-full btn-sm justify-center {% if screen.current_mode == 'playlist' %}btn-primary{% else %}btn-secondary{% endif %}">
                         <i class="fas fa-list"></i>
@@ -148,6 +149,7 @@
                     </button>
                 </form>
                 <form action="{{ url_for('screen.set_mode', screen_id=screen.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="mode" value="iptv">
                     <button type="submit" class="w-full btn-sm justify-center {% if screen.current_mode == 'iptv' %}bg-purple-600 hover:bg-purple-700 text-white border-purple-600{% else %}btn-secondary{% endif %}">
                         <i class="fas fa-tv"></i>
@@ -156,6 +158,7 @@
                 </form>
                 {% endif %}
                 <form action="{{ url_for('screen.toggle_screen', screen_id=screen.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full btn-secondary btn-sm justify-center">
                         <i class="fas fa-{% if screen.is_active %}pause{% else %}play{% endif %}"></i>
                         {% if screen.is_active %}Désactiver{% else %}Activer{% endif %} l'écran
@@ -163,6 +166,7 @@
                 </form>
                 <form action="{{ url_for('screen.delete_screen', screen_id=screen.id) }}" method="POST" 
                       onsubmit="return confirm('Supprimer cet écran ? Cette action est irréversible.')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full btn-danger-outline btn-sm justify-center">
                         <i class="fas fa-trash"></i>
                         Supprimer l'écran

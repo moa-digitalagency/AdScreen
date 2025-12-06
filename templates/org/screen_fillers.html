@@ -22,6 +22,7 @@
         </div>
 
         <form method="POST" enctype="multipart/form-data" class="space-y-4 sm:space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
                 <label class="label">Fichier (image ou vidéo)</label>
                 <input type="file" name="file" accept="image/*,video/*" required
@@ -76,11 +77,13 @@
                         <i class="fas fa-eye mr-1"></i>Aperçu
                     </button>
                     <form action="{{ url_for('org.toggle_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST" class="flex-1">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="w-full px-2 py-1.5 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition">
                             <i class="fas fa-{% if filler.is_active %}pause{% else %}play{% endif %} mr-1"></i>{{ "Pause" if filler.is_active else "Play" }}
                         </button>
                     </form>
                     <form action="{{ url_for('org.delete_filler', screen_id=screen.id, filler_id=filler.id) }}" method="POST" class="flex-1">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="w-full px-2 py-1.5 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded transition"
                             onclick="return confirm('Supprimer ce filler ?')">
                             <i class="fas fa-trash mr-1"></i>Supprimer

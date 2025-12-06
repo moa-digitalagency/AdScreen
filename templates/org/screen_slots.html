@@ -33,6 +33,7 @@
         </div>
 
         <form method="POST" id="slotsForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div id="slots-container" class="space-y-4 mb-6">
                 {% for slot in screen.time_slots %}
                 {% set calculated_price = (slot.duration_seconds / 60) * (screen.price_per_minute or 2.0) %}
