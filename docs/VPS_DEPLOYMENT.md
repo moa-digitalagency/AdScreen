@@ -219,6 +219,13 @@ location /player/ {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
 }
+
+# Service Worker for offline caching (player)
+location /static/js/player-sw.js {
+    add_header Cache-Control "no-cache";
+    add_header Service-Worker-Allowed "/player/";
+    proxy_pass http://127.0.0.1:5000;
+}
 ```
 
 ### Reducing Log Verbosity

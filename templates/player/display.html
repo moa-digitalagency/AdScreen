@@ -1810,7 +1810,7 @@
             },
             
             async onConnectionRestored() {
-                if (navigator.serviceWorker.controller) {
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({ type: 'SYNC_LOGS' });
                 }
                 
@@ -1868,7 +1868,7 @@
             },
             
             precacheMediaFiles(playlistData) {
-                if (!playlistData.playlist || !navigator.serviceWorker.controller) return;
+                if (!playlistData.playlist || !('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
                 
                 const urls = playlistData.playlist
                     .filter(item => item.url && !item.url.startsWith('http'))
@@ -1918,7 +1918,7 @@
             },
             
             getCacheStatus() {
-                if (navigator.serviceWorker.controller) {
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({ type: 'GET_CACHE_STATUS' });
                 }
             },

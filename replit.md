@@ -21,6 +21,7 @@ The backend is built with Flask (Python 3.11) and uses PostgreSQL with SQLAlchem
 -   **Content Management**: Strict validation (Pillow for images, FFmpeg for videos), content queues, internal content, filler content, and content action controls.
 -   **Booking System**: Unique reservation numbers, detailed receipts, and precise time selection.
 -   **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat logging, playback statistics, and audio support.
+-   **Offline Caching**: Service Worker-based offline support with IndexedDB storage, automatic media pre-caching, and log queue synchronization on reconnection.
 -   **OnlineTV Mode**: Integrates HLS.js for M3U/HLS stream playback with active overlays.
 -   **Adaptive Bitrate Streaming (ABR)**: Automatically adjusts video quality based on bandwidth, with buffer optimization and real-time quality indicators.
 -   **MPEG-TS to HLS Conversion**: Server-side FFmpeg conversion for non-native MPEG-TS streams, with a robust fallback strategy.

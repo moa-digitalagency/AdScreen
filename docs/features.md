@@ -84,6 +84,7 @@ Interface de diffusion pour les écrans publicitaires.
 | **Mode OnlineTV** | Disponible | Streaming M3U/HLS avec overlays actifs |
 | **Contrôle audio** | Disponible | Mute/unmute avec bouton et raccourci (M) |
 | **Raccourcis clavier** | Disponible | F11: plein écran, M: mute, Espace: pause |
+| **Mode hors ligne** | Disponible | Cache des contenus pour lecture sans internet |
 
 ## Détail des fonctionnalités
 
@@ -403,6 +404,50 @@ Le player dispose d'un système de contrôle audio complet :
 
 **Écran d'accueil**
 L'écran d'accueil affiche les raccourcis clavier disponibles pour guider l'utilisateur.
+
+### Mode Hors Ligne (Offline Caching) - Décembre 2025
+
+Le player dispose d'un système de cache intelligent permettant la lecture continue même en cas de perte de connexion internet.
+
+**Fonctionnalités**
+| Fonction | Description |
+|----------|-------------|
+| Cache automatique | Les médias (images, vidéos) sont automatiquement mis en cache |
+| Playlist locale | La playlist courante est sauvegardée dans IndexedDB |
+| Détection connexion | Surveillance en temps réel de l'état de la connexion |
+| Synchronisation auto | Synchronisation automatique au retour de la connexion |
+| Indicateur visuel | Badge "Mode hors ligne" affiché en cas de déconnexion |
+| File d'attente logs | Les statistiques de lecture sont mises en file d'attente |
+
+**Technologies utilisées**
+| Technologie | Usage |
+|-------------|-------|
+| Service Worker | Interception des requêtes et cache des médias |
+| IndexedDB | Stockage local de la playlist et des logs en attente |
+| Cache API | Stockage des fichiers médias pour lecture hors ligne |
+| Background Sync | Synchronisation des logs quand la connexion revient |
+
+**Comportement**
+
+1. **Connexion normale** :
+   - La playlist est récupérée depuis le serveur
+   - Les médias sont automatiquement pré-cachés en arrière-plan
+   - Les statistiques de lecture sont envoyées immédiatement
+
+2. **Perte de connexion** :
+   - Le badge "Mode hors ligne" apparaît
+   - La lecture continue avec les contenus cachés
+   - Les statistiques sont mises en file d'attente locale
+
+3. **Retour de connexion** :
+   - La playlist est rafraîchie automatiquement
+   - Les statistiques en attente sont synchronisées
+   - Le badge "Mode hors ligne" disparaît
+
+**Prérequis navigateur**
+- Service Workers : Chrome 45+, Firefox 44+, Safari 11.1+, Edge 17+
+- IndexedDB : Tous les navigateurs modernes
+- Dégradation gracieuse pour les navigateurs non supportés
 
 ### Contenus internes (établissement)
 

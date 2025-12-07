@@ -274,6 +274,31 @@ Vérifiez que :
    - La récurrence est correctement configurée (type, intervalle, jours)
    - La priorité est suffisante pour apparaître dans la playlist
 
+### Mode hors ligne ne fonctionne pas
+
+Vérifiez que :
+1. Le navigateur supporte les Service Workers (Chrome 45+, Firefox 44+, Safari 11.1+)
+2. Le site est servi en HTTPS (requis pour les Service Workers en production)
+3. Le fichier `/static/js/player-sw.js` est accessible
+4. IndexedDB est disponible et non bloqué par les paramètres de confidentialité
+5. L'espace de stockage du navigateur n'est pas saturé
+
+**Pour tester le mode hors ligne :**
+1. Ouvrez le player et laissez-le charger la playlist
+2. Déconnectez le réseau (mode avion ou déconnexion WiFi)
+3. Le badge "Mode hors ligne" devrait apparaître
+4. La lecture devrait continuer avec les contenus cachés
+5. À la reconnexion, la playlist se rafraîchit automatiquement
+
+**Configuration Nginx pour Service Workers :**
+```nginx
+# Headers pour le Service Worker
+location /static/js/player-sw.js {
+    add_header Cache-Control "no-cache";
+    add_header Service-Worker-Allowed "/player/";
+}
+```
+
 ## Support
 
 - **Documentation** : `/docs`
