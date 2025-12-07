@@ -90,6 +90,63 @@ FALLBACK
 - Si récupération échoue → affichage message erreur
 - Possibilité de repasser en mode playlist manuellement
 
+=================
+STREAMING ADAPTATIF (ABR)
+=================
+
+LOGIQUE ABR (Décembre 2025)
+---------------------------
+Le streaming OnlineTV utilise désormais l'Adaptive Bitrate Streaming (ABR) comme YouTube/Netflix :
+
+1. ESTIMATION BANDE PASSANTE :
+   - Algorithme EWMA (Exponentially Weighted Moving Average)
+   - Coefficients Fast (3.0) et Slow (9.0) pour réactivité optimale
+   - Mesure continue pendant le téléchargement des segments
+
+2. SÉLECTION QUALITÉ AUTOMATIQUE :
+   - startLevel: -1 (auto, pas de niveau forcé)
+   - abrBandWidthFactor: 0.95 (utilise 95% de la bande passante estimée)
+   - abrBandWidthUpFactor: 0.7 (monte en qualité à 70% du seuil)
+
+3. GESTION DES BUFFERS :
+   - backBufferLength: 60s (tampon arrière)
+   - maxBufferLength: 30s (tampon avant standard)
+   - maxMaxBufferLength: 120s (tampon avant maximum)
+   - maxBufferSize: 60MB
+
+4. RÉCUPÉRATION ERREURS :
+   - fragLoadingMaxRetry: 8 (tentatives par fragment)
+   - fragLoadingRetryDelay: 500ms (délai entre tentatives)
+   - manifestLoadingMaxRetry: 6
+   - levelLoadingMaxRetry: 6
+
+COMPORTEMENT ABR
+----------------
+| Situation | Action |
+|-----------|--------|
+| Bande passante baisse | Qualité descend automatiquement |
+| Bande passante remonte | Qualité remonte progressivement |
+| Erreur réseau | Retry automatique sans interruption |
+| Fragment manquant | Continue avec qualité inférieure |
+
+INDICATEUR QUALITÉ
+------------------
+L'indicateur visuel affiche :
+- Résolution actuelle (ex: 720p, 1080p)
+- Badge qualité (FHD/HD/SD/LD/LOW)
+- Barre de bande passante (vert=bon, jaune=moyen, rouge=faible)
+- Débit en Mbps
+
+NIVEAUX QUALITÉ
+---------------
+| Badge | Résolution | Débit typique |
+|-------|------------|---------------|
+| FHD | 1080p+ | 4+ Mbps |
+| HD | 720p | 2-4 Mbps |
+| SD | 480p | 1-2 Mbps |
+| LD | 360p | 0.5-1 Mbps |
+| LOW | <360p | <0.5 Mbps |
+
 AUDIO
 -----
 - Son activé par défaut sur tous les flux

@@ -263,6 +263,23 @@ Les diffusions de démonstration illustrent différents modes de programmation :
 8. Testez le contrôle audio avec la touche M (le son du stream doit s'activer/désactiver)
 9. Vérifiez que l'état audio est synchronisé entre mode playlist et mode TV
 
+### 8. Test Streaming Adaptatif (ABR)
+
+Le streaming OnlineTV dispose maintenant d'un système adaptatif comme YouTube/Netflix :
+
+1. Lancez un stream OnlineTV sur un écran
+2. Observez l'indicateur de qualité en bas à droite (visible au survol de la souris)
+3. **Test connexion lente** : Limitez la bande passante via les outils développeur du navigateur
+4. Vérifiez que la qualité baisse automatiquement (HD → SD → LD)
+5. **Test récupération** : Rétablissez la bande passante normale
+6. Vérifiez que la qualité remonte progressivement
+7. Observez les badges de qualité : FHD (1080p), HD (720p), SD (480p), LD (360p)
+8. Vérifiez la barre de bande passante avec code couleur :
+   - Vert : Connexion excellente (>5 Mbps)
+   - Jaune : Connexion moyenne (2-5 Mbps)
+   - Orange : Connexion faible (1-2 Mbps)
+   - Rouge : Connexion très faible (<1 Mbps)
+
 ## Réinitialisation
 
 Pour revenir à un état propre :
@@ -292,7 +309,7 @@ La facturation peut être générée de deux manières :
 3. Consultez vos factures hebdomadaires
 4. Uploadez une preuve de paiement
 
-### 8. Test Établissement Gratuit
+### 9. Test Établissement Gratuit
 
 1. Connectez-vous avec manager@cafe-gratuit.fr / demo123
 2. Vérifiez l'accès limité : pas de réservations, pas de facturation

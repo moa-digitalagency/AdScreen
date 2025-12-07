@@ -329,6 +329,7 @@ Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
 | Gestion chaînes | Liste personnalisable par établissement |
 | Fallback automatique | Repli en cas d'erreur de stream |
 | **Contrôle audio** | Audio activé par défaut, mute/unmute disponible |
+| **Streaming adaptatif (ABR)** | Ajustement automatique de la qualité selon la bande passante |
 
 **Configuration par établissement**
 - Activation OnlineTV au niveau de l'établissement
@@ -339,14 +340,38 @@ Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
 **Technologies de streaming**
 | Bibliothèque | Usage | Formats supportés |
 |--------------|-------|-------------------|
-| HLS.js | Streaming principal | M3U8, HLS |
+| HLS.js | Streaming principal avec ABR | M3U8, HLS |
 | mpegts.js | Fallback streaming | MPEG-TS (.ts) |
+
+**Streaming Adaptatif (ABR) - Décembre 2025**
+
+Le lecteur OnlineTV fonctionne désormais comme YouTube et Netflix avec un système de streaming adaptatif :
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Qualité automatique | Ajuste la qualité vidéo en temps réel selon la bande passante |
+| Estimation EWMA | Algorithme de moyenne mobile pour prédire la bande passante |
+| Buffers optimisés | 30-120 secondes de tampon pour éviter les coupures |
+| Indicateur de qualité | Affichage en temps réel de la résolution et du débit |
+| Transitions fluides | Changement de qualité sans interruption de lecture |
+| Récupération automatique | 8 tentatives avec délai de 500ms pour les erreurs réseau |
+
+**Indicateur de qualité visuel**
+
+| Badge | Résolution | Description |
+|-------|------------|-------------|
+| FHD | 1080p+ | Full HD, connexion excellente |
+| HD | 720p | Haute définition |
+| SD | 480p | Définition standard |
+| LD | 360p | Basse définition |
+| LOW | < 360p | Très basse qualité |
 
 **Avantages**
 - Garde l'attention des visiteurs quand il n'y a pas de publicité
 - Les overlays et diffusions restent visibles
 - Bascule automatique ou manuelle entre modes
 - Audio synchronisé avec l'état mute/unmute du player
+- **Pas de lag** : La qualité s'adapte au lieu de couper
 
 ### Contrôle Audio du Player
 

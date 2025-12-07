@@ -91,10 +91,19 @@ Shabaka AdScreen est une application web Flask suivant une architecture MVC (Mod
 |-----------|-------------|-------|
 | Pillow | PIL | Validation images, génération reçus |
 | ReportLab | PDF | Génération reçus PDF |
-| ffmpeg | Système | Validation vidéos |
+| ffmpeg | Système | Validation vidéos, conversion HLS |
 | qrcode | Python | Génération QR codes |
-| HLS.js | JavaScript | Streaming M3U/HLS pour OnlineTV |
+| HLS.js | JavaScript | Streaming M3U/HLS avec ABR pour OnlineTV |
 | mpegts.js | JavaScript | Fallback MPEG-TS pour streams non-HLS |
+
+### Streaming Adaptatif (ABR)
+
+| Composant | Technologie | Usage |
+|-----------|-------------|-------|
+| HLS.js ABR | JavaScript | Estimation bande passante EWMA |
+| Quality Indicator | CSS/JS | Affichage temps réel qualité et débit |
+| Buffer Manager | HLS.js | Gestion buffers 30-120s |
+| Level Switcher | HLS.js | Changement qualité automatique |
 
 ## Structure des fichiers
 
