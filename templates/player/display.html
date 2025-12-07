@@ -1707,6 +1707,428 @@
             if (player.heartbeatInterval) clearInterval(player.heartbeatInterval);
             if (player.refreshInterval) clearInterval(player.refreshInterval);
         });
+
+        const offlineManager = {
+            isOnline: navigator.onLine,
+            swRegistration: null,
+            db: null,
+            cachedPlaylist: null,
+            cacheStatusInterval: null,
+            
+            async init() {
+                await this.registerServiceWorker();
+                await this.openDatabase();
+                this.setupConnectionListeners();
+                this.setupSwMessageHandler();
+                
+                if (!this.isOnline) {
+                    await this.loadCachedPlaylist();
+                }
+                
+                debug('Offline manager initialized, online: ' + this.isOnline);
+                this.updateOfflineIndicator();
+            },
+            
+            async registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        this.swRegistration = await navigator.serviceWorker.register('/static/js/player-sw.js', {
+                            scope: '/player/'
+                        });
+                        debug('Service Worker registered');
+                        
+                        if ('sync' in self.registration) {
+                            await this.swRegistration.sync.register('sync-logs');
+                        }
+                    } catch (error) {
+                        console.error('[Offline] SW registration failed:', error);
+                    }
+                }
+            },
+            
+            openDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('ShabakaPlayerOffline', 2);
+                    
+                    request.onerror = () => {
+                        console.error('[Offline] IndexedDB error');
+                        resolve(null);
+                    };
+                    
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve(this.db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        if (!db.objectStoreNames.contains('pendingLogs')) {
+                            db.createObjectStore('pendingLogs', { keyPath: 'timestamp' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('cachedPlaylist')) {
+                            db.createObjectStore('cachedPlaylist', { keyPath: 'id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('mediaCache')) {
+                            db.createObjectStore('mediaCache', { keyPath: 'url' });
+                        }
+                    };
+                });
+            },
+            
+            setupConnectionListeners() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    debug('Connection restored - syncing...');
+                    this.updateOfflineIndicator();
+                    this.onConnectionRestored();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    debug('Connection lost - using cached content');
+                    this.updateOfflineIndicator();
+                });
+            },
+            
+            setupSwMessageHandler() {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('message', (event) => {
+                        if (event.data.type === 'PRECACHE_COMPLETE') {
+                            debug('Media pre-cached: ' + event.data.urls.length + ' files');
+                        }
+                        if (event.data.type === 'CACHE_STATUS') {
+                            debug('Cache: ' + event.data.status.mediaCount + ' files (' + event.data.status.totalSizeMB + ' MB)');
+                        }
+                        if (event.data.type === 'SYNC_COMPLETE') {
+                            debug('Pending logs synced');
+                        }
+                    });
+                }
+            },
+            
+            async onConnectionRestored() {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'SYNC_LOGS' });
+                }
+                
+                await fetchPlaylist();
+                debug('Playlist refreshed after reconnection');
+            },
+            
+            async savePlaylistToCache(playlistData) {
+                if (!this.db) return;
+                
+                try {
+                    const tx = this.db.transaction('cachedPlaylist', 'readwrite');
+                    const store = tx.objectStore('cachedPlaylist');
+                    
+                    await store.clear();
+                    
+                    const entry = {
+                        id: 'current',
+                        data: playlistData,
+                        timestamp: Date.now()
+                    };
+                    await store.put(entry);
+                    
+                    this.cachedPlaylist = playlistData;
+                    debug('Playlist cached locally');
+                    
+                    this.precacheMediaFiles(playlistData);
+                } catch (error) {
+                    console.error('[Offline] Failed to cache playlist:', error);
+                }
+            },
+            
+            async loadCachedPlaylist() {
+                if (!this.db) return null;
+                
+                try {
+                    const tx = this.db.transaction('cachedPlaylist', 'readonly');
+                    const store = tx.objectStore('cachedPlaylist');
+                    const entry = await new Promise((resolve) => {
+                        const req = store.get('current');
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => resolve(null);
+                    });
+                    
+                    if (entry && entry.data) {
+                        this.cachedPlaylist = entry.data;
+                        debug('Loaded cached playlist from ' + new Date(entry.timestamp).toLocaleTimeString());
+                        return entry.data;
+                    }
+                } catch (error) {
+                    console.error('[Offline] Failed to load cached playlist:', error);
+                }
+                
+                return null;
+            },
+            
+            precacheMediaFiles(playlistData) {
+                if (!playlistData.playlist || !navigator.serviceWorker.controller) return;
+                
+                const urls = playlistData.playlist
+                    .filter(item => item.url && !item.url.startsWith('http'))
+                    .map(item => item.url);
+                
+                if (urls.length > 0) {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'PRECACHE_MEDIA',
+                        urls: urls
+                    });
+                    debug('Requested pre-cache for ' + urls.length + ' media files');
+                }
+            },
+            
+            updateOfflineIndicator() {
+                let indicator = document.getElementById('offlineIndicator');
+                
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.id = 'offlineIndicator';
+                    indicator.style.cssText = `
+                        position: fixed;
+                        top: 60px;
+                        left: 20px;
+                        background: rgba(239, 68, 68, 0.9);
+                        backdrop-filter: blur(10px);
+                        padding: 8px 16px;
+                        border-radius: 20px;
+                        color: white;
+                        font-family: sans-serif;
+                        font-size: 12px;
+                        z-index: 100;
+                        display: none;
+                        align-items: center;
+                        gap: 8px;
+                        transition: opacity 0.3s;
+                    `;
+                    indicator.innerHTML = '<span>📴</span><span>Mode hors ligne</span>';
+                    document.body.appendChild(indicator);
+                }
+                
+                if (this.isOnline) {
+                    indicator.style.display = 'none';
+                } else {
+                    indicator.style.display = 'flex';
+                }
+            },
+            
+            getCacheStatus() {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'GET_CACHE_STATUS' });
+                }
+            },
+            
+            async queueOfflineLog(logData) {
+                if (!this.db) return;
+                
+                try {
+                    const tx = this.db.transaction('pendingLogs', 'readwrite');
+                    const store = tx.objectStore('pendingLogs');
+                    logData.timestamp = Date.now();
+                    await store.add(logData);
+                    debug('Queued offline log');
+                } catch (error) {
+                    console.error('[Offline] Failed to queue log:', error);
+                }
+            }
+        };
+
+        const originalFetchPlaylist = fetchPlaylist;
+        fetchPlaylist = async function() {
+            try {
+                const response = await fetch('/player/api/playlist');
+                const data = await response.json();
+                
+                if (data.error && data.offline) {
+                    debug('Offline - using cached playlist');
+                    const cachedData = await offlineManager.loadCachedPlaylist();
+                    if (cachedData) {
+                        applyPlaylistData(cachedData);
+                        return;
+                    } else {
+                        debug('No cached playlist available');
+                        return;
+                    }
+                }
+                
+                if (!data.error) {
+                    await offlineManager.savePlaylistToCache(data);
+                }
+                
+                applyPlaylistData(data);
+                
+            } catch (error) {
+                debug('Fetch failed: ' + error.message);
+                
+                if (!offlineManager.isOnline) {
+                    const cachedData = await offlineManager.loadCachedPlaylist();
+                    if (cachedData) {
+                        debug('Using cached playlist (offline)');
+                        applyPlaylistData(cachedData);
+                        return;
+                    }
+                }
+                
+                debug('Playlist error: ' + error.message);
+            }
+        };
+
+        function applyPlaylistData(data) {
+            if (data.error) {
+                debug('Playlist error: ' + data.error);
+                return;
+            }
+            
+            const newMode = data.mode || 'playlist';
+            const previousMode = player.mode;
+            
+            if (newMode === 'iptv' && data.iptv) {
+                player.mode = 'iptv';
+                const newIptvUrl = data.iptv.url;
+                const channelName = data.iptv.name;
+                
+                player.overlays = data.overlays || [];
+                debug('IPTV mode - Overlays: ' + player.overlays.length);
+                
+                if (newIptvUrl !== player.iptvUrl) {
+                    player.iptvUrl = newIptvUrl;
+                    player.iptvChannelName = channelName;
+                    
+                    player.imageEl.style.display = 'none';
+                    player.videoEl.style.display = 'none';
+                    player.iptvEl.style.display = 'block';
+                    
+                    const iptvChannelNameEl = document.getElementById('iptvChannelName');
+                    if (iptvChannelNameEl) iptvChannelNameEl.textContent = channelName || 'OnlineTV';
+                    
+                    if (typeof loadIptvStream === 'function') {
+                        loadIptvStream(newIptvUrl);
+                    }
+                }
+                
+                if (previousMode === 'playlist' || player.overlays.length > 0) {
+                    if (typeof renderOverlays === 'function') {
+                        renderOverlays();
+                    }
+                }
+                return;
+            }
+            
+            if (previousMode === 'iptv' && newMode === 'playlist') {
+                debug('Switching from IPTV to playlist mode');
+                if (typeof switchToPlaylistMode === 'function') {
+                    switchToPlaylistMode();
+                }
+            }
+            
+            player.mode = 'playlist';
+            
+            const newPlaylist = data.playlist || [];
+            player.overlays = data.overlays || [];
+            
+            const currentItem = player.playlist[player.currentIndex];
+            const currentContentId = currentItem ? currentItem.id : null;
+            
+            player.playlist = newPlaylist;
+            
+            if (currentContentId) {
+                const newIndex = newPlaylist.findIndex(item => item.id === currentContentId);
+                if (newIndex !== -1) {
+                    player.currentIndex = newIndex;
+                } else if (player.currentIndex >= newPlaylist.length) {
+                    player.currentIndex = 0;
+                }
+            }
+            
+            debug('Playlist updated: ' + newPlaylist.length + ' items');
+            
+            if (player.state === PlayerState.IDLE && newPlaylist.length > 0) {
+                player.currentIndex = 0;
+                playCurrentItem();
+            }
+            
+            if (typeof renderOverlays === 'function') {
+                renderOverlays();
+            }
+        }
+
+        const originalLogPlay = logPlay;
+        logPlay = async function(item) {
+            const logData = {
+                content_id: item.id,
+                content_type: item.type,
+                category: item.category,
+                duration: item.duration,
+                booking_id: item.booking_id
+            };
+            
+            if (!offlineManager.isOnline) {
+                debug('Offline - queuing log for later sync');
+                await offlineManager.queueOfflineLog(logData);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/player/api/log-play', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(logData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.offline) {
+                    await offlineManager.queueOfflineLog(logData);
+                    return;
+                }
+                
+                if (result.exhausted) {
+                    debug('Content exhausted, refreshing playlist');
+                    fetchPlaylist();
+                }
+            } catch (error) {
+                debug('Log play error: ' + error.message);
+                await offlineManager.queueOfflineLog(logData);
+            }
+        };
+
+        const originalStartPlayer = startPlayer;
+        startPlayer = async function() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            
+            player.imageEl = document.getElementById('imageContent');
+            player.videoEl = document.getElementById('videoContent');
+            player.iptvEl = document.getElementById('iptvContent');
+            player.debugEl = document.getElementById('debugInfo');
+            
+            debug('Player starting...');
+            
+            await offlineManager.init();
+            
+            await fetchPlaylist();
+            
+            document.getElementById('loading').classList.add('hidden');
+            
+            player.heartbeatInterval = setInterval(sendHeartbeat, 30000);
+            sendHeartbeat();
+            
+            player.refreshInterval = setInterval(fetchPlaylist, player.PLAYLIST_REFRESH_INTERVAL);
+            
+            if (player.playlist.length > 0) {
+                debug('Starting playback with ' + player.playlist.length + ' items');
+                player.currentIndex = 0;
+                playCurrentItem();
+            } else {
+                debug('No content available');
+                updateInfoDisplay(null);
+            }
+        };
     </script>
 </body>
 </html>
