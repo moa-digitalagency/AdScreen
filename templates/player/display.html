@@ -413,6 +413,11 @@
             isMuted: false,
             currentBandwidth: null,
             availableLevels: null,
+            isBuffering: false,
+            bufferStallCount: 0,
+            lastBufferTime: null,
+            qualityCapped: false,
+            qualityRecoveryTimer: null,
             
             CONTROLS_HIDE_DELAY: 10000,
             PLAYLIST_REFRESH_INTERVAL: 10000,
@@ -725,6 +730,11 @@
             console.log('[IPTV DEBUG] Current player.iptvChannelName:', player.iptvChannelName);
             
             clearTimer();
+            cancelQualityRecovery();
+            
+            player.isBuffering = false;
+            player.bufferStallCount = 0;
+            player.qualityCapped = false;
             
             player.imageEl.style.display = 'none';
             player.videoEl.pause();
@@ -896,6 +906,71 @@
             return '/player/api/stream-proxy?url=' + encodeURIComponent(originalUrl);
         }
         
+        function cancelQualityRecovery() {
+            if (player.qualityRecoveryTimer) {
+                clearTimeout(player.qualityRecoveryTimer);
+                player.qualityRecoveryTimer = null;
+            }
+        }
+        
+        function scheduleQualityRecovery() {
+            cancelQualityRecovery();
+            player.qualityRecoveryTimer = setTimeout(function() {
+                player.qualityRecoveryTimer = null;
+                if (player.hlsInstance && !player.isBuffering && player.mode === 'iptv') {
+                    const currentCap = player.hlsInstance.autoLevelCapping;
+                    const levels = player.hlsInstance.levels;
+                    
+                    if (currentCap >= 0 && levels && currentCap < levels.length - 1) {
+                        player.hlsInstance.autoLevelCapping = currentCap + 1;
+                        debug('Quality cap raised to level ' + (currentCap + 1));
+                        updateQualityIndicator();
+                        scheduleQualityRecovery();
+                    } else if (currentCap >= 0) {
+                        player.hlsInstance.autoLevelCapping = -1;
+                        player.qualityCapped = false;
+                        player.bufferStallCount = 0;
+                        debug('Quality cap fully removed, ABR unrestricted');
+                        updateQualityIndicator();
+                    }
+                }
+            }, 10000);
+        }
+        
+        function capQualityLevel() {
+            if (!player.hlsInstance || player.mode !== 'iptv') return;
+            
+            const levels = player.hlsInstance.levels;
+            if (!levels || levels.length <= 1) return;
+            
+            let currentLevel = player.hlsInstance.currentLevel;
+            if (currentLevel < 0) {
+                currentLevel = player.hlsInstance.loadLevel;
+            }
+            if (currentLevel < 0) {
+                currentLevel = player.hlsInstance.autoLevelCapping >= 0 ? player.hlsInstance.autoLevelCapping : levels.length - 1;
+            }
+            
+            const currentCap = player.hlsInstance.autoLevelCapping;
+            let newCap;
+            
+            if (currentCap === -1) {
+                newCap = Math.max(0, currentLevel - 1);
+            } else {
+                newCap = Math.max(0, currentCap - 1);
+            }
+            
+            if (newCap !== currentCap) {
+                player.hlsInstance.autoLevelCapping = newCap;
+                player.qualityCapped = true;
+                cancelQualityRecovery();
+                debug('Quality capped to level ' + newCap + ' (cap was ' + currentCap + ', current level ' + currentLevel + ')');
+                updateQualityIndicator();
+            }
+            
+            scheduleQualityRecovery();
+        }
+        
         function loadHlsStream(streamUrl, useProxy = false) {
             if (player.hlsInstance) {
                 player.hlsInstance.destroy();
@@ -918,33 +993,43 @@
                 player.hlsInstance = new Hls({
                     debug: false,
                     enableWorker: true,
-                    lowLatencyMode: false,
-                    backBufferLength: 60,
-                    maxBufferLength: 30,
-                    maxMaxBufferLength: 120,
-                    maxBufferSize: 60 * 1000 * 1000,
-                    maxBufferHole: 0.5,
-                    fragLoadingTimeOut: 30000,
-                    manifestLoadingTimeOut: 20000,
-                    levelLoadingTimeOut: 20000,
+                    lowLatencyMode: true,
+                    backBufferLength: 30,
+                    maxBufferLength: 10,
+                    maxMaxBufferLength: 30,
+                    maxBufferSize: 30 * 1000 * 1000,
+                    maxBufferHole: 0.3,
+                    highBufferWatchdogPeriod: 2,
+                    nudgeOffset: 0.1,
+                    nudgeMaxRetry: 5,
+                    fragLoadingTimeOut: 10000,
+                    manifestLoadingTimeOut: 10000,
+                    levelLoadingTimeOut: 10000,
                     startFragPrefetch: true,
                     startLevel: -1,
+                    capLevelToPlayerSize: true,
+                    capLevelOnFPSDrop: true,
+                    fpsDroppedMonitoringPeriod: 3000,
+                    fpsDroppedMonitoringThreshold: 0.2,
                     abrEwmaDefaultEstimate: 500000,
-                    abrEwmaFastLive: 3.0,
-                    abrEwmaSlowLive: 9.0,
-                    abrEwmaFastVoD: 3.0,
-                    abrEwmaSlowVoD: 9.0,
-                    abrBandWidthFactor: 0.95,
-                    abrBandWidthUpFactor: 0.7,
+                    abrEwmaFastLive: 2.0,
+                    abrEwmaSlowLive: 6.0,
+                    abrEwmaFastVoD: 2.0,
+                    abrEwmaSlowVoD: 6.0,
+                    abrBandWidthFactor: 0.8,
+                    abrBandWidthUpFactor: 0.5,
                     abrMaxWithRealBitrate: true,
-                    maxLoadingDelay: 4,
+                    maxLoadingDelay: 2,
                     minAutoBitrate: 0,
-                    manifestLoadingMaxRetry: 6,
-                    fragLoadingMaxRetry: 8,
-                    fragLoadingRetryDelay: 500,
-                    levelLoadingMaxRetry: 6,
+                    manifestLoadingMaxRetry: 4,
+                    fragLoadingMaxRetry: 6,
+                    fragLoadingRetryDelay: 300,
+                    levelLoadingMaxRetry: 4,
                     testBandwidth: true,
                     progressive: true,
+                    liveSyncDurationCount: 3,
+                    liveMaxLatencyDurationCount: 6,
+                    liveDurationInfinity: true,
                     xhrSetup: function(xhr, url) {
                         xhr.withCredentials = false;
                     }
@@ -992,6 +1077,49 @@
                         player.currentBandwidth = bw;
                         updateQualityIndicator();
                     }
+                    player.lastBufferTime = Date.now();
+                    player.bufferStallCount = 0;
+                });
+                
+                player.hlsInstance.on(Hls.Events.FPS_DROP, function(event, data) {
+                    debug('FPS dropped: ' + data.currentDropped + '/' + data.currentDecoded);
+                    capQualityLevel();
+                });
+                
+                player.hlsInstance.on(Hls.Events.FPS_DROP_LEVEL_CAPPING, function(event, data) {
+                    debug('FPS drop level capping to ' + data.level);
+                    player.qualityCapped = true;
+                    updateQualityIndicator();
+                });
+                
+                player.iptvEl.addEventListener('waiting', function() {
+                    if (!player.isBuffering) {
+                        player.isBuffering = true;
+                        player.bufferStallCount = (player.bufferStallCount || 0) + 1;
+                        debug('Buffering detected (stall #' + player.bufferStallCount + ')');
+                        updateIptvStatus('loading', 'Mise en mémoire tampon...');
+                        
+                        cancelQualityRecovery();
+                        
+                        if (player.bufferStallCount >= 2) {
+                            capQualityLevel();
+                        }
+                    }
+                });
+                
+                player.iptvEl.addEventListener('playing', function() {
+                    if (player.isBuffering) {
+                        player.isBuffering = false;
+                        debug('Playback resumed after buffering');
+                        updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+                        
+                        scheduleQualityRecovery();
+                    }
+                });
+                
+                player.iptvEl.addEventListener('stalled', function() {
+                    debug('Stream stalled, network may be slow');
+                    capQualityLevel();
                 });
                 
                 player.hlsInstance.on(Hls.Events.ERROR, function(event, data) {
@@ -1281,6 +1409,8 @@
         }
         
         function switchToPlaylistMode() {
+            cancelQualityRecovery();
+            
             if (player.hlsInstance) {
                 player.hlsInstance.destroy();
                 player.hlsInstance = null;
@@ -1305,6 +1435,9 @@
             player.iptvChannelName = null;
             player.currentBandwidth = null;
             player.availableLevels = null;
+            player.isBuffering = false;
+            player.bufferStallCount = 0;
+            player.qualityCapped = false;
             player.state = PlayerState.IDLE;
         }
 
