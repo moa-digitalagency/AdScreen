@@ -35,60 +35,63 @@ login_manager.init_app(app)
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
 
+INIT_DB_MODE = os.environ.get('INIT_DB_MODE', 'false').lower() == 'true'
+
 with app.app_context():
     import models
     db.create_all()
     
-    superadmin_email = os.environ.get("SUPERADMIN_EMAIL")
-    superadmin_password = os.environ.get("SUPERADMIN_PASSWORD")
-    
-    if superadmin_email and superadmin_password:
-        existing_superadmin = models.User.query.filter_by(email=superadmin_email).first()
-        if not existing_superadmin:
-            superadmin = models.User(
-                username='superadmin',
-                email=superadmin_email,
-                role='superadmin',
-                is_active=True
-            )
-            superadmin.set_password(superadmin_password)
-            db.session.add(superadmin)
-            db.session.commit()
-            logging.info(f"Superadmin user created with email: {superadmin_email}")
-        else:
-            updated = False
-            if existing_superadmin.role != 'superadmin':
-                existing_superadmin.role = 'superadmin'
-                updated = True
-                logging.info(f"Updated user {superadmin_email} to superadmin role")
-            
-            if not existing_superadmin.check_password(superadmin_password):
-                existing_superadmin.set_password(superadmin_password)
-                updated = True
-                logging.info(f"Updated superadmin password for {superadmin_email}")
-            
-            if updated:
+    if not INIT_DB_MODE:
+        superadmin_email = os.environ.get("SUPERADMIN_EMAIL")
+        superadmin_password = os.environ.get("SUPERADMIN_PASSWORD")
+        
+        if superadmin_email and superadmin_password:
+            existing_superadmin = models.User.query.filter_by(email=superadmin_email).first()
+            if not existing_superadmin:
+                superadmin = models.User(
+                    username='superadmin',
+                    email=superadmin_email,
+                    role='superadmin',
+                    is_active=True
+                )
+                superadmin.set_password(superadmin_password)
+                db.session.add(superadmin)
                 db.session.commit()
-    
-    from routes.auth_routes import auth_bp
-    from routes.admin_routes import admin_bp
-    from routes.org_routes import org_bp
-    from routes.screen_routes import screen_bp
-    from routes.booking_routes import booking_bp
-    from routes.player_routes import player_bp
-    from routes.api_routes import api_bp
-    from routes.billing_routes import billing_bp
-    from routes.ad_content_routes import ad_content_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp, url_prefix="/admin")
-    app.register_blueprint(org_bp, url_prefix="/org")
-    app.register_blueprint(screen_bp, url_prefix="/screen")
-    app.register_blueprint(booking_bp, url_prefix="/book")
-    app.register_blueprint(player_bp, url_prefix="/player")
-    app.register_blueprint(api_bp, url_prefix="/api")
-    app.register_blueprint(billing_bp, url_prefix="/org/billing")
-    app.register_blueprint(ad_content_bp, url_prefix="/admin")
+                logging.info(f"Superadmin user created with email: {superadmin_email}")
+            else:
+                updated = False
+                if existing_superadmin.role != 'superadmin':
+                    existing_superadmin.role = 'superadmin'
+                    updated = True
+                    logging.info(f"Updated user {superadmin_email} to superadmin role")
+                
+                if not existing_superadmin.check_password(superadmin_password):
+                    existing_superadmin.set_password(superadmin_password)
+                    updated = True
+                    logging.info(f"Updated superadmin password for {superadmin_email}")
+                
+                if updated:
+                    db.session.commit()
+        
+        from routes.auth_routes import auth_bp
+        from routes.admin_routes import admin_bp
+        from routes.org_routes import org_bp
+        from routes.screen_routes import screen_bp
+        from routes.booking_routes import booking_bp
+        from routes.player_routes import player_bp
+        from routes.api_routes import api_bp
+        from routes.billing_routes import billing_bp
+        from routes.ad_content_routes import ad_content_bp
+        
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(admin_bp, url_prefix="/admin")
+        app.register_blueprint(org_bp, url_prefix="/org")
+        app.register_blueprint(screen_bp, url_prefix="/screen")
+        app.register_blueprint(booking_bp, url_prefix="/book")
+        app.register_blueprint(player_bp, url_prefix="/player")
+        app.register_blueprint(api_bp, url_prefix="/api")
+        app.register_blueprint(billing_bp, url_prefix="/org/billing")
+        app.register_blueprint(ad_content_bp, url_prefix="/admin")
 
 @login_manager.user_loader
 def load_user(user_id):

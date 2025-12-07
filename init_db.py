@@ -3,11 +3,19 @@
 Script d'initialisation de la base de données Shabaka AdScreen
 Crée toutes les tables définies dans les modèles SQLAlchemy.
 Ajoute automatiquement les colonnes manquantes aux tables existantes.
+
+Usage VPS:
+    python init_db.py          # Initialize/update database
+    python init_db.py --check  # Verify database connection
+    python init_db.py --drop   # Reset database (WARNING: data loss)
 """
 import sys
+import os
 import argparse
 import logging
 from sqlalchemy import inspect, text
+
+os.environ.setdefault('INIT_DB_MODE', 'true')
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
