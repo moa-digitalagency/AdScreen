@@ -253,6 +253,55 @@
         body.show-controls #debugInfo {
             opacity: 1;
         }
+        
+        #qualityIndicator {
+            position: fixed;
+            bottom: 20px;
+            right: 200px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 8px 14px;
+            border-radius: 6px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 11px;
+            z-index: 60;
+            display: none;
+            transition: all 0.3s ease;
+        }
+        
+        #qualityIndicator.visible {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quality-badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 10px;
+        }
+        
+        .quality-high { background: #22c55e; }
+        .quality-medium { background: #eab308; }
+        .quality-low { background: #f97316; }
+        .quality-very-low { background: #ef4444; }
+        
+        .bandwidth-bar {
+            width: 60px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .bandwidth-fill {
+            height: 100%;
+            background: #22c55e;
+            border-radius: 2px;
+            transition: width 0.5s ease, background 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -294,6 +343,15 @@
             <span style="color: #a855f7;">📺</span>
             <span id="iptvChannelName">OnlineTV</span>
         </div>
+    </div>
+    
+    <div id="qualityIndicator">
+        <span id="qualityLabel">Auto</span>
+        <span id="qualityBadge" class="quality-badge quality-high">HD</span>
+        <div class="bandwidth-bar">
+            <div id="bandwidthFill" class="bandwidth-fill" style="width: 50%;"></div>
+        </div>
+        <span id="bandwidthText">-- Mbps</span>
     </div>
     
     <script src="{{ url_for('static', filename='js/hls.min.js') }}"></script>
@@ -353,6 +411,8 @@
             hlsInstance: null,
             mpegtsPlayer: null,
             isMuted: false,
+            currentBandwidth: null,
+            availableLevels: null,
             
             CONTROLS_HIDE_DELAY: 10000,
             PLAYLIST_REFRESH_INTERVAL: 10000,
@@ -858,22 +918,33 @@
                 player.hlsInstance = new Hls({
                     debug: false,
                     enableWorker: true,
-                    lowLatencyMode: true,
-                    backBufferLength: 30,
-                    maxBufferLength: 10,
-                    maxMaxBufferLength: 30,
-                    maxBufferSize: 30 * 1000 * 1000,
+                    lowLatencyMode: false,
+                    backBufferLength: 60,
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 120,
+                    maxBufferSize: 60 * 1000 * 1000,
                     maxBufferHole: 0.5,
-                    fragLoadingTimeOut: 20000,
-                    manifestLoadingTimeOut: 15000,
-                    levelLoadingTimeOut: 15000,
+                    fragLoadingTimeOut: 30000,
+                    manifestLoadingTimeOut: 20000,
+                    levelLoadingTimeOut: 20000,
                     startFragPrefetch: true,
-                    startLevel: 0,
+                    startLevel: -1,
+                    abrEwmaDefaultEstimate: 500000,
+                    abrEwmaFastLive: 3.0,
+                    abrEwmaSlowLive: 9.0,
+                    abrEwmaFastVoD: 3.0,
+                    abrEwmaSlowVoD: 9.0,
+                    abrBandWidthFactor: 0.95,
+                    abrBandWidthUpFactor: 0.7,
                     abrMaxWithRealBitrate: true,
-                    manifestLoadingMaxRetry: 5,
-                    fragLoadingMaxRetry: 5,
-                    fragLoadingRetryDelay: 1000,
-                    levelLoadingMaxRetry: 4,
+                    maxLoadingDelay: 4,
+                    minAutoBitrate: 0,
+                    manifestLoadingMaxRetry: 6,
+                    fragLoadingMaxRetry: 8,
+                    fragLoadingRetryDelay: 500,
+                    levelLoadingMaxRetry: 6,
+                    testBandwidth: true,
+                    progressive: true,
                     xhrSetup: function(xhr, url) {
                         xhr.withCredentials = false;
                     }
@@ -884,10 +955,12 @@
                 player.iptvEl.muted = player.isMuted;
                 player.hlsInstance.startLoad();
                 
-                player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                    debug('HLS manifest parsed, starting playback');
+                player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                    debug('HLS manifest parsed, levels: ' + data.levels.length + ', starting playback');
+                    player.availableLevels = data.levels;
                     player.iptvRetryCount = 0;
                     hideIptvError();
+                    updateQualityIndicator();
                     updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
                     player.iptvEl.play().then(() => {
                         debug('OnlineTV stream started' + (useProxy ? ' (via proxy)' : ''));
@@ -901,6 +974,24 @@
                 player.hlsInstance.on(Hls.Events.MANIFEST_LOADING, function() {
                     debug('Loading HLS manifest...');
                     updateIptvStatus('loading', 'Chargement...');
+                });
+                
+                player.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
+                    const level = player.hlsInstance.levels[data.level];
+                    if (level) {
+                        const height = level.height || 'Auto';
+                        const bitrate = Math.round(level.bitrate / 1000);
+                        debug('Quality switched to: ' + height + 'p (' + bitrate + ' kbps)');
+                        updateQualityIndicator();
+                    }
+                });
+                
+                player.hlsInstance.on(Hls.Events.FRAG_BUFFERED, function(event, data) {
+                    const bw = player.hlsInstance.bandwidthEstimate;
+                    if (bw) {
+                        player.currentBandwidth = bw;
+                        updateQualityIndicator();
+                    }
                 });
                 
                 player.hlsInstance.on(Hls.Events.ERROR, function(event, data) {
@@ -930,7 +1021,7 @@
                                 break;
                         }
                     } else if (data.details === 'fragLoadError') {
-                        debug('Fragment load error (non-fatal), continuing...');
+                        debug('Fragment load error (non-fatal), ABR will adjust quality...');
                     } else if (data.details === 'manifestLoadError' || data.details === 'manifestParsingError') {
                         handleNetworkError(streamUrl, data, useProxy);
                     }
@@ -1004,6 +1095,94 @@
                 debug('Max retries reached, showing error');
                 updateIptvStatus('error', 'Chaîne indisponible');
                 showIptvError('La chaîne n\'est pas accessible. Causes possibles :<br><br>• La chaîne est hors ligne ou protégée<br>• L\'URL du stream n\'est plus valide<br>• Le serveur bloque les connexions externes<br><br>Essayez une autre chaîne ou vérifiez l\'URL M3U.');
+            }
+        }
+        
+        function updateQualityIndicator() {
+            const indicator = document.getElementById('qualityIndicator');
+            const labelEl = document.getElementById('qualityLabel');
+            const badgeEl = document.getElementById('qualityBadge');
+            const fillEl = document.getElementById('bandwidthFill');
+            const bwTextEl = document.getElementById('bandwidthText');
+            
+            if (!indicator || !player.hlsInstance || player.mode !== 'iptv') {
+                if (indicator) indicator.classList.remove('visible');
+                return;
+            }
+            
+            indicator.classList.add('visible');
+            
+            const currentLevel = player.hlsInstance.currentLevel;
+            const levels = player.hlsInstance.levels;
+            const bandwidth = player.currentBandwidth || player.hlsInstance.bandwidthEstimate || 0;
+            
+            let qualityText = 'Auto';
+            let qualityClass = 'quality-high';
+            let badgeText = 'HD';
+            
+            if (levels && levels.length > 0 && currentLevel >= 0 && currentLevel < levels.length) {
+                const level = levels[currentLevel];
+                const height = level.height;
+                const bitrate = level.bitrate;
+                
+                if (height) {
+                    qualityText = height + 'p';
+                    if (height >= 1080) {
+                        badgeText = 'FHD';
+                        qualityClass = 'quality-high';
+                    } else if (height >= 720) {
+                        badgeText = 'HD';
+                        qualityClass = 'quality-high';
+                    } else if (height >= 480) {
+                        badgeText = 'SD';
+                        qualityClass = 'quality-medium';
+                    } else if (height >= 360) {
+                        badgeText = 'LD';
+                        qualityClass = 'quality-low';
+                    } else {
+                        badgeText = 'LOW';
+                        qualityClass = 'quality-very-low';
+                    }
+                } else if (bitrate) {
+                    const kbps = Math.round(bitrate / 1000);
+                    qualityText = kbps + ' kbps';
+                    if (bitrate >= 4000000) {
+                        badgeText = 'HD';
+                        qualityClass = 'quality-high';
+                    } else if (bitrate >= 2000000) {
+                        badgeText = 'SD';
+                        qualityClass = 'quality-medium';
+                    } else {
+                        badgeText = 'LD';
+                        qualityClass = 'quality-low';
+                    }
+                }
+            }
+            
+            if (labelEl) labelEl.textContent = qualityText;
+            if (badgeEl) {
+                badgeEl.textContent = badgeText;
+                badgeEl.className = 'quality-badge ' + qualityClass;
+            }
+            
+            if (bandwidth > 0) {
+                const mbps = (bandwidth / 1000000).toFixed(1);
+                if (bwTextEl) bwTextEl.textContent = mbps + ' Mbps';
+                
+                const maxBandwidth = 20000000;
+                const fillPercent = Math.min(100, (bandwidth / maxBandwidth) * 100);
+                if (fillEl) {
+                    fillEl.style.width = fillPercent + '%';
+                    if (bandwidth >= 5000000) {
+                        fillEl.style.background = '#22c55e';
+                    } else if (bandwidth >= 2000000) {
+                        fillEl.style.background = '#eab308';
+                    } else if (bandwidth >= 1000000) {
+                        fillEl.style.background = '#f97316';
+                    } else {
+                        fillEl.style.background = '#ef4444';
+                    }
+                }
             }
         }
         
@@ -1119,8 +1298,13 @@
             document.getElementById('iptvInfo').style.display = 'none';
             document.getElementById('info').style.display = '';
             
+            const qualityIndicator = document.getElementById('qualityIndicator');
+            if (qualityIndicator) qualityIndicator.classList.remove('visible');
+            
             player.iptvUrl = null;
             player.iptvChannelName = null;
+            player.currentBandwidth = null;
+            player.availableLevels = null;
             player.state = PlayerState.IDLE;
         }
 
