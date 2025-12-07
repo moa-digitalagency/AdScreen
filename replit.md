@@ -44,6 +44,13 @@ The backend is built with Flask (Python 3.11) and uses PostgreSQL with SQLAlchem
 ### CSS Theme System
 The project uses a comprehensive, reusable CSS theme template based on an emerald/teal color palette, defined via CSS custom properties. It includes pre-designed components for buttons, cards, badges, forms, navigation, notifications, and more, all customizable by updating root CSS variables.
 
+### VPS Deployment
+The platform supports standalone VPS deployment with:
+-   **init_db.py**: Standalone database initialization script with INIT_DB_MODE to prevent side effects during schema sync.
+-   **systemd Integration**: Service file with ExecStartPre for automatic database schema updates on restart.
+-   **Environment File**: Secure configuration via `.env` file instead of inline environment variables.
+-   **Nginx Configuration**: Optimized reverse proxy settings for streaming with proper timeout and buffer settings.
+
 ## External Dependencies
 -   **PostgreSQL**: Primary database.
 -   **Pillow**: Image processing and validation.
