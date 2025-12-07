@@ -181,8 +181,15 @@ async function queueOfflineLog(logData) {
     const tx = db.transaction('pendingLogs', 'readwrite');
     const store = tx.objectStore('pendingLogs');
     logData.timestamp = Date.now();
-    await store.add(logData);
+    await idbRequest(store.add(logData));
     console.log('[SW] Queued offline log:', logData);
+}
+
+function idbRequest(request) {
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
 }
 
 function openOfflineDB() {
@@ -250,7 +257,7 @@ async function syncPendingLogs() {
         const db = await openOfflineDB();
         const tx = db.transaction('pendingLogs', 'readonly');
         const store = tx.objectStore('pendingLogs');
-        const logs = await store.getAll();
+        const logs = await idbRequest(store.getAll());
         
         if (!logs || logs.length === 0) {
             return;
@@ -269,7 +276,7 @@ async function syncPendingLogs() {
                 if (response.ok) {
                     const deleteTx = db.transaction('pendingLogs', 'readwrite');
                     const deleteStore = deleteTx.objectStore('pendingLogs');
-                    await deleteStore.delete(log.timestamp);
+                    await idbRequest(deleteStore.delete(log.timestamp));
                     console.log('[SW] Synced log:', log.timestamp);
                 }
             } catch (error) {
