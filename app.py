@@ -82,6 +82,10 @@ with app.app_context():
         from routes.api_routes import api_bp
         from routes.billing_routes import billing_bp
         from routes.ad_content_routes import ad_content_bp
+        from routes.mobile_api_routes import mobile_api_bp
+        
+        from services.rate_limiter import init_limiter
+        init_limiter(app)
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(admin_bp, url_prefix="/admin")
@@ -92,6 +96,7 @@ with app.app_context():
         app.register_blueprint(api_bp, url_prefix="/api")
         app.register_blueprint(billing_bp, url_prefix="/org/billing")
         app.register_blueprint(ad_content_bp, url_prefix="/admin")
+        app.register_blueprint(mobile_api_bp, url_prefix="/mobile/api/v1")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -130,6 +135,7 @@ CSRF_EXEMPT_ENDPOINTS = [
 
 CSRF_EXEMPT_PREFIXES = [
     'api.',
+    'mobile_api.',
 ]
 
 @app.before_request
