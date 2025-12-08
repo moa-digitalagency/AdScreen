@@ -41,6 +41,7 @@ The backend is built with Flask (Python 3.11) and uses PostgreSQL with SQLAlchem
 -   **Customizable Registration Number Label**: Allows country-specific labels.
 -   **City Selection**: Dynamic dropdown with autocomplete populated from `utils/world_data.py`.
 -   **World Data Coverage**: Comprehensive data for 208 countries and over 4,600 cities.
+-   **Mobile API (v1)**: Secure REST API at `/mobile/api/v1/*` with JWT authentication (access/refresh tokens), rate limiting via Flask-Limiter, and input validation for native mobile app development. Documentation in `docs/API_MOBILE_V1_SECURE.md`.
 
 ### CSS Theme System
 The project uses a comprehensive, reusable CSS theme template based on an emerald/teal color palette, defined via CSS custom properties. It includes pre-designed components for buttons, cards, badges, forms, navigation, notifications, and more, all customizable by updating root CSS variables.
@@ -65,3 +66,5 @@ The platform supports standalone VPS deployment with:
 -   **Gunicorn**: Production WSGI HTTP Server.
 -   **HLS.js**: HTTP Live Streaming playback.
 -   **mpegts.js**: MPEG-TS stream playback fallback.
+-   **PyJWT**: JWT token generation and validation.
+-   **Flask-Limiter**: Rate limiting for API protection.
