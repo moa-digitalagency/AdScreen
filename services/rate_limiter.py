@@ -7,6 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_client_ip():
+    """Get real client IP, handling proxy headers safely."""
+    forwarded_for = request.headers.get('X-Forwarded-For')
+    if forwarded_for:
+        client_ip = forwarded_for.split(',')[0].strip()
+        return client_ip
     return get_remote_address()
 
 
