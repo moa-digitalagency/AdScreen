@@ -4719,6 +4719,18 @@ video {
   }
 }
 
+.bottom-6 {
+  bottom: 1.5rem;
+}
+
+.left-6 {
+  left: 1.5rem;
+}
+
+.z-\[9999\] {
+  z-index: 9999;
+}
+
 :is(:where([dir="rtl"]) .peer:checked ~ .rtl\:peer-checked\:after\:-translate-x-full)::after {
   content: var(--tw-content);
   --tw-translate-x: -100%;

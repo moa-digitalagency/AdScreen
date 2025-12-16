@@ -934,10 +934,3 @@ html {
         padding: 2rem;
     }
 }
-
-#lang-switcher {
-    position: fixed !important;
-    bottom: 1.5rem;
-    left: 1.5rem;
-    z-index: 9999;
-}
