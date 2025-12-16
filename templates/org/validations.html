@@ -1,12 +1,12 @@
 {% extends "org/base.html" %}
 
-{% block page_title %}Validations{% endblock %}
+{% block page_title %}{{ t('nav.validations') }}{% endblock %}
 
 {% block main_content %}
 <div class="bg-white rounded-xl shadow-sm border border-gray-100">
     <div class="p-6 border-b border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-800">Contenus en attente de validation</h2>
-        <p class="text-gray-500 text-sm mt-1">{{ contents|length }} contenu(s) à valider</p>
+        <h2 class="text-lg font-semibold text-gray-800">{{ t('validations.pending_validations') }}</h2>
+        <p class="text-gray-500 text-sm mt-1">{{ contents|length }} {% if current_lang() == 'fr' %}contenu(s) à valider{% else %}content(s) to validate{% endif %}</p>
     </div>
 
     {% if contents %}
@@ -31,7 +31,7 @@
                         <div class="flex items-center gap-2 mb-1">
                             <h3 class="font-medium text-gray-800 truncate">{{ content.original_filename }}</h3>
                             <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium flex-shrink-0">
-                                En attente
+                                {{ t('contents.pending') }}
                             </span>
                         </div>
                         <p class="text-sm text-gray-500 mb-2">
@@ -39,9 +39,9 @@
                         </p>
                         
                         <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                            <span><i class="fas fa-user mr-1"></i>{{ content.client_name or 'Anonyme' }}</span>
+                            <span><i class="fas fa-user mr-1"></i>{{ content.client_name or (t('common.none') if current_lang() == 'en' else 'Anonyme') }}</span>
                             {% if content.client_phone %}
-                            <a href="https://wa.me/{{ content.client_phone|replace(' ', '')|replace('+', '')|replace('-', '') }}?text={{ ('Bonjour ' ~ (content.client_name or '') ~ ', concernant votre réservation publicitaire sur ' ~ content.screen.name ~ '...')|urlencode }}"
+                            <a href="https://wa.me/{{ content.client_phone|replace(' ', '')|replace('+', '')|replace('-', '') }}?text={{ (('Hello ' ~ (content.client_name or '') ~ ', regarding your ad booking on ' ~ content.screen.name ~ '...') if current_lang() == 'en' else ('Bonjour ' ~ (content.client_name or '') ~ ', concernant votre réservation publicitaire sur ' ~ content.screen.name ~ '...'))|urlencode }}"
                                target="_blank"
                                class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition font-medium">
                                 <i class="fab fa-whatsapp"></i>{{ content.client_phone }}
@@ -51,7 +51,7 @@
                             <span><i class="fas fa-expand-arrows-alt mr-1"></i>{{ content.width }}x{{ content.height }}</span>
                             {% if content.booking %}
                             <span><i class="fas fa-clock mr-1"></i>{{ content.booking.slot_duration }}s</span>
-                            <span><i class="fas fa-redo mr-1"></i>{{ content.booking.num_plays }} diffusions</span>
+                            <span><i class="fas fa-redo mr-1"></i>{{ content.booking.num_plays }} {% if current_lang() == 'fr' %}diffusions{% else %}broadcasts{% endif %}</span>
                             <span class="font-semibold text-gray-800"><i class="fas fa-coins mr-1"></i>{{ "%.2f"|format(content.booking.total_price) }}{{ currency_symbol }}</span>
                             {% endif %}
                         </div>
@@ -62,21 +62,21 @@
                     <button onclick="openPreview('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.original_filename }}')" 
                             class="btn-secondary text-sm !py-2 !px-3">
                         <i class="fas fa-eye"></i>
-                        <span class="hidden sm:inline">Aperçu</span>
+                        <span class="hidden sm:inline">{{ t('contents.preview') }}</span>
                     </button>
                     
                     <form action="{{ url_for('org.approve_content', content_id=content.id) }}" method="POST" class="inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-primary text-sm !py-2 !px-3 !shadow-none">
                             <i class="fas fa-check"></i>
-                            <span class="hidden sm:inline">Approuver</span>
+                            <span class="hidden sm:inline">{{ t('contents.approve') }}</span>
                         </button>
                     </form>
                     
                     <button onclick="showRejectModal({{ content.id }})" 
                             class="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 text-white rounded-full hover:bg-red-600 transition font-semibold">
                         <i class="fas fa-times"></i>
-                        <span class="hidden sm:inline">Refuser</span>
+                        <span class="hidden sm:inline">{{ t('contents.reject') }}</span>
                     </button>
                 </div>
             </div>
@@ -88,8 +88,8 @@
         <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <i class="fas fa-check-circle text-green-600 text-3xl"></i>
         </div>
-        <h3 class="text-xl font-semibold text-gray-800 mb-2">Tout est validé!</h3>
-        <p class="text-gray-500">Aucun contenu en attente de validation.</p>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">{% if current_lang() == 'fr' %}Tout est validé!{% else %}All validated!{% endif %}</h3>
+        <p class="text-gray-500">{{ t('validations.no_pending') }}</p>
     </div>
     {% endif %}
 </div>
@@ -97,7 +97,7 @@
 <div id="previewModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50" onclick="closePreview(event)">
     <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <div class="flex items-center justify-between p-4 border-b border-gray-100">
-            <h3 id="previewTitle" class="font-semibold text-gray-800">Aperçu du contenu</h3>
+            <h3 id="previewTitle" class="font-semibold text-gray-800">{{ t('contents.preview') }}</h3>
             <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600 transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
@@ -106,7 +106,7 @@
         </div>
         <div class="p-4 bg-gray-50 flex justify-end gap-3">
             <button onclick="closePreview()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
-                Fermer
+                {{ t('common.close') }}
             </button>
         </div>
     </div>
@@ -114,26 +114,26 @@
 
 <div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Refuser le contenu</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">{% if current_lang() == 'fr' %}Refuser le contenu{% else %}Reject content{% endif %}</h3>
         <form id="rejectForm" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Motif du refus</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{% if current_lang() == 'fr' %}Motif du refus{% else %}Rejection reason{% endif %}</label>
                 <select name="reason" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-                    <option value="Contenu non conforme aux règles">Contenu non conforme aux règles</option>
-                    <option value="Qualité insuffisante">Qualité insuffisante</option>
-                    <option value="Résolution incorrecte">Résolution incorrecte</option>
-                    <option value="Contenu inapproprié">Contenu inapproprié</option>
-                    <option value="Autre">Autre</option>
+                    <option value="{% if current_lang() == 'fr' %}Contenu non conforme aux règles{% else %}Content not compliant with rules{% endif %}">{% if current_lang() == 'fr' %}Contenu non conforme aux règles{% else %}Content not compliant with rules{% endif %}</option>
+                    <option value="{% if current_lang() == 'fr' %}Qualité insuffisante{% else %}Insufficient quality{% endif %}">{% if current_lang() == 'fr' %}Qualité insuffisante{% else %}Insufficient quality{% endif %}</option>
+                    <option value="{% if current_lang() == 'fr' %}Résolution incorrecte{% else %}Incorrect resolution{% endif %}">{% if current_lang() == 'fr' %}Résolution incorrecte{% else %}Incorrect resolution{% endif %}</option>
+                    <option value="{% if current_lang() == 'fr' %}Contenu inapproprié{% else %}Inappropriate content{% endif %}">{% if current_lang() == 'fr' %}Contenu inapproprié{% else %}Inappropriate content{% endif %}</option>
+                    <option value="{% if current_lang() == 'fr' %}Autre{% else %}Other{% endif %}">{% if current_lang() == 'fr' %}Autre{% else %}Other{% endif %}</option>
                 </select>
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button" onclick="hideRejectModal()" 
                     class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                    Annuler
+                    {{ t('common.cancel') }}
                 </button>
                 <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                    Confirmer le refus
+                    {% if current_lang() == 'fr' %}Confirmer le refus{% else %}Confirm rejection{% endif %}
                 </button>
             </div>
         </form>

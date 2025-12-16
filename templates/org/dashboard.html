@@ -1,17 +1,17 @@
 {% extends "org/base.html" %}
 
-{% block page_title %}Tableau de bord{% endblock %}
+{% block page_title %}{{ t('nav.dashboard') }}{% endblock %}
 
 {% block main_content %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-xs sm:text-sm font-medium">Écrans</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">{{ t('nav.screens') }}</p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ total_screens }}</p>
                 <p class="text-green-600 text-xs sm:text-sm mt-1">
                     <span class="status-dot status-online mr-1"></span>
-                    {{ online_screens }} en ligne
+                    {{ online_screens }} {% if current_lang() == 'fr' %}en ligne{% else %}online{% endif %}
                 </p>
             </div>
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -23,9 +23,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-xs sm:text-sm font-medium">En attente</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">{{ t('dashboard.pending_validations') }}</p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ pending_validations }}</p>
-                <p class="text-yellow-600 text-xs sm:text-sm mt-1">À valider</p>
+                <p class="text-yellow-600 text-xs sm:text-sm mt-1">{% if current_lang() == 'fr' %}À valider{% else %}To validate{% endif %}</p>
             </div>
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-clock text-yellow-600 text-lg sm:text-xl"></i>
@@ -36,9 +36,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-xs sm:text-sm font-medium">CA Brut</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">{% if current_lang() == 'fr' %}CA Brut{% else %}Gross Revenue{% endif %}</p>
                 <p class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ "%.2f"|format(total_revenue) }} {{ currency_symbol }}</p>
-                <p class="text-gray-500 text-xs sm:text-sm mt-1">Total des ventes</p>
+                <p class="text-gray-500 text-xs sm:text-sm mt-1">{% if current_lang() == 'fr' %}Total des ventes{% else %}Total sales{% endif %}</p>
             </div>
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-coins text-green-600 text-lg sm:text-xl"></i>
@@ -49,9 +49,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 card-hover">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-xs sm:text-sm font-medium">Revenu net</p>
+                <p class="text-gray-500 text-xs sm:text-sm font-medium">{% if current_lang() == 'fr' %}Revenu net{% else %}Net Revenue{% endif %}</p>
                 <p class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">{{ "%.2f"|format(org.calculate_net_revenue(total_revenue)) }} {{ currency_symbol }}</p>
-                <p class="text-gray-500 text-xs sm:text-sm mt-1">Après commission ({{ org.commission_rate }}%)</p>
+                <p class="text-gray-500 text-xs sm:text-sm mt-1">{% if current_lang() == 'fr' %}Après commission{% else %}After commission{% endif %} ({{ org.commission_rate }}%)</p>
             </div>
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-wallet text-emerald-600 text-lg sm:text-xl"></i>
@@ -63,20 +63,20 @@
 <div class="grid sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <p class="font-medium text-sm sm:text-base">CA Hebdomadaire</p>
+            <p class="font-medium text-sm sm:text-base">{% if current_lang() == 'fr' %}CA Hebdomadaire{% else %}Weekly Revenue{% endif %}</p>
             <i class="fas fa-chart-line opacity-50"></i>
         </div>
         <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(weekly_revenue) }} {{ currency_symbol }}</p>
-        <p class="text-blue-100 text-xs sm:text-sm mt-1">7 derniers jours</p>
+        <p class="text-blue-100 text-xs sm:text-sm mt-1">{% if current_lang() == 'fr' %}7 derniers jours{% else %}Last 7 days{% endif %}</p>
     </div>
     
     <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 sm:p-6 text-white">
         <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <p class="font-medium text-sm sm:text-base">Revenu net hebdo</p>
+            <p class="font-medium text-sm sm:text-base">{% if current_lang() == 'fr' %}Revenu net hebdo{% else %}Weekly Net Revenue{% endif %}</p>
             <i class="fas fa-wallet opacity-50"></i>
         </div>
         <p class="text-2xl sm:text-3xl font-bold">{{ "%.2f"|format(org.calculate_net_revenue(weekly_revenue)) }} {{ currency_symbol }}</p>
-        <p class="text-emerald-100 text-xs sm:text-sm mt-1">Commission: {{ "%.2f"|format(org.calculate_platform_commission(weekly_revenue)) }} {{ currency_symbol }}</p>
+        <p class="text-emerald-100 text-xs sm:text-sm mt-1">{% if current_lang() == 'fr' %}Commission{% else %}Commission{% endif %}: {{ "%.2f"|format(org.calculate_platform_commission(weekly_revenue)) }} {{ currency_symbol }}</p>
     </div>
 </div>
 
@@ -84,13 +84,13 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 sm:mb-8" id="quick-actions-section">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 class="text-base sm:text-lg font-semibold text-gray-800">
-            <i class="fas fa-bolt text-yellow-500 mr-2"></i>Actions rapides
+            <i class="fas fa-bolt text-yellow-500 mr-2"></i>{{ t('dashboard.quick_actions') }}
         </h2>
         
         {% if screens|length > 1 %}
         <div class="flex items-center gap-2">
             <label for="quick-action-screen" class="text-xs sm:text-sm text-gray-600 whitespace-nowrap">
-                <i class="fas fa-tv mr-1"></i>Écran:
+                <i class="fas fa-tv mr-1"></i>{% if current_lang() == 'fr' %}Écran:{% else %}Screen:{% endif %}
             </label>
             <select id="quick-action-screen" 
                     class="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]"
@@ -115,7 +115,7 @@
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                 <i class="fas fa-list text-white text-lg"></i>
             </div>
-            <span class="text-xs sm:text-sm font-medium text-primary-700 text-center">Voir Playlist</span>
+            <span class="text-xs sm:text-sm font-medium text-primary-700 text-center">{% if current_lang() == 'fr' %}Voir Playlist{% else %}View Playlist{% endif %}</span>
         </a>
         
         <a href="{{ url_for('org.screen_iptv', screen_id=screens[0].id) }}" 
@@ -124,7 +124,7 @@
             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                 <i class="fas fa-tv text-white text-lg"></i>
             </div>
-            <span class="text-xs sm:text-sm font-medium text-purple-700 text-center">Voir OnlineTV</span>
+            <span class="text-xs sm:text-sm font-medium text-purple-700 text-center">{% if current_lang() == 'fr' %}Voir OnlineTV{% else %}View OnlineTV{% endif %}</span>
         </a>
         
         <form action="{{ url_for('screen.set_mode', screen_id=screens[0].id) }}" method="POST" class="contents" id="qa-playlist-form">
@@ -136,7 +136,7 @@
                 <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                     <i class="fas fa-play text-white text-lg"></i>
                 </div>
-                <span class="text-xs sm:text-sm font-medium text-green-700 text-center">Lancer Playlist</span>
+                <span class="text-xs sm:text-sm font-medium text-green-700 text-center">{% if current_lang() == 'fr' %}Lancer Playlist{% else %}Start Playlist{% endif %}</span>
             </button>
         </form>
         
@@ -149,7 +149,7 @@
                 <div class="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 transition">
                     <i class="fas fa-broadcast-tower text-white text-lg"></i>
                 </div>
-                <span class="text-xs sm:text-sm font-medium text-orange-700 text-center">Lancer OnlineTV</span>
+                <span class="text-xs sm:text-sm font-medium text-orange-700 text-center">{% if current_lang() == 'fr' %}Lancer OnlineTV{% else %}Start OnlineTV{% endif %}</span>
             </button>
         </form>
     </div>
@@ -157,7 +157,7 @@
     <div class="mt-4 pt-4 border-t border-gray-100">
         <p class="text-xs text-gray-500" id="qa-current-screen-info">
             <i class="fas fa-info-circle mr-1"></i>
-            Actions pour: <strong id="qa-current-screen-name">{{ screens[0].name }}</strong>
+            {% if current_lang() == 'fr' %}Actions pour:{% else %}Actions for:{% endif %} <strong id="qa-current-screen-name">{{ screens[0].name }}</strong>
             <span class="status-dot status-{{ screens[0].status }} w-2 h-2 ml-2 inline-block"></span>
         </p>
     </div>
@@ -195,8 +195,8 @@ function updateQuickActions(screenId) {
 <div class="grid lg:grid-cols-3 gap-4 sm:gap-6">
     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
         <div class="flex items-center justify-between mb-4 sm:mb-6">
-            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Mes écrans</h2>
-            <a href="{{ url_for('org.screens') }}" class="text-primary-600 hover:underline text-xs sm:text-sm">Voir tous</a>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">{{ t('nav.my_screens') }}</h2>
+            <a href="{{ url_for('org.screens') }}" class="text-primary-600 hover:underline text-xs sm:text-sm">{% if current_lang() == 'fr' %}Voir tous{% else %}View all{% endif %}</a>
         </div>
         
         <div class="grid sm:grid-cols-2 gap-3 sm:gap-4">
@@ -210,7 +210,7 @@ function updateQuickActions(screenId) {
                         </div>
                         <div class="min-w-0">
                             <p class="font-medium text-gray-800 text-sm truncate">{{ screen.name }}</p>
-                            <p class="text-xs text-gray-500 truncate">{{ screen.location or 'Non défini' }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ screen.location or (t('screens.location') if current_lang() == 'en' else 'Non défini') }}</p>
                         </div>
                     </div>
                     <span class="status-dot status-{{ screen.status }} flex-shrink-0"></span>
@@ -225,10 +225,10 @@ function updateQuickActions(screenId) {
                 <div class="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-tv text-gray-400 text-xl sm:text-2xl"></i>
                 </div>
-                <p class="text-gray-500 mb-4 text-sm">Aucun écran configuré</p>
+                <p class="text-gray-500 mb-4 text-sm">{{ t('screens.no_screens') }}</p>
                 <a href="{{ url_for('org.new_screen') }}" class="btn-primary btn-sm">
                     <i class="fas fa-plus"></i>
-                    Créer mon premier écran
+                    {{ t('screens.create_first') }}
                 </a>
             </div>
             {% endfor %}
@@ -236,21 +236,21 @@ function updateQuickActions(screenId) {
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-        <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Dernières réservations</h2>
+        <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">{% if current_lang() == 'fr' %}Dernières réservations{% else %}Recent Bookings{% endif %}</h2>
         <div class="space-y-3 sm:space-y-4">
             {% for booking in recent_bookings[:6] %}
             <div class="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 last:border-0">
                 <div class="min-w-0 flex-1">
-                    <p class="font-medium text-gray-800 text-sm truncate">{{ booking.content.client_name or 'Anonyme' }}</p>
+                    <p class="font-medium text-gray-800 text-sm truncate">{{ booking.content.client_name or (t('common.none') if current_lang() == 'en' else 'Anonyme') }}</p>
                     <p class="text-xs text-gray-500 truncate">{{ booking.screen.name }}</p>
                 </div>
                 <div class="text-right flex-shrink-0 ml-3">
                     <p class="font-semibold text-gray-800 text-sm">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</p>
-                    <p class="text-xs text-gray-500">{{ booking.num_plays }} diffusions</p>
+                    <p class="text-xs text-gray-500">{{ booking.num_plays }} {% if current_lang() == 'fr' %}diffusions{% else %}broadcasts{% endif %}</p>
                 </div>
             </div>
             {% else %}
-            <p class="text-gray-500 text-center py-6 sm:py-8 text-sm">Aucune réservation</p>
+            <p class="text-gray-500 text-center py-6 sm:py-8 text-sm">{% if current_lang() == 'fr' %}Aucune réservation{% else %}No bookings{% endif %}</p>
             {% endfor %}
         </div>
     </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Demande d'accès{% endblock %}
+{% block title %}{{ t('auth.register_title') }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen gradient-bg">
@@ -15,14 +15,14 @@
                 </a>
                 <div class="flex-1 flex items-center justify-end gap-4">
                     <div class="hidden md:flex items-center gap-1">
-                        <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link text-sm">Fonctionnalités</a>
-                        <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link text-sm">Comment ça marche</a>
-                        <a href="{{ url_for('auth.index') }}#avantages" class="nav-link text-sm">Avantages</a>
+                        <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link text-sm">{{ t('nav.features') }}</a>
+                        <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link text-sm">{{ t('nav.how_it_works') }}</a>
+                        <a href="{{ url_for('auth.index') }}#avantages" class="nav-link text-sm">{{ t('nav.advantages') }}</a>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary text-sm hidden sm:inline-flex">
                             <i class="fas fa-sign-in-alt"></i>
-                            Connexion
+                            {{ t('common.login') }}
                         </a>
                         <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition">
                             <i class="fas fa-bars text-lg"></i>
@@ -33,13 +33,13 @@
             
             <div data-mobile-menu class="hidden md:hidden border-t border-gray-100 py-4">
                 <div class="flex flex-col gap-1">
-                    <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link block py-2 px-2">Fonctionnalités</a>
-                    <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link block py-2 px-2">Comment ça marche</a>
-                    <a href="{{ url_for('auth.index') }}#avantages" class="nav-link block py-2 px-2">Avantages</a>
+                    <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link block py-2 px-2">{{ t('nav.features') }}</a>
+                    <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link block py-2 px-2">{{ t('nav.how_it_works') }}</a>
+                    <a href="{{ url_for('auth.index') }}#avantages" class="nav-link block py-2 px-2">{{ t('nav.advantages') }}</a>
                     <div class="border-t border-gray-100 pt-3 mt-2 flex flex-col gap-2">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary block text-center text-sm">
                             <i class="fas fa-sign-in-alt mr-1"></i>
-                            Connexion
+                            {{ t('common.login') }}
                         </a>
                     </div>
                 </div>
@@ -50,8 +50,8 @@
     <div class="flex items-center justify-center px-4 pt-24 pb-8 min-h-screen">
         <div class="max-w-lg w-full">
             <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-900">Demander un accès</h1>
-                <p class="text-gray-600 mt-2">Soumettez votre demande pour rejoindre Shabaka AdScreen</p>
+                <h1 class="text-2xl font-bold text-gray-900">{{ t('auth.register_title') }}</h1>
+                <p class="text-gray-600 mt-2">{{ t('auth.register_subtitle') }}</p>
             </div>
 
             <div class="bg-white rounded-2xl shadow-xl p-8">
@@ -59,8 +59,8 @@
                     <div class="flex items-start gap-3">
                         <i class="fab fa-whatsapp text-emerald-600 text-xl mt-0.5"></i>
                         <div class="text-sm text-emerald-700">
-                            <p class="font-medium mb-1">Comment ça marche ?</p>
-                            <p>Remplissez ce formulaire et nous vous contacterons via WhatsApp pour finaliser votre inscription.</p>
+                            <p class="font-medium mb-1">{{ t('process.title') }}</p>
+                            <p>{% if current_lang() == 'fr' %}Remplissez ce formulaire et nous vous contacterons via WhatsApp pour finaliser votre inscription.{% else %}Fill out this form and we will contact you via WhatsApp to finalize your registration.{% endif %}</p>
                         </div>
                     </div>
                 </div>
@@ -69,44 +69,44 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Votre nom</label>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">{{ t('common.name') }}</label>
                             <input type="text" id="name" name="name" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                                placeholder="Jean Dupont">
+                                placeholder="{% if current_lang() == 'fr' %}Jean Dupont{% else %}John Doe{% endif %}">
                         </div>
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">{{ t('common.email') }}</label>
                             <input type="email" id="email" name="email" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                                placeholder="email@exemple.com">
+                                placeholder="email@example.com">
                         </div>
                     </div>
 
                     <div>
-                        <label for="org_name" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'établissement</label>
+                        <label for="org_name" class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.organization_name') }}</label>
                         <input type="text" id="org_name" name="org_name" required
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                            placeholder="Restaurant Le Gourmet">
+                            placeholder="{% if current_lang() == 'fr' %}Restaurant Le Gourmet{% else %}The Gourmet Restaurant{% endif %}">
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Téléphone (WhatsApp)</label>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">{{ t('common.phone') }} (WhatsApp)</label>
                             <input type="tel" id="phone" name="phone" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                                 placeholder="+33 6 12 34 56 78">
                         </div>
                         <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">{{ t('common.address') }}</label>
                             <input type="text" id="address" name="address"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                                placeholder="123 Rue Example, Paris">
+                                placeholder="{% if current_lang() == 'fr' %}123 Rue Example, Paris{% else %}123 Example Street, Paris{% endif %}">
                         </div>
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Pays</label>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">{{ t('auth.country') }}</label>
                             <select id="country" name="country" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
                                 {% for code, name in countries %}
@@ -117,7 +117,7 @@
                             </select>
                         </div>
                         <div>
-                            <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">Devise</label>
+                            <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">{% if current_lang() == 'fr' %}Devise{% else %}Currency{% endif %}</label>
                             <select id="currency" name="currency" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
                                 {% for curr in currencies %}
@@ -128,27 +128,27 @@
                             </select>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 -mt-3">Choisissez votre pays et la devise pour vos tarifs</p>
+                    <p class="text-xs text-gray-500 -mt-3">{% if current_lang() == 'fr' %}Choisissez votre pays et la devise pour vos tarifs{% else %}Choose your country and currency for your rates{% endif %}</p>
 
                     <div>
-                        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message (optionnel)</label>
+                        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">{% if current_lang() == 'fr' %}Message (optionnel){% else %}Message (optional){% endif %}</label>
                         <textarea id="message" name="message" rows="3"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
-                            placeholder="Décrivez votre établissement et vos besoins..."></textarea>
+                            placeholder="{% if current_lang() == 'fr' %}Décrivez votre établissement et vos besoins...{% else %}Describe your organization and needs...{% endif %}"></textarea>
                     </div>
 
                     <button type="submit"
                         class="w-full btn-primary justify-center py-3">
                         <i class="fab fa-whatsapp"></i>
-                        Envoyer ma demande
+                        {{ t('common.submit') }}
                     </button>
                 </form>
 
                 <div class="mt-6 text-center">
                     <p class="text-gray-600">
-                        Déjà un compte ?
+                        {{ t('auth.have_account') }}
                         <a href="{{ url_for('auth.login') }}" class="text-emerald-600 font-semibold hover:underline">
-                            Se connecter
+                            {{ t('auth.login_btn') }}
                         </a>
                     </p>
                 </div>

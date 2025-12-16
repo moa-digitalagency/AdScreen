@@ -1,6 +1,6 @@
 {% extends "org/base.html" %}
 
-{% block page_title %}Gestion des Contenus{% endblock %}
+{% block page_title %}{{ t('nav.contents') }}{% endblock %}
 
 {% block main_content %}
 <div class="space-y-6">
@@ -10,23 +10,23 @@
                 <i class="fas fa-photo-video text-blue-600 text-xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-gray-800">Tous les contenus</h2>
-                <p class="text-gray-500">Gérez les publicités, contenus internes et fillers de vos écrans</p>
+                <h2 class="text-xl font-bold text-gray-800">{{ t('contents.all_contents') }}</h2>
+                <p class="text-gray-500">{% if current_lang() == 'fr' %}Gérez les publicités, contenus internes et fillers de vos écrans{% else %}Manage ads, internal content and fillers for your screens{% endif %}</p>
             </div>
         </div>
 
         <div class="grid md:grid-cols-3 gap-4 mb-6">
             <div class="bg-purple-50 rounded-lg p-4">
                 <p class="text-2xl font-bold text-purple-700">{{ contents|length }}</p>
-                <p class="text-sm text-purple-600">Publicités clients</p>
+                <p class="text-sm text-purple-600">{% if current_lang() == 'fr' %}Publicités clients{% else %}Client Ads{% endif %}</p>
             </div>
             <div class="bg-blue-50 rounded-lg p-4">
                 <p class="text-2xl font-bold text-blue-700">{{ internals|length }}</p>
-                <p class="text-sm text-blue-600">Contenus internes</p>
+                <p class="text-sm text-blue-600">{% if current_lang() == 'fr' %}Contenus internes{% else %}Internal Content{% endif %}</p>
             </div>
             <div class="bg-green-50 rounded-lg p-4">
                 <p class="text-2xl font-bold text-green-700">{{ fillers|length }}</p>
-                <p class="text-sm text-green-600">Fillers/Démos</p>
+                <p class="text-sm text-green-600">{% if current_lang() == 'fr' %}Fillers/Démos{% else %}Fillers/Demos{% endif %}</p>
             </div>
         </div>
     </div>
@@ -34,20 +34,20 @@
     {% if contents %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h3 class="font-semibold text-gray-800">Publicités clients</h3>
+            <h3 class="font-semibold text-gray-800">{% if current_lang() == 'fr' %}Publicités clients{% else %}Client Ads{% endif %}</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Client</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Playlist</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Diffusions</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('contents.preview') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Contenu{% else %}Content{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Client{% else %}Client{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Écran{% else %}Screen{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('screens.playlist') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.status') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Diffusions{% else %}Broadcasts{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -89,29 +89,29 @@
                         <td class="px-6 py-4">
                             {% if content.in_playlist %}
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                <i class="fas fa-check mr-1"></i>Active
+                                <i class="fas fa-check mr-1"></i>{{ t('common.active') }}
                             </span>
                             {% else %}
                             <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
-                                <i class="fas fa-ban mr-1"></i>Retirée
+                                <i class="fas fa-ban mr-1"></i>{% if current_lang() == 'fr' %}Retirée{% else %}Removed{% endif %}
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             {% if content.status == 'approved' %}
-                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approuvé</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">{{ t('contents.approved') }}</span>
                             {% elif content.status == 'pending' %}
-                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">En attente</span>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">{{ t('contents.pending') }}</span>
                             {% elif content.status == 'suspended' %}
-                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">Suspendu</span>
+                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">{% if current_lang() == 'fr' %}Suspendu{% else %}Suspended{% endif %}</span>
                             {% else %}
-                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Rejeté</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">{{ t('contents.rejected') }}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
                             {% if content.booking %}
                             <div class="text-gray-800 font-medium">{{ content.booking.plays_completed }}/{{ content.booking.num_plays }}</div>
-                            <div class="text-xs text-gray-400">{{ content.booking.slot_duration }}s chaque</div>
+                            <div class="text-xs text-gray-400">{{ content.booking.slot_duration }}s {% if current_lang() == 'fr' %}chaque{% else %}each{% endif %}</div>
                             {% else %}
                             <span class="text-gray-400">-</span>
                             {% endif %}
@@ -119,57 +119,57 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
                                 <button onclick="openPreviewModal('{{ content.file_path }}', '{{ content.content_type }}', '{{ content.screen.resolution_width }}', '{{ content.screen.resolution_height }}')" 
-                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Aperçu">
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{{ t('contents.preview') }}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 {% if content.in_playlist %}
                                 <form action="{{ url_for('org.remove_content_from_playlist', content_id=content.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Retirer de la playlist{% else %}Remove from playlist{% endif %}">
                                         <i class="fas fa-minus-circle"></i>
                                     </button>
                                 </form>
                                 {% if content.status == 'approved' %}
                                 <form action="{{ url_for('org.suspend_content', content_id=content.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Suspendre">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Suspendre{% else %}Suspend{% endif %}">
                                         <i class="fas fa-pause"></i>
                                     </button>
                                 </form>
                                 {% elif content.status == 'suspended' %}
                                 <form action="{{ url_for('org.activate_content', content_id=content.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Activer">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Activer{% else %}Activate{% endif %}">
                                         <i class="fas fa-play"></i>
                                     </button>
                                 </form>
                                 {% elif content.status == 'pending' %}
                                 <form action="{{ url_for('org.approve_content', content_id=content.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Approuver">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{{ t('contents.approve') }}">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </form>
                                 <form action="{{ url_for('org.reject_content', content_id=content.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Rejeter">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{{ t('contents.reject') }}">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </form>
                                 {% endif %}
-                                <form action="{{ url_for('org.delete_content', content_id=content.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce contenu ? Cette action est irréversible.')">
+                                <form action="{{ url_for('org.delete_content', content_id=content.id) }}" method="POST" class="inline" onsubmit="return confirm('{% if current_lang() == 'fr' %}Supprimer ce contenu ? Cette action est irréversible.{% else %}Delete this content? This action is irreversible.{% endif %}')">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{{ t('common.delete') }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                                 {% else %}
                                 <button onclick="openChangeScreenModal({{ content.id }})" 
-                                        class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Changer d'écran">
+                                        class="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Changer d'écran{% else %}Change screen{% endif %}">
                                     <i class="fas fa-exchange-alt"></i>
                                 </button>
                                 <button onclick="openAssignScreenModal({{ content.id }})" 
-                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Assigner à un écran">
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Assigner à un écran{% else %}Assign to screen{% endif %}">
                                     <i class="fas fa-desktop"></i>
                                 </button>
                                 {% endif %}
@@ -186,19 +186,19 @@
     {% if internals %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h3 class="font-semibold text-gray-800">Contenus internes</h3>
+            <h3 class="font-semibold text-gray-800">{% if current_lang() == 'fr' %}Contenus internes{% else %}Internal Content{% endif %}</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Priorité</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Playlist</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('contents.preview') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Contenu{% else %}Content{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Écran{% else %}Screen{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Priorité{% else %}Priority{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('screens.playlist') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.status') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -239,51 +239,51 @@
                         <td class="px-6 py-4">
                             {% if internal.in_playlist %}
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                <i class="fas fa-check mr-1"></i>Active
+                                <i class="fas fa-check mr-1"></i>{{ t('common.active') }}
                             </span>
                             {% else %}
                             <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
-                                <i class="fas fa-ban mr-1"></i>Retirée
+                                <i class="fas fa-ban mr-1"></i>{% if current_lang() == 'fr' %}Retirée{% else %}Removed{% endif %}
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             {% if internal.is_active %}
-                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Actif</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">{{ t('common.active') }}</span>
                             {% else %}
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Inactif</span>
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{{ t('common.inactive') }}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
                                 <button onclick="openPreviewModal('{{ internal.file_path }}', '{{ internal.content_type }}', '{{ internal.screen.resolution_width }}', '{{ internal.screen.resolution_height }}')" 
-                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Aperçu">
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{{ t('contents.preview') }}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 {% if internal.in_playlist %}
                                 <form action="{{ url_for('org.remove_internal_from_playlist', internal_id=internal.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Retirer de la playlist{% else %}Remove from playlist{% endif %}">
                                         <i class="fas fa-minus-circle"></i>
                                     </button>
                                 </form>
                                 {% else %}
                                 <form action="{{ url_for('org.add_internal_to_playlist', internal_id=internal.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Ajouter à la playlist">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Ajouter à la playlist{% else %}Add to playlist{% endif %}">
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                 </form>
                                 {% endif %}
                                 <form action="{{ url_for('org.toggle_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-{% if internal.is_active %}orange{% else %}green{% endif %}-600 hover:bg-{% if internal.is_active %}orange{% else %}green{% endif %}-50 rounded-lg transition" title="{% if internal.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-{% if internal.is_active %}orange{% else %}green{% endif %}-600 hover:bg-{% if internal.is_active %}orange{% else %}green{% endif %}-50 rounded-lg transition" title="{% if internal.is_active %}{% if current_lang() == 'fr' %}Désactiver{% else %}Deactivate{% endif %}{% else %}{% if current_lang() == 'fr' %}Activer{% else %}Activate{% endif %}{% endif %}">
                                         <i class="fas fa-{% if internal.is_active %}pause{% else %}play{% endif %}"></i>
                                     </button>
                                 </form>
-                                <form action="{{ url_for('org.delete_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce contenu ?')">
+                                <form action="{{ url_for('org.delete_screen_internal', screen_id=internal.screen_id, internal_id=internal.id) }}" method="POST" class="inline" onsubmit="return confirm('{% if current_lang() == 'fr' %}Supprimer ce contenu ?{% else %}Delete this content?{% endif %}')">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{{ t('common.delete') }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -300,19 +300,19 @@
     {% if fillers %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h3 class="font-semibold text-gray-800">Fillers / Démos</h3>
+            <h3 class="font-semibold text-gray-800">{% if current_lang() == 'fr' %}Fillers / Démos{% else %}Fillers / Demos{% endif %}</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Aperçu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Contenu</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Écran</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Durée</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Playlist</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('contents.preview') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Contenu{% else %}Content{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{% if current_lang() == 'fr' %}Écran{% else %}Screen{% endif %}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('contents.duration') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('screens.playlist') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.status') }}</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{{ t('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -353,51 +353,51 @@
                         <td class="px-6 py-4">
                             {% if filler.in_playlist %}
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                <i class="fas fa-check mr-1"></i>Active
+                                <i class="fas fa-check mr-1"></i>{{ t('common.active') }}
                             </span>
                             {% else %}
                             <span class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
-                                <i class="fas fa-ban mr-1"></i>Retirée
+                                <i class="fas fa-ban mr-1"></i>{% if current_lang() == 'fr' %}Retirée{% else %}Removed{% endif %}
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             {% if filler.is_active %}
-                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Actif</span>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">{{ t('common.active') }}</span>
                             {% else %}
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">Inactif</span>
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{{ t('common.inactive') }}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-1">
                                 <button onclick="openPreviewModal('{{ filler.file_path }}', '{{ filler.content_type }}', '{{ filler.screen.resolution_width }}', '{{ filler.screen.resolution_height }}')" 
-                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Aperçu">
+                                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="{{ t('contents.preview') }}">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 {% if filler.in_playlist %}
                                 <form action="{{ url_for('org.remove_filler_from_playlist', filler_id=filler.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Retirer de la playlist">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Retirer de la playlist{% else %}Remove from playlist{% endif %}">
                                         <i class="fas fa-minus-circle"></i>
                                     </button>
                                 </form>
                                 {% else %}
                                 <form action="{{ url_for('org.add_filler_to_playlist', filler_id=filler.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="Ajouter à la playlist">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="{% if current_lang() == 'fr' %}Ajouter à la playlist{% else %}Add to playlist{% endif %}">
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                 </form>
                                 {% endif %}
-                                <form action="{{ url_for('org.toggle_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline">
+                                <form action="{{ url_for('org.toggle_screen_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-{% if filler.is_active %}orange{% else %}green{% endif %}-600 hover:bg-{% if filler.is_active %}orange{% else %}green{% endif %}-50 rounded-lg transition" title="{% if filler.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-{% if filler.is_active %}orange{% else %}green{% endif %}-600 hover:bg-{% if filler.is_active %}orange{% else %}green{% endif %}-50 rounded-lg transition" title="{% if filler.is_active %}{% if current_lang() == 'fr' %}Désactiver{% else %}Deactivate{% endif %}{% else %}{% if current_lang() == 'fr' %}Activer{% else %}Activate{% endif %}{% endif %}">
                                         <i class="fas fa-{% if filler.is_active %}pause{% else %}play{% endif %}"></i>
                                     </button>
                                 </form>
-                                <form action="{{ url_for('org.delete_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer ce filler ?')">
+                                <form action="{{ url_for('org.delete_screen_filler', screen_id=filler.screen_id, filler_id=filler.id) }}" method="POST" class="inline" onsubmit="return confirm('{% if current_lang() == 'fr' %}Supprimer ce filler ?{% else %}Delete this filler?{% endif %}')">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                    <button type="submit" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="{{ t('common.delete') }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -413,64 +413,12 @@
 
     {% if not contents and not internals and not fillers %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-photo-video text-gray-400 text-2xl"></i>
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-photo-video text-gray-400 text-3xl"></i>
         </div>
-        <p class="text-gray-500 mb-2">Aucun contenu</p>
-        <p class="text-gray-400 text-sm">Ajoutez des contenus depuis la page de chaque écran</p>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ t('contents.no_contents') }}</h3>
+        <p class="text-gray-500">{% if current_lang() == 'fr' %}Aucun contenu trouvé pour vos écrans{% else %}No content found for your screens{% endif %}</p>
     </div>
     {% endif %}
 </div>
-
-<div id="previewModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
-    <div class="relative max-w-5xl w-full max-h-[90vh]">
-        <div class="absolute -top-12 left-0 right-0 flex justify-between items-center">
-            <p class="text-white text-sm" id="previewResolution"></p>
-            <button onclick="closePreviewModal()" class="p-2 text-white hover:text-gray-300 transition">
-                <i class="fas fa-times text-2xl"></i>
-            </button>
-        </div>
-        <div class="flex items-center justify-center" id="previewContainer" style="min-height: 400px;">
-        </div>
-    </div>
-</div>
-
-<script>
-function openPreviewModal(filePath, contentType, width, height) {
-    const modal = document.getElementById('previewModal');
-    const container = document.getElementById('previewContainer');
-    const resolutionText = document.getElementById('previewResolution');
-    
-    resolutionText.textContent = `Résolution écran: ${width}x${height}`;
-    
-    if (contentType === 'image') {
-        container.innerHTML = `<img src="/${filePath}" alt="Preview" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl">`;
-    } else {
-        container.innerHTML = `<video src="/${filePath}" controls autoplay class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"></video>`;
-    }
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closePreviewModal() {
-    const modal = document.getElementById('previewModal');
-    const container = document.getElementById('previewContainer');
-    
-    const video = container.querySelector('video');
-    if (video) video.pause();
-    
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    container.innerHTML = '';
-}
-
-document.getElementById('previewModal').addEventListener('click', function(e) {
-    if (e.target === this) closePreviewModal();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closePreviewModal();
-});
-</script>
 {% endblock %}

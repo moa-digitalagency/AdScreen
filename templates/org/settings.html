@@ -1,6 +1,6 @@
 {% extends "org/base.html" %}
 
-{% block page_title %}Paramètres{% endblock %}
+{% block page_title %}{{ t('nav.settings') }}{% endblock %}
 
 {% block main_content %}
 <div class="max-w-2xl">
@@ -10,8 +10,8 @@
                 <i class="fas fa-cog text-gray-600 text-xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-gray-800">Paramètres de l'établissement</h2>
-                <p class="text-gray-500 text-sm">Gérez les informations de votre organisation</p>
+                <h2 class="text-xl font-bold text-gray-800">{% if current_lang() == 'fr' %}Paramètres de l'établissement{% else %}Organization Settings{% endif %}</h2>
+                <p class="text-gray-500 text-sm">{% if current_lang() == 'fr' %}Gérez les informations de votre organisation{% else %}Manage your organization information{% endif %}</p>
             </div>
         </div>
 
@@ -20,20 +20,20 @@
             <div class="border-b border-gray-100 pb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-building text-emerald-500"></i>
-                    Informations générales
+                    {{ t('settings.general') }}
                 </h3>
                 <div class="space-y-4">
                     <div>
-                        <label for="name" class="label">Nom de l'établissement</label>
+                        <label for="name" class="label">{% if current_lang() == 'fr' %}Nom de l'établissement{% else %}Organization Name{% endif %}</label>
                         <input type="text" id="name" name="name" value="{{ org.name }}" class="input-field" required>
                     </div>
                     <div>
-                        <label for="phone" class="label">Téléphone</label>
+                        <label for="phone" class="label">{{ t('common.phone') }}</label>
                         <input type="tel" id="phone" name="phone" value="{{ org.phone or '' }}" class="input-field" placeholder="+33 1 23 45 67 89">
                     </div>
                     <div>
-                        <label for="address" class="label">Adresse</label>
-                        <textarea id="address" name="address" rows="2" class="input-field" placeholder="Adresse complète de l'établissement">{{ org.address or '' }}</textarea>
+                        <label for="address" class="label">{{ t('common.address') }}</label>
+                        <textarea id="address" name="address" rows="2" class="input-field" placeholder="{% if current_lang() == 'fr' %}Adresse complète de l'établissement{% else %}Complete address of the organization{% endif %}">{{ org.address or '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -41,33 +41,33 @@
             <div class="border-b border-gray-100 pb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-briefcase text-purple-500"></i>
-                    Informations légales de l'entreprise
+                    {% if current_lang() == 'fr' %}Informations légales de l'entreprise{% else %}Legal Business Information{% endif %}
                 </h3>
                 <div class="space-y-4">
                     <div>
-                        <label for="business_name" class="label">Dénomination sociale</label>
-                        <input type="text" id="business_name" name="business_name" value="{{ org.business_name or '' }}" class="input-field" placeholder="Nom légal de votre entreprise">
-                        <p class="text-xs text-gray-500 mt-1">La raison sociale qui apparaîtra sur les reçus et factures</p>
+                        <label for="business_name" class="label">{% if current_lang() == 'fr' %}Dénomination sociale{% else %}Business Name{% endif %}</label>
+                        <input type="text" id="business_name" name="business_name" value="{{ org.business_name or '' }}" class="input-field" placeholder="{% if current_lang() == 'fr' %}Nom légal de votre entreprise{% else %}Legal name of your company{% endif %}">
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}La raison sociale qui apparaîtra sur les reçus et factures{% else %}The company name that will appear on receipts and invoices{% endif %}</p>
                     </div>
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="registration_number_label" class="label">Libellé du numéro d'immatriculation</label>
-                            <input type="text" id="registration_number_label" name="registration_number_label" value="{{ org.registration_number_label or '' }}" class="input-field" placeholder="Ex: SIRET, NIF, Tax ID, ABN...">
-                            <p class="text-xs text-gray-500 mt-1">Le nom du numéro d'immatriculation selon votre pays</p>
+                            <label for="registration_number_label" class="label">{% if current_lang() == 'fr' %}Libellé du numéro d'immatriculation{% else %}Registration Number Label{% endif %}</label>
+                            <input type="text" id="registration_number_label" name="registration_number_label" value="{{ org.registration_number_label or '' }}" class="input-field" placeholder="{% if current_lang() == 'fr' %}Ex: SIRET, NIF, Tax ID, ABN...{% else %}E.g.: SIRET, NIF, Tax ID, ABN...{% endif %}">
+                            <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}Le nom du numéro d'immatriculation selon votre pays{% else %}The registration number name according to your country{% endif %}</p>
                         </div>
                         <div>
                             <label for="business_registration_number" class="label">{{ org.registration_number_label or registration_label }}</label>
-                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="Votre numéro d'immatriculation">
+                            <input type="text" id="business_registration_number" name="business_registration_number" value="{{ org.business_registration_number or '' }}" class="input-field" placeholder="{% if current_lang() == 'fr' %}Votre numéro d'immatriculation{% else %}Your registration number{% endif %}">
                         </div>
                     </div>
                     <div>
-                        <label for="vat_number" class="label">Numéro de TVA</label>
-                        <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="Ex: FR12345678901">
+                        <label for="vat_number" class="label">{% if current_lang() == 'fr' %}Numéro de TVA{% else %}VAT Number{% endif %}</label>
+                        <input type="text" id="vat_number" name="vat_number" value="{{ org.vat_number or '' }}" class="input-field" placeholder="{% if current_lang() == 'fr' %}Ex: FR12345678901{% else %}E.g.: FR12345678901{% endif %}">
                     </div>
                     <div>
-                        <label for="vat_rate" class="label">Taux de TVA (%)</label>
-                        <input type="number" id="vat_rate" name="vat_rate" value="{{ org.vat_rate or 0 }}" class="input-field" min="0" max="100" step="0.1" placeholder="Ex: 20">
-                        <p class="text-xs text-gray-500 mt-1">Le taux de TVA applicable à vos réservations (0 si non assujetti)</p>
+                        <label for="vat_rate" class="label">{% if current_lang() == 'fr' %}Taux de TVA (%){% else %}VAT Rate (%){% endif %}</label>
+                        <input type="number" id="vat_rate" name="vat_rate" value="{{ org.vat_rate or 0 }}" class="input-field" min="0" max="100" step="0.1" placeholder="{% if current_lang() == 'fr' %}Ex: 20{% else %}E.g.: 20{% endif %}">
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}Le taux de TVA applicable à vos réservations (0 si non assujetti){% else %}The VAT rate applicable to your bookings (0 if not applicable){% endif %}</p>
                     </div>
                 </div>
             </div>
@@ -75,11 +75,11 @@
             <div class="border-b border-gray-100 pb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-globe text-blue-500"></i>
-                    Localisation et devise
+                    {% if current_lang() == 'fr' %}Localisation et devise{% else %}Location and Currency{% endif %}
                 </h3>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="country" class="label">Pays</label>
+                        <label for="country" class="label">{{ t('auth.country') }}</label>
                         <select id="country" name="country" class="input-field" onchange="updateCities()">
                             {% for code, name in countries %}
                             <option value="{{ code }}" {% if code == org.country %}selected{% endif %}>
@@ -87,24 +87,24 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Le pays de votre établissement</p>
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}Le pays de votre établissement{% else %}Your organization's country{% endif %}</p>
                     </div>
                     <div>
-                        <label for="city" class="label">Ville</label>
+                        <label for="city" class="label">{{ t('auth.city') }}</label>
                         <select id="city" name="city" class="input-field">
-                            <option value="">-- Sélectionner une ville --</option>
+                            <option value="">-- {% if current_lang() == 'fr' %}Sélectionner une ville{% else %}Select a city{% endif %} --</option>
                             {% for city_name in cities %}
                             <option value="{{ city_name }}" {% if city_name == org.city %}selected{% endif %}>
                                 {{ city_name }}
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">La ville de votre établissement</p>
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}La ville de votre établissement{% else %}Your organization's city{% endif %}</p>
                     </div>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label for="currency" class="label">Devise</label>
+                        <label for="currency" class="label">{% if current_lang() == 'fr' %}Devise{% else %}Currency{% endif %}</label>
                         <select id="currency" name="currency" class="input-field">
                             {% for curr in currencies %}
                             <option value="{{ curr.code }}" {% if curr.code == org.currency %}selected{% endif %}>
@@ -112,10 +112,10 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Devise utilisée pour les tarifs</p>
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}Devise utilisée pour les tarifs{% else %}Currency used for pricing{% endif %}</p>
                     </div>
                     <div>
-                        <label for="timezone" class="label">Fuseau horaire</label>
+                        <label for="timezone" class="label">{% if current_lang() == 'fr' %}Fuseau horaire{% else %}Timezone{% endif %}</label>
                         <select id="timezone" name="timezone" class="input-field">
                             {% for tz in timezones %}
                             <option value="{{ tz }}" {% if tz == org.timezone %}selected{% endif %}>
@@ -123,7 +123,7 @@
                             </option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Le fuseau horaire de votre établissement</p>
+                        <p class="text-xs text-gray-500 mt-1">{% if current_lang() == 'fr' %}Le fuseau horaire de votre établissement{% else %}Your organization's timezone{% endif %}</p>
                     </div>
                 </div>
             </div>
@@ -131,17 +131,18 @@
             <div class="border-b border-gray-100 pb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fas fa-ad text-orange-500"></i>
-                    Contenu publicitaire
+                    {% if current_lang() == 'fr' %}Contenu publicitaire{% else %}Advertising Content{% endif %}
                 </h3>
                 <div class="space-y-4">
                     <div class="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-100">
                         <div class="flex-1">
                             <label for="allow_ad_content" class="font-medium text-gray-800 cursor-pointer">
-                                Autoriser les contenus publicitaires
+                                {% if current_lang() == 'fr' %}Autoriser les contenus publicitaires{% else %}Allow advertising content{% endif %}
                             </label>
                             <p class="text-sm text-gray-500 mt-1">
-                                Permet au gestionnaire de la plateforme de diffuser des publicités sur vos écrans. 
-                                En échange, vous recevez une commission sur les revenus générés.
+                                {% if current_lang() == 'fr' %}Permet au gestionnaire de la plateforme de diffuser des publicités sur vos écrans. 
+                                En échange, vous recevez une commission sur les revenus générés.{% else %}Allows the platform manager to broadcast ads on your screens. 
+                                In exchange, you receive a commission on the generated revenue.{% endif %}
                             </p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer ml-4">
@@ -154,8 +155,9 @@
                         <div class="flex items-start gap-2">
                             <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
                             <p class="text-sm text-blue-700">
-                                Si cette option est désactivée, vos écrans ne recevront aucun contenu publicitaire externe.
-                                Vous pouvez réactiver cette option à tout moment.
+                                {% if current_lang() == 'fr' %}Si cette option est désactivée, vos écrans ne recevront aucun contenu publicitaire externe.
+                                Vous pouvez réactiver cette option à tout moment.{% else %}If this option is disabled, your screens will not receive any external advertising content.
+                                You can reactivate this option at any time.{% endif %}
                             </p>
                         </div>
                     </div>
@@ -166,13 +168,13 @@
                 <div class="flex items-start gap-3">
                     <i class="fas fa-info-circle text-gray-400 mt-0.5"></i>
                     <div class="text-sm text-gray-600">
-                        <p class="font-medium mb-1">Informations de contact</p>
+                        <p class="font-medium mb-1">{% if current_lang() == 'fr' %}Informations de contact{% else %}Contact Information{% endif %}</p>
                         <ul class="space-y-1 text-gray-500">
-                            <li><strong>Email de l'organisation:</strong> {{ org.email }}</li>
-                            <li><strong>Plan d'abonnement:</strong> {{ org.subscription_plan|capitalize }}</li>
-                            <li><strong>Taux de commission:</strong> {{ org.commission_rate }}%</li>
+                            <li><strong>{% if current_lang() == 'fr' %}Email de l'organisation:{% else %}Organization Email:{% endif %}</strong> {{ org.email }}</li>
+                            <li><strong>{% if current_lang() == 'fr' %}Plan d'abonnement:{% else %}Subscription Plan:{% endif %}</strong> {{ org.subscription_plan|capitalize }}</li>
+                            <li><strong>{% if current_lang() == 'fr' %}Taux de commission:{% else %}Commission Rate:{% endif %}</strong> {{ org.commission_rate }}%</li>
                         </ul>
-                        <p class="text-xs text-gray-400 mt-2">L'email et le taux de commission sont gérés par l'administrateur.</p>
+                        <p class="text-xs text-gray-400 mt-2">{% if current_lang() == 'fr' %}L'email et le taux de commission sont gérés par l'administrateur.{% else %}Email and commission rate are managed by the administrator.{% endif %}</p>
                     </div>
                 </div>
             </div>
@@ -180,7 +182,7 @@
             <div class="flex justify-end">
                 <button type="submit" class="btn-primary">
                     <i class="fas fa-save mr-2"></i>
-                    Enregistrer les modifications
+                    {{ t('settings.save_changes') }}
                 </button>
             </div>
         </form>
@@ -195,12 +197,12 @@ function updateCities() {
     const citySelect = document.getElementById('city');
     const country = countrySelect.value;
     
-    citySelect.innerHTML = '<option value="">Chargement...</option>';
+    citySelect.innerHTML = '<option value="">{% if current_lang() == "fr" %}Chargement...{% else %}Loading...{% endif %}</option>';
     
     fetch('/api/cities/' + encodeURIComponent(country))
         .then(response => response.json())
         .then(data => {
-            citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+            citySelect.innerHTML = '<option value="">-- {% if current_lang() == "fr" %}Sélectionner une ville{% else %}Select a city{% endif %} --</option>';
             if (data.cities && data.cities.length > 0) {
                 data.cities.forEach(city => {
                     const option = document.createElement('option');
@@ -212,7 +214,7 @@ function updateCities() {
         })
         .catch(error => {
             console.error('Error loading cities:', error);
-            citySelect.innerHTML = '<option value="">-- Sélectionner une ville --</option>';
+            citySelect.innerHTML = '<option value="">-- {% if current_lang() == "fr" %}Sélectionner une ville{% else %}Select a city{% endif %} --</option>';
         });
 }
 </script>
