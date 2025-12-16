@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Réservation confirmée - {{ booking.reservation_number }}{% endblock %}
+{% block title %}{{ t('booking.booking_sent') }} - {{ booking.reservation_number }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8 px-4">
@@ -10,80 +10,80 @@
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-check text-3xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold mb-1">Réservation envoyée!</h1>
-                <p class="text-emerald-100">Votre contenu est en attente de validation</p>
+                <h1 class="text-2xl font-bold mb-1">{{ t('booking.booking_sent') }}</h1>
+                <p class="text-emerald-100">{{ t('booking.content_pending') }}</p>
             </div>
             
             <div class="p-6">
                 <div class="bg-gray-50 rounded-xl p-4 mb-6 text-center">
-                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Numéro de réservation</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ t('booking.reservation_number') }}</p>
                     <p class="text-2xl font-mono font-bold text-gray-800">{{ booking.reservation_number }}</p>
                 </div>
 
                 <div class="border-t border-dashed border-gray-200 pt-6 mb-6">
                     <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                         <i class="fas fa-receipt text-emerald-600"></i>
-                        Récapitulatif
+                        {{ t('booking.summary') }}
                     </h3>
                     
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Écran</span>
+                            <span class="text-gray-500">{{ t('booking.screen') }}</span>
                             <span class="font-medium text-gray-800">{{ screen.name }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Établissement</span>
+                            <span class="text-gray-500">{{ t('booking.establishment') }}</span>
                             <span class="font-medium text-gray-800">{{ screen.organization.name }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Type de contenu</span>
+                            <span class="text-gray-500">{{ t('booking.content_type') }}</span>
                             <span class="font-medium text-gray-800 capitalize">{{ content.content_type }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Nom du fichier</span>
+                            <span class="text-gray-500">{{ t('booking.filename') }}</span>
                             <span class="font-medium text-gray-800 text-right max-w-[200px] truncate">{{ content.original_filename }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Durée créneau</span>
+                            <span class="text-gray-500">{{ t('booking.slot_duration_label') }}</span>
                             <span class="font-medium text-gray-800">{{ booking.slot_duration }}s</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Nombre de diffusions</span>
+                            <span class="text-gray-500">{{ t('booking.num_broadcasts') }}</span>
                             <span class="font-medium text-gray-800">{{ booking.num_plays }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Date de début</span>
+                            <span class="text-gray-500">{{ t('booking.start_date') }}</span>
                             <span class="font-medium text-gray-800">{{ booking.start_date.strftime('%d/%m/%Y') if booking.start_date else '-' }}</span>
                         </div>
                         {% if booking.end_date %}
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Date de fin</span>
+                            <span class="text-gray-500">{{ t('booking.end_date') }}</span>
                             <span class="font-medium text-gray-800">{{ booking.end_date.strftime('%d/%m/%Y') }}</span>
                         </div>
                         {% endif %}
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Prix unitaire</span>
+                            <span class="text-gray-500">{{ t('booking.unit_price') }}</span>
                             <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.price_per_play) }} {{ currency_symbol }}</span>
                         </div>
                     </div>
                     
                     <div class="border-t border-gray-200 mt-4 pt-4 space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Sous-total HT</span>
+                            <span class="text-gray-600">{{ t('booking.subtotal') }}</span>
                             <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
                         </div>
                         {% if booking.vat_rate and booking.vat_rate > 0 %}
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-600">TVA ({{ "%.1f"|format(booking.vat_rate) }}%)</span>
+                            <span class="text-gray-600">{{ t('booking.vat') }} ({{ "%.1f"|format(booking.vat_rate) }}%)</span>
                             <span class="font-medium text-gray-800">{{ "%.2f"|format(booking.vat_amount) }} {{ currency_symbol }}</span>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                            <span class="text-lg font-semibold text-gray-800">Total TTC</span>
+                            <span class="text-lg font-semibold text-gray-800">{{ t('booking.total_ttc') }}</span>
                             <span class="text-2xl font-bold text-emerald-600">{{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}</span>
                         </div>
                         {% else %}
                         <div class="flex justify-between items-center">
-                            <span class="text-lg font-semibold text-gray-800">Total</span>
+                            <span class="text-lg font-semibold text-gray-800">{{ t('common.total') }}</span>
                             <span class="text-2xl font-bold text-emerald-600">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
                         </div>
                         {% endif %}
@@ -94,8 +94,8 @@
                     <div class="flex items-center gap-3">
                         <i class="fas fa-clock text-yellow-600"></i>
                         <div>
-                            <p class="font-medium text-yellow-800">En attente de validation</p>
-                            <p class="text-sm text-yellow-600">L'établissement va examiner votre contenu.</p>
+                            <p class="font-medium text-yellow-800">{{ t('booking.pending_validation') }}</p>
+                            <p class="text-sm text-yellow-600">{{ t('booking.establishment_review') }}</p>
                         </div>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                     <div class="flex items-center gap-3">
                         <i class="fas fa-envelope text-gray-500"></i>
                         <div>
-                            <p class="text-sm text-gray-600">Confirmation envoyée à</p>
+                            <p class="text-sm text-gray-600">{{ t('booking.confirmation_sent') }}</p>
                             <p class="font-medium text-gray-800">{{ content.client_email }}</p>
                         </div>
                     </div>
@@ -113,11 +113,11 @@
                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
                     <div class="flex items-start gap-4">
                         <div class="bg-white p-2 rounded-lg border border-emerald-100 shadow-sm flex-shrink-0">
-                            <img src="data:image/png;base64,{{ booking_qr }}" alt="QR Code Réservation" class="w-24 h-24">
+                            <img src="data:image/png;base64,{{ booking_qr }}" alt="QR Code" class="w-24 h-24">
                         </div>
                         <div class="flex-1">
-                            <p class="font-semibold text-emerald-800 mb-1">Merci pour votre réservation!</p>
-                            <p class="text-sm text-emerald-700">Scannez ce QR code pour passer une nouvelle commande sur cet écran.</p>
+                            <p class="font-semibold text-emerald-800 mb-1">{{ t('booking.thank_you') }}</p>
+                            <p class="text-sm text-emerald-700">{{ t('booking.scan_qr_new') }}</p>
                             <p class="text-xs text-emerald-600 mt-2">{{ site_settings.platform_name }}</p>
                         </div>
                     </div>
@@ -125,7 +125,7 @@
 
                 <div class="text-center text-xs text-gray-400 border-t border-gray-100 pt-4">
                     <p>{{ screen.organization.name }} - {{ site_settings.platform_name }}</p>
-                    <p class="mt-1">{{ booking.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+                    <p class="mt-1">{{ booking.created_at.strftime('%d/%m/%Y') }}</p>
                 </div>
             </div>
         </div>
@@ -133,15 +133,15 @@
         <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
             <a href="{{ url_for('booking.download_receipt', reservation_number=booking.reservation_number) }}" class="btn-secondary" download>
                 <i class="fas fa-download"></i>
-                Télécharger le reçu (Image)
+                {{ t('booking.download_receipt') }}
             </a>
             <button onclick="window.print()" class="btn-secondary">
                 <i class="fas fa-print"></i>
-                Imprimer
+                {{ t('booking.print') }}
             </button>
             <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" class="btn-primary">
                 <i class="fas fa-plus"></i>
-                Nouvelle réservation
+                {{ t('booking.new_booking') }}
             </a>
         </div>
 
@@ -292,19 +292,19 @@
     </div>
     
     <div class="thermal-reservation">
-        <div style="font-size: 8px;">N° RESERVATION</div>
+        <div style="font-size: 8px;">{{ t('booking.reservation_number')|upper }}</div>
         <div class="thermal-reservation-number">{{ booking.reservation_number }}</div>
     </div>
     
     <div class="thermal-separator"></div>
-    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 2mm;">RECAPITULATIF</div>
+    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 2mm;">{{ t('booking.summary')|upper }}</div>
     
     <div class="thermal-line">
-        <span class="thermal-line-label">Ecran:</span>
+        <span class="thermal-line-label">{{ t('booking.screen') }}:</span>
         <span class="thermal-line-value">{{ screen.name[:18] }}{% if screen.name|length > 18 %}..{% endif %}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Etablis.:</span>
+        <span class="thermal-line-label">{{ t('booking.establishment')[:8] }}.:</span>
         <span class="thermal-line-value">{{ screen.organization.name[:16] }}{% if screen.organization.name|length > 16 %}..{% endif %}</span>
     </div>
     <div class="thermal-line">
@@ -312,46 +312,45 @@
         <span class="thermal-line-value">{{ content.content_type|capitalize }}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Fichier:</span>
+        <span class="thermal-line-label">{{ t('booking.filename')[:7] }}:</span>
         <span class="thermal-line-value">{{ content.original_filename[:15] }}{% if content.original_filename|length > 15 %}...{% endif %}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Creneau:</span>
+        <span class="thermal-line-label">{{ t('booking.slot_duration_label')[:7] }}:</span>
         <span class="thermal-line-value">{{ booking.slot_duration }}s</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Diffusions:</span>
+        <span class="thermal-line-label">{{ t('booking.num_broadcasts')[:10] }}:</span>
         <span class="thermal-line-value">{{ booking.num_plays }}x</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Debut:</span>
+        <span class="thermal-line-label">{{ t('booking.start') }}:</span>
         <span class="thermal-line-value">{{ booking.start_date.strftime('%d/%m/%Y') if booking.start_date else '-' }}</span>
     </div>
     {% if booking.end_date %}
     <div class="thermal-line">
-        <span class="thermal-line-label">Fin:</span>
+        <span class="thermal-line-label">{{ t('booking.end') }}:</span>
         <span class="thermal-line-value">{{ booking.end_date.strftime('%d/%m/%Y') }}</span>
     </div>
     {% endif %}
     
     <div class="thermal-separator"></div>
-    <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 2mm;">TARIFICATION</div>
     
     <div class="thermal-line">
-        <span class="thermal-line-label">Prix/diff.:</span>
+        <span class="thermal-line-label">{{ t('booking.unit_price')[:10] }}:</span>
         <span class="thermal-line-value">{{ "%.2f"|format(booking.price_per_play) }} {{ currency_symbol }}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Nb diff.:</span>
+        <span class="thermal-line-label">Nb:</span>
         <span class="thermal-line-value">x {{ booking.num_plays }}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Sous-total HT:</span>
+        <span class="thermal-line-label">{{ t('booking.subtotal')[:10] }}:</span>
         <span class="thermal-line-value">{{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}</span>
     </div>
     {% if booking.vat_rate and booking.vat_rate > 0 %}
     <div class="thermal-line">
-        <span class="thermal-line-label">TVA ({{ "%.1f"|format(booking.vat_rate) }}%):</span>
+        <span class="thermal-line-label">{{ t('booking.vat') }} ({{ "%.1f"|format(booking.vat_rate) }}%):</span>
         <span class="thermal-line-value">{{ "%.2f"|format(booking.vat_amount) }} {{ currency_symbol }}</span>
     </div>
     {% endif %}
@@ -360,14 +359,14 @@
     
     <div class="thermal-total">
         {% if booking.vat_rate and booking.vat_rate > 0 %}
-        TOTAL TTC: {{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}
+        {{ t('booking.total_ttc') }}: {{ "%.2f"|format(booking.total_price_with_vat or booking.total_price) }} {{ currency_symbol }}
         {% else %}
-        TOTAL: {{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}
+        {{ t('common.total') }}: {{ "%.2f"|format(booking.total_price) }} {{ currency_symbol }}
         {% endif %}
     </div>
     
     <div class="thermal-status">
-        *** EN ATTENTE DE VALIDATION ***
+        *** {{ t('booking.pending_validation')|upper }} ***
     </div>
     
     <div class="thermal-separator"></div>
@@ -388,14 +387,13 @@
             <img src="data:image/png;base64,{{ booking_qr }}" alt="QR" style="width: 20mm !important; height: 20mm !important;">
         </div>
         <div style="flex: 1; text-align: left; font-size: 7px; line-height: 1.4;">
-            Merci pour votre reservation!<br>
-            Scannez le QR code pour passer<br>
-            une nouvelle commande.
+            {{ t('booking.thank_you') }}<br>
+            {{ t('booking.scan_qr_new')[:40] }}
         </div>
     </div>
     
     <div class="thermal-footer">
-        {{ booking.created_at.strftime('%d/%m/%Y a %H:%M') }}<br>
+        {{ booking.created_at.strftime('%d/%m/%Y') }}<br>
         --------------------------------<br>
         {{ site_settings.platform_name }}<br>
         www.shabaka-adscreen.com

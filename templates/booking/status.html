@@ -1,58 +1,58 @@
 {% extends "base.html" %}
 
-{% block title %}Statut réservation{% endblock %}
+{% block title %}{{ t('booking.booking_status') }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
     <div class="max-w-lg w-full">
         <div class="bg-white rounded-2xl shadow-xl p-8">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Statut de votre réservation</h1>
+            <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">{{ t('booking.booking_status') }}</h1>
             
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-gray-500">Statut</span>
+                    <span class="text-gray-500">{{ t('common.status') }}</span>
                     {% if booking.status == 'pending' %}
-                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">En attente de validation</span>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">{{ t('booking.pending_validation') }}</span>
                     {% elif booking.status == 'active' %}
-                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">Actif - En diffusion</span>
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">{{ t('booking.active_broadcasting') }}</span>
                     {% elif booking.status == 'completed' %}
-                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">Terminé</span>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{{ t('booking.completed') }}</span>
                     {% elif booking.status == 'rejected' %}
-                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">Refusé</span>
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">{{ t('booking.rejected') }}</span>
                     {% endif %}
                 </div>
                 
                 <div class="bg-gray-50 rounded-xl p-4 space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Écran</span>
+                        <span class="text-gray-500">{{ t('booking.screen') }}</span>
                         <span class="font-medium text-gray-800">{{ booking.screen.name }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Type de contenu</span>
+                        <span class="text-gray-500">{{ t('booking.content_type') }}</span>
                         <span class="font-medium text-gray-800 capitalize">
                             <i class="fas fa-{% if booking.content.content_type == 'image' %}image text-blue-500{% else %}video text-purple-500{% endif %} mr-1"></i>
                             {{ booking.content.content_type }}
                         </span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Durée par diffusion</span>
+                        <span class="text-gray-500">{{ t('booking.duration_per_play') }}</span>
                         <span class="font-medium text-gray-800">{{ booking.slot_duration }}s</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Diffusions prévues</span>
+                        <span class="text-gray-500">{{ t('booking.planned_plays') }}</span>
                         <span class="font-medium text-gray-800">{{ booking.num_plays }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Diffusions effectuées</span>
+                        <span class="text-gray-500">{{ t('booking.broadcasts_completed') }}</span>
                         <span class="font-medium text-gray-800">{{ booking.plays_completed }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Progression</span>
+                        <span class="text-gray-500">{{ t('booking.progression') }}</span>
                         <span class="font-medium text-gray-800">{{ ((booking.plays_completed / booking.num_plays) * 100)|int }}%</span>
                     </div>
                     {% if booking.start_date %}
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-500">Période</span>
+                        <span class="text-gray-500">{{ t('booking.period') }}</span>
                         <span class="font-medium text-gray-800">{{ booking.start_date.strftime('%d/%m/%Y') }}{% if booking.end_date %} - {{ booking.end_date.strftime('%d/%m/%Y') }}{% endif %}</span>
                     </div>
                     {% endif %}
@@ -68,12 +68,12 @@
                 <div class="flex items-start gap-3">
                     <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
                     <div class="text-sm text-blue-700">
-                        <p class="font-medium mb-2">Mode de diffusion</p>
+                        <p class="font-medium mb-2">{{ t('booking.broadcast_mode') }}</p>
                         {% if booking.content.content_type == 'image' %}
-                        <p><i class="fas fa-image mr-1"></i> <strong>Image:</strong> Votre image sera affichée pendant exactement <strong>{{ booking.slot_duration }} secondes</strong> à chaque diffusion.</p>
+                        <p><i class="fas fa-image mr-1"></i> <strong>{{ t('contents.image') }}:</strong> {{ t('booking.image_broadcast_info') }} <strong>{{ booking.slot_duration }} {{ t('booking.seconds_per_play') }}</strong></p>
                         {% else %}
-                        <p><i class="fas fa-video mr-1"></i> <strong>Vidéo:</strong> Votre vidéo sera lue en entier. Si elle est plus courte que {{ booking.slot_duration }}s, la dernière image restera affichée jusqu'à atteindre la durée réglementaire.</p>
-                        <p class="mt-1 text-xs text-blue-600">Exemple: vidéo de 13s dans un slot de 15s → la vidéo joue puis la dernière image reste 2s supplémentaires.</p>
+                        <p><i class="fas fa-video mr-1"></i> <strong>{{ t('contents.video') }}:</strong> {{ t('booking.video_broadcast_info') }} {{ booking.slot_duration }}s, {{ t('booking.video_broadcast_info2') }}</p>
+                        <p class="mt-1 text-xs text-blue-600">{{ t('booking.video_example') }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -83,22 +83,22 @@
                 <div class="flex items-start gap-3">
                     <i class="fas fa-calendar-check text-yellow-600 mt-0.5"></i>
                     <div class="text-sm text-yellow-700">
-                        <p class="font-medium mb-1">Répartition équitable</p>
-                        <p>Vos {{ booking.num_plays }} diffusions sont réparties uniformément sur toute la période de réservation pour une visibilité optimale.</p>
+                        <p class="font-medium mb-1">{{ t('booking.equitable_distribution') }}</p>
+                        <p>{{ t('booking.equitable_info') }}</p>
                     </div>
                 </div>
             </div>
             
             {% if booking.content.rejection_reason %}
             <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                <p class="font-medium text-red-800 mb-1">Motif du refus</p>
+                <p class="font-medium text-red-800 mb-1">{{ t('booking.rejection_reason') }}</p>
                 <p class="text-red-600">{{ booking.content.rejection_reason }}</p>
             </div>
             {% endif %}
             
             <div class="text-center">
                 <a href="{{ url_for('booking.screen_booking', screen_code=booking.screen.unique_code) }}" class="text-primary-600 hover:text-primary-700 font-medium">
-                    <i class="fas fa-plus mr-1"></i>Nouvelle réservation
+                    <i class="fas fa-plus mr-1"></i>{{ t('booking.new_booking') }}
                 </a>
             </div>
         </div>

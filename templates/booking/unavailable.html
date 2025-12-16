@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Écran indisponible{% endblock %}
+{% block title %}{{ t('booking.screen_unavailable') }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -9,14 +9,14 @@
             <i class="fas fa-tv text-gray-400 text-3xl"></i>
         </div>
         
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">Écran indisponible</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ t('booking.screen_unavailable') }}</h1>
         <p class="text-gray-500 mb-6">
-            Cet écran n'est actuellement pas disponible pour les réservations.
+            {{ t('booking.screen_unavailable_desc') }}
         </p>
         
         <a href="{{ url_for('auth.index') }}" class="btn-primary">
             <i class="fas fa-home"></i>
-            Retour à l'accueil
+            {{ t('booking.back_home') }}
         </a>
     </div>
 </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Catalogue des Écrans{% endblock %}
+{% block title %}{{ t('catalog.title') }}{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -15,17 +15,17 @@
                 </a>
                 <div class="flex-1 flex items-center justify-end gap-4">
                     <div class="hidden md:flex items-center gap-1">
-                        <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link text-sm">Fonctionnalités</a>
-                        <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link text-sm">Comment ça marche</a>
-                        <a href="{{ url_for('auth.index') }}#avantages" class="nav-link text-sm">Avantages</a>
+                        <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link text-sm">{{ t('nav.features') }}</a>
+                        <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link text-sm">{{ t('nav.how_it_works') }}</a>
+                        <a href="{{ url_for('auth.index') }}#avantages" class="nav-link text-sm">{{ t('nav.advantages') }}</a>
                         <a href="{{ url_for('auth.catalog') }}" class="nav-link text-sm text-emerald-600 font-medium">
-                            <i class="fas fa-th-large mr-1"></i>Catalogue
+                            <i class="fas fa-th-large mr-1"></i>{{ t('nav.catalog') }}
                         </a>
                     </div>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary text-sm hidden sm:inline-flex">
                             <i class="fas fa-sign-in-alt"></i>
-                            Connexion
+                            {{ t('common.login') }}
                         </a>
                         <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition">
                             <i class="fas fa-bars text-lg"></i>
@@ -36,16 +36,16 @@
             
             <div data-mobile-menu class="hidden md:hidden border-t border-gray-100 py-4">
                 <div class="flex flex-col gap-1">
-                    <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link block py-2 px-2">Fonctionnalités</a>
-                    <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link block py-2 px-2">Comment ça marche</a>
-                    <a href="{{ url_for('auth.index') }}#avantages" class="nav-link block py-2 px-2">Avantages</a>
+                    <a href="{{ url_for('auth.index') }}#fonctionnalites" class="nav-link block py-2 px-2">{{ t('nav.features') }}</a>
+                    <a href="{{ url_for('auth.index') }}#comment-ca-marche" class="nav-link block py-2 px-2">{{ t('nav.how_it_works') }}</a>
+                    <a href="{{ url_for('auth.index') }}#avantages" class="nav-link block py-2 px-2">{{ t('nav.advantages') }}</a>
                     <a href="{{ url_for('auth.catalog') }}" class="nav-link block py-2 px-2 text-emerald-600 font-medium">
-                        <i class="fas fa-th-large mr-1"></i>Catalogue
+                        <i class="fas fa-th-large mr-1"></i>{{ t('nav.catalog') }}
                     </a>
                     <div class="border-t border-gray-100 pt-3 mt-2 flex flex-col gap-2">
                         <a href="{{ url_for('auth.login') }}" class="btn-primary block text-center text-sm">
                             <i class="fas fa-sign-in-alt mr-1"></i>
-                            Connexion
+                            {{ t('common.login') }}
                         </a>
                     </div>
                 </div>
@@ -63,26 +63,26 @@
                         <div>
                             <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full text-white text-xs font-medium mb-3">
                                 <i class="fas fa-globe"></i>
-                                Catalogue mondial
+                                {{ t('catalog.global_catalog') }}
                             </div>
                             <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-2">
-                                Trouvez votre écran idéal
+                                {{ t('catalog.find_ideal_screen') }}
                             </h1>
                             <p class="text-emerald-100 max-w-xl">
-                                Parcourez notre catalogue d'écrans publicitaires et réservez l'emplacement parfait pour votre campagne.
+                                {{ t('catalog.description') }}
                             </p>
                         </div>
                         
                         <div class="bg-white rounded-2xl p-4 shadow-lg min-w-[280px]">
                             <label class="block text-xs font-medium text-gray-500 mb-2">
-                                <i class="fas fa-filter mr-1"></i>Filtrer par pays
+                                <i class="fas fa-filter mr-1"></i>{{ t('catalog.filter_by_country') }}
                             </label>
                             <form method="GET" id="countryFilterForm">
                                 <select name="country" 
                                         onchange="document.getElementById('countryFilterForm').submit()"
                                         class="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer">
                                     <option value="all" {% if country_filter == 'all' %}selected{% endif %}>
-                                        🌍 Tous les pays
+                                        {{ t('catalog.all_countries') }}
                                     </option>
                                     {% for country in available_countries %}
                                     <option value="{{ country.code }}" {% if country_filter == country.code %}selected{% endif %}>
@@ -94,7 +94,7 @@
                             {% if detected_country and country_filter == detected_country %}
                             <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1">
                                 <i class="fas fa-location-dot"></i>
-                                Détecté automatiquement
+                                {{ t('catalog.auto_detected') }}
                             </p>
                             {% endif %}
                         </div>
@@ -113,18 +113,18 @@
                                 <div>
                                     <h2 class="text-xl font-bold text-white">{{ country.country_name }}</h2>
                                     <p class="text-gray-400 text-sm">
-                                        {{ country.organizations|length }} établissement{% if country.organizations|length > 1 %}s{% endif %} · 
+                                        {{ country.organizations|length }} {{ t('catalog.establishment') if country.organizations|length == 1 else t('catalog.establishments') }} · 
                                         {% set total_screens = namespace(count=0) %}
                                         {% for org in country.organizations %}
                                             {% set total_screens.count = total_screens.count + org.screens|length %}
                                         {% endfor %}
-                                        {{ total_screens.count }} écran{% if total_screens.count > 1 %}s{% endif %}
+                                        {{ total_screens.count }} {{ t('catalog.screen') if total_screens.count == 1 else t('catalog.screens_plural') }}
                                     </p>
                                 </div>
                             </div>
                             <div class="hidden sm:flex items-center gap-2">
                                 <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full">
-                                    <i class="fas fa-check-circle mr-1"></i>Disponible
+                                    <i class="fas fa-check-circle mr-1"></i>{{ t('common.available') }}
                                 </span>
                             </div>
                         </div>
@@ -150,7 +150,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full">
-                                        <i class="fas fa-tv mr-1"></i>{{ org.screens|length }} écran{% if org.screens|length > 1 %}s{% endif %}
+                                        <i class="fas fa-tv mr-1"></i>{{ org.screens|length }} {{ t('catalog.screen') if org.screens|length == 1 else t('catalog.screens_plural') }}
                                     </span>
                                 </div>
                             </div>
@@ -214,7 +214,7 @@
                                         
                                         <div class="flex items-center justify-between pt-3 border-t border-gray-200">
                                             <div>
-                                                <span class="text-xs text-gray-400">À partir de</span>
+                                                <span class="text-xs text-gray-400">{{ t('common.from') }}</span>
                                                 <div class="font-bold text-emerald-600">
                                                     {{ "%.2f"|format(screen.price_per_minute / 6) }} {{ screen.get_currency_symbol() }}
                                                 </div>
@@ -222,7 +222,7 @@
                                             <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" 
                                                class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors">
                                                 <i class="fas fa-calendar-plus"></i>
-                                                Réserver
+                                                {{ t('featured_screens.book_now') }}
                                             </a>
                                         </div>
                                     </div>
@@ -240,21 +240,21 @@
                 <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <i class="fas fa-search text-gray-400 text-3xl"></i>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun écran trouvé</h3>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ t('catalog.no_screens_found') }}</h3>
                 <p class="text-gray-500 mb-6 max-w-md mx-auto">
                     {% if country_filter != 'all' %}
-                    Aucun écran disponible dans ce pays pour le moment. Essayez un autre filtre.
+                    {{ t('catalog.no_screens_country') }}
                     {% else %}
-                    Il n'y a actuellement aucun écran publicitaire disponible dans notre catalogue.
+                    {{ t('catalog.no_screens_available') }}
                     {% endif %}
                 </p>
                 {% if country_filter != 'all' %}
                 <a href="{{ url_for('auth.catalog', country='all') }}" class="btn-secondary inline-flex">
-                    <i class="fas fa-globe mr-2"></i>Voir tous les pays
+                    <i class="fas fa-globe mr-2"></i>{{ t('catalog.view_all_countries') }}
                 </a>
                 {% else %}
                 <a href="{{ url_for('auth.register') }}" class="btn-primary inline-flex">
-                    <i class="fas fa-plus mr-2"></i>Devenir partenaire
+                    <i class="fas fa-plus mr-2"></i>{{ t('catalog.become_partner') }}
                 </a>
                 {% endif %}
             </div>
@@ -273,7 +273,7 @@
                         <span class="text-lg font-bold text-white">{{ site_settings.platform_name or 'Shabaka AdScreen' }}</span>
                     </div>
                     <p class="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
-                        {{ site_settings.site_description or 'La plateforme SaaS de référence pour la location d\'espaces publicitaires sur écrans.' }}
+                        {{ site_settings.site_description or t('footer.tagline') }}
                     </p>
                     <div class="flex gap-3">
                         {% if site_settings.facebook_url %}
@@ -309,16 +309,16 @@
                     </div>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Produit</h4>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">{{ t('common.product') }}</h4>
                     <ul class="space-y-2 sm:space-y-3">
-                        <li><a href="{{ url_for('auth.index') }}#fonctionnalites" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Fonctionnalités</a></li>
-                        <li><a href="{{ url_for('auth.index') }}#comment-ca-marche" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Comment ça marche</a></li>
-                        <li><a href="{{ url_for('auth.index') }}#avantages" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Avantages</a></li>
-                        <li><a href="{{ url_for('auth.catalog') }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Catalogue</a></li>
+                        <li><a href="{{ url_for('auth.index') }}#fonctionnalites" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('nav.features') }}</a></li>
+                        <li><a href="{{ url_for('auth.index') }}#comment-ca-marche" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('nav.how_it_works') }}</a></li>
+                        <li><a href="{{ url_for('auth.index') }}#avantages" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('nav.advantages') }}</a></li>
+                        <li><a href="{{ url_for('auth.catalog') }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('nav.catalog') }}</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Contact</h4>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">{{ t('footer.contact') }}</h4>
                     <ul class="space-y-2 sm:space-y-3">
                         {% if site_settings.support_email %}
                         <li><a href="mailto:{{ site_settings.support_email }}" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm"><i class="fas fa-envelope mr-1"></i>{{ site_settings.support_email }}</a></li>
@@ -335,23 +335,23 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">Légal</h4>
+                    <h4 class="font-semibold text-white mb-3 sm:mb-4 text-sm sm:text-base">{{ t('footer.legal') }}</h4>
                     <ul class="space-y-2 sm:space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">CGU</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Confidentialité</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">Mentions légales</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('footer.terms') }}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('footer.privacy') }}</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-emerald-400 transition text-xs sm:text-sm">{{ t('footer.legal_notice') }}</a></li>
                     </ul>
                 </div>
             </div>
             <div class="divider opacity-20 mb-6 sm:mb-8"></div>
             <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <p class="text-gray-500 text-xs sm:text-sm">
-                    © {{ now.year if now else '2024' }} {{ site_settings.platform_name or 'Shabaka AdScreen' }}. Tous droits réservés.
+                    {{ now.year if now else '2024' }} {{ site_settings.platform_name or 'Shabaka AdScreen' }}. {{ t('footer.all_rights') }}.
                 </p>
                 <div class="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
-                    <span>Fait avec</span>
+                    <span>{{ t('footer.made_with') }}</span>
                     <i class="fas fa-heart text-emerald-500"></i>
-                    <span>en France</span>
+                    <span>{{ t('common.in_france') }}</span>
                 </div>
             </div>
         </div>
@@ -359,15 +359,12 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenuToggle = document.querySelector('[data-mobile-menu-toggle]');
-    const mobileMenu = document.querySelector('[data-mobile-menu]');
-    
-    if (mobileMenuToggle && mobileMenu) {
-        mobileMenuToggle.addEventListener('click', function() {
-            mobileMenu.classList.toggle('hidden');
+document.querySelectorAll('[data-mobile-menu-toggle]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('[data-mobile-menu]').forEach(function(menu) {
+            menu.classList.toggle('hidden');
         });
-    }
+    });
 });
 </script>
 {% endblock %}
