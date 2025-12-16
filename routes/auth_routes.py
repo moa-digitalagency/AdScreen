@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User, Organization, SiteSetting, RegistrationRequest
+from services.translation_service import t
 import urllib.parse
 
 auth_bp = Blueprint('auth', __name__)
@@ -41,7 +42,7 @@ Message: {message}"""
         whatsapp_url = f"https://wa.me/{admin_whatsapp}?text={encoded_message}"
         return redirect(whatsapp_url)
     
-    flash('Message envoyé avec succès!', 'success')
+    flash(t('flash.message_sent_success'), 'success')
     return redirect(url_for('auth.index'))
 
 
@@ -60,7 +61,7 @@ def login():
         
         if user and user.check_password(password):
             if not user.is_active:
-                flash('Votre compte a été désactivé.', 'error')
+                flash(t('flash.account_disabled'), 'error')
                 return render_template('auth/login.html')
             
             login_user(user)
@@ -70,7 +71,7 @@ def login():
                 return redirect(next_page or url_for('admin.dashboard'))
             return redirect(next_page or url_for('org.dashboard'))
         
-        flash('Email ou mot de passe incorrect.', 'error')
+        flash(t('flash.invalid_credentials'), 'error')
     
     return render_template('auth/login.html')
 
@@ -96,17 +97,17 @@ def register():
         message = request.form.get('message', '')
         
         if not name or not email or not org_name or not phone:
-            flash('Veuillez remplir tous les champs obligatoires.', 'error')
+            flash(t('flash.fill_required_fields'), 'error')
             return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         existing_request = RegistrationRequest.query.filter_by(email=email, status='pending').first()
         if existing_request:
-            flash('Une demande est déjà en cours pour cet email.', 'warning')
+            flash(t('flash.request_pending'), 'warning')
             return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash('Cet email est déjà associé à un compte.', 'error')
+            flash(t('flash.email_exists'), 'error')
             return render_template('auth/register.html', currencies=currencies, countries=countries)
         
         reg_request = RegistrationRequest(
@@ -142,7 +143,7 @@ Connectez-vous à l'admin pour valider cette demande."""
             encoded_message = urllib.parse.quote(whatsapp_message)
             whatsapp_url = f"https://wa.me/{admin_whatsapp}?text={encoded_message}"
         
-        flash('Votre demande a été envoyée avec succès! Nous vous contacterons bientôt via WhatsApp.', 'success')
+        flash(t('flash.registration_success'), 'success')
         return redirect(url_for('auth.login'))
     
     return render_template('auth/register.html', currencies=currencies, countries=countries)
@@ -152,7 +153,7 @@ Connectez-vous à l'admin pour valider cette demande."""
 @login_required
 def logout():
     logout_user()
-    flash('Vous avez été déconnecté.', 'info')
+    flash(t('flash.logged_out'), 'info')
     return redirect(url_for('auth.index'))
 
 

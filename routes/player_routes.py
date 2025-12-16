@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from models.ad_content import AdContent, AdContentStat
+from services.translation_service import t
 from datetime import datetime
 import urllib.parse
 import urllib3
@@ -26,14 +27,14 @@ def login():
         
         if screen and screen.check_password(password):
             if not screen.is_active:
-                flash('Cet écran a été désactivé.', 'error')
+                flash(t('flash.screen_disabled'), 'error')
                 return render_template('player/login.html')
             
             session['screen_id'] = screen.id
             session['screen_code'] = screen.unique_code
             return redirect(url_for('player.display'))
         
-        flash('Code écran ou mot de passe incorrect.', 'error')
+        flash(t('flash.invalid_screen_credentials'), 'error')
     
     return render_template('player/login.html')
 
@@ -60,20 +61,20 @@ def logout():
             db.session.commit()
     
     session.clear()
-    flash('Écran déconnecté.', 'info')
+    flash(t('flash.screen_disconnected'), 'info')
     return redirect(url_for('player.login'))
 
 
 @player_bp.route('/api/screen-mode')
 def get_screen_mode():
     if 'screen_id' not in session:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'error': t('flash.not_authenticated')}), 401
     
     db.session.expire_all()
     
     screen = Screen.query.get(session['screen_id'])
     if not screen:
-        return jsonify({'error': 'Écran non trouvé'}), 404
+        return jsonify({'error': t('flash.screen_not_found')}), 404
     
     return jsonify({
         'mode': screen.current_mode or 'playlist',
@@ -87,14 +88,14 @@ def get_screen_mode():
 @player_bp.route('/api/playlist')
 def get_playlist():
     if 'screen_id' not in session:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'error': t('flash.not_authenticated')}), 401
     
     db.session.expire_all()
     db.session.rollback()
     
     screen = db.session.query(Screen).filter_by(id=session['screen_id']).first()
     if not screen:
-        return jsonify({'error': 'Écran non trouvé'}), 404
+        return jsonify({'error': t('flash.screen_not_found')}), 404
     
     if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
         from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
@@ -266,11 +267,11 @@ def get_playlist():
 @player_bp.route('/api/heartbeat', methods=['POST'])
 def heartbeat():
     if 'screen_id' not in session:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'error': t('flash.not_authenticated')}), 401
     
     screen = Screen.query.get(session['screen_id'])
     if not screen:
-        return jsonify({'error': 'Écran non trouvé'}), 404
+        return jsonify({'error': t('flash.screen_not_found')}), 404
     
     data = request.get_json() or {}
     status = data.get('status', 'online')
@@ -294,11 +295,11 @@ def heartbeat():
 @player_bp.route('/api/log-play', methods=['POST'])
 def log_play():
     if 'screen_id' not in session:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'error': t('flash.not_authenticated')}), 401
     
     screen = Screen.query.get(session['screen_id'])
     if not screen:
-        return jsonify({'error': 'Écran non trouvé'}), 404
+        return jsonify({'error': t('flash.screen_not_found')}), 404
     
     data = request.get_json()
     content_id = data.get('content_id')
@@ -350,14 +351,14 @@ def stream_proxy():
     from flask import stream_with_context
     
     if 'screen_id' not in session:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'error': t('flash.not_authenticated')}), 401
     
     url = request.args.get('url')
     if not url:
-        return jsonify({'error': 'URL manquante'}), 400
+        return jsonify({'error': t('flash.missing_url')}), 400
     
     if not url.startswith(('http://', 'https://')):
-        return jsonify({'error': 'URL invalide'}), 400
+        return jsonify({'error': t('flash.invalid_url')}), 400
     
     is_manifest = '.m3u' in url.lower() or '.m3u8' in url.lower()
     is_ts_segment = '.ts' in url.lower()
@@ -461,7 +462,7 @@ def stream_proxy():
             
     except Exception as e:
         logger.error(f"Error proxying stream: {str(e)}")
-        return jsonify({'error': 'Erreur lors du chargement du stream'}), 500
+        return jsonify({'error': t('flash.stream_error')}), 500
 
 
 @player_bp.route('/api/stream-proxy', methods=['OPTIONS'])
@@ -488,13 +489,13 @@ def tv_stream(screen_code):
     screen = Screen.query.filter_by(unique_code=screen_code).first()
     
     if not screen:
-        return jsonify({'error': 'Écran non trouvé'}), 404
+        return jsonify({'error': t('flash.screen_not_found')}), 404
     
     if not screen.current_iptv_channel:
-        return jsonify({'error': 'Aucune chaîne IPTV configurée'}), 400
+        return jsonify({'error': t('flash.no_iptv_channel')}), 400
     
     if screen.current_mode != 'iptv':
-        return jsonify({'error': 'Écran pas en mode IPTV'}), 400
+        return jsonify({'error': t('flash.not_iptv_mode')}), 400
     
     source_url = screen.current_iptv_channel
     channel_name = screen.current_iptv_channel_name or 'Unknown'
