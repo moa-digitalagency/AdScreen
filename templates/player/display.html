@@ -387,6 +387,13 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
         const PlayerState = {
             IDLE: 'idle',
             PLAYING: 'playing',
@@ -631,16 +638,18 @@
                 'filler': '🎬 Démo'
             };
             
-            const itemName = item.name || 'Contenu';
+            const itemName = escapeHtml(item.name || 'Contenu');
+            const categoryLabel = escapeHtml(categoryLabels[item.category] || item.category);
             currentInfoEl.innerHTML = 
-                `<strong>${categoryLabels[item.category] || item.category}</strong> - ${itemName}<br>
-                 <span style="opacity: 0.7">Durée: ${item.duration}s ${item.remaining_plays ? `| Restant: ${item.remaining_plays}` : ''}</span>`;
+                `<strong>${categoryLabel}</strong> - ${itemName}<br>
+                 <span style="opacity: 0.7">Durée: ${escapeHtml(item.duration)}s ${item.remaining_plays ? `| Restant: ${escapeHtml(item.remaining_plays)}` : ''}</span>`;
             
             if (player.playlist.length > 1) {
                 const nextIndex = (player.currentIndex + 1) % player.playlist.length;
                 const nextItem = player.playlist[nextIndex];
+                const nextCategoryLabel = categoryLabels[nextItem.category] || nextItem.category;
                 nextInfoEl.textContent = 
-                    `Suivant: ${categoryLabels[nextItem.category] || nextItem.category} - ${nextItem.name || 'Contenu'}`;
+                    `Suivant: ${nextCategoryLabel} - ${nextItem.name || 'Contenu'}`;
             } else {
                 nextInfoEl.textContent = 'Boucle en cours...';
             }
@@ -1353,7 +1362,7 @@
             errorEl.innerHTML = `
                 <div style="font-size: 48px; margin-bottom: 16px;">📺</div>
                 <h3 style="font-size: 18px; margin-bottom: 8px;">Erreur de diffusion</h3>
-                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">${message}</p>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">${escapeHtml(message)}</p>
                 <button onclick="retryIptvStream()" style="background: #3b82f6; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 8px;">
                     🔄 Réessayer
                 </button>
@@ -1582,25 +1591,27 @@
                     const duration = Math.max(10, (overlay.message?.length || 50) / (overlay.scroll_speed / 10));
                     container.innerHTML = `
                         <div class="overlay-ticker" style="
-                            color: ${overlay.text_color || '#ffffff'};
-                            font-size: ${overlay.font_size || 24}px;
+                            color: ${escapeHtml(overlay.text_color) || '#ffffff'};
+                            font-size: ${parseInt(overlay.font_size) || 24}px;
                             animation-duration: ${duration}s;
-                        ">${overlay.message || ''}</div>
+                        ">${escapeHtml(overlay.message || '')}</div>
                     `;
                 } else if (overlay.type === 'image' && overlay.image_path) {
-                    const opacity = overlay.image_opacity !== undefined ? overlay.image_opacity : 1;
-                    const widthPercent = overlay.image_width_percent || 20;
+                    const opacity = parseFloat(overlay.image_opacity) || 1;
+                    const widthPercent = parseInt(overlay.image_width_percent) || 20;
+                    const safePath = encodeURI(overlay.image_path);
                     
                     if (position === 'header' || position === 'footer' || position === 'body') {
-                        container.innerHTML = `<img src="/${overlay.image_path}" class="overlay-image" style="opacity: ${opacity}; max-width: ${widthPercent}%;" />`;
+                        container.innerHTML = `<img src="/${safePath}" class="overlay-image" style="opacity: ${opacity}; max-width: ${widthPercent}%;" />`;
                     } else {
-                        const cornerSize = overlay.corner_size || 15;
-                        container.innerHTML = `<img src="/${overlay.image_path}" style="opacity: ${opacity}; width: ${widthPercent}vw; max-width: 300px; height: auto;" />`;
+                        const cornerSize = parseInt(overlay.corner_size) || 15;
+                        container.innerHTML = `<img src="/${safePath}" style="opacity: ${opacity}; width: ${widthPercent}vw; max-width: 300px; height: auto;" />`;
                     }
                 } else if (overlay.type === 'corner' && overlay.image_path) {
-                    const opacity = overlay.image_opacity !== undefined ? overlay.image_opacity : 1;
-                    const cornerSize = overlay.corner_size || 15;
-                    container.innerHTML = `<img src="/${overlay.image_path}" style="opacity: ${opacity}; width: ${cornerSize}vw; max-width: 200px; height: auto;" />`;
+                    const opacity = parseFloat(overlay.image_opacity) || 1;
+                    const cornerSize = parseInt(overlay.corner_size) || 15;
+                    const safePath = encodeURI(overlay.image_path);
+                    container.innerHTML = `<img src="/${safePath}" style="opacity: ${opacity}; width: ${cornerSize}vw; max-width: 200px; height: auto;" />`;
                 }
                 
                 debug('Rendered overlay: id=' + overlay.id + ', type=' + overlay.type + ', position=' + position);

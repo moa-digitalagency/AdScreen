@@ -215,8 +215,20 @@ python init_db_demo.py --force
 **Librairies externes (non modifiables) :**
 - `static/js/mpegts.min.js` - Librairie tierce minifiee, warnings normaux
 
+## Securite
+
+**Corrections XSS appliquees (16/12/2024) :**
+- `static/js/main.js` : Remplacement innerHTML par creation d'elements DOM
+- `templates/admin/ad_contents/form.html` : Ajout fonction escapeHtml() pour donnees dynamiques
+- `templates/player/display.html` : Ajout escapeHtml() + encodeURI() pour chemins et messages
+
+**Bonnes pratiques :**
+- Toujours echapper les donnees utilisateur avec escapeHtml() avant insertion HTML
+- Utiliser textContent au lieu de innerHTML quand possible
+- Valider/sanitizer les chemins de fichiers cote serveur
+
 ## Dernieres modifications
 
-- 16/12/2024 : Correction vulnerabilite XSS dans main.js (innerHTML -> DOM API)
+- 16/12/2024 : Corrections vulnerabilites XSS (main.js, ad_contents/form.html, player/display.html)
 - 16/12/2024 : Mise a jour documentation structure fichiers
 - 12/2024 : Reecriture complete de la documentation
