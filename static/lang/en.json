@@ -49,7 +49,14 @@
     "from": "From",
     "available": "Available",
     "product": "Product",
-    "in_france": "in France"
+    "in_france": "in France",
+    "whatsapp": "WhatsApp",
+    "portrait": "Portrait",
+    "landscape": "Landscape",
+    "images": "Images",
+    "videos": "Videos",
+    "image_formats": "JPG, PNG, GIF",
+    "video_formats": "MP4, WebM"
   },
   "nav": {
     "features": "Features",

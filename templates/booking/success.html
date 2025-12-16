@@ -37,7 +37,7 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">{{ t('booking.content_type') }}</span>
-                            <span class="font-medium text-gray-800 capitalize">{{ content.content_type }}</span>
+                            <span class="font-medium text-gray-800 capitalize">{% if content.content_type == 'image' %}{{ t('contents.image') }}{% else %}{{ t('contents.video') }}{% endif %}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">{{ t('booking.filename') }}</span>
@@ -308,8 +308,8 @@
         <span class="thermal-line-value">{{ screen.organization.name[:16] }}{% if screen.organization.name|length > 16 %}..{% endif %}</span>
     </div>
     <div class="thermal-line">
-        <span class="thermal-line-label">Type:</span>
-        <span class="thermal-line-value">{{ content.content_type|capitalize }}</span>
+        <span class="thermal-line-label">{{ t('booking.content_type') }}:</span>
+        <span class="thermal-line-value">{% if content.content_type == 'image' %}{{ t('contents.image') }}{% else %}{{ t('contents.video') }}{% endif %}</span>
     </div>
     <div class="thermal-line">
         <span class="thermal-line-label">{{ t('booking.filename')[:7] }}:</span>
