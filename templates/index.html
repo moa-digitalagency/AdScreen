@@ -423,22 +423,32 @@
     </section>
     {% endif %}
 
-    <section class="py-16 sm:py-20 lg:py-24 bg-gradient-to-br from-emerald-600 to-emerald-700 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
-            <div class="absolute bottom-10 right-10 w-60 h-60 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-4">
-                {{ t('cta.title_line1') }}<br>{{ t('cta.title_line2') }}
-            </h2>
-            <p class="text-emerald-100 mb-6 sm:mb-8 text-sm sm:text-base max-w-2xl mx-auto">
-                {{ t('cta.subtitle') }}
-            </p>
-            <a href="{{ url_for('auth.register') }}" class="inline-flex items-center gap-2 bg-white text-emerald-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold hover:bg-gray-50 transition shadow-lg text-sm sm:text-base">
-                <i class="fas fa-rocket"></i>
-                {{ t('cta.register_free') }}
-            </a>
+    <section class="py-16 sm:py-20 lg:py-24">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl sm:rounded-[2rem] relative overflow-hidden py-12 sm:py-16 px-6 sm:px-12">
+                <div class="absolute inset-0 opacity-20">
+                    <div class="absolute top-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-10 right-10 w-60 h-60 bg-white rounded-full blur-3xl"></div>
+                </div>
+                <div class="text-center relative">
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-4">
+                        {{ t('cta.title_line1') }}
+                    </h2>
+                    <p class="text-emerald-100 mb-8 sm:mb-10 text-sm sm:text-base max-w-2xl mx-auto">
+                        {{ t('cta.subtitle') }}
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <a href="{{ url_for('auth.register') }}" class="inline-flex items-center gap-2 bg-white text-emerald-600 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:bg-gray-50 transition shadow-lg text-sm sm:text-base">
+                            <i class="fas fa-rocket"></i>
+                            {{ t('cta.register_free') }}
+                        </a>
+                        <a href="{{ url_for('player.login') }}" class="inline-flex items-center gap-2 bg-white/20 backdrop-blur text-white border border-white/30 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:bg-white/30 transition text-sm sm:text-base">
+                            <i class="fas fa-play"></i>
+                            {{ t('nav.player_mode') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
