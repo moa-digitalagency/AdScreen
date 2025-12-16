@@ -244,6 +244,7 @@ python init_db_demo.py --force
 
 ## Dernieres modifications
 
+- 16/12/2024 : Internationalisation complete des routes backend (toutes les flash messages utilisent t())
 - 16/12/2024 : Implementation complete du systeme bilingue (FR/EN)
 - 16/12/2024 : Corrections vulnerabilites XSS (main.js, ad_contents/form.html, player/display.html)
 - 16/12/2024 : Mise a jour documentation structure fichiers
