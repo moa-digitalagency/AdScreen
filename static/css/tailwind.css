@@ -933,7 +933,7 @@ video {
 }
 
 .mt-8 {
-  margin-top: 2rem;
+  margin-top: 0rem;
 }
 
 .line-clamp-1 {
@@ -2579,6 +2579,7 @@ video {
 
 .pb-6 {
   padding-bottom: 1.5rem;
+  padding-top: 3.5rem;
 }
 
 .pb-8 {
