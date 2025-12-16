@@ -227,8 +227,24 @@ python init_db_demo.py --force
 - Utiliser textContent au lieu de innerHTML quand possible
 - Valider/sanitizer les chemins de fichiers cote serveur
 
+## Internationalisation (i18n)
+
+**Langues supportees :** Francais (fr), Anglais (en)
+
+**Architecture :**
+- `services/translation_service.py` : Service de traduction avec detection du navigateur
+- `static/lang/fr.json` et `static/lang/en.json` : Fichiers de traduction
+- Widget flottant en bas a gauche pour changer de langue
+- Detection automatique de la langue du navigateur
+
+**Convention :**
+- Tous les textes utilisateur utilisent la syntaxe `{{ t('cle.souscle') }}`
+- Les noms de marque ("Shabaka AdScreen") restent en dur (pratique i18n standard)
+- Ajouter les nouvelles cles dans les deux fichiers JSON simultanement
+
 ## Dernieres modifications
 
+- 16/12/2024 : Implementation complete du systeme bilingue (FR/EN)
 - 16/12/2024 : Corrections vulnerabilites XSS (main.js, ad_contents/form.html, player/display.html)
 - 16/12/2024 : Mise a jour documentation structure fichiers
 - 12/2024 : Reecriture complete de la documentation
