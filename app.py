@@ -2,7 +2,7 @@ import os
 import logging
 import secrets
 
-from flask import Flask, request, session, abort
+from flask import Flask, request, session, abort, redirect, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
@@ -86,6 +86,9 @@ with app.app_context():
         
         from services.rate_limiter import init_limiter
         init_limiter(app)
+        
+        from services.translation_service import init_translations, set_locale, SUPPORTED_LANGUAGES
+        init_translations(app)
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(admin_bp, url_prefix="/admin")
@@ -213,3 +216,14 @@ def inject_site_settings():
             'made_with_text': SiteSetting.get('made_with_text', 'Fait avec ❤️ en France'),
         }
     }
+
+
+@app.route('/set-language/<lang>')
+def set_language(lang):
+    from services.translation_service import set_locale, SUPPORTED_LANGUAGES
+    if lang in SUPPORTED_LANGUAGES:
+        set_locale(lang)
+    referrer = request.referrer
+    if referrer:
+        return redirect(referrer)
+    return redirect('/')

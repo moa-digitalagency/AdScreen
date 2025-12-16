@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ current_lang() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Shabaka AdScreen{% endblock %} - Location Écrans Publicitaires</title>
+    <title>{% block title %}Shabaka AdScreen{% endblock %} - {% if current_lang() == 'fr' %}Location Écrans Publicitaires{% else %}Advertising Screen Rental{% endif %}</title>
     {% if site_settings.favicon %}
     <link rel="icon" href="{{ site_settings.favicon }}">
     <link rel="apple-touch-icon" href="{{ site_settings.favicon }}">
@@ -45,7 +45,45 @@
         {% endif %}
     {% endwith %}
     
+    <div id="lang-switcher" class="fixed bottom-4 left-4 z-50">
+        <div class="relative">
+            <button onclick="toggleLangMenu()" class="flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2.5 border border-gray-200 hover:shadow-xl transition-all duration-200 group">
+                <i class="fas fa-globe text-emerald-500"></i>
+                <span class="text-sm font-medium text-gray-700">{{ t('language.french') if current_lang() == 'fr' else t('language.english') }}</span>
+                <i class="fas fa-chevron-up text-gray-400 text-xs transition-transform duration-200" id="lang-chevron"></i>
+            </button>
+            <div id="lang-menu" class="hidden absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden min-w-[140px]">
+                <a href="{{ url_for('set_language', lang='fr') }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition {% if current_lang() == 'fr' %}bg-emerald-50 text-emerald-600{% else %}text-gray-700{% endif %}">
+                    <span class="text-lg">🇫🇷</span>
+                    <span class="text-sm font-medium">Français</span>
+                    {% if current_lang() == 'fr' %}<i class="fas fa-check text-emerald-500 ml-auto text-xs"></i>{% endif %}
+                </a>
+                <a href="{{ url_for('set_language', lang='en') }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition {% if current_lang() == 'en' %}bg-emerald-50 text-emerald-600{% else %}text-gray-700{% endif %}">
+                    <span class="text-lg">🇬🇧</span>
+                    <span class="text-sm font-medium">English</span>
+                    {% if current_lang() == 'en' %}<i class="fas fa-check text-emerald-500 ml-auto text-xs"></i>{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    function toggleLangMenu() {
+        const menu = document.getElementById('lang-menu');
+        const chevron = document.getElementById('lang-chevron');
+        menu.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+    
+    document.addEventListener('click', function(e) {
+        const switcher = document.getElementById('lang-switcher');
+        if (!switcher.contains(e.target)) {
+            document.getElementById('lang-menu').classList.add('hidden');
+            document.getElementById('lang-chevron').classList.remove('rotate-180');
+        }
+    });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
