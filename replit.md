@@ -1,81 +1,182 @@
 # Shabaka AdScreen
 
-## À propos du projet
+## A propos du projet
 
-Shabaka AdScreen est une plateforme SaaS qui permet aux établissements (restaurants, bars, centres commerciaux, hôtels) de monétiser leurs écrans d'affichage. Les annonceurs locaux réservent des créneaux publicitaires directement via un QR code, sans intermédiaire.
+Shabaka AdScreen est une plateforme SaaS qui permet aux etablissements (restaurants, bars, centres commerciaux, hotels) de monetiser leurs ecrans d'affichage. Les annonceurs locaux reservent des creneaux publicitaires directement via un QR code, sans intermediaire.
 
 ## Stack technique
 
 - **Backend** : Flask 3.x avec Python 3.11
-- **Base de données** : PostgreSQL avec SQLAlchemy 2.x
-- **Frontend** : Templates Jinja2, Tailwind CSS 3.4 (CDN)
+- **Base de donnees** : PostgreSQL avec SQLAlchemy 2.x
+- **Frontend** : Templates Jinja2, Tailwind CSS 3.4
 - **Authentification** : Flask-Login (sessions), PyJWT (API mobile)
 - **Serveur** : Gunicorn avec gevent
 - **Streaming** : HLS.js, mpegts.js (fallback)
 
-## Architecture
+## Architecture des fichiers
 
 ```
 shabaka-adscreen/
-├── app.py              # Configuration Flask et initialisation
-├── main.py             # Point d'entrée de l'application
-├── init_db.py          # Script de création/mise à jour du schéma
-├── init_db_demo.py     # Données de démonstration
-├── models/             # 15+ modèles SQLAlchemy (User, Screen, Booking...)
-├── routes/             # 8 blueprints Flask (admin, org, player, booking...)
-├── services/           # Logique métier (playlist, pricing, QR, receipts...)
-├── utils/              # Utilitaires (world_data avec 208 pays, currencies...)
-├── templates/          # Templates Jinja2 organisés par module
-├── static/             # CSS, JS, uploads
-└── docs/               # Documentation complète
+├── app.py                  # Configuration Flask et initialisation
+├── main.py                 # Point d'entree de l'application
+├── init_db.py              # Script de creation/mise a jour du schema
+├── init_db_demo.py         # Donnees de demonstration (808 lignes)
+│
+├── models/                 # Modeles SQLAlchemy
+│   ├── __init__.py
+│   ├── ad_content.py       # Contenu publicitaire (435 lignes)
+│   ├── booking.py          # Reservations
+│   ├── broadcast.py        # Diffusions (435 lignes)
+│   ├── content.py          # Contenus
+│   ├── filler.py           # Contenus de remplissage
+│   ├── heartbeat_log.py    # Logs heartbeat player
+│   ├── internal_content.py # Contenus internes
+│   ├── invoice.py          # Factures
+│   ├── organization.py     # Organisations/Etablissements
+│   ├── registration_request.py # Demandes d'inscription
+│   ├── screen.py           # Ecrans
+│   ├── screen_overlay.py   # Overlays ecran
+│   ├── site_setting.py     # Parametres du site
+│   ├── stat_log.py         # Logs statistiques
+│   ├── time_period.py      # Periodes horaires
+│   ├── time_slot.py        # Creneaux horaires
+│   └── user.py             # Utilisateurs
+│
+├── routes/                 # Blueprints Flask
+│   ├── __init__.py
+│   ├── admin_routes.py     # Console admin (1790 lignes)
+│   ├── ad_content_routes.py # Gestion contenus pub (901 lignes)
+│   ├── api_routes.py       # API generale
+│   ├── auth_routes.py      # Authentification (324 lignes)
+│   ├── billing_routes.py   # Facturation (466 lignes)
+│   ├── booking_routes.py   # Reservations (456 lignes)
+│   ├── mobile_api_routes.py # API mobile (570 lignes)
+│   ├── org_routes.py       # Dashboard organisation (1610 lignes)
+│   ├── player_routes.py    # Player ecran (637 lignes)
+│   └── screen_routes.py    # Gestion ecrans
+│
+├── services/               # Logique metier
+│   ├── __init__.py
+│   ├── availability_service.py # Calcul disponibilites (251 lignes)
+│   ├── currency_service.py     # Gestion devises (307 lignes)
+│   ├── filler_generator.py     # Generation fillers (401 lignes)
+│   ├── hls_converter.py        # Conversion HLS
+│   ├── input_validator.py      # Validation entrees
+│   ├── iptv_service.py         # Service IPTV
+│   ├── jwt_service.py          # Gestion JWT (268 lignes)
+│   ├── overlay_service.py      # Gestion overlays
+│   ├── playlist_service.py     # Generation playlists (390 lignes)
+│   ├── pricing_service.py      # Calcul prix
+│   ├── qr_service.py           # Generation QR codes (270 lignes)
+│   ├── rate_limiter.py         # Limitation requetes
+│   └── receipt_generator.py    # Generation recus (515 lignes)
+│
+├── utils/                  # Utilitaires
+│   ├── __init__.py
+│   ├── countries.py        # Liste des pays
+│   ├── currencies.py       # Devises (398 lignes)
+│   ├── image_utils.py      # Manipulation images
+│   ├── video_utils.py      # Manipulation videos
+│   └── world_data.py       # Donnees mondiales (208 pays, 4600+ villes)
+│
+├── templates/              # Templates Jinja2
+│   ├── admin/              # Interface admin
+│   │   ├── ad_contents/    # Gestion contenus pub
+│   │   ├── billing/        # Facturation
+│   │   ├── broadcasts/     # Diffusions
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   ├── organizations.html
+│   │   ├── screens.html
+│   │   ├── settings.html
+│   │   ├── stats.html
+│   │   └── users.html
+│   ├── auth/               # Authentification
+│   │   ├── login.html
+│   │   └── register.html
+│   ├── booking/            # Reservation annonceur
+│   │   ├── screen.html
+│   │   ├── status.html
+│   │   ├── success.html
+│   │   └── unavailable.html
+│   ├── org/                # Dashboard organisation
+│   │   ├── billing/        # Facturation org
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   ├── screens.html
+│   │   ├── settings.html
+│   │   └── stats.html
+│   ├── player/             # Player ecran
+│   │   ├── display.html
+│   │   └── login.html
+│   ├── base.html           # Template de base
+│   ├── catalog.html        # Catalogue ecrans
+│   └── index.html          # Page d'accueil
+│
+├── static/                 # Fichiers statiques
+│   ├── css/
+│   │   ├── input.css       # Source Tailwind
+│   │   ├── styles.css      # Styles compiles
+│   │   ├── tailwind.css    # Tailwind compile
+│   │   └── theme-template.css
+│   ├── js/
+│   │   ├── hls.min.js      # Librairie HLS.js
+│   │   ├── main.js         # JS principal (306 lignes)
+│   │   ├── mpegts.min.js   # Librairie MPEG-TS (externe)
+│   │   └── player-sw.js    # Service Worker player
+│   └── uploads/            # Contenus uploades
+│       └── fillers/        # Images de remplissage (7 dossiers)
+│
+├── docs/                   # Documentation
+│   ├── README.md           # Vue d'ensemble
+│   ├── Algo.md             # Algorithmes metier
+│   ├── API_MOBILE_DOCUMENTATION.md
+│   ├── API_MOBILE_V1_SECURE.md
+│   ├── architecture.md
+│   ├── COMMERCIAL_PRESENTATION.md
+│   ├── demo_accounts.md
+│   ├── deployment.md
+│   ├── features.md
+│   ├── PLAYER_MOBILE_SDK.md
+│   └── VPS_DEPLOYMENT.md
+│
+├── package.json            # Config Node.js (Tailwind)
+├── tailwind.config.js      # Config Tailwind CSS
+├── pyproject.toml          # Config Python
+├── requirements.txt        # Dependances Python
+└── README.md               # Documentation principale
 ```
 
 ## Interfaces
 
 La plateforme expose 4 interfaces distinctes :
 
-1. **Admin** (`/admin`) - Console opérateur : gestion des établissements, commissions, diffusions, facturation
-2. **Organisation** (`/org`) - Tableau de bord établissement : écrans, contenus, overlays, statistiques
-3. **Booking** (`/book/<code>`) - Interface annonceur : réservation via QR code, upload, paiement
-4. **Player** (`/player`) - Diffusion sur écran : playlist, overlays, mode OnlineTV
+1. **Admin** (`/admin`) - Console operateur : gestion des etablissements, commissions, diffusions, facturation
+2. **Organisation** (`/org`) - Tableau de bord etablissement : ecrans, contenus, overlays, statistiques
+3. **Booking** (`/book/<code>`) - Interface annonceur : reservation via QR code, upload, paiement
+4. **Player** (`/player`) - Diffusion sur ecran : playlist, overlays, mode OnlineTV
 
-## Fonctionnalités clés
+## Fonctionnalites cles
 
 - **Multi-pays** : 208 pays, 4600+ villes, 4 devises (EUR, MAD, XOF, TND)
-- **Système de broadcast** : Ciblage géographique, programmation avec récurrence
+- **Systeme de broadcast** : Ciblage geographique, programmation avec recurrence
 - **OnlineTV** : Streaming adaptatif HLS avec overlays
 - **Mode hors ligne** : Service Worker + IndexedDB pour le player
 - **API mobile** : REST avec JWT et rate limiting
 
 ## Comptes de test
 
-Après `python init_db_demo.py` :
+Apres `python init_db_demo.py` :
 
 - **Admin** : admin@shabaka-adscreen.com / admin123
-- **Établissements** : manager@restaurant-paris.fr / demo123 (et autres)
-- **Player** : code unique de l'écran + screen123
-
-## Documentation
-
-Toute la documentation est dans le dossier `docs/` :
-
-- `README.md` - Vue d'ensemble de la documentation
-- `features.md` - Guide complet des fonctionnalités
-- `architecture.md` - Structure technique détaillée
-- `Algo.md` - Algorithmes métier (prix, disponibilités, playlist)
-- `deployment.md` - Guide de déploiement
-- `VPS_DEPLOYMENT.md` - Déploiement sur serveur privé
-- `demo_accounts.md` - Comptes de test et scénarios
-- `COMMERCIAL_PRESENTATION.md` - Pitch commercial
-- `API_MOBILE_DOCUMENTATION.md` - API REST avec sessions
-- `API_MOBILE_V1_SECURE.md` - API REST avec JWT
-- `PLAYER_MOBILE_SDK.md` - Guide développement player natif
+- **Etablissements** : manager@restaurant-paris.fr / demo123 (et autres)
+- **Player** : code unique de l'ecran + screen123
 
 ## Variables d'environnement requises
 
 ```
 DATABASE_URL           # URL de connexion PostgreSQL
-SESSION_SECRET         # Clé secrète pour les cookies de session
+SESSION_SECRET         # Cle secrete pour les cookies de session
 SUPERADMIN_EMAIL       # Email du super-administrateur
 SUPERADMIN_PASSWORD    # Mot de passe du super-administrateur
 ```
@@ -83,31 +184,39 @@ SUPERADMIN_PASSWORD    # Mot de passe du super-administrateur
 ## Commandes utiles
 
 ```bash
-# Démarrer l'application
+# Demarrer l'application
 gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
 
-# Initialiser la base de données
+# Initialiser la base de donnees
 python init_db.py
 
-# Créer les données de démonstration
+# Creer les donnees de demonstration
 python init_db_demo.py
 
-# Réinitialiser les données de démo
+# Reinitialiser les donnees de demo
 python init_db_demo.py --force
 ```
 
-## Notes de développement
+## Notes de developpement
 
 - Le port 5000 est obligatoire pour l'interface web
-- Les contenus sont stockés dans `static/uploads/`
-- Les overlays BROADCAST ont priorité sur les overlays LOCAL
-- Le heartbeat player est envoyé toutes les 30 secondes
-- La facturation est hebdomadaire (lundi à dimanche)
+- Les contenus sont stockes dans `static/uploads/`
+- Les overlays BROADCAST ont priorite sur les overlays LOCAL
+- Le heartbeat player est envoye toutes les 30 secondes
+- La facturation est hebdomadaire (lundi a dimanche)
 
-## Dernières modifications
+## Notes qualite code
 
-- Réécriture complète de la documentation (12/2024)
-  - Style plus naturel et humain
-  - Contenu plus détaillé et complet
-  - Exemples de code mis à jour
-  - Structure améliorée pour faciliter la navigation
+**Fichiers volumineux a refactoriser si necessaire :**
+- `routes/admin_routes.py` (1790 lignes)
+- `routes/org_routes.py` (1610 lignes)
+- `routes/ad_content_routes.py` (901 lignes)
+
+**Librairies externes (non modifiables) :**
+- `static/js/mpegts.min.js` - Librairie tierce minifiee, warnings normaux
+
+## Dernieres modifications
+
+- 16/12/2024 : Correction vulnerabilite XSS dans main.js (innerHTML -> DOM API)
+- 16/12/2024 : Mise a jour documentation structure fichiers
+- 12/2024 : Reecriture complete de la documentation

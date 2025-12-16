@@ -1,0 +1,36 @@
+innerHTML détecté
+L'utilisation de innerHTML peut mener à des attaques XSS
+toast.innerHTML = `
+static/js/main.js:152
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14
+Algorithme Algorithme de chiffrement obsolète obsolète
+Algorithme de chiffrement obsolète ne devrait pas être utilisé pour la sécurité
+*/var n;n=function(){"use strict";function e(e){return"function"==typeof e}va...
+static/js/mpegts.min.js:14

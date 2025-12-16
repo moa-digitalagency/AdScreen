@@ -1,0 +1,68 @@
+Fichier beaucoup trop long
+Ce fichier contient 1791 lignes, ce qui le rend difficile à maintenir
+routes/admin_routes.py
+Fichier beaucoup trop long
+Ce fichier contient 1611 lignes, ce qui le rend difficile à maintenir
+routes/org_routes.py
+Fichier trop long
+Ce fichier contient 808 lignes, considérez le diviser
+init_db_demo.py
+Fichier trop long
+Ce fichier contient 435 lignes, considérez le diviser
+models/ad_content.py
+Fichier trop long
+Ce fichier contient 435 lignes, considérez le diviser
+models/broadcast.py
+Fichier trop long
+Ce fichier contient 902 lignes, considérez le diviser
+routes/ad_content_routes.py
+Fichier trop long
+Ce fichier contient 325 lignes, considérez le diviser
+routes/auth_routes.py
+Fichier trop long
+Ce fichier contient 467 lignes, considérez le diviser
+routes/billing_routes.py
+Fichier trop long
+Ce fichier contient 457 lignes, considérez le diviser
+routes/booking_routes.py
+Fichier trop long
+Ce fichier contient 571 lignes, considérez le diviser
+routes/mobile_api_routes.py
+Fichier trop long
+Ce fichier contient 638 lignes, considérez le diviser
+routes/player_routes.py
+Fichier trop long
+Ce fichier contient 308 lignes, considérez le diviser
+services/currency_service.py
+Fichier trop long
+Ce fichier contient 402 lignes, considérez le diviser
+services/filler_generator.py
+Fichier trop long
+Ce fichier contient 391 lignes, considérez le diviser
+services/playlist_service.py
+Fichier trop long
+Ce fichier contient 516 lignes, considérez le diviser
+services/receipt_generator.py
+Fichier trop long
+Ce fichier contient 306 lignes, considérez le diviser
+static/js/main.js
+Trop de paramètres
+La fonction "function" a 6 paramètres
+!function(e,t){"object"==typeof exports&&"object"==typeof...
+static/js/mpegts.min.js:7
+Trop de paramètres
+La fonction "function" a 6 paramètres
+!function(e,t){"object"==typeof exports&&"object"==typeof...
+static/js/mpegts.min.js:7
+Trop de paramètres
+La fonction "function" a 7 paramètres
+!function(e,t){"object"==typeof exports&&"object"==typeof...
+static/js/mpegts.min.js:7
+Trop de paramètres
+La fonction "function" a 7 paramètres
+!function(e,t){"object"==typeof exports&&"object"==typeof...
+static/js/mpegts.min.js:7
+Trop de paramètres
+La fonction "function" a 7 paramètres
+!function(e,t){"object"==typeof exports&&"object"==typeof...
+static/js/mpegts.min.js:7

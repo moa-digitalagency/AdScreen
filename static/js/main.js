@@ -149,12 +149,20 @@ function initCounterAnimations() {
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
+    
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'ml-2 hover:opacity-75';
+    closeButton.onclick = function() { this.parentElement.remove(); };
+    
+    const closeIcon = document.createElement('i');
+    closeIcon.className = 'fas fa-times';
+    closeButton.appendChild(closeIcon);
+    
+    toast.appendChild(messageSpan);
+    toast.appendChild(closeButton);
     document.body.appendChild(toast);
     
     setTimeout(() => {
