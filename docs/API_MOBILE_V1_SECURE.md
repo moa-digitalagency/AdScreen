@@ -1,95 +1,63 @@
-# Shabaka AdScreen - API Mobile Securisee v1
+# API Mobile sécurisée v1
 
-## Table des matieres
+Cette version de l'API utilise JWT (JSON Web Tokens) pour l'authentification et intègre une protection contre les abus (rate limiting).
 
-1. [Introduction](#introduction)
-2. [Securite](#securite)
-3. [Authentification JWT](#authentification-jwt)
-4. [Rate Limiting](#rate-limiting)
-5. [Endpoints API Mobile](#endpoints-api-mobile)
-6. [Codes d'Erreur](#codes-derreur)
-7. [Exemples d'Integration](#exemples-dintegration)
+## Pourquoi cette version ?
 
----
+L'API classique utilise des cookies de session, ce qui fonctionne bien pour les navigateurs mais pose des problèmes sur mobile :
+- Les cookies sont difficiles à gérer sur certaines plateformes
+- La session peut expirer de façon imprévisible
+- Pas de mécanisme standard de renouvellement
 
-## Introduction
+L'API v1 sécurisée résout ces problèmes avec des tokens JWT :
+- Stockage simple (chaîne de caractères)
+- Expiration prévisible (24h pour l'access token)
+- Renouvellement automatique avec le refresh token
 
-Cette API securisee utilise **JWT (JSON Web Tokens)** pour l'authentification et integre le **rate limiting** pour proteger contre les abus.
-
-### URL de Base
+## URL de base
 
 ```
 /mobile/api/v1/
 ```
 
-### Caracteristiques de Securite
+## Authentification
 
-- Authentification JWT avec tokens d'acces et de rafraichissement
-- Rate limiting par IP
-- Validation stricte des entrees
-- Protection CSRF pour les endpoints non-API
-- HTTPS obligatoire en production
+### Comment ça marche
 
----
+1. L'application appelle `/auth/login` ou `/auth/screen-login`
+2. Le serveur retourne deux tokens : `access_token` et `refresh_token`
+3. L'application stocke ces tokens de manière sécurisée
+4. Chaque requête inclut l'access token dans le header `Authorization`
+5. Quand l'access token expire, l'application utilise le refresh token pour en obtenir un nouveau
 
-## Securite
+### Durée de vie des tokens
 
-### Headers Requis
+| Token | Durée | Usage |
+|-------|-------|-------|
+| Access token | 24 heures | Accès aux endpoints protégés |
+| Refresh token | 30 jours | Obtention d'un nouveau access token |
 
-```http
+### Connecter un utilisateur
+
+```
+POST /mobile/api/v1/auth/login
 Content-Type: application/json
-Authorization: Bearer <access_token>
-```
 
-### Tokens JWT
-
-| Type | Duree de Validite | Usage |
-|------|-------------------|-------|
-| Access Token | 24 heures | Acces aux endpoints proteges |
-| Refresh Token | 30 jours | Obtention d'un nouveau access token |
-
-### Flux d'Authentification
-
-```
-1. POST /mobile/api/v1/auth/login ou /auth/screen-login
-   -> Retourne access_token + refresh_token
-
-2. Utiliser access_token dans le header Authorization
-   -> Authorization: Bearer <access_token>
-
-3. Quand access_token expire:
-   POST /mobile/api/v1/auth/refresh
-   -> Retourne nouveau access_token + refresh_token
-```
-
----
-
-## Authentification JWT
-
-### Connexion Utilisateur
-
-#### POST /mobile/api/v1/auth/login
-
-Authentifie un utilisateur et retourne les tokens JWT.
-
-**Rate Limit:** 5 requetes/minute
-
-**Request Body:**
-```json
 {
-  "email": "user@example.com",
+  "email": "manager@restaurant.fr",
   "password": "motdepasse"
 }
 ```
 
-**Response Success (200):**
+Retourne :
+
 ```json
 {
   "success": true,
   "user": {
     "id": 1,
     "username": "john_doe",
-    "email": "user@example.com",
+    "email": "manager@restaurant.fr",
     "role": "admin",
     "organization_id": 1
   },
@@ -100,39 +68,26 @@ Authentifie un utilisateur et retourne les tokens JWT.
 }
 ```
 
-**Response Error (401):**
-```json
-{
-  "error": "Invalid email or password",
-  "code": "INVALID_CREDENTIALS"
-}
+### Connecter un écran
+
 ```
+POST /mobile/api/v1/auth/screen-login
+Content-Type: application/json
 
----
-
-### Connexion Ecran
-
-#### POST /mobile/api/v1/auth/screen-login
-
-Authentifie un ecran et retourne les tokens JWT.
-
-**Rate Limit:** 5 requetes/minute
-
-**Request Body:**
-```json
 {
   "screen_code": "ABC123",
-  "password": "motdepasse"
+  "password": "screen123"
 }
 ```
 
-**Response Success (200):**
+Retourne :
+
 ```json
 {
   "success": true,
   "screen": {
     "id": 1,
-    "name": "Ecran Restaurant",
+    "name": "Écran Restaurant",
     "unique_code": "ABC123",
     "resolution": "1920x1080",
     "orientation": "landscape"
@@ -144,24 +99,21 @@ Authentifie un ecran et retourne les tokens JWT.
 }
 ```
 
----
+### Renouveler le token
 
-### Rafraichir le Token
+Quand l'access token expire (erreur 401), utilisez le refresh token :
 
-#### POST /mobile/api/v1/auth/refresh
+```
+POST /mobile/api/v1/auth/refresh
+Content-Type: application/json
 
-Obtient un nouveau access token avec le refresh token.
-
-**Rate Limit:** 10 requetes/minute
-
-**Request Body:**
-```json
 {
   "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
 
-**Response Success (200):**
+Retourne de nouveaux tokens :
+
 ```json
 {
   "success": true,
@@ -172,23 +124,21 @@ Obtient un nouveau access token avec le refresh token.
 }
 ```
 
----
+## Rate limiting
 
-## Rate Limiting
+Pour protéger le serveur contre les abus, chaque endpoint a une limite de requêtes par minute.
 
-### Limites par Categorie
-
-| Categorie | Endpoint | Limite |
+| Catégorie | Endpoint | Limite |
 |-----------|----------|--------|
-| Auth | /auth/login | 5/minute |
-| Auth | /auth/screen-login | 5/minute |
-| Auth | /auth/refresh | 10/minute |
-| Player | /screen/playlist | 60/minute |
-| Player | /screen/heartbeat | 120/minute |
-| Player | /screen/log-play | 120/minute |
-| Dashboard | /dashboard/* | 100/minute |
+| Authentification | /auth/login | 5/min |
+| Authentification | /auth/screen-login | 5/min |
+| Authentification | /auth/refresh | 10/min |
+| Player | /screen/playlist | 60/min |
+| Player | /screen/heartbeat | 120/min |
+| Player | /screen/log-play | 120/min |
+| Dashboard | /dashboard/* | 100/min |
 
-### Response Rate Limit Exceeded (429)
+Si vous dépassez la limite, vous recevez une erreur 429 :
 
 ```json
 {
@@ -198,22 +148,24 @@ Obtient un nouveau access token avec le refresh token.
 }
 ```
 
----
+Attendez le délai indiqué avant de réessayer.
 
-## Endpoints API Mobile
+## Endpoints écran
 
-### Endpoints Ecran (Screen JWT Required)
+Tous ces endpoints nécessitent un token écran dans le header :
 
-#### GET /mobile/api/v1/screen/mode
-
-Retourne le mode actuel de l'ecran.
-
-**Headers:**
 ```http
-Authorization: Bearer <screen_access_token>
+Authorization: Bearer <access_token>
 ```
 
-**Response:**
+### Récupérer le mode
+
+```
+GET /mobile/api/v1/screen/mode
+```
+
+Retourne :
+
 ```json
 {
   "mode": "playlist",
@@ -224,23 +176,19 @@ Authorization: Bearer <screen_access_token>
 }
 ```
 
----
+### Récupérer la playlist
 
-#### GET /mobile/api/v1/screen/playlist
-
-Retourne la playlist complete.
-
-**Headers:**
-```http
-Authorization: Bearer <screen_access_token>
+```
+GET /mobile/api/v1/screen/playlist
 ```
 
-**Response:**
+Retourne :
+
 ```json
 {
   "screen": {
     "id": 1,
-    "name": "Ecran Restaurant",
+    "name": "Écran Restaurant",
     "resolution": "1920x1080",
     "orientation": "landscape"
   },
@@ -263,45 +211,23 @@ Authorization: Bearer <screen_access_token>
 }
 ```
 
----
+### Envoyer un heartbeat
 
-#### POST /mobile/api/v1/screen/heartbeat
-
-Signale que l'ecran est actif.
-
-**Headers:**
-```http
-Authorization: Bearer <screen_access_token>
 ```
+POST /mobile/api/v1/screen/heartbeat
+Content-Type: application/json
 
-**Request Body:**
-```json
 {
   "status": "playing"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "timestamp": "2024-01-15T14:30:00.000000"
-}
+### Enregistrer une diffusion
+
 ```
+POST /mobile/api/v1/screen/log-play
+Content-Type: application/json
 
----
-
-#### POST /mobile/api/v1/screen/log-play
-
-Enregistre une diffusion de contenu.
-
-**Headers:**
-```http
-Authorization: Bearer <screen_access_token>
-```
-
-**Request Body:**
-```json
 {
   "content_id": 123,
   "content_type": "image",
@@ -311,7 +237,8 @@ Authorization: Bearer <screen_access_token>
 }
 ```
 
-**Response:**
+Retourne :
+
 ```json
 {
   "success": true,
@@ -319,26 +246,24 @@ Authorization: Bearer <screen_access_token>
 }
 ```
 
----
+## Endpoints dashboard
 
-### Endpoints Dashboard (User JWT Required)
+Ces endpoints nécessitent un token utilisateur.
 
-#### GET /mobile/api/v1/dashboard/screens
+### Liste des écrans
 
-Liste tous les ecrans de l'utilisateur.
-
-**Headers:**
-```http
-Authorization: Bearer <user_access_token>
+```
+GET /mobile/api/v1/dashboard/screens
 ```
 
-**Response:**
+Retourne :
+
 ```json
 {
   "screens": [
     {
       "id": 1,
-      "name": "Ecran Restaurant",
+      "name": "Écran Restaurant",
       "unique_code": "ABC123",
       "status": "playing",
       "last_heartbeat": "2024-01-15T14:30:00.000000",
@@ -352,23 +277,14 @@ Authorization: Bearer <user_access_token>
 }
 ```
 
----
+### Statistiques d'un écran
 
-#### GET /mobile/api/v1/dashboard/screen/{screen_id}/stats
-
-Statistiques d'un ecran.
-
-**Headers:**
-```http
-Authorization: Bearer <user_access_token>
+```
+GET /mobile/api/v1/dashboard/screen/1/stats?days=7
 ```
 
-**Query Parameters:**
-| Parametre | Type | Default | Description |
-|-----------|------|---------|-------------|
-| days | integer | 7 | Nombre de jours (1-90) |
+Retourne :
 
-**Response:**
 ```json
 {
   "screen_id": 1,
@@ -385,18 +301,14 @@ Authorization: Bearer <user_access_token>
 }
 ```
 
----
+### Résumé global
 
-#### GET /mobile/api/v1/dashboard/summary
-
-Resume global du dashboard.
-
-**Headers:**
-```http
-Authorization: Bearer <user_access_token>
+```
+GET /mobile/api/v1/dashboard/summary
 ```
 
-**Response:**
+Retourne :
+
 ```json
 {
   "total_screens": 5,
@@ -406,15 +318,16 @@ Authorization: Bearer <user_access_token>
 }
 ```
 
----
+## Endpoint santé
 
-### Endpoint Public
+Pour vérifier que l'API fonctionne, sans authentification :
 
-#### GET /mobile/api/v1/health
+```
+GET /mobile/api/v1/health
+```
 
-Verifie l'etat de l'API.
+Retourne :
 
-**Response:**
 ```json
 {
   "status": "healthy",
@@ -423,50 +336,40 @@ Verifie l'etat de l'API.
 }
 ```
 
----
+## Codes d'erreur
 
-## Codes d'Erreur
+### Erreurs d'authentification
 
-### Codes d'Authentification
+| Code | HTTP | Signification |
+|------|------|---------------|
+| TOKEN_MISSING | 401 | Header Authorization absent |
+| TOKEN_INVALID | 401 | Token expiré ou invalide |
+| INVALID_TOKEN_TYPE | 401 | Mauvais type de token |
+| INVALID_CREDENTIALS | 401 | Email ou mot de passe incorrect |
+| ACCOUNT_DISABLED | 403 | Compte désactivé |
+| SCREEN_DISABLED | 403 | Écran désactivé |
 
-| Code | HTTP | Description |
-|------|------|-------------|
-| TOKEN_MISSING | 401 | Token d'autorisation manquant |
-| TOKEN_INVALID | 401 | Token invalide ou expire |
-| INVALID_TOKEN_TYPE | 401 | Type de token incorrect |
-| INVALID_CREDENTIALS | 401 | Email/mot de passe incorrect |
-| ACCOUNT_DISABLED | 403 | Compte desactive |
-| SCREEN_DISABLED | 403 | Ecran desactive |
-| SCREEN_TOKEN_REQUIRED | 403 | Token ecran requis |
-| USER_TOKEN_REQUIRED | 403 | Token utilisateur requis |
-| SUPERADMIN_REQUIRED | 403 | Acces superadmin requis |
+### Erreurs de validation
 
-### Codes de Validation
-
-| Code | HTTP | Description |
-|------|------|-------------|
-| INVALID_CONTENT_TYPE | 400 | Content-Type doit etre JSON |
-| INVALID_JSON | 400 | Corps JSON invalide |
+| Code | HTTP | Signification |
+|------|------|---------------|
+| INVALID_CONTENT_TYPE | 400 | Content-Type doit être JSON |
+| INVALID_JSON | 400 | Corps de requête mal formé |
 | MISSING_FIELDS | 400 | Champs requis manquants |
-| VALIDATION_ERROR | 400 | Erreur de validation |
 
-### Codes Systeme
+### Erreurs système
 
-| Code | HTTP | Description |
-|------|------|-------------|
-| RATE_LIMIT_EXCEEDED | 429 | Trop de requetes |
-| SCREEN_NOT_FOUND | 404 | Ecran non trouve |
-| USER_NOT_FOUND | 404 | Utilisateur non trouve |
+| Code | HTTP | Signification |
+|------|------|---------------|
+| RATE_LIMIT_EXCEEDED | 429 | Trop de requêtes |
+| SCREEN_NOT_FOUND | 404 | Écran non trouvé |
+| USER_NOT_FOUND | 404 | Utilisateur non trouvé |
 
----
-
-## Exemples d'Integration
-
-### Flutter/Dart - Client Complet
+## Exemple Flutter complet
 
 ```dart
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SecureAdScreenApi {
@@ -482,15 +385,15 @@ class SecureAdScreenApi {
     refreshToken = prefs.getString('refresh_token');
   }
 
-  Future<void> _saveTokens(Map<String, dynamic> tokens) async {
+  Future<void> _saveTokens(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
-    accessToken = tokens['access_token'];
-    refreshToken = tokens['refresh_token'];
+    accessToken = data['access_token'];
+    refreshToken = data['refresh_token'];
     await prefs.setString('access_token', accessToken!);
     await prefs.setString('refresh_token', refreshToken!);
   }
 
-  Map<String, String> get _authHeaders => {
+  Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $accessToken',
   };
@@ -523,52 +426,42 @@ class SecureAdScreenApi {
     if (response.statusCode == 200) {
       await _saveTokens(json.decode(response.body));
     } else {
-      throw Exception('Session expired');
+      throw Exception('Session expirée');
     }
   }
 
-  Future<http.Response> _authenticatedRequest(
-    String method,
-    String endpoint,
-    {Map<String, dynamic>? body}
-  ) async {
-    var response = await _makeRequest(method, endpoint, body: body);
-    
+  Future<http.Response> _request(String method, String endpoint, {Map<String, dynamic>? body}) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    http.Response response;
+
+    if (method == 'GET') {
+      response = await http.get(uri, headers: _headers);
+    } else {
+      response = await http.post(uri, headers: _headers, body: json.encode(body));
+    }
+
     if (response.statusCode == 401) {
       await _refreshAccessToken();
-      response = await _makeRequest(method, endpoint, body: body);
+      if (method == 'GET') {
+        response = await http.get(uri, headers: _headers);
+      } else {
+        response = await http.post(uri, headers: _headers, body: json.encode(body));
+      }
     }
-    
+
     return response;
   }
 
-  Future<http.Response> _makeRequest(
-    String method,
-    String endpoint,
-    {Map<String, dynamic>? body}
-  ) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
-    
-    switch (method) {
-      case 'GET':
-        return http.get(uri, headers: _authHeaders);
-      case 'POST':
-        return http.post(uri, headers: _authHeaders, body: json.encode(body));
-      default:
-        throw Exception('Unsupported method');
-    }
-  }
-
   Future<Map<String, dynamic>> getPlaylist() async {
-    final response = await _authenticatedRequest('GET', '/mobile/api/v1/screen/playlist');
+    final response = await _request('GET', '/mobile/api/v1/screen/playlist');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     }
-    throw Exception('Failed to load playlist');
+    throw Exception('Impossible de récupérer la playlist');
   }
 
   Future<void> sendHeartbeat(String status) async {
-    await _authenticatedRequest('POST', '/mobile/api/v1/screen/heartbeat', body: {'status': status});
+    await _request('POST', '/mobile/api/v1/screen/heartbeat', body: {'status': status});
   }
 
   Future<Map<String, dynamic>> logPlay({
@@ -578,23 +471,19 @@ class SecureAdScreenApi {
     required int duration,
     int? bookingId,
   }) async {
-    final response = await _authenticatedRequest(
-      'POST',
-      '/mobile/api/v1/screen/log-play',
-      body: {
-        'content_id': contentId,
-        'content_type': contentType,
-        'category': category,
-        'duration': duration,
-        'booking_id': bookingId,
-      },
-    );
+    final response = await _request('POST', '/mobile/api/v1/screen/log-play', body: {
+      'content_id': contentId,
+      'content_type': contentType,
+      'category': category,
+      'duration': duration,
+      'booking_id': bookingId,
+    });
     return json.decode(response.body);
   }
 }
 ```
 
-### React Native - Client Complet
+## Exemple React Native complet
 
 ```javascript
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -611,11 +500,11 @@ class SecureAdScreenClient {
     this.refreshToken = await AsyncStorage.getItem('refresh_token');
   }
 
-  async saveTokens(tokens) {
-    this.accessToken = tokens.access_token;
-    this.refreshToken = tokens.refresh_token;
-    await AsyncStorage.setItem('access_token', tokens.access_token);
-    await AsyncStorage.setItem('refresh_token', tokens.refresh_token);
+  async saveTokens(data) {
+    this.accessToken = data.access_token;
+    this.refreshToken = data.refresh_token;
+    await AsyncStorage.setItem('access_token', data.access_token);
+    await AsyncStorage.setItem('refresh_token', data.refresh_token);
   }
 
   async loginScreen(screenCode, password) {
@@ -644,11 +533,11 @@ class SecureAdScreenClient {
       const data = await response.json();
       await this.saveTokens(data);
     } else {
-      throw new Error('Session expired');
+      throw new Error('Session expirée');
     }
   }
 
-  async authenticatedFetch(endpoint, options = {}) {
+  async request(endpoint, options = {}) {
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.accessToken}`,
@@ -667,19 +556,19 @@ class SecureAdScreenClient {
   }
 
   async getPlaylist() {
-    const response = await this.authenticatedFetch('/mobile/api/v1/screen/playlist');
+    const response = await this.request('/mobile/api/v1/screen/playlist');
     return response.json();
   }
 
   async sendHeartbeat(status = 'playing') {
-    await this.authenticatedFetch('/mobile/api/v1/screen/heartbeat', {
+    await this.request('/mobile/api/v1/screen/heartbeat', {
       method: 'POST',
       body: JSON.stringify({ status }),
     });
   }
 
   async logPlay({ contentId, contentType, category, duration, bookingId = null }) {
-    const response = await this.authenticatedFetch('/mobile/api/v1/screen/log-play', {
+    const response = await this.request('/mobile/api/v1/screen/log-play', {
       method: 'POST',
       body: JSON.stringify({
         content_id: contentId,
@@ -696,35 +585,27 @@ class SecureAdScreenClient {
 export default SecureAdScreenClient;
 ```
 
----
+## Bonnes pratiques
 
-## Bonnes Pratiques de Securite
+### Stockage des tokens
 
-### Stockage des Tokens
+- Sur iOS : utilisez le Keychain
+- Sur Android : utilisez le Keystore ou EncryptedSharedPreferences
+- Ne stockez jamais les tokens en clair dans les logs
 
-- **Mobile:** Utilisez un stockage securise (Keychain iOS, Keystore Android)
-- **Ne jamais** stocker les tokens dans le code source
-- **Ne jamais** exposer les tokens dans les logs
+### Gestion des erreurs 401
 
-### Gestion des Erreurs 401
+1. Interceptez les erreurs 401
+2. Tentez de renouveler le token avec le refresh token
+3. Si le renouvellement échoue, redirigez vers l'écran de connexion
+4. Effacez les tokens stockés
 
-1. Tentez de rafraichir le token automatiquement
-2. Si le refresh echoue, redirigez vers la connexion
-3. Effacez les tokens stockes
+### Rate limiting
 
-### Rate Limiting
-
-1. Implementez un backoff exponentiel en cas de 429
-2. Cachez les responses quand possible
-3. Regroupez les requetes si possible
+- Implémentez un backoff exponentiel en cas de 429
+- Cachez les réponses quand c'est possible
+- Regroupez les requêtes similaires
 
 ### HTTPS
 
-- Utilisez **toujours** HTTPS en production
-- Validez les certificats SSL
-- Implementez le certificate pinning pour plus de securite
-
----
-
-*Documentation API Mobile Securisee v1.0*
-*Generee le 2024-01-15*
+En production, utilisez toujours HTTPS. Les tokens JWT passent en clair dans les headers et doivent être protégés.

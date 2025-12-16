@@ -1,44 +1,40 @@
-# Guide de Déploiement - Shabaka AdScreen
+# Guide de déploiement
+
+Ce guide explique comment installer et configurer Shabaka AdScreen en production.
 
 ## Prérequis
 
-- Python 3.11+
-- PostgreSQL 14+
-- ffmpeg (pour la validation des vidéos)
-- Espace disque suffisant pour les uploads
+- **Python 3.11** ou supérieur
+- **PostgreSQL 14** ou supérieur
+- **ffmpeg** pour la validation des vidéos (optionnel mais recommandé)
+- Espace disque suffisant pour stocker les fichiers uploadés
 
 ## Variables d'environnement
 
-| Variable | Description | Obligatoire |
-|----------|-------------|-------------|
-| `DATABASE_URL` | URL de connexion PostgreSQL | Oui |
-| `SESSION_SECRET` | Clé secrète pour les sessions Flask | Oui |
-| `SUPERADMIN_EMAIL` | Email du super-administrateur | Oui |
-| `SUPERADMIN_PASSWORD` | Mot de passe du super-administrateur | Oui |
-| `UPLOAD_FOLDER` | Chemin du dossier uploads (défaut: static/uploads) | Non |
-| `REPLIT_DEV_DOMAIN` | Domaine Replit (auto-configuré) | Non |
+Quatre variables sont indispensables :
 
-### Configuration du Super-Administrateur
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql://user:password@localhost:5432/shabaka` |
+| `SESSION_SECRET` | Clé secrète pour signer les cookies | Chaîne aléatoire longue |
+| `SUPERADMIN_EMAIL` | Email du super-administrateur | `admin@votre-domaine.com` |
+| `SUPERADMIN_PASSWORD` | Mot de passe du super-administrateur | Un mot de passe solide |
 
-Les identifiants du super-administrateur sont stockés de manière sécurisée via des variables d'environnement. **Ne jamais écrire ces identifiants en clair dans le code source.**
+Le super-administrateur est créé ou mis à jour automatiquement au démarrage de l'application. Ne mettez jamais ces identifiants en clair dans le code.
 
-Au démarrage de l'application, le super-administrateur est automatiquement créé ou mis à jour avec les identifiants fournis.
+### Variables optionnelles
 
-### Exemple de configuration
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `UPLOAD_FOLDER` | Dossier des fichiers uploadés | `static/uploads` |
+| `CRON_SECRET` | Clé pour sécuriser les endpoints cron | Aucun |
 
-```bash
-export DATABASE_URL="postgresql://user:password@localhost:5432/shabaka_adscreen"
-export SESSION_SECRET="votre-cle-secrete-tres-longue-et-aleatoire"
-export SUPERADMIN_EMAIL="admin@votre-domaine.com"
-export SUPERADMIN_PASSWORD="mot-de-passe-securise"
-```
+## Installation pas à pas
 
-## Installation
-
-### 1. Cloner le projet
+### 1. Récupérer le code
 
 ```bash
-git clone <repository-url>
+git clone <url-du-dépôt>
 cd shabaka-adscreen
 ```
 
@@ -48,39 +44,38 @@ cd shabaka-adscreen
 # Avec pip
 pip install -r requirements.txt
 
-# Ou avec uv (recommandé)
+# Ou avec uv (plus rapide)
 uv sync
 ```
 
 ### Dépendances principales
 
-- flask
-- flask-sqlalchemy
-- flask-login
-- gunicorn
-- psycopg2-binary
-- pillow (génération reçus thermiques)
-- reportlab (génération PDF)
-- qrcode
-- pyjwt
-- email-validator
-- werkzeug
+Le fichier `requirements.txt` inclut notamment :
+- flask et flask-sqlalchemy pour le backend
+- flask-login pour l'authentification
+- gunicorn pour le serveur de production
+- pillow pour les images et les reçus
+- reportlab pour les PDF
+- qrcode pour les QR codes
+- psycopg2-binary pour PostgreSQL
 
 ### 3. Configurer la base de données
 
+Créez la base de données PostgreSQL :
+
 ```bash
-# Créer la base de données PostgreSQL
 createdb shabaka_adscreen
-
-# Initialiser les tables (inclut Broadcast)
-python init_db.py
-
-# Optionnel : créer les données de démonstration
-# (7 organisations dont 1 gratuit, 10 écrans, 5 diffusions)
-python init_db_demo.py
 ```
 
-### 4. Créer les dossiers nécessaires
+Initialisez les tables :
+
+```bash
+python init_db.py
+```
+
+Ce script crée toutes les tables et ajoute automatiquement les colonnes manquantes si vous mettez à jour une installation existante.
+
+### 4. Créer les dossiers de stockage
 
 ```bash
 mkdir -p static/uploads/contents
@@ -90,23 +85,25 @@ mkdir -p static/uploads/broadcasts
 chmod -R 755 static/uploads
 ```
 
-## Démarrage
+### 5. Démarrer l'application
 
-### Mode développement
+**En développement** (avec rechargement automatique) :
 
 ```bash
 gunicorn --bind 0.0.0.0:5000 --reload main:app
 ```
 
-L'application sera accessible sur http://localhost:5000 avec le rechargement automatique activé.
-
-### Mode production
+**En production** :
 
 ```bash
 gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 main:app
 ```
 
-### Configuration Gunicorn recommandée
+L'application est accessible sur `http://localhost:5000`
+
+## Configuration Gunicorn recommandée
+
+Pour un déploiement robuste :
 
 ```bash
 gunicorn \
@@ -125,31 +122,30 @@ gunicorn \
 
 ## Déploiement sur Replit
 
-Sur Replit, l'application est déjà configurée pour se lancer automatiquement :
+Sur Replit, presque tout est automatique :
 
 1. La base de données PostgreSQL est provisionnée automatiquement
-2. Les variables d'environnement sont configurées dans les Secrets
-3. Gunicorn démarre via le workflow "Start application"
+2. Les variables d'environnement se configurent dans les Secrets
+3. Le workflow "Start application" lance Gunicorn
 
 Pour publier :
 1. Cliquez sur "Deploy" dans l'interface Replit
 2. L'application sera accessible via une URL `.replit.app`
 
-### Variables Replit auto-configurées
+Les variables Replit auto-configurées :
+- `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
+- `REPLIT_DEV_DOMAIN`
 
-- `DATABASE_URL` - URL PostgreSQL
-- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
-- `REPLIT_DEV_DOMAIN` - Domaine de développement
+## Configuration Nginx (reverse proxy)
 
-## Nginx (Reverse Proxy)
-
-Configuration recommandée pour Nginx :
+Si vous placez Nginx devant l'application :
 
 ```nginx
 server {
     listen 80;
     server_name votre-domaine.com;
 
+    # Taille max des uploads (ajustez selon vos besoins)
     client_max_body_size 200M;
 
     location / {
@@ -160,11 +156,52 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Cache des fichiers statiques
     location /static {
         alias /chemin/vers/shabaka-adscreen/static;
         expires 30d;
     }
+
+    # Pour le streaming IPTV
+    location /player/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+    }
+
+    # Pour le Service Worker (mode hors ligne)
+    location /static/js/player-sw.js {
+        add_header Cache-Control "no-cache";
+        add_header Service-Worker-Allowed "/player/";
+        proxy_pass http://127.0.0.1:5000;
+    }
 }
+```
+
+## Données de démonstration
+
+Pour tester l'installation avec des données réalistes :
+
+```bash
+python init_db_demo.py
+```
+
+Cela crée :
+- 7 établissements dans 4 pays (France, Maroc, Sénégal, Tunisie)
+- 10 écrans avec différentes résolutions
+- Des overlays et des diffusions de test
+- 1 établissement en mode gratuit
+
+Pour recommencer à zéro :
+
+```bash
+python init_db_demo.py --force
+```
+
+Pour tout supprimer :
+
+```bash
+python init_db_demo.py --clear
 ```
 
 ## Maintenance
@@ -172,63 +209,49 @@ server {
 ### Sauvegarde de la base de données
 
 ```bash
-pg_dump -U user shabaka_adscreen > backup_$(date +%Y%m%d).sql
+pg_dump -U utilisateur shabaka_adscreen > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restauration
 
 ```bash
-psql -U user shabaka_adscreen < backup_20231201.sql
+psql -U utilisateur shabaka_adscreen < backup_20231201.sql
 ```
 
-### Mise à jour
+### Mise à jour de l'application
 
 ```bash
 git pull origin main
 pip install -r requirements.txt
-# Relancer l'application
+python init_db.py  # Met à jour le schéma si nécessaire
+# Redémarrer l'application
 ```
 
-### Réinitialisation des données de démo
+## Vérifications
 
-```bash
-# Supprimer et recréer les données de démonstration
-python init_db_demo.py --force
-```
+### Points de contrôle
 
-## Monitoring
+| URL | Attendu |
+|-----|---------|
+| `/` | Page d'accueil publique |
+| `/player` | Formulaire de connexion player |
+| `/admin` | Redirection vers login |
+| `/catalog` | Liste des écrans publics |
 
-### Logs applicatifs
+### Métriques à surveiller
 
-Les logs sont affichés sur la sortie standard. En production, redirigez-les vers un fichier :
-
-```bash
-gunicorn main:app 2>&1 | tee -a /var/log/shabaka-adscreen/app.log
-```
-
-### Points de vérification
-
-- **Santé** : `GET /` doit retourner 200
-- **Player** : `GET /player` doit afficher le formulaire de connexion
-- **Admin** : `GET /admin` doit rediriger vers login
-- **Base de données** : `python init_db.py --check`
-
-### Métriques clés
-
-- Uptime des écrans (heartbeat logs)
+- Uptime des écrans (via les logs de heartbeat)
 - Nombre de réservations par jour
-- Revenus par devise (EUR, MAD, XOF, TND)
 - Temps de validation des contenus
-- Diffusions actives et écrans ciblés
+- Revenus par devise
 
-## Troubleshooting
+## Dépannage
 
 ### Erreur de connexion à la base de données
 
-Vérifiez que :
-1. PostgreSQL est démarré
-2. La variable `DATABASE_URL` est correcte
-3. L'utilisateur a les droits sur la base
+1. Vérifiez que PostgreSQL est démarré
+2. Vérifiez que `DATABASE_URL` est correcte
+3. Vérifiez que l'utilisateur a les droits sur la base
 
 ```bash
 python init_db.py --check
@@ -236,71 +259,39 @@ python init_db.py --check
 
 ### Erreur d'upload de fichiers
 
-Vérifiez que :
-1. Les dossiers `static/uploads/*` existent (contents, fillers, internal, broadcasts)
-2. Les permissions sont correctes (755)
-3. `MAX_CONTENT_LENGTH` est suffisant dans `app.py`
+1. Vérifiez que les dossiers `static/uploads/*` existent
+2. Vérifiez les permissions (755)
+3. Vérifiez la limite de taille dans Nginx si utilisé
 
-### Player écran ne se connecte pas
+### Player qui ne se connecte pas
 
-Vérifiez que :
-1. Le code unique de l'écran est correct
-2. Le mot de passe player est correct
-3. L'écran est actif dans le dashboard
+1. Vérifiez le code unique de l'écran
+2. Vérifiez le mot de passe player
+3. Vérifiez que l'écran est actif dans le dashboard
 
-### Reçus ne s'affichent pas
+### Reçus qui ne s'affichent pas
 
-Vérifiez que :
-1. Pillow est installé (`pip install pillow`)
-2. Les fonts sont disponibles (DejaVuSans)
-3. La réservation existe en base
+1. Vérifiez que Pillow est installé
+2. Vérifiez que les polices système sont disponibles
+3. Vérifiez que la réservation existe
 
-### Problèmes de devises
+### Diffusions non affichées
 
-Vérifiez que :
-1. L'organisation a une devise configurée (currency)
-2. Le pays est défini (country)
-3. Les symboles sont corrects dans `models/organization.py`
+1. Vérifiez que la diffusion est active
+2. Vérifiez les dates de début/fin
+3. Vérifiez le ciblage (pays, ville, établissement, écran)
+4. Attendez le prochain rafraîchissement de la playlist (30 secondes)
 
-### Diffusions non affichées sur le player
+### Mode hors ligne qui ne fonctionne pas
 
-Vérifiez que :
-1. La diffusion est active (`is_active = True`)
-2. Les dates de début/fin sont valides (ou nulles)
-3. Le ciblage correspond à l'écran (pays, ville, établissement, écran)
-4. Le player a rafraîchi sa playlist (toutes les 30 secondes)
-5. Pour les diffusions programmées :
-   - Le mode est 'scheduled' et la date/heure est passée
-   - La récurrence est correctement configurée (type, intervalle, jours)
-   - La priorité est suffisante pour apparaître dans la playlist
-
-### Mode hors ligne ne fonctionne pas
-
-Vérifiez que :
-1. Le navigateur supporte les Service Workers (Chrome 45+, Firefox 44+, Safari 11.1+)
-2. Le site est servi en HTTPS (requis pour les Service Workers en production)
-3. Le fichier `/static/js/player-sw.js` est accessible
-4. IndexedDB est disponible et non bloqué par les paramètres de confidentialité
-5. L'espace de stockage du navigateur n'est pas saturé
-
-**Pour tester le mode hors ligne :**
-1. Ouvrez le player et laissez-le charger la playlist
-2. Déconnectez le réseau (mode avion ou déconnexion WiFi)
-3. Le badge "Mode hors ligne" devrait apparaître
-4. La lecture devrait continuer avec les contenus cachés
-5. À la reconnexion, la playlist se rafraîchit automatiquement
-
-**Configuration Nginx pour Service Workers :**
-```nginx
-# Headers pour le Service Worker
-location /static/js/player-sw.js {
-    add_header Cache-Control "no-cache";
-    add_header Service-Worker-Allowed "/player/";
-}
-```
+1. Vérifiez le support Service Worker du navigateur
+2. En production, le site doit être en HTTPS
+3. Vérifiez que `/static/js/player-sw.js` est accessible
+4. Vérifiez l'espace de stockage disponible
 
 ## Support
 
-- **Documentation** : `/docs`
-- **Email support** : support@shabaka-adscreen.com
-- **WhatsApp admin** : Configurable dans les paramètres
+Pour toute question ou problème :
+- Consultez les logs de l'application
+- Vérifiez la section Dépannage ci-dessus
+- Les données de démonstration permettent de tester chaque fonctionnalité isolément

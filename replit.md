@@ -1,70 +1,113 @@
-# Shabaka AdScreen - SaaS Location Écrans Publicitaires
+# Shabaka AdScreen
 
-## Overview
-Shabaka AdScreen is a SaaS platform designed for establishments to monetize their advertising screens through a self-service rental system. Advertisers can book time slots, upload content, make payments, and receive performance reports. The platform provides a comprehensive solution for screen monetization, offering flexibility and control for both establishments and advertisers, aiming for significant market potential in the advertising display sector.
+## À propos du projet
 
-## User Preferences
-Not specified.
+Shabaka AdScreen est une plateforme SaaS qui permet aux établissements (restaurants, bars, centres commerciaux, hôtels) de monétiser leurs écrans d'affichage. Les annonceurs locaux réservent des créneaux publicitaires directement via un QR code, sans intermédiaire.
 
-## System Architecture
+## Stack technique
 
-### UI/UX Decisions
-The platform utilizes Jinja2 templates, styled with Tailwind CSS v3.4 for a utility-first approach. Font Awesome and Google Fonts (Inter, JetBrains Mono) are used for iconography and typography. Design elements include modern gradient backgrounds (emerald/green tones), glassmorphism effects, decorative circles, and wave effects. The design is responsive, adapting to various screen sizes, with color-coded sections, real-time content previews, and a unified emerald brand color scheme.
+- **Backend** : Flask 3.x avec Python 3.11
+- **Base de données** : PostgreSQL avec SQLAlchemy 2.x
+- **Frontend** : Templates Jinja2, Tailwind CSS 3.4 (CDN)
+- **Authentification** : Flask-Login (sessions), PyJWT (API mobile)
+- **Serveur** : Gunicorn avec gevent
+- **Streaming** : HLS.js, mpegts.js (fallback)
 
-### Technical Implementations
-The backend is built with Flask (Python 3.11) and uses PostgreSQL with SQLAlchemy ORM. Flask-Login manages authentication. Key features include:
+## Architecture
 
--   **User Roles**: Superadmin, Establishment, Client/Advertiser, and Screen (player).
--   **Establishment Management**: CRUD, configurable slots, commissions, QR code generation.
--   **Registration System**: Form-based requests, admin validation, WhatsApp notifications.
--   **Screen Management**: Naming, live preview, multi-positional overlays (scrolling banners, static images) with customizable styles, durations, and frequencies.
--   **Content Management**: Strict validation (Pillow for images, FFmpeg for videos), content queues, internal content, filler content, and content action controls.
--   **Booking System**: Unique reservation numbers, detailed receipts, and precise time selection.
--   **Screen Player**: Fullscreen web player with auto-loop, real-time overlay display, heartbeat logging, playback statistics, and audio support.
--   **Offline Caching**: Service Worker-based offline support with IndexedDB storage, automatic media pre-caching, and log queue synchronization on reconnection.
--   **OnlineTV Mode**: Integrates HLS.js for M3U/HLS stream playback with active overlays.
--   **Adaptive Bitrate Streaming (ABR)**: Automatically adjusts video quality based on bandwidth, with buffer optimization and real-time quality indicators.
--   **MPEG-TS to HLS Conversion**: Server-side FFmpeg conversion for non-native MPEG-TS streams, with a robust fallback strategy.
--   **Administration**: Site settings (SEO, commissions), maintenance mode, global statistics, and automated weekly billing.
--   **Internal Content**: Managed with the same algorithms as client bookings for availability and distribution.
--   **Playlist Priorities**: Structured hierarchy from Paid content (100) to Fillers/Demos (20), with Broadcast content (200) having highest priority.
--   **Overlay Priority System**: Configurable priority levels (1-100), tracking of LOCAL vs BROADCAST sources, and auto-pause/resume functionality for local overlays during broadcast.
--   **Broadcast/Diffusion System**: Superadmin feature for targeting screens geographically or by organization with various content types (overlay, playlist) and advanced scheduling (recurrence patterns, priority, override options).
--   **Multi-tenant Support**: Differentiates between paid and free establishments with feature restrictions and decorator-based access control.
--   **Ad Content Control**: Organization-level toggle (`allow_ad_content`) for accepting/rejecting superadmin advertising content, defaulting to opt-in.
--   **Superadmin Authentication**: Securely managed via environment variables.
--   **Admin User Management**: Role-based permissions and full CRUD interface for admin users.
--   **Custom QR Codes**: Generated with `qrcode[pil]` library.
--   **Advanced Site Settings**: Comprehensive SEO, social media, and custom code injection options.
--   **Multi-Currency Support**: Dynamic currency display and calculations.
--   **Public Catalog**: Displays available screens with details and booking options.
--   **Customizable Registration Number Label**: Allows country-specific labels.
--   **City Selection**: Dynamic dropdown with autocomplete populated from `utils/world_data.py`.
--   **World Data Coverage**: Comprehensive data for 208 countries and over 4,600 cities.
--   **Mobile API (v1)**: Secure REST API at `/mobile/api/v1/*` with JWT authentication (access/refresh tokens), rate limiting via Flask-Limiter, and input validation for native mobile app development. Documentation in `docs/API_MOBILE_V1_SECURE.md`.
+```
+shabaka-adscreen/
+├── app.py              # Configuration Flask et initialisation
+├── main.py             # Point d'entrée de l'application
+├── init_db.py          # Script de création/mise à jour du schéma
+├── init_db_demo.py     # Données de démonstration
+├── models/             # 15+ modèles SQLAlchemy (User, Screen, Booking...)
+├── routes/             # 8 blueprints Flask (admin, org, player, booking...)
+├── services/           # Logique métier (playlist, pricing, QR, receipts...)
+├── utils/              # Utilitaires (world_data avec 208 pays, currencies...)
+├── templates/          # Templates Jinja2 organisés par module
+├── static/             # CSS, JS, uploads
+└── docs/               # Documentation complète
+```
 
-### CSS Theme System
-The project uses a comprehensive, reusable CSS theme template based on an emerald/teal color palette, defined via CSS custom properties. It includes pre-designed components for buttons, cards, badges, forms, navigation, notifications, and more, all customizable by updating root CSS variables.
+## Interfaces
 
-### VPS Deployment
-The platform supports standalone VPS deployment with:
--   **init_db.py**: Standalone database initialization script with INIT_DB_MODE to prevent side effects during schema sync.
--   **systemd Integration**: Service file with ExecStartPre for automatic database schema updates on restart.
--   **Environment File**: Secure configuration via `.env` file instead of inline environment variables.
--   **Nginx Configuration**: Optimized reverse proxy settings for streaming with proper timeout and buffer settings.
+La plateforme expose 4 interfaces distinctes :
 
-## External Dependencies
--   **PostgreSQL**: Primary database.
--   **Pillow**: Image processing and validation.
--   **ffmpeg**: Video processing and validation.
--   **qrcode[pil]**: QR code generation.
--   **Tailwind CSS (CDN)**: Front-end styling.
--   **Font Awesome**: Icons.
--   **Google Fonts**: Typography (Inter, JetBrains Mono).
--   **European Central Bank (ECB) API**: Real-time currency exchange rates.
--   **WhatsApp**: Admin notifications.
--   **Gunicorn**: Production WSGI HTTP Server.
--   **HLS.js**: HTTP Live Streaming playback.
--   **mpegts.js**: MPEG-TS stream playback fallback.
--   **PyJWT**: JWT token generation and validation.
--   **Flask-Limiter**: Rate limiting for API protection.
+1. **Admin** (`/admin`) - Console opérateur : gestion des établissements, commissions, diffusions, facturation
+2. **Organisation** (`/org`) - Tableau de bord établissement : écrans, contenus, overlays, statistiques
+3. **Booking** (`/book/<code>`) - Interface annonceur : réservation via QR code, upload, paiement
+4. **Player** (`/player`) - Diffusion sur écran : playlist, overlays, mode OnlineTV
+
+## Fonctionnalités clés
+
+- **Multi-pays** : 208 pays, 4600+ villes, 4 devises (EUR, MAD, XOF, TND)
+- **Système de broadcast** : Ciblage géographique, programmation avec récurrence
+- **OnlineTV** : Streaming adaptatif HLS avec overlays
+- **Mode hors ligne** : Service Worker + IndexedDB pour le player
+- **API mobile** : REST avec JWT et rate limiting
+
+## Comptes de test
+
+Après `python init_db_demo.py` :
+
+- **Admin** : admin@shabaka-adscreen.com / admin123
+- **Établissements** : manager@restaurant-paris.fr / demo123 (et autres)
+- **Player** : code unique de l'écran + screen123
+
+## Documentation
+
+Toute la documentation est dans le dossier `docs/` :
+
+- `README.md` - Vue d'ensemble de la documentation
+- `features.md` - Guide complet des fonctionnalités
+- `architecture.md` - Structure technique détaillée
+- `Algo.md` - Algorithmes métier (prix, disponibilités, playlist)
+- `deployment.md` - Guide de déploiement
+- `VPS_DEPLOYMENT.md` - Déploiement sur serveur privé
+- `demo_accounts.md` - Comptes de test et scénarios
+- `COMMERCIAL_PRESENTATION.md` - Pitch commercial
+- `API_MOBILE_DOCUMENTATION.md` - API REST avec sessions
+- `API_MOBILE_V1_SECURE.md` - API REST avec JWT
+- `PLAYER_MOBILE_SDK.md` - Guide développement player natif
+
+## Variables d'environnement requises
+
+```
+DATABASE_URL           # URL de connexion PostgreSQL
+SESSION_SECRET         # Clé secrète pour les cookies de session
+SUPERADMIN_EMAIL       # Email du super-administrateur
+SUPERADMIN_PASSWORD    # Mot de passe du super-administrateur
+```
+
+## Commandes utiles
+
+```bash
+# Démarrer l'application
+gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app
+
+# Initialiser la base de données
+python init_db.py
+
+# Créer les données de démonstration
+python init_db_demo.py
+
+# Réinitialiser les données de démo
+python init_db_demo.py --force
+```
+
+## Notes de développement
+
+- Le port 5000 est obligatoire pour l'interface web
+- Les contenus sont stockés dans `static/uploads/`
+- Les overlays BROADCAST ont priorité sur les overlays LOCAL
+- Le heartbeat player est envoyé toutes les 30 secondes
+- La facturation est hebdomadaire (lundi à dimanche)
+
+## Dernières modifications
+
+- Réécriture complète de la documentation (12/2024)
+  - Style plus naturel et humain
+  - Contenu plus détaillé et complet
+  - Exemples de code mis à jour
+  - Structure améliorée pour faciliter la navigation

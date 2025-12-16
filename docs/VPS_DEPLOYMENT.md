@@ -1,96 +1,94 @@
-# VPS Deployment Guide for Shabaka AdScreen
+# Déploiement sur VPS
 
-## Quick Start
+Ce guide détaille l'installation de Shabaka AdScreen sur un serveur privé virtuel (VPS) avec Linux.
+
+## Démarrage rapide
 
 ```bash
-# 1. Clone and setup
-git clone <your-repo-url>
+# 1. Récupérer et préparer
+git clone <url-du-dépôt>
 cd shabaka-adscreen
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Configure environment
-export DATABASE_URL="postgresql://user:password@host:5432/database_name"
+# 2. Configurer l'environnement
+export DATABASE_URL="postgresql://user:password@localhost:5432/shabaka"
 export SESSION_SECRET="$(openssl rand -hex 32)"
-export SUPERADMIN_EMAIL="admin@yourdomain.com"
-export SUPERADMIN_PASSWORD="your-secure-password"
+export SUPERADMIN_EMAIL="admin@votre-domaine.com"
+export SUPERADMIN_PASSWORD="mot-de-passe-securise"
 
-# 3. Initialize database (run this FIRST, before starting the app)
+# 3. Initialiser la base (avant le premier démarrage)
 python init_db.py
 
-# 4. Start application
+# 4. Démarrer
 gunicorn --bind 0.0.0.0:5000 --workers 4 --worker-class gevent main:app
 ```
 
-## Required Environment Variables
+## Installation détaillée
 
-Set these environment variables on your VPS before running the application:
+### Préparer l'environnement
+
+Créez un utilisateur dédié :
 
 ```bash
-# Required
-export DATABASE_URL="postgresql://user:password@host:5432/database_name"
-export SESSION_SECRET="your-secure-random-secret-key-here"
-
-# Recommended (for superadmin access)
-export SUPERADMIN_EMAIL="admin@yourdomain.com"
-export SUPERADMIN_PASSWORD="your-secure-password"
-
-# Optional (for cron jobs)
-export CRON_SECRET="your-cron-secret"
+sudo adduser --system --group shabaka
+sudo mkdir -p /opt/shabaka
+sudo chown shabaka:shabaka /opt/shabaka
 ```
 
-## Installation Steps
+Clonez le projet :
 
-### 1. Clone the repository
 ```bash
-git clone <your-repo-url>
-cd shabaka-adscreen
+sudo -u shabaka git clone <url-du-dépôt> /opt/shabaka/adscreen
+cd /opt/shabaka/adscreen
 ```
 
-### 2. Create virtual environment
+Créez l'environnement virtuel Python :
+
 ```bash
-python3.11 -m venv venv
-source venv/bin/activate
+sudo -u shabaka python3.11 -m venv venv
+sudo -u shabaka venv/bin/pip install -r requirements.txt
 ```
 
-### 3. Install dependencies
+### Configurer les variables d'environnement
+
+Créez un fichier `/opt/shabaka/adscreen/.env` :
+
 ```bash
-pip install -r requirements.txt
+DATABASE_URL=postgresql://shabaka:motdepasse@localhost:5432/shabaka_adscreen
+SESSION_SECRET=votre-cle-secrete-longue-et-aleatoire
+SUPERADMIN_EMAIL=admin@votre-domaine.com
+SUPERADMIN_PASSWORD=mot-de-passe-securise
 ```
 
-### 4. Initialize the database (IMPORTANT: Run before starting the app)
+Protégez ce fichier :
+
 ```bash
-python init_db.py
+chmod 600 /opt/shabaka/adscreen/.env
+chown shabaka:shabaka /opt/shabaka/adscreen/.env
 ```
 
-This command will:
-- Create all database tables
-- Automatically add any missing columns to existing tables
-- Display a summary of all tables
-- Skip superadmin creation and blueprint registration (handled by app on startup)
+### Initialiser la base de données
 
-**Options:**
 ```bash
-python init_db.py --check  # Verify database connection only
-python init_db.py --drop   # Reset database (WARNING: all data will be lost)
+sudo -u shabaka /opt/shabaka/adscreen/venv/bin/python init_db.py
 ```
 
-### 5. Run the application
+Ce script :
+- Crée toutes les tables
+- Ajoute automatiquement les colonnes manquantes si vous mettez à jour
+- Affiche un résumé des tables créées
 
-**Development:**
+Options utiles :
 ```bash
-python main.py
+python init_db.py --check  # Vérifie la connexion uniquement
+python init_db.py --drop   # Réinitialise la base (perte de données)
 ```
 
-**Production (recommended):**
-```bash
-gunicorn --bind 0.0.0.0:5000 --workers 4 --worker-class gevent main:app
-```
+## Configuration systemd
 
-## Using with systemd (Production)
-
-Create a service file `/etc/systemd/system/shabaka.service`:
+Créez `/etc/systemd/system/shabaka.service` :
 
 ```ini
 [Unit]
@@ -99,12 +97,12 @@ After=network.target postgresql.service
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
-WorkingDirectory=/path/to/shabaka-adscreen
-EnvironmentFile=/path/to/shabaka-adscreen/.env
-ExecStartPre=/path/to/venv/bin/python init_db.py
-ExecStart=/path/to/venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 4 --worker-class gevent main:app
+User=shabaka
+Group=shabaka
+WorkingDirectory=/opt/shabaka/adscreen
+EnvironmentFile=/opt/shabaka/adscreen/.env
+ExecStartPre=/opt/shabaka/adscreen/venv/bin/python init_db.py
+ExecStart=/opt/shabaka/adscreen/venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 4 --worker-class gevent main:app
 Restart=always
 RestartSec=5
 
@@ -112,33 +110,41 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Create the environment file `/path/to/shabaka-adscreen/.env`:
-```bash
-DATABASE_URL=postgresql://user:password@host:5432/database
-SESSION_SECRET=your-secret-key
-SUPERADMIN_EMAIL=admin@yourdomain.com
-SUPERADMIN_PASSWORD=your-password
-```
+Activez et démarrez le service :
 
-Then enable and start:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable shabaka
 sudo systemctl start shabaka
 ```
 
-**Notes:**
-- The `ExecStartPre` directive runs `init_db.py` before each start to ensure database schema is up-to-date.
-- `init_db.py` sets `INIT_DB_MODE=true` internally to skip superadmin creation and blueprint registration (these run when the main app starts).
-- Do NOT add `INIT_DB_MODE=true` to your environment file, as this would prevent the app from starting properly.
+La ligne `ExecStartPre` exécute `init_db.py` avant chaque démarrage pour maintenir le schéma à jour.
 
-## Using with Nginx (Reverse Proxy)
+## Configuration Nginx
+
+Créez `/etc/nginx/sites-available/shabaka` :
 
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com;
+    server_name votre-domaine.com;
 
+    # Redirection HTTPS (recommandé)
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name votre-domaine.com;
+
+    # Certificats SSL (Let's Encrypt recommandé)
+    ssl_certificate /etc/letsencrypt/live/votre-domaine.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/votre-domaine.com/privkey.pem;
+
+    # Taille max des uploads
+    client_max_body_size 200M;
+
+    # Application principale
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host $host;
@@ -147,92 +153,163 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Fichiers statiques (cache long)
     location /static {
-        alias /path/to/shabaka-adscreen/static;
+        alias /opt/shabaka/adscreen/static;
         expires 30d;
     }
 
-    client_max_body_size 100M;
+    # Configuration streaming
+    location /player/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+        proxy_send_timeout 300s;
+    }
+
+    # Service Worker pour le mode hors ligne
+    location /static/js/player-sw.js {
+        add_header Cache-Control "no-cache";
+        add_header Service-Worker-Allowed "/player/";
+        proxy_pass http://127.0.0.1:5000;
+    }
 }
 ```
 
-## Database Schema Updates
-
-When you update the code and there are new database columns, simply run:
+Activez la configuration :
 
 ```bash
-python init_db.py
+sudo ln -s /etc/nginx/sites-available/shabaka /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-This will automatically detect and add any missing columns without losing existing data.
+## Certificat SSL avec Let's Encrypt
 
-## Troubleshooting
-
-### "column does not exist" errors
-Run `python init_db.py` to sync the database schema.
-
-### Static files not loading
-Ensure the `static/uploads` folder exists and has write permissions:
 ```bash
-mkdir -p static/uploads
-chmod 755 static/uploads
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d votre-domaine.com
 ```
 
-### Permission errors
-Make sure the application user has write access to:
-- `static/uploads/`
-- Any log directories
+Certbot configure automatiquement Nginx et renouvelle le certificat.
 
-### Database connection issues
-Verify your DATABASE_URL is correct and the PostgreSQL server is accessible.
+## Mise à jour du schéma
 
-## IPTV/OnlineTV Streaming Notes
+Quand vous mettez à jour le code et qu'il y a de nouvelles colonnes en base :
 
-The platform includes adaptive bitrate streaming for IPTV/OnlineTV functionality:
-
-### Features
-- **Adaptive Quality**: Video quality automatically adjusts based on connection speed
-- **Buffer Management**: Smart buffering prevents stalls during bandwidth fluctuations
-- **Quality Recovery**: After network issues, quality gradually improves over time
-
-### VPS Considerations
-1. **CDN Assets**: HLS.js is loaded from CDN (`jsdelivr.net`). Ensure your VPS has internet access.
-2. **Proxy Streaming**: MPEG-TS streams are converted to HLS via server proxy. This uses server bandwidth.
-3. **Logging**: Debug logging is enabled by default. For production, consider reducing log verbosity.
-
-### Nginx Configuration for Streaming
-Add these settings for better streaming performance:
-
-```nginx
-# Inside the server block
-proxy_buffering off;
-proxy_read_timeout 300s;
-proxy_connect_timeout 75s;
-proxy_send_timeout 300s;
-
-# For websocket support (if needed)
-location /player/ {
-    proxy_pass http://127.0.0.1:5000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-}
-
-# Service Worker for offline caching (player)
-location /static/js/player-sw.js {
-    add_header Cache-Control "no-cache";
-    add_header Service-Worker-Allowed "/player/";
-    proxy_pass http://127.0.0.1:5000;
-}
+```bash
+sudo -u shabaka /opt/shabaka/adscreen/venv/bin/python init_db.py
+sudo systemctl restart shabaka
 ```
 
-### Reducing Log Verbosity
-In `app.py`, change the logging level for production:
+Le script `init_db.py` détecte et ajoute les colonnes manquantes sans perdre les données existantes.
+
+## Notes sur le streaming IPTV
+
+La plateforme inclut le streaming adaptatif pour la fonctionnalité OnlineTV.
+
+### Fonctionnement
+
+- La qualité vidéo s'adapte automatiquement à la bande passante
+- Les buffers sont optimisés pour éviter les coupures
+- La qualité remonte progressivement après une dégradation réseau
+
+### Points d'attention
+
+**CDN externe** : HLS.js est chargé depuis jsDelivr. Votre VPS doit avoir accès à Internet.
+
+**Bande passante** : Les flux MPEG-TS passent par un proxy serveur. Préférez les flux HLS natifs quand c'est possible.
+
+**Logs** : Par défaut, le logging est en mode DEBUG. En production, changez dans `app.py` :
+
 ```python
-# Change this line:
+# Avant
 logging.basicConfig(level=logging.DEBUG)
-# To:
+
+# Après
 logging.basicConfig(level=logging.WARNING)
 ```
+
+## Dépannage
+
+### Erreurs "column does not exist"
+
+Le schéma n'est pas à jour. Exécutez :
+
+```bash
+sudo -u shabaka /opt/shabaka/adscreen/venv/bin/python init_db.py
+```
+
+### Fichiers statiques non chargés
+
+Vérifiez les permissions :
+
+```bash
+sudo chown -R shabaka:shabaka /opt/shabaka/adscreen/static
+sudo chmod -R 755 /opt/shabaka/adscreen/static
+```
+
+### Erreurs de permission
+
+Vérifiez que l'utilisateur `shabaka` a accès aux dossiers :
+
+```bash
+sudo -u shabaka ls -la /opt/shabaka/adscreen/static/uploads/
+```
+
+### Connexion base de données refusée
+
+Vérifiez PostgreSQL :
+
+```bash
+sudo systemctl status postgresql
+sudo -u postgres psql -c "SELECT 1;"
+```
+
+Vérifiez les droits :
+
+```bash
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE shabaka_adscreen TO shabaka;"
+```
+
+## Sécurité
+
+### Pare-feu
+
+Ouvrez uniquement les ports nécessaires :
+
+```bash
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw enable
+```
+
+### Mises à jour système
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+### Sauvegardes
+
+Automatisez les sauvegardes de la base :
+
+```bash
+# Dans /etc/cron.daily/shabaka-backup
+#!/bin/bash
+pg_dump -U shabaka shabaka_adscreen | gzip > /backup/shabaka_$(date +%Y%m%d).sql.gz
+find /backup -name "shabaka_*.sql.gz" -mtime +30 -delete
+```
+
+## Ressources recommandées
+
+| VPS type | vCPU | RAM | Usage |
+|----------|------|-----|-------|
+| Petit réseau (<10 écrans) | 1 | 1 Go | Tests, démo |
+| Réseau moyen (10-50 écrans) | 2 | 2 Go | Production standard |
+| Grand réseau (50+ écrans) | 4 | 4 Go | Production intensive |
+
+Le stockage dépend du volume de contenus uploadés. Comptez 1 Go de base + volume des fichiers média.

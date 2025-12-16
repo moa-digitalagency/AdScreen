@@ -1,275 +1,159 @@
-# Shabaka AdScreen - SaaS Location Écrans Publicitaires
+# Shabaka AdScreen
 
-Plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. Support multi-pays et multi-devises (EUR, MAD, XOF, TND).
+**Transformez vos écrans en source de revenus**
 
-**Un produit de Shabaka InnovLab**
+Shabaka AdScreen est une plateforme développée par Shabaka InnovLab qui permet aux commerces - restaurants, bars, centres commerciaux, hôtels - de rentabiliser leurs écrans d'affichage. Les annonceurs locaux réservent des créneaux publicitaires directement via un QR code, sans intermédiaire.
+
+## Ce que fait la plateforme
+
+La plateforme connecte trois acteurs :
+
+**Les établissements** installent l'application sur leurs écrans et définissent leurs tarifs. Chaque écran génère un QR code unique que les clients peuvent scanner pour réserver de l'espace publicitaire.
+
+**Les annonceurs** scannent le QR code, voient les disponibilités et les prix, uploadent leur contenu (image ou vidéo), paient et reçoivent un reçu. C'est aussi simple que ça.
+
+**L'opérateur** (vous) gère l'ensemble depuis une console d'administration : établissements, commissions, diffusions centralisées, facturation automatique.
+
+## Couverture internationale
+
+La plateforme fonctionne dans 208 pays avec plus de 4 600 villes référencées. Quatre devises sont nativement supportées :
+
+- Euro (EUR) pour la France et l'Europe
+- Dirham marocain (MAD) pour le Maroc
+- Franc CFA (XOF) pour l'Afrique de l'Ouest
+- Dinar tunisien (TND) pour la Tunisie
+
+Les prix, reçus et statistiques s'affichent automatiquement dans la devise de chaque établissement.
+
+## Comment ça marche
+
+### Pour un établissement
+
+1. Créez votre compte et configurez vos écrans (résolution, orientation, tarifs)
+2. Imprimez ou affichez le QR code généré automatiquement
+3. Validez ou refusez les contenus soumis par les annonceurs
+4. Consultez vos statistiques et revenus
+
+### Pour un annonceur
+
+1. Scannez le QR code de l'écran qui vous intéresse
+2. Choisissez la durée, la période horaire et le nombre de diffusions
+3. Uploadez votre image ou vidéo
+4. Payez et téléchargez votre reçu
+
+### Pour l'opérateur
+
+1. Gérez les établissements et leurs commissions
+2. Diffusez des messages sur tous les écrans d'un pays, d'une ville ou d'un établissement
+3. Suivez les revenus globaux et la santé du réseau
+4. Générez automatiquement les factures hebdomadaires
 
 ## Fonctionnalités principales
 
-### Multi-pays & Multi-devises (208 pays, 4600+ villes)
-- France (EUR)
-- Maroc (MAD)
-- Sénégal (XOF)
-- Tunisie (TND)
-- Et 200+ autres pays avec sélection dynamique de ville
-
-### Gestion multi-établissements
-- Superadmin gère les organisations et commissions
-- Demandes d'inscription via WhatsApp
-- Commission personnalisable par établissement
-- Statistiques par devise
-
 ### Gestion des écrans
-- Résolution, orientation, types de contenu acceptés
-- Nommage personnalisé des écrans
-- Aperçu en direct de ce qui s'affiche
-- **Overlays superposés** (bandeaux défilants)
-- Fillers générés automatiquement avec QR code
+- Résolutions personnalisables (HD, Full HD, 4K, portrait ou paysage)
+- Types de contenu : images, vidéos ou les deux
+- Limite de taille de fichier configurable par écran
+- Monitoring en temps réel (statut online/offline, uptime)
 
-### Système d'overlays
-- Type bandeau: Texte défilant (ticker)
-- Positions: Header (haut), Body (centre), Footer (bas)
-- Personnalisation: Couleurs, taille de police, vitesse de défilement
-- Fréquence configurable par durée ou nombre de passages
+### Tarification flexible
+- Prix par minute défini par l'établissement
+- Créneaux de 10, 15, 30 ou 60 secondes
+- Multiplicateurs horaires (matin, midi, soir, nuit)
+- Calcul automatique du prix final
 
-### Système de diffusion (Broadcast) - NOUVEAU
-- Diffusion centralisée par le superadmin
+### Validation des contenus
+- Vérification automatique de la résolution et du format
+- Contrôle de la durée des vidéos
+- File d'attente pour validation manuelle
+- Motifs de refus personnalisables
+
+### Diffusions centralisées
+- L'opérateur peut pousser du contenu vers n'importe quel écran
 - Ciblage par pays, ville, établissement ou écran spécifique
-- Types: Overlay (bandeau) ou contenu playlist
-- **Modes de programmation**: Immédiat ou Programmé avec date/heure exacte
-- **Système de récurrence**: Unique, quotidien, hebdomadaire (jours sélectionnables), mensuel
-- **Priorité configurable** (20-200) avec option override pour décaler la playlist
-- Programmation avec dates de début/fin
+- Programmation avec dates et récurrence (quotidien, hebdomadaire, mensuel)
+- Priorité configurable pour contrôler l'ordre d'affichage
 
-### Créneaux horaires
-- Slots configurables avec prix calculés automatiquement
-- Multiplicateurs de prix (matin, midi, soir, nuit)
-- Prix affichés en devise locale
+### Mode OnlineTV
+- Diffusez des chaînes TV en direct quand il n'y a pas de publicité
+- Les bandeaux publicitaires restent visibles par-dessus le flux TV
+- Streaming adaptatif qui ajuste la qualité selon la connexion
 
-### QR Codes & Réservations
-- Génération automatique par écran
-- Réservation en libre-service
-- **Reçu thermique** (image style ticket de caisse)
-- **Reçu PDF** imprimable
+### Overlays et bandeaux
+- Texte défilant personnalisable (couleurs, vitesse, position)
+- Affichage par-dessus le contenu principal
+- Géré par l'établissement ou diffusé centralement
 
-### Validation contenu
-- File d'attente avec aperçu
-- Validation stricte (ratio, résolution, durée)
-- Validation/refus manuel avec motif
-
-### Player web
-- Interface fullscreen pour diffusion sur écrans
-- Affichage des overlays en temps réel
-- Réception des diffusions (broadcasts) centralisées
-- Heartbeat et statuts temps réel
-- **Mode OnlineTV** : Streaming M3U/HLS avec HLS.js, overlays actifs pendant la diffusion TV
-
-### Statistiques
-- Tracking des passages et revenus
-- Analytics par écran, période, devise
-- Monitoring uptime des écrans
-
-## Prérequis
-
-- Python 3.11+
-- PostgreSQL 14+
-- ffmpeg (pour validation vidéos)
+### Facturation automatique
+- Cycle hebdomadaire (lundi à dimanche)
+- Commission configurable par établissement
+- Upload des preuves de paiement
+- Export PDF des factures
 
 ## Installation
 
-### 1. Cloner le projet
+### Prérequis
+
+- Python 3.11 ou supérieur
+- PostgreSQL 14 ou supérieur
+- ffmpeg (pour la validation des vidéos)
+
+### Configuration
+
+Définissez ces variables d'environnement :
 
 ```bash
-git clone <repository-url>
-cd shabaka-adscreen
+DATABASE_URL=postgresql://utilisateur:motdepasse@localhost:5432/shabaka_adscreen
+SESSION_SECRET=une-clé-secrète-longue-et-aléatoire
+SUPERADMIN_EMAIL=admin@votre-domaine.com
+SUPERADMIN_PASSWORD=un-mot-de-passe-solide
 ```
 
-### 2. Installer les dépendances
+### Lancement
 
 ```bash
-# Avec pip
+# Installer les dépendances
 pip install -r requirements.txt
 
-# Ou avec uv (recommandé)
-uv sync
-```
-
-### 3. Configuration
-
-Configurer les variables d'environnement :
-
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/shabaka_adscreen
-SESSION_SECRET=your-secret-key-here
-SUPERADMIN_EMAIL=admin@votre-domaine.com
-SUPERADMIN_PASSWORD=mot-de-passe-securise
-```
-
-**Important** : Les identifiants du super-administrateur doivent être stockés dans des variables d'environnement, jamais en clair dans le code.
-
-### 4. Initialiser la base de données
-
-```bash
-# Créer les tables
+# Initialiser la base de données
 python init_db.py
 
-# Créer les données de démonstration (7 organisations, 10 écrans, 4 pays, 5 diffusions)
-python init_db_demo.py
-```
-
-## Démarrage
-
-### Développement
-
-```bash
+# Démarrer l'application
 gunicorn --bind 0.0.0.0:5000 --reload main:app
 ```
 
-### Production
+L'application est accessible sur `http://localhost:5000`
+
+## Tester la plateforme
+
+Lancez les données de démonstration pour explorer toutes les fonctionnalités :
 
 ```bash
-gunicorn --bind 0.0.0.0:5000 --workers 4 --reuse-port main:app
+python init_db_demo.py
 ```
 
-L'application sera accessible sur `http://localhost:5000`
+Cela crée 7 établissements dans 4 pays, 10 écrans et plusieurs diffusions de test.
 
-## Comptes de démonstration
+**Compte administrateur** : `admin@shabaka-adscreen.com` / `admin123`
 
-Après avoir exécuté `init_db_demo.py` (pour test uniquement) :
+**Comptes établissements** (mot de passe : `demo123`) :
+- `manager@restaurant-paris.fr` - Restaurant parisien
+- `manager@cafe-marrakech.ma` - Café au Maroc
+- `manager@dakar-beach.sn` - Restaurant au Sénégal
+- `manager@tunis-cafe.tn` - Café en Tunisie
 
-### Superadmin (démo)
-
-| Email | Mot de passe |
-|-------|--------------|
-| admin@shabaka-adscreen.com | admin123 |
-
-> **Note** : En production, utilisez les variables d'environnement `SUPERADMIN_EMAIL` et `SUPERADMIN_PASSWORD`.
-
-### Établissements (mot de passe: demo123)
-
-| Pays | Établissement | Email | Devise | Type |
-|------|--------------|-------|--------|------|
-| FR | Le Bistrot Parisien | manager@restaurant-paris.fr | EUR | Payant |
-| FR | Bar Le Central | manager@bar-lyon.fr | EUR | Payant |
-| FR | Centre Commercial Atlantis | manager@atlantis-mall.fr | EUR | Payant |
-| MA | Café Marrakech | manager@cafe-marrakech.ma | MAD | Payant |
-| SN | Restaurant Dakar Beach | manager@dakar-beach.sn | XOF | Payant |
-| TN | Tunisian Café | manager@tunis-cafe.tn | TND | Payant |
-| **FR** | **Petit Café Gratuit** | manager@cafe-gratuit.fr | EUR | **Gratuit** |
-
-Mot de passe player pour tous les écrans : `screen123`
-
-### Diffusions de démonstration
-
-| Nom | Ciblage | Mode | Récurrence |
-|-----|---------|------|------------|
-| Promotion Été France | Pays: FR | Immédiat | - |
-| Message Marrakech | Ville: Marrakech | Immédiat | - |
-| Promo Centre Atlantis | Établissement | Programmé | Quotidien 12h |
-| Info Écran Beach | Écran spécifique | Programmé | Hebdo ven/sam |
-| Promo Mensuelle Tunisie | Pays: TN | Programmé | Mensuel |
-
-## Structure du projet
-
-```
-├── app.py              # Configuration Flask
-├── main.py             # Point d'entrée
-├── requirements.txt    # Dépendances Python
-├── init_db.py          # Initialisation base de données
-├── init_db_demo.py     # Données de démonstration
-├── models/             # Modèles SQLAlchemy
-│   └── broadcast.py    # Modèle diffusions
-├── routes/             # Routes Flask (blueprints)
-├── services/           # Logique métier
-│   ├── playlist_service.py
-│   ├── pricing_service.py
-│   ├── qr_service.py
-│   ├── receipt_generator.py  # Reçus thermiques
-│   └── filler_generator.py   # Génération fillers
-├── utils/              # Utilitaires
-│   └── countries.py    # Noms des pays
-├── templates/          # Templates Jinja2
-│   └── admin/
-│       └── broadcasts/ # Gestion diffusions
-├── static/             # Fichiers statiques
-│   └── uploads/        # Contenus uploadés
-└── docs/               # Documentation
-```
+**Mot de passe player** pour tous les écrans : `screen123`
 
 ## Documentation
 
-- [Déploiement](docs/deployment.md)
-- [Comptes de démonstration](docs/demo_accounts.md)
-- [Fonctionnalités](docs/features.md)
-- [Architecture](docs/architecture.md)
+La documentation complète se trouve dans le dossier `docs/` :
 
-## API Player
-
-Le player écran communique avec l'API pour récupérer la playlist :
-
-```
-GET /api/playlist/<screen_code>     # Récupère la playlist + overlays + broadcasts
-POST /api/heartbeat/<screen_code>   # Signal de vie
-POST /api/log-play/<screen_code>    # Log de diffusion
-```
-
-## Espace Admin
-
-Dans l'espace admin (`/admin`), vous pouvez configurer :
-- Établissements (payants ou gratuits) et écrans
-- **Gestion des administrateurs** avec permissions granulaires
-- Numéro WhatsApp pour recevoir les demandes d'inscription
-- Commissions par défaut/min/max
-- Paramètres SEO
-- Mode maintenance
-- **Diffusions (Broadcasts)** : Pousser du contenu vers les écrans ciblés
-
-### Types d'établissements
-
-- **Payant** : Accès complet (réservations, facturation, créneaux, périodes, contenus internes, overlays, OnlineTV)
-- **Gratuit** : Fonctionnalités limitées (contenus internes et overlays uniquement)
-
-### Mode OnlineTV
-
-Les établissements peuvent activer le mode OnlineTV pour diffuser des chaînes TV en direct :
-- Streaming M3U/M3U8/HLS via la bibliothèque HLS.js
-- Les overlays restent actifs pendant la diffusion TV
-- Bascule instantanée entre mode playlist et mode TV
-- Gestion des chaînes par établissement
-
-### Gestion des administrateurs
-
-Le superadmin peut créer d'autres administrateurs avec des permissions spécifiques pour chaque menu (tableau de bord, établissements, écrans, diffusions, statistiques, facturation, demandes, paramètres, utilisateurs).
-
-## Système de diffusion (Broadcast)
-
-Les superadmins peuvent diffuser du contenu vers plusieurs écrans :
-
-1. Accédez à `/admin` et connectez-vous
-2. Cliquez sur "Diffusion" dans le menu
-3. Créez une nouvelle diffusion
-4. Choisissez le ciblage (pays, ville, établissement, écran)
-5. Configurez le type (overlay ou contenu)
-6. **Choisissez le mode de programmation**:
-   - **Immédiat**: Diffusion active dès activation
-   - **Programmé**: Définir date/heure + récurrence optionnelle
-7. **Définissez la priorité** (20-200) et l'option override
-8. Activez la diffusion
-
-Les diffusions apparaissent automatiquement sur les players ciblés selon leur programmation.
-
-## Système de reçus
-
-Après une réservation, le client peut télécharger :
-- **Image thermique** : Style ticket de caisse avec en-tête établissement + écran
-- **PDF** : Document imprimable
-
-Les reçus incluent :
-- Numéro de réservation
-- Détails du créneau et des diffusions
-- Prix dans la devise de l'établissement
-- QR code de vérification
-- Statut de validation
+- [Guide des fonctionnalités](docs/features.md) - Détail de toutes les fonctionnalités
+- [Architecture technique](docs/architecture.md) - Structure du code et des données
+- [Guide de déploiement](docs/deployment.md) - Installation en production
+- [Comptes de démonstration](docs/demo_accounts.md) - Données de test
+- [Présentation commerciale](docs/COMMERCIAL_PRESENTATION.md) - Pour convaincre vos clients
+- [API Mobile](docs/API_MOBILE_V1_SECURE.md) - Pour développer une app mobile
 
 ## Licence
 

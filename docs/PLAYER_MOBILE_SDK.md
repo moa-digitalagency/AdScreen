@@ -1,193 +1,134 @@
-# Shabaka AdScreen - Guide de Developpement Player Mobile
+# Guide de développement Player Mobile
 
-Ce document fournit toutes les informations necessaires pour recoder le player d'ecran publicitaire en application mobile native (Android/iOS) tout en restant synchronise avec le backend.
+Ce guide vous accompagne pour créer un player natif Android ou iOS qui diffuse du contenu Shabaka AdScreen. Le player se synchronise avec le backend pour récupérer la playlist, signaler son activité et enregistrer les statistiques de diffusion.
 
-## Table des matieres
+## Architecture du player
 
-1. [Architecture du Player](#architecture-du-player)
-2. [Flux d'Authentification](#flux-dauthentification)
-3. [Synchronisation des Donnees](#synchronisation-des-donnees)
-4. [API Endpoints Player](#api-endpoints-player)
-5. [Structure des Donnees](#structure-des-donnees)
-6. [Logique de Lecture](#logique-de-lecture)
-7. [Gestion des Overlays](#gestion-des-overlays)
-8. [Mode IPTV](#mode-iptv)
-9. [Gestion Hors-ligne](#gestion-hors-ligne)
-10. [Implementation Flutter](#implementation-flutter)
-11. [Implementation React Native](#implementation-react-native)
-12. [Implementation iOS Swift](#implementation-ios-swift)
-
----
-
-## Architecture du Player
+Un player mobile complet se compose de plusieurs modules :
 
 ```
-+------------------+     +------------------+     +------------------+
-|   Player Mobile  |<--->|   API Backend    |<--->|   Base Donnees   |
-+------------------+     +------------------+     +------------------+
-        |                        |
-        v                        v
-+------------------+     +------------------+
-|  Cache Local     |     |  Fichiers Media  |
-|  (IndexedDB/     |     |  (Images/Videos) |
-|   SQLite)        |     +------------------+
-+------------------+
+┌─────────────────────────────────────────────────────────────┐
+│                        PLAYER MOBILE                         │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   Module Auth   │  Module Playlist │    Module Player        │
+│   (JWT tokens)  │  (sync données)  │    (lecture média)      │
+├─────────────────┼─────────────────┼─────────────────────────┤
+│  Module Overlay │  Module Heartbeat │   Module Stats         │
+│  (bandeaux)     │  (signal activité)│   (log des lectures)   │
+├─────────────────┴─────────────────┴─────────────────────────┤
+│                     Module Cache (hors ligne)               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      API BACKEND                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Composants Principaux
+## Séquence de démarrage
 
-1. **Module Auth** - Gestion JWT tokens
-2. **Module Playlist** - Recuperation et gestion du contenu
-3. **Module Player** - Lecture media (images/videos)
-4. **Module Overlay** - Affichage des bannieres/overlays
-5. **Module Heartbeat** - Signalement d'activite
-6. **Module Stats** - Enregistrement des lectures
-7. **Module Cache** - Stockage hors-ligne
-
----
-
-## Flux d'Authentification
-
-### Sequence de Connexion
+Voici ce qui doit se passer quand le player démarre :
 
 ```
-1. Utilisateur entre: code_ecran + mot_de_passe
-2. POST /mobile/api/v1/auth/screen-login
-3. Recevoir: access_token + refresh_token + infos_ecran
-4. Stocker tokens de maniere securisee
-5. Demarrer le player
+1. Afficher l'écran de connexion
+2. Utilisateur entre : code écran + mot de passe
+3. Appeler POST /mobile/api/v1/auth/screen-login
+4. Stocker les tokens JWT de manière sécurisée
+5. Récupérer la playlist avec GET /mobile/api/v1/screen/playlist
+6. Pré-télécharger les médias en cache local
+7. Démarrer les timers (heartbeat toutes les 30s, refresh playlist toutes les 60s)
+8. Lancer la boucle de lecture
 ```
 
-### Gestion des Tokens
+## Synchronisation avec le backend
 
-```
-Token Expiration:
-- Access Token: 24 heures
-- Refresh Token: 30 jours
+### Intervalles recommandés
 
-Flux de rafraichissement:
-1. Requete retourne 401
-2. POST /mobile/api/v1/auth/refresh avec refresh_token
-3. Recevoir nouveaux tokens
-4. Rejouer la requete originale
-```
-
----
-
-## Synchronisation des Donnees
-
-### Intervalles Recommandes
-
-| Operation | Intervalle | Description |
-|-----------|------------|-------------|
+| Opération | Intervalle | Objectif |
+|-----------|------------|----------|
 | Heartbeat | 30 secondes | Signaler que le player est actif |
-| Playlist | 60 secondes | Verifier les mises a jour de contenu |
-| Log Play | Temps reel | Apres chaque lecture complete |
+| Playlist | 60 secondes | Détecter les nouveaux contenus |
+| Log play | Temps réel | Après chaque contenu joué |
 
-### Diagramme de Synchronisation
+### Gestion des tokens
+
+Les tokens JWT ont une durée de vie limitée :
+- Access token : 24 heures
+- Refresh token : 30 jours
+
+Quand une requête retourne 401 (token expiré) :
+1. Appelez `/mobile/api/v1/auth/refresh` avec le refresh token
+2. Stockez les nouveaux tokens
+3. Rejouez la requête originale
+
+Si le refresh échoue aussi, redirigez vers l'écran de connexion.
+
+## API utilisée par le player
+
+### Connexion
 
 ```
-[Demarrage]
-     |
-     v
-[Connexion JWT] --> [Erreur] --> [Afficher ecran login]
-     |
-     v
-[Recuperer Playlist]
-     |
-     v
-[Pre-telecharger Media] --> [Cache local]
-     |
-     v
-[Boucle de Lecture]
-     |
-     +---> [Heartbeat toutes les 30s]
-     |
-     +---> [Rafraichir Playlist toutes les 60s]
-     |
-     +---> [Log Play apres chaque contenu]
-     |
-     v
-[Verifier mode: playlist ou iptv]
-     |
-     +---> [Mode Playlist] --> [Lire contenu suivant]
-     |
-     +---> [Mode IPTV] --> [Lire flux HLS]
-```
+POST /mobile/api/v1/auth/screen-login
+Content-Type: application/json
 
----
-
-## API Endpoints Player
-
-### POST /mobile/api/v1/auth/screen-login
-
-Authentifie l'ecran et retourne les tokens JWT.
-
-**Request:**
-```json
 {
   "screen_code": "ABC123",
-  "password": "motdepasse"
+  "password": "screen123"
 }
 ```
 
-**Response (200):**
+Réponse :
+
 ```json
 {
   "success": true,
   "screen": {
     "id": 1,
-    "name": "Ecran Restaurant",
+    "name": "Écran Restaurant",
     "unique_code": "ABC123",
     "resolution": "1920x1080",
     "orientation": "landscape"
   },
   "access_token": "eyJhbG...",
   "refresh_token": "eyJhbG...",
-  "token_type": "Bearer",
   "expires_in": 86400
 }
 ```
 
----
+### Récupération du mode
 
-### GET /mobile/api/v1/screen/mode
-
-Retourne le mode actuel de l'ecran.
-
-**Headers:**
 ```
+GET /mobile/api/v1/screen/mode
 Authorization: Bearer <access_token>
 ```
 
-**Response:**
+Réponse :
+
 ```json
 {
   "mode": "playlist",
   "iptv_enabled": true,
   "iptv_channel_url": null,
-  "iptv_channel_name": null,
-  "timestamp": "2024-01-15T14:30:00.000000"
+  "iptv_channel_name": null
 }
 ```
 
----
+Le mode est soit `playlist` (lecture de contenus) soit `iptv` (flux TV en direct).
 
-### GET /mobile/api/v1/screen/playlist
+### Récupération de la playlist
 
-Retourne la playlist complete avec overlays.
-
-**Headers:**
 ```
+GET /mobile/api/v1/screen/playlist
 Authorization: Bearer <access_token>
 ```
 
-**Response:**
+Réponse :
+
 ```json
 {
   "screen": {
     "id": 1,
-    "name": "Ecran Restaurant",
+    "name": "Écran Restaurant",
     "resolution": "1920x1080",
     "orientation": "landscape"
   },
@@ -220,7 +161,7 @@ Authorization: Bearer <access_token>
     {
       "id": 1,
       "type": "scrolling_text",
-      "content": "Bienvenue dans notre etablissement!",
+      "content": "Bienvenue dans notre établissement!",
       "position": "bottom",
       "style": {
         "background_color": "#000000",
@@ -232,52 +173,31 @@ Authorization: Bearer <access_token>
       "source": "LOCAL"
     }
   ],
-  "iptv": null,
-  "timestamp": "2024-01-15T14:30:00.000000"
+  "iptv": null
 }
 ```
 
----
+### Heartbeat
 
-### POST /mobile/api/v1/screen/heartbeat
-
-Signale que l'ecran est actif.
-
-**Headers:**
 ```
+POST /mobile/api/v1/screen/heartbeat
 Authorization: Bearer <access_token>
-```
+Content-Type: application/json
 
-**Request:**
-```json
 {
   "status": "playing"
 }
 ```
 
-**Status possibles:** `online`, `playing`, `paused`, `idle`, `error`
+Les statuts possibles : `online`, `playing`, `paused`, `idle`, `error`
 
-**Response:**
-```json
-{
-  "success": true,
-  "timestamp": "2024-01-15T14:30:00.000000"
-}
+### Log de lecture
+
 ```
-
----
-
-### POST /mobile/api/v1/screen/log-play
-
-Enregistre une lecture de contenu pour les statistiques.
-
-**Headers:**
-```
+POST /mobile/api/v1/screen/log-play
 Authorization: Bearer <access_token>
-```
+Content-Type: application/json
 
-**Request:**
-```json
 {
   "content_id": 123,
   "content_type": "image",
@@ -287,7 +207,8 @@ Authorization: Bearer <access_token>
 }
 ```
 
-**Response:**
+Réponse :
+
 ```json
 {
   "success": true,
@@ -295,21 +216,19 @@ Authorization: Bearer <access_token>
 }
 ```
 
-> **Note:** `exhausted: true` indique que le contenu a atteint son quota de lectures et sera retire de la playlist.
+Si `exhausted` est `true`, le contenu a atteint son quota. Retirez-le de la playlist.
 
----
+## Structure des données
 
-## Structure des Donnees
-
-### Contenu (Content Item)
+### Contenu
 
 ```typescript
 interface ContentItem {
   id: number;
   type: 'image' | 'video';
   url: string;
-  duration: number;        // secondes
-  priority: number;        // 20-200
+  duration: number;           // en secondes
+  priority: number;           // 20-200
   category: 'paid' | 'internal' | 'filler' | 'broadcast' | 'ad_content';
   booking_id: number | null;
   remaining_plays: number | null;
@@ -317,15 +236,15 @@ interface ContentItem {
 }
 ```
 
-### Priorites de Contenu
+### Priorités
 
-| Categorie | Priorite | Description |
+| Catégorie | Priorité | Description |
 |-----------|----------|-------------|
-| broadcast | 200 | Diffusion superadmin (priorite max) |
-| paid | 100 | Contenu client paye |
-| internal | 80 | Contenu interne etablissement |
-| ad_content | 60 | Publicites superadmin |
-| filler | 20 | Contenu de remplissage |
+| broadcast | 200 | Diffusions opérateur (priorité maximale) |
+| paid | 100 | Publicités payantes des clients |
+| internal | 80 | Contenus de l'établissement |
+| ad_content | 60 | Publicités de l'opérateur |
+| filler | 20 | Contenus de remplissage |
 
 ### Overlay
 
@@ -333,7 +252,7 @@ interface ContentItem {
 interface Overlay {
   id: number;
   type: 'scrolling_text' | 'static_image' | 'static_text';
-  content: string;         // texte ou URL image
+  content: string;           // texte ou URL d'image
   position: 'top' | 'bottom' | 'left' | 'right';
   style: OverlayStyle;
   priority: number;
@@ -345,137 +264,111 @@ interface OverlayStyle {
   background_color: string;
   text_color: string;
   font_size: number;
-  speed?: number;          // pour scrolling_text
+  speed?: number;            // pour scrolling_text
   opacity?: number;
 }
 ```
 
----
+## Logique de lecture
 
-## Logique de Lecture
+### Algorithme de sélection
 
-### Algorithme de Selection
+La playlist est triée par priorité décroissante. À priorité égale, les contenus passent en round-robin.
 
 ```python
 def get_next_content(playlist, current_index):
-    # 1. Trier par priorite decroissante
+    # Trier par priorité décroissante
     sorted_playlist = sorted(playlist, key=lambda x: x['priority'], reverse=True)
     
-    # 2. Filtrer les contenus epuises
+    # Filtrer les contenus épuisés
     available = [c for c in sorted_playlist if c.get('remaining_plays', 1) > 0]
     
-    # 3. Selection round-robin dans chaque groupe de priorite
-    next_index = (current_index + 1) % len(available)
+    if not available:
+        return None
     
+    # Round-robin
+    next_index = (current_index + 1) % len(available)
     return available[next_index]
 ```
 
-### Gestion de la Duree
+### Durée d'affichage
+
+- **Images** : utilisez la durée spécifiée dans l'item (défaut : 10 secondes)
+- **Vidéos** : jouez la vidéo jusqu'à la fin, ignorez la durée spécifiée
+
+### Boucle de lecture
 
 ```
-Pour images:
-- Utiliser la duree specifiee dans l'item
-- Defaut: 10 secondes
-
-Pour videos:
-- Utiliser la duree reelle de la video
-- Ignorer la duree specifiee dans l'item
+1. Récupérer le contenu suivant
+2. Afficher (image) ou lire (vidéo)
+3. Attendre la fin de la durée ou de la vidéo
+4. Appeler log-play pour signaler la diffusion
+5. Si exhausted=true, retirer le contenu
+6. Passer au contenu suivant
+7. Répéter
 ```
 
-### Boucle de Lecture
+## Affichage des overlays
+
+Les overlays s'affichent par-dessus le contenu principal :
 
 ```
-1. Recuperer contenu suivant
-2. Afficher/Lire le contenu
-3. Attendre fin de duree/video
-4. Envoyer log-play au backend
-5. Verifier si contenu epuise
-6. Retirer si epuise
-7. Retour a l'etape 1
+┌────────────────────────────────────────────┐
+│              [Overlay top]                 │
+├────────────────────────────────────────────┤
+│                                            │
+│          CONTENU PRINCIPAL                 │
+│          (image ou vidéo)                  │
+│                                            │
+├────────────────────────────────────────────┤
+│             [Overlay bottom]               │
+└────────────────────────────────────────────┘
 ```
 
----
+Les overlays BROADCAST ont priorité sur les overlays LOCAL. Quand un overlay BROADCAST est actif, masquez temporairement les overlays LOCAL.
 
-## Gestion des Overlays
+### Types d'overlay
 
-### Affichage Simultane
-
-Les overlays s'affichent par-dessus le contenu principal:
-
-```
-+----------------------------------+
-|          [Overlay Top]           |
-+----------------------------------+
-|                                  |
-|       CONTENU PRINCIPAL          |
-|       (Image/Video/IPTV)         |
-|                                  |
-+----------------------------------+
-|        [Overlay Bottom]          |
-+----------------------------------+
-```
-
-### Priorite des Sources
-
-```
-BROADCAST > LOCAL
-
-Si un overlay BROADCAST est actif:
-- Mettre en pause les overlays LOCAL
-- Afficher uniquement BROADCAST
-- Reprendre LOCAL apres fin BROADCAST
-```
-
-### Types d'Overlay
-
-1. **scrolling_text**: Texte defilant horizontalement
-2. **static_image**: Image fixe (logo, QR code)
-3. **static_text**: Texte fixe (annonces)
-
----
+- **scrolling_text** : texte qui défile horizontalement
+- **static_image** : image fixe (logo, QR code)
+- **static_text** : texte fixe (annonces)
 
 ## Mode IPTV
 
-Quand `mode == 'iptv'`:
+Quand le mode est `iptv`, le player doit :
+
+1. Arrêter la lecture de la playlist
+2. Démarrer le flux HLS (URL fournie dans `iptv.url`)
+3. Continuer à afficher les overlays par-dessus
+4. Continuer les heartbeats
 
 ```json
 {
   "mode": "iptv",
   "iptv": {
     "url": "https://stream.example.com/live.m3u8",
-    "name": "Chaine Info"
+    "name": "Chaîne Info"
   },
   "playlist": [],
   "overlays": [...]
 }
 ```
 
-### Implementation HLS
+Utilisez HLS.js (web), ExoPlayer (Android) ou AVPlayer (iOS) pour la lecture.
 
-```javascript
-// Utiliser HLS.js ou ExoPlayer/AVPlayer natif
-if (mode === 'iptv' && iptv.url) {
-  // Arreter playlist
-  // Demarrer flux HLS
-  // Afficher overlays par-dessus
-}
-```
+## Gestion hors ligne
 
----
+Pour continuer à fonctionner sans connexion :
 
-## Gestion Hors-ligne
+### Stratégie de cache
 
-### Strategie de Cache
+1. À chaque récupération de playlist, téléchargez les médias en arrière-plan
+2. Stockez-les dans le cache local (SQLite ou système de fichiers)
+3. Si la connexion est perdue, lisez depuis le cache
+4. Mettez les log-play en file d'attente
+5. À la reconnexion, envoyez les logs en attente
 
-```
-1. Pre-telecharger tous les medias de la playlist
-2. Stocker dans le cache local (SQLite/IndexedDB)
-3. Servir depuis le cache si hors-ligne
-4. Mettre en queue les log-play
-5. Synchroniser a la reconnexion
-```
-
-### Schema de Cache
+### Schéma de base locale
 
 ```sql
 CREATE TABLE cached_media (
@@ -498,18 +391,15 @@ CREATE TABLE pending_logs (
 );
 ```
 
----
+## Implémentation Flutter
 
-## Implementation Flutter
-
-### Classe AdScreenPlayer
+Voici une classe complète pour un player Flutter :
 
 ```dart
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
 
 class AdScreenPlayer {
   final String baseUrl;
@@ -524,8 +414,19 @@ class AdScreenPlayer {
 
   AdScreenPlayer(this.baseUrl);
 
-  // === AUTHENTIFICATION ===
-  
+  // Initialisation depuis le stockage
+  Future<bool> loadSavedSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    accessToken = prefs.getString('access_token');
+    refreshToken = prefs.getString('refresh_token');
+    final screenJson = prefs.getString('screen_info');
+    if (screenJson != null) {
+      screenInfo = json.decode(screenJson);
+    }
+    return accessToken != null;
+  }
+
+  // Connexion
   Future<bool> login(String screenCode, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/mobile/api/v1/auth/screen-login'),
@@ -541,40 +442,27 @@ class AdScreenPlayer {
       accessToken = data['access_token'];
       refreshToken = data['refresh_token'];
       screenInfo = data['screen'];
-      await _saveTokens();
+      await _saveSession();
       return true;
     }
     return false;
   }
 
-  Future<void> _saveTokens() async {
+  Future<void> _saveSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', accessToken!);
     await prefs.setString('refresh_token', refreshToken!);
     await prefs.setString('screen_info', json.encode(screenInfo));
   }
 
-  Future<bool> loadSavedSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    accessToken = prefs.getString('access_token');
-    refreshToken = prefs.getString('refresh_token');
-    final screenJson = prefs.getString('screen_info');
-    if (screenJson != null) {
-      screenInfo = json.decode(screenJson);
-    }
-    return accessToken != null;
-  }
-
-  Map<String, String> get _authHeaders => {
+  // Headers d'authentification
+  Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer $accessToken',
   };
 
-  Future<http.Response> _authenticatedRequest(
-    String method,
-    String endpoint, {
-    Map<String, dynamic>? body,
-  }) async {
+  // Requête avec renouvellement automatique du token
+  Future<http.Response> _request(String method, String endpoint, {Map<String, dynamic>? body}) async {
     var response = await _makeRequest(method, endpoint, body: body);
     
     if (response.statusCode == 401) {
@@ -587,20 +475,13 @@ class AdScreenPlayer {
     return response;
   }
 
-  Future<http.Response> _makeRequest(
-    String method,
-    String endpoint, {
-    Map<String, dynamic>? body,
-  }) async {
+  Future<http.Response> _makeRequest(String method, String endpoint, {Map<String, dynamic>? body}) async {
     final uri = Uri.parse('$baseUrl$endpoint');
     
-    switch (method) {
-      case 'GET':
-        return http.get(uri, headers: _authHeaders);
-      case 'POST':
-        return http.post(uri, headers: _authHeaders, body: json.encode(body));
-      default:
-        throw Exception('Unsupported method');
+    if (method == 'GET') {
+      return http.get(uri, headers: _headers);
+    } else {
+      return http.post(uri, headers: _headers, body: json.encode(body));
     }
   }
 
@@ -615,16 +496,15 @@ class AdScreenPlayer {
       final data = json.decode(response.body);
       accessToken = data['access_token'];
       refreshToken = data['refresh_token'];
-      await _saveTokens();
+      await _saveSession();
       return true;
     }
     return false;
   }
 
-  // === SYNCHRONISATION ===
-
+  // Récupération du mode
   Future<String> getMode() async {
-    final response = await _authenticatedRequest('GET', '/mobile/api/v1/screen/mode');
+    final response = await _request('GET', '/mobile/api/v1/screen/mode');
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data['mode'];
@@ -632,32 +512,33 @@ class AdScreenPlayer {
     return 'playlist';
   }
 
+  // Récupération de la playlist
   Future<void> fetchPlaylist() async {
-    final response = await _authenticatedRequest('GET', '/mobile/api/v1/screen/playlist');
+    final response = await _request('GET', '/mobile/api/v1/screen/playlist');
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       playlist = List<Map<String, dynamic>>.from(data['playlist']);
       overlays = List<Map<String, dynamic>>.from(data['overlays'] ?? []);
       
-      // Trier par priorite
+      // Trier par priorité décroissante
       playlist.sort((a, b) => (b['priority'] as int).compareTo(a['priority'] as int));
     }
   }
 
+  // Heartbeat
   Future<void> sendHeartbeat(String status) async {
-    await _authenticatedRequest('POST', '/mobile/api/v1/screen/heartbeat', 
-      body: {'status': status});
+    await _request('POST', '/mobile/api/v1/screen/heartbeat', body: {'status': status});
   }
 
+  // Log de lecture
   Future<bool> logPlay(Map<String, dynamic> content) async {
-    final response = await _authenticatedRequest('POST', '/mobile/api/v1/screen/log-play',
-      body: {
-        'content_id': content['id'],
-        'content_type': content['type'],
-        'category': content['category'],
-        'duration': content['duration'],
-        'booking_id': content['booking_id'],
-      });
+    final response = await _request('POST', '/mobile/api/v1/screen/log-play', body: {
+      'content_id': content['id'],
+      'content_type': content['type'],
+      'category': content['category'],
+      'duration': content['duration'],
+      'booking_id': content['booking_id'],
+    });
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -666,250 +547,64 @@ class AdScreenPlayer {
     return false;
   }
 
-  // === LECTURE ===
-
-  void startPlayer() {
-    // Demarrer heartbeat toutes les 30s
+  // Démarrage du player
+  void start() {
+    // Heartbeat toutes les 30 secondes
     heartbeatTimer = Timer.periodic(Duration(seconds: 30), (_) {
       sendHeartbeat('playing');
     });
 
-    // Rafraichir playlist toutes les 60s
+    // Rafraîchissement playlist toutes les 60 secondes
     playlistTimer = Timer.periodic(Duration(seconds: 60), (_) {
       fetchPlaylist();
     });
 
-    // Premiere recuperation
-    fetchPlaylist().then((_) => _playNext());
+    // Première récupération
+    fetchPlaylist();
   }
 
-  void stopPlayer() {
+  // Arrêt du player
+  void stop() {
     heartbeatTimer?.cancel();
     playlistTimer?.cancel();
   }
 
+  // Contenu actuel
   Map<String, dynamic>? getCurrentContent() {
     if (playlist.isEmpty) return null;
     return playlist[currentIndex % playlist.length];
   }
 
-  Future<void> _playNext() async {
-    if (playlist.isEmpty) {
-      await Future.delayed(Duration(seconds: 5));
-      _playNext();
-      return;
-    }
-
-    final content = getCurrentContent()!;
-    
-    // Attendre la duree du contenu
-    if (content['type'] == 'image') {
-      await Future.delayed(Duration(seconds: content['duration'] ?? 10));
-    }
-    // Pour video, attendre la fin de la video (gere par VideoPlayerController)
-
-    // Logger la lecture
-    final exhausted = await logPlay(content);
-    
-    // Retirer si epuise
-    if (exhausted) {
-      playlist.removeAt(currentIndex % playlist.length);
-    } else {
-      currentIndex++;
-    }
-
-    // Continuer la lecture
-    _playNext();
+  // Passer au contenu suivant
+  void nextContent() {
+    currentIndex++;
   }
 
-  // === OVERLAYS ===
-
-  List<Map<String, dynamic>> getActiveOverlays() {
-    return overlays.where((o) => o['active'] == true).toList()
-      ..sort((a, b) => (b['priority'] as int).compareTo(a['priority'] as int));
+  // Retirer un contenu épuisé
+  void removeContent(Map<String, dynamic> content) {
+    playlist.remove(content);
   }
 
+  // Construire l'URL complète d'un média
   String getMediaUrl(String path) {
     if (path.startsWith('http')) return path;
     return '$baseUrl$path';
   }
-}
-```
 
-### Widget Player Flutter
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-
-class PlayerScreen extends StatefulWidget {
-  final AdScreenPlayer player;
-
-  const PlayerScreen({Key? key, required this.player}) : super(key: key);
-
-  @override
-  _PlayerScreenState createState() => _PlayerScreenState();
-}
-
-class _PlayerScreenState extends State<PlayerScreen> {
-  VideoPlayerController? _videoController;
-  Map<String, dynamic>? _currentContent;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.player.startPlayer();
-    _startPlaybackLoop();
-  }
-
-  @override
-  void dispose() {
-    widget.player.stopPlayer();
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  void _startPlaybackLoop() async {
-    while (mounted) {
-      await widget.player.fetchPlaylist();
-      
-      final content = widget.player.getCurrentContent();
-      if (content == null) {
-        await Future.delayed(Duration(seconds: 5));
-        continue;
-      }
-
-      setState(() => _currentContent = content);
-
-      if (content['type'] == 'video') {
-        await _playVideo(content);
-      } else {
-        await Future.delayed(Duration(seconds: content['duration'] ?? 10));
-      }
-
-      final exhausted = await widget.player.logPlay(content);
-      if (exhausted) {
-        widget.player.playlist.remove(content);
-      } else {
-        widget.player.currentIndex++;
-      }
-    }
-  }
-
-  Future<void> _playVideo(Map<String, dynamic> content) async {
-    final url = widget.player.getMediaUrl(content['url']);
-    _videoController = VideoPlayerController.network(url);
-    await _videoController!.initialize();
-    await _videoController!.play();
-    
-    // Attendre fin de video
-    await _videoController!.position.then((pos) async {
-      while (_videoController!.value.isPlaying) {
-        await Future.delayed(Duration(milliseconds: 500));
-      }
-    });
-    
-    _videoController!.dispose();
-    _videoController = null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Contenu principal
-          Center(child: _buildMainContent()),
-          
-          // Overlays
-          ..._buildOverlays(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    if (_currentContent == null) {
-      return CircularProgressIndicator(color: Colors.white);
-    }
-
-    if (_currentContent!['type'] == 'video' && _videoController != null) {
-      return AspectRatio(
-        aspectRatio: _videoController!.value.aspectRatio,
-        child: VideoPlayer(_videoController!),
-      );
-    }
-
-    return CachedNetworkImage(
-      imageUrl: widget.player.getMediaUrl(_currentContent!['url']),
-      fit: BoxFit.contain,
-      placeholder: (context, url) => CircularProgressIndicator(),
-      errorWidget: (context, url, error) => Icon(Icons.error, color: Colors.red),
-    );
-  }
-
-  List<Widget> _buildOverlays() {
-    final activeOverlays = widget.player.getActiveOverlays();
-    return activeOverlays.map((overlay) {
-      switch (overlay['position']) {
-        case 'top':
-          return Positioned(top: 0, left: 0, right: 0, child: _buildOverlay(overlay));
-        case 'bottom':
-          return Positioned(bottom: 0, left: 0, right: 0, child: _buildOverlay(overlay));
-        default:
-          return SizedBox.shrink();
-      }
-    }).toList();
-  }
-
-  Widget _buildOverlay(Map<String, dynamic> overlay) {
-    final style = overlay['style'] ?? {};
-    final bgColor = _parseColor(style['background_color'] ?? '#000000');
-    final textColor = _parseColor(style['text_color'] ?? '#FFFFFF');
-    final fontSize = (style['font_size'] ?? 24).toDouble();
-
-    if (overlay['type'] == 'scrolling_text') {
-      return Container(
-        color: bgColor.withOpacity(0.8),
-        height: fontSize + 20,
-        child: Marquee(
-          text: overlay['content'],
-          style: TextStyle(color: textColor, fontSize: fontSize),
-          scrollAxis: Axis.horizontal,
-          velocity: (style['speed'] ?? 50).toDouble(),
-        ),
-      );
-    }
-
-    return Container(
-      color: bgColor.withOpacity(0.8),
-      padding: EdgeInsets.all(10),
-      child: Text(
-        overlay['content'],
-        style: TextStyle(color: textColor, fontSize: fontSize),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
-  Color _parseColor(String hex) {
-    return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+  // Overlays actifs
+  List<Map<String, dynamic>> getActiveOverlays() {
+    return overlays.where((o) => o['active'] == true).toList()
+      ..sort((a, b) => (b['priority'] as int).compareTo(a['priority'] as int));
   }
 }
 ```
 
----
-
-## Implementation React Native
-
-### Classe PlayerService
+## Implémentation React Native
 
 ```javascript
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-class PlayerService {
+class AdScreenPlayer {
   constructor(baseUrl) {
     this.baseUrl = baseUrl;
     this.accessToken = null;
@@ -922,7 +617,15 @@ class PlayerService {
     this.playlistInterval = null;
   }
 
-  // === AUTH ===
+  async loadSavedSession() {
+    this.accessToken = await AsyncStorage.getItem('access_token');
+    this.refreshToken = await AsyncStorage.getItem('refresh_token');
+    const screenJson = await AsyncStorage.getItem('screen_info');
+    if (screenJson) {
+      this.screenInfo = JSON.parse(screenJson);
+    }
+    return this.accessToken != null;
+  }
 
   async login(screenCode, password) {
     const response = await fetch(`${this.baseUrl}/mobile/api/v1/auth/screen-login`, {
@@ -943,53 +646,32 @@ class PlayerService {
   }
 
   async saveSession() {
-    await AsyncStorage.setItem('player_session', JSON.stringify({
-      accessToken: this.accessToken,
-      refreshToken: this.refreshToken,
-      screenInfo: this.screenInfo,
-    }));
+    await AsyncStorage.setItem('access_token', this.accessToken);
+    await AsyncStorage.setItem('refresh_token', this.refreshToken);
+    await AsyncStorage.setItem('screen_info', JSON.stringify(this.screenInfo));
   }
 
-  async loadSession() {
-    const session = await AsyncStorage.getItem('player_session');
-    if (session) {
-      const data = JSON.parse(session);
-      this.accessToken = data.accessToken;
-      this.refreshToken = data.refreshToken;
-      this.screenInfo = data.screenInfo;
-      return true;
-    }
-    return false;
-  }
+  async request(endpoint, options = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.accessToken}`,
+      ...options.headers,
+    };
 
-  async authenticatedFetch(endpoint, options = {}) {
-    let response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.accessToken}`,
-        ...options.headers,
-      },
-    });
+    let response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
 
     if (response.status === 401) {
-      const refreshed = await this.refreshAccessToken();
+      const refreshed = await this.refreshTokens();
       if (refreshed) {
-        response = await fetch(`${this.baseUrl}${endpoint}`, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.accessToken}`,
-            ...options.headers,
-          },
-        });
+        headers.Authorization = `Bearer ${this.accessToken}`;
+        response = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
       }
     }
 
     return response;
   }
 
-  async refreshAccessToken() {
+  async refreshTokens() {
     const response = await fetch(`${this.baseUrl}/mobile/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1006,29 +688,25 @@ class PlayerService {
     return false;
   }
 
-  // === SYNC ===
-
   async fetchPlaylist() {
-    const response = await this.authenticatedFetch('/mobile/api/v1/screen/playlist');
+    const response = await this.request('/mobile/api/v1/screen/playlist');
     if (response.ok) {
       const data = await response.json();
-      this.playlist = data.playlist || [];
+      this.playlist = data.playlist;
       this.overlays = data.overlays || [];
       this.playlist.sort((a, b) => b.priority - a.priority);
-      return data;
     }
-    return null;
   }
 
   async sendHeartbeat(status = 'playing') {
-    await this.authenticatedFetch('/mobile/api/v1/screen/heartbeat', {
+    await this.request('/mobile/api/v1/screen/heartbeat', {
       method: 'POST',
       body: JSON.stringify({ status }),
     });
   }
 
   async logPlay(content) {
-    const response = await this.authenticatedFetch('/mobile/api/v1/screen/log-play', {
+    const response = await this.request('/mobile/api/v1/screen/log-play', {
       method: 'POST',
       body: JSON.stringify({
         content_id: content.id,
@@ -1041,21 +719,20 @@ class PlayerService {
 
     if (response.ok) {
       const data = await response.json();
-      return data.exhausted;
+      return data.exhausted === true;
     }
     return false;
   }
 
-  // === PLAYER ===
-
-  startSync() {
+  start() {
     this.heartbeatInterval = setInterval(() => this.sendHeartbeat('playing'), 30000);
     this.playlistInterval = setInterval(() => this.fetchPlaylist(), 60000);
+    this.fetchPlaylist();
   }
 
-  stopSync() {
-    clearInterval(this.heartbeatInterval);
-    clearInterval(this.playlistInterval);
+  stop() {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    if (this.playlistInterval) clearInterval(this.playlistInterval);
   }
 
   getCurrentContent() {
@@ -1067,8 +744,11 @@ class PlayerService {
     this.currentIndex++;
   }
 
-  removeExhausted(content) {
-    this.playlist = this.playlist.filter(c => c.id !== content.id);
+  removeContent(content) {
+    const index = this.playlist.indexOf(content);
+    if (index > -1) {
+      this.playlist.splice(index, 1);
+    }
   }
 
   getMediaUrl(path) {
@@ -1078,253 +758,30 @@ class PlayerService {
 
   getActiveOverlays() {
     return this.overlays
-      .filter(o => o.active !== false)
+      .filter(o => o.active)
       .sort((a, b) => b.priority - a.priority);
   }
 }
 
-export default PlayerService;
+export default AdScreenPlayer;
 ```
 
----
-
-## Implementation iOS Swift
-
-### Classe AdScreenPlayer
-
-```swift
-import Foundation
-
-class AdScreenPlayer: ObservableObject {
-    let baseUrl: String
-    
-    @Published var accessToken: String?
-    @Published var refreshToken: String?
-    @Published var screenInfo: ScreenInfo?
-    @Published var playlist: [ContentItem] = []
-    @Published var overlays: [Overlay] = []
-    @Published var currentIndex: Int = 0
-    
-    private var heartbeatTimer: Timer?
-    private var playlistTimer: Timer?
-    
-    init(baseUrl: String) {
-        self.baseUrl = baseUrl
-    }
-    
-    // MARK: - Auth
-    
-    func login(screenCode: String, password: String) async throws -> Bool {
-        let url = URL(string: "\(baseUrl)/mobile/api/v1/auth/screen-login")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode([
-            "screen_code": screenCode,
-            "password": password
-        ])
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            return false
-        }
-        
-        let loginResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
-        
-        DispatchQueue.main.async {
-            self.accessToken = loginResponse.accessToken
-            self.refreshToken = loginResponse.refreshToken
-            self.screenInfo = loginResponse.screen
-        }
-        
-        saveSession()
-        return true
-    }
-    
-    private func saveSession() {
-        UserDefaults.standard.set(accessToken, forKey: "access_token")
-        UserDefaults.standard.set(refreshToken, forKey: "refresh_token")
-    }
-    
-    func loadSession() -> Bool {
-        accessToken = UserDefaults.standard.string(forKey: "access_token")
-        refreshToken = UserDefaults.standard.string(forKey: "refresh_token")
-        return accessToken != nil
-    }
-    
-    // MARK: - API
-    
-    func fetchPlaylist() async throws {
-        guard let token = accessToken else { return }
-        
-        let url = URL(string: "\(baseUrl)/mobile/api/v1/screen/playlist")!
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let response = try JSONDecoder().decode(PlaylistResponse.self, from: data)
-        
-        DispatchQueue.main.async {
-            self.playlist = response.playlist.sorted { $0.priority > $1.priority }
-            self.overlays = response.overlays ?? []
-        }
-    }
-    
-    func sendHeartbeat(status: String = "playing") async {
-        guard let token = accessToken else { return }
-        
-        let url = URL(string: "\(baseUrl)/mobile/api/v1/screen/heartbeat")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try? JSONEncoder().encode(["status": status])
-        
-        _ = try? await URLSession.shared.data(for: request)
-    }
-    
-    func logPlay(content: ContentItem) async -> Bool {
-        guard let token = accessToken else { return false }
-        
-        let url = URL(string: "\(baseUrl)/mobile/api/v1/screen/log-play")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let body: [String: Any] = [
-            "content_id": content.id,
-            "content_type": content.type,
-            "category": content.category,
-            "duration": content.duration,
-            "booking_id": content.bookingId as Any
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        
-        let (data, _) = try! await URLSession.shared.data(for: request)
-        let response = try? JSONDecoder().decode(LogPlayResponse.self, from: data)
-        return response?.exhausted ?? false
-    }
-    
-    // MARK: - Player Control
-    
-    func startPlayer() {
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in
-            Task { await self.sendHeartbeat() }
-        }
-        
-        playlistTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
-            Task { try? await self.fetchPlaylist() }
-        }
-    }
-    
-    func stopPlayer() {
-        heartbeatTimer?.invalidate()
-        playlistTimer?.invalidate()
-    }
-    
-    func getCurrentContent() -> ContentItem? {
-        guard !playlist.isEmpty else { return nil }
-        return playlist[currentIndex % playlist.count]
-    }
-    
-    func getMediaUrl(_ path: String) -> URL {
-        if path.hasPrefix("http") {
-            return URL(string: path)!
-        }
-        return URL(string: "\(baseUrl)\(path)")!
-    }
-}
-
-// MARK: - Models
-
-struct LoginResponse: Codable {
-    let accessToken: String
-    let refreshToken: String
-    let screen: ScreenInfo
-    
-    enum CodingKeys: String, CodingKey {
-        case accessToken = "access_token"
-        case refreshToken = "refresh_token"
-        case screen
-    }
-}
-
-struct ScreenInfo: Codable {
-    let id: Int
-    let name: String
-    let uniqueCode: String
-    let resolution: String
-    let orientation: String
-    
-    enum CodingKeys: String, CodingKey {
-        case id, name, resolution, orientation
-        case uniqueCode = "unique_code"
-    }
-}
-
-struct PlaylistResponse: Codable {
-    let playlist: [ContentItem]
-    let overlays: [Overlay]?
-}
-
-struct ContentItem: Codable, Identifiable {
-    let id: Int
-    let type: String
-    let url: String
-    let duration: Int
-    let priority: Int
-    let category: String
-    let bookingId: Int?
-    let remainingPlays: Int?
-    let name: String
-    
-    enum CodingKeys: String, CodingKey {
-        case id, type, url, duration, priority, category, name
-        case bookingId = "booking_id"
-        case remainingPlays = "remaining_plays"
-    }
-}
-
-struct Overlay: Codable, Identifiable {
-    let id: Int
-    let type: String
-    let content: String
-    let position: String
-    let priority: Int
-    let source: String
-}
-
-struct LogPlayResponse: Codable {
-    let success: Bool
-    let exhausted: Bool
-}
-```
-
----
-
-## Bonnes Pratiques
+## Points importants
 
 ### Performance
 
-1. **Pre-chargement**: Telecharger les 3-5 prochains contenus a l'avance
-2. **Cache agressif**: Stocker tous les medias localement
-3. **Compression**: Utiliser des formats optimises (WebP, H.265)
+- Préchargez les médias en arrière-plan pour éviter les latences
+- Utilisez un cache LRU (Least Recently Used) pour limiter l'espace disque
+- Compressez les images si nécessaire pour la résolution de l'écran
 
-### Fiabilite
+### Robustesse
 
-1. **Retry automatique**: 3 tentatives avec backoff exponentiel
-2. **Queue hors-ligne**: Stocker les logs en local si pas de reseau
-3. **Watchdog**: Redemarrer le player si bloque
+- Gérez les coupures réseau gracieusement
+- Stockez les logs en file d'attente quand hors ligne
+- Redémarrez automatiquement après un crash
 
-### Securite
+### Expérience utilisateur
 
-1. **Stockage securise**: Keychain (iOS) / Keystore (Android) pour tokens
-2. **Certificate Pinning**: En production
-3. **Pas de logs sensibles**: Ne jamais logger les tokens
-
----
-
-*Documentation Player Mobile SDK v1.0*
-*Generee le 2024-01-15*
+- Affichez un écran de chargement pendant le téléchargement initial
+- Montrez un indicateur quand la connexion est perdue
+- Permettez de changer d'écran sans redémarrer l'application

@@ -1,659 +1,341 @@
-# Fonctionnalités Shabaka AdScreen
+# Guide des fonctionnalités
 
-## Vue d'ensemble
+Ce document décrit tout ce que Shabaka AdScreen sait faire, fonctionnalité par fonctionnalité.
 
-Shabaka AdScreen est une plateforme SaaS permettant aux établissements (bars, restaurants, centres commerciaux) de monétiser leurs écrans publicitaires via un système de location self-service. La plateforme supporte les opérations multi-pays et multi-devises, ainsi qu'un système de diffusion centralisé pour les superadmins.
+## Les quatre types d'utilisateurs
 
-## Rôles utilisateurs
+Shabaka AdScreen distingue quatre rôles avec des interfaces et des droits différents.
 
-### 1. Superadmin (Administrateur SaaS)
+### L'opérateur (Super-administrateur)
 
-Gestion globale de la plateforme.
+C'est vous, ou votre équipe. L'opérateur contrôle l'ensemble de la plateforme depuis l'interface `/admin`.
 
-| Fonctionnalité | Statut | Description |
-|----------------|--------|-------------|
-| Gestion établissements | Disponible | Créer, modifier, suspendre des établissements |
-| **Types établissements** | Disponible | Payant (accès complet) ou Gratuit (fonctionnalités limitées) |
-| Configuration commissions | Disponible | Définir le taux de commission par établissement |
-| Plans d'abonnement | Disponible | Assigner des plans (basic, premium, enterprise) |
-| Multi-devises | Disponible | Support EUR, MAD, XOF, TND |
-| Statistiques globales | Disponible | Revenus totaux, écrans actifs, uptime moyen |
-| Configuration WhatsApp | Disponible | Numéro pour demandes d'inscription |
-| Paramètres SEO | Disponible | Titre, description du site |
-| Mode maintenance | Disponible | Activation/désactivation |
-| **Diffusion (Broadcast)** | Disponible | Pousser du contenu vers les écrans ciblés |
-| Facturation hebdomadaire | Disponible | Génération automatique des factures |
-| **Gestion Admins** | Disponible | Créer des administrateurs avec permissions |
-| **Permissions granulaires** | Disponible | Accès menu par menu pour chaque admin |
-| Liste noire contenus | Prévu | Bloquer des contenus ou IP abusives |
-| Audit logs | Prévu | Traçabilité des actions |
+**Gestion des établissements**
+- Créer, modifier, suspendre des établissements
+- Définir le taux de commission de chaque établissement (pourcentage prélevé sur les revenus)
+- Assigner des plans d'abonnement (basic, premium, enterprise)
+- Distinguer les établissements payants (accès complet) des établissements gratuits (fonctionnalités limitées)
 
-### 2. Établissement (Organisation)
+**Gestion des administrateurs**
+- Créer d'autres administrateurs pour déléguer certaines tâches
+- Attribuer des permissions granulaires : chaque admin n'accède qu'aux menus autorisés
+- Les permissions disponibles : tableau de bord, établissements, écrans, diffusions, statistiques, facturation, demandes d'inscription, paramètres, gestion des utilisateurs
 
-Gestion des écrans et contenus pour un établissement.
+**Diffusions centralisées**
+- Pousser du contenu (bandeau défilant ou contenu dans la playlist) vers n'importe quel écran
+- Cibler par pays (tous les écrans de France), par ville (tous les écrans de Paris), par établissement ou par écran spécifique
+- Programmer des diffusions à une date et heure précises
+- Configurer des récurrences : quotidien, hebdomadaire (certains jours), mensuel
+- Définir une priorité pour contrôler l'ordre d'affichage
+- Activer le mode "override" pour interrompre la playlist normale
 
-| Fonctionnalité | Statut | Description |
-|----------------|--------|-------------|
-| Gestion écrans | Disponible | Créer, configurer, activer/désactiver des écrans |
-| **Actions rapides** | Disponible | Sélecteur d'écran pour appliquer les actions rapides |
-| **Contrôle publicités** | Disponible | Activer/désactiver les publicités superadmin |
-| Configuration résolution | Disponible | Définir largeur, hauteur, orientation |
-| Types de contenu | Disponible | Activer/désactiver images, vidéos |
-| Créneaux horaires | Disponible | Définir durées et prix par type de contenu |
-| Périodes journée | Disponible | Multiplicateurs de prix (matin, soir, etc.) |
-| QR Codes | Disponible | Génération automatique par écran |
-| Validation contenus | Disponible | File d'attente, aperçu, validation/refus |
-| Contenus fillers | Disponible | Images de remplissage générées automatiquement |
-| Contenus internes | Disponible | Promos établissement avec programmation (période + passages total distribués équitablement) |
-| **Calcul disponibilités** | Disponible | Même algorithme que les réservations clients (dates, périodes, créneaux) |
-| **Overlays/Bandeaux** | Disponible | Textes défilants superposés sur le player |
-| Statistiques | Disponible | Revenus par écran/période, diffusions |
-| État temps réel | Disponible | Online/offline, dernière activité |
+**Facturation**
+- Les factures sont générées automatiquement chaque semaine (lundi à dimanche)
+- Chaque facture calcule la commission due par l'établissement
+- Les établissements uploadent leurs preuves de paiement
+- L'opérateur valide les preuves et marque les factures comme réglées
 
-### 3. Client / Annonceur
+**Paramètres globaux**
+- Numéro WhatsApp pour recevoir les demandes d'inscription
+- Paramètres SEO (titre, description du site)
+- Mode maintenance (désactive temporairement l'accès public)
+- Commission par défaut pour les nouveaux établissements
 
-Accès public via QR code ou lien pour réserver de l'espace publicitaire.
+**Statistiques globales**
+- Revenus totaux par devise
+- Nombre d'écrans actifs
+- Uptime moyen du réseau
+- Réservations en attente de validation
 
-| Fonctionnalité | Statut | Description |
-|----------------|--------|-------------|
-| Consultation écran | Disponible | Voir specs, résolution, prix en devise locale |
-| Sélection créneau | Disponible | Choisir durée, période, nombre de diffusions |
-| Upload contenu | Disponible | Images et vidéos avec validation |
-| Validation format | Disponible | Vérification résolution, ratio, durée |
-| Calcul prix | Disponible | Prix dynamique selon choix (multi-devise) |
-| Suivi réservation | Disponible | Statut en attente, validé, refusé |
-| **Reçu thermique** | Disponible | Image style ticket de caisse |
-| **Reçu PDF** | Disponible | PDF imprimable |
-| Paiement en ligne | Prévu | Intégration Stripe |
-| Notifications email | Prévu | Validation, refus, rapports |
+### L'établissement (Manager)
 
-### 4. Écran (Player)
+Chaque établissement gère ses propres écrans depuis l'interface `/org`.
 
-Interface de diffusion pour les écrans publicitaires.
+**Gestion des écrans**
+- Créer et configurer des écrans avec nom, emplacement, résolution
+- Définir l'orientation : paysage (16:9), portrait (9:16) ou personnalisée
+- Activer/désactiver les types de contenu acceptés (images, vidéos, ou les deux)
+- Fixer le prix par minute et la taille maximale des fichiers
 
-| Fonctionnalité | Statut | Description |
-|----------------|--------|-------------|
-| Login écran | Disponible | Authentification par code et mot de passe |
-| Récupération playlist | Disponible | API JSON des contenus à diffuser |
-| Mode plein écran | Disponible | Affichage optimisé fullscreen (F11) |
-| Loop automatique | Disponible | Enchaînement des contenus |
-| **Overlays temps réel** | Disponible | Affichage des bandeaux défilants |
-| **Diffusions (Broadcasts)** | Disponible | Réception des diffusions centralisées |
-| Heartbeat | Disponible | Ping régulier pour statut online |
-| Logging diffusions | Disponible | Enregistrement des passages |
-| **Mode OnlineTV** | Disponible | Streaming M3U/HLS avec overlays actifs |
-| **Contrôle audio** | Disponible | Mute/unmute avec bouton et raccourci (M) |
-| **Raccourcis clavier** | Disponible | F11: plein écran, M: mute, Espace: pause |
-| **Mode hors ligne** | Disponible | Cache des contenus pour lecture sans internet |
+**Configuration des créneaux**
+- Définir les durées disponibles : 10s, 15s, 30s pour les images ; 15s, 30s, 60s pour les vidéos
+- Le prix de chaque créneau est calculé automatiquement à partir du prix par minute
 
-## Détail des fonctionnalités
+**Périodes horaires**
+- Définir des multiplicateurs de prix selon l'heure de la journée
+- Exemple classique : matin (x0.8), midi (x1.5), après-midi (x1.0), soir (x1.8), nuit (x0.5)
+- Le prix final = prix du créneau × multiplicateur de la période
 
-### Multi-devises
+**Validation des contenus**
+- Les contenus soumis par les annonceurs arrivent dans une file d'attente
+- Chaque contenu peut être prévisualisé à la résolution exacte de l'écran
+- L'établissement valide ou refuse avec un motif explicite
+- Les contenus validés passent en diffusion, les refusés sont archivés
 
-La plateforme supporte 4 devises principales selon le pays de l'établissement :
+**Contenus internes**
+- L'établissement peut créer ses propres contenus promotionnels
+- Ces contenus utilisent le même système de programmation que les réservations clients
+- Ils sont répartis équitablement sur la période choisie
 
-| Pays | Devise | Symbole | Exemple |
-|------|--------|---------|---------|
-| France | EUR | € | 2.50 € |
-| Maroc | MAD | DH | 25.00 DH |
-| Sénégal | XOF | FCFA | 1500 FCFA |
-| Tunisie | TND | DT | 8.00 DT |
+**Fillers (contenus de remplissage)**
+- À la création d'un écran, un filler est généré automatiquement
+- Il affiche le QR code de réservation avec le message "Votre publicité ici"
+- Les fillers sont diffusés quand il n'y a pas d'autre contenu
 
-Les prix sont affichés dans la devise de l'établissement partout : écran de réservation, reçus, statistiques.
+**Overlays et bandeaux**
+- Créer des bandeaux défilants qui s'affichent par-dessus le contenu principal
+- Personnaliser les couleurs, la vitesse de défilement, la taille du texte
+- Positionner en haut, au centre ou en bas de l'écran
+- Définir la fréquence d'affichage (pendant X secondes ou X fois par jour)
 
-### Gestion des écrans
+**Mode OnlineTV**
+- Activer la diffusion de chaînes TV en direct quand il n'y a pas de publicité
+- Configurer une URL de liste M3U
+- Les overlays restent actifs pendant la diffusion TV
+- Basculer instantanément entre mode playlist et mode TV
 
-Chaque écran est configurable avec :
-- **Nom et localisation** : Identification et géolocalisation
-- **Résolution** : Largeur x Hauteur (ex: 1920x1080, 3840x2160)
-- **Orientation** : Paysage, portrait ou carré
-- **Types acceptés** : Images, vidéos ou les deux
-- **Taille max fichier** : Limite en Mo (jusqu'à 200 Mo)
-- **Prix par minute** : Base de calcul des créneaux
-- **Code unique** : Généré automatiquement pour le QR code
+**Contrôle des publicités opérateur**
+- Par défaut, les établissements acceptent les publicités diffusées par l'opérateur
+- Cette option peut être désactivée dans les paramètres
+- N'affecte pas les bandeaux et diffusions propres à l'établissement
 
-### Créneaux horaires (Time Slots)
+**Statistiques**
+- Revenus par écran, par jour, par période
+- Nombre de diffusions par contenu
+- Uptime des écrans
+- Temps moyen de validation des contenus
 
-Configuration des durées de diffusion avec prix calculés automatiquement :
+**QR Codes**
+- Chaque écran génère automatiquement un QR code unique
+- Le QR code pointe vers la page de réservation de cet écran
+- Peut être téléchargé et imprimé
 
-| Type | Durées disponibles | Calcul prix |
-|------|-------------------|-------------|
-| Image | 10s, 15s, 30s | prix_par_minute × (durée/60) |
-| Vidéo | 15s, 30s, 60s | prix_par_minute × (durée/60) |
+### L'annonceur (Client)
 
-### Périodes de la journée (Time Periods)
+Les annonceurs accèdent via le QR code ou un lien direct vers `/book/<code>`.
 
-Multiplicateurs de prix selon l'heure :
+**Consultation**
+- Voir les caractéristiques de l'écran : résolution, orientation, types acceptés
+- Consulter les prix dans la devise locale
+- Voir les disponibilités par période
 
-| Période | Horaires | Multiplicateur | Usage |
-|---------|----------|----------------|-------|
-| Matin | 06h-12h | x0.8 | Tarif réduit |
-| Midi | 12h-14h | x1.5 | Heure de pointe |
-| Après-midi | 14h-18h | x1.0 | Tarif normal |
-| Soir | 18h-22h | x1.8 | Prime time |
-| Nuit | 22h-06h | x0.5 | Tarif réduit |
+**Réservation**
+- Choisir le type de contenu (image ou vidéo)
+- Sélectionner la durée du créneau
+- Choisir la période horaire (matin, midi, soir, etc.)
+- Définir le nombre de diffusions souhaité
+- Sélectionner les dates de diffusion
 
-**Prix final** = Prix de base × Multiplicateur période
+**Upload**
+- Uploader une image (JPEG, PNG, GIF, WebP) ou une vidéo (MP4, WebM, MOV)
+- Le système vérifie automatiquement que le contenu respecte la résolution et la durée
+- Les contenus non conformes sont rejetés avec un message explicatif
 
-### Système d'overlays (par établissement)
+**Confirmation**
+- Le prix total est affiché avant validation
+- Après soumission, un numéro de réservation unique est attribué
+- Deux formats de reçu sont disponibles : image (style ticket thermique) et PDF
 
-Les overlays permettent d'afficher des informations superposées sur le player :
+**Suivi**
+- Consulter le statut de la réservation : en attente, validé ou refusé
+- Si refusé, le motif est affiché
 
-**Type Bandeau (Ticker)**
-- Texte défilant horizontal
-- Vitesse de défilement configurable (30-100 px/s)
-- Couleurs personnalisables (fond, texte)
-- Taille de police ajustable
+### L'écran (Player)
 
-**Positions**
-- Header : En haut de l'écran
-- Body : Au centre
-- Footer : En bas de l'écran
+L'interface de diffusion fonctionne sur `/player`.
 
-**Fréquence d'affichage**
-- Par durée : Afficher pendant X secondes
-- Par passage : Afficher X fois par jour/période
+**Authentification**
+- Connexion avec le code unique de l'écran et un mot de passe
+- Session persistante pour éviter les reconnexions
 
-### Types d'établissements
+**Playlist**
+- Récupération automatique des contenus à diffuser
+- Ordre basé sur la priorité : diffusions opérateur (200), contenus payants (100), contenus internes (80), fillers (20)
+- Rafraîchissement régulier pour intégrer les nouveaux contenus
 
-La plateforme permet de distinguer deux types d'établissements :
+**Diffusion**
+- Enchaînement automatique des contenus
+- Les images sont affichées pendant la durée du créneau
+- Les vidéos sont lues intégralement (si plus courtes que le créneau, la dernière image reste affichée)
 
-**Établissement Payant**
-- Accès complet à toutes les fonctionnalités
-- Réservations, facturation, créneaux, périodes
-- Contenus internes et overlays
-- Statistiques avancées
+**Overlays**
+- Affichage des bandeaux défilants par-dessus le contenu
+- Les overlays de l'opérateur ont priorité sur ceux de l'établissement
+- Affichage simultané possible selon les positions
 
-**Établissement Gratuit**
-- Fonctionnalités limitées aux contenus internes et overlays
-- Pas de réservations ni de facturation
-- Pas de configuration des créneaux payants
-- Commission à 0%
+**Mode OnlineTV**
+- Quand activé, le player bascule sur le flux TV
+- Les overlays continuent de s'afficher
+- L'audio est synchronisé avec l'état mute/unmute
 
-### Contrôle des Publicités Superadmin
+**Contrôles**
+- Mode plein écran avec F11
+- Mute/unmute avec la touche M ou le bouton à l'écran
+- Pause/play avec la barre d'espace
 
-Les établissements peuvent contrôler la diffusion des publicités créées par le superadmin sur leurs écrans :
+**Heartbeat**
+- Signal envoyé toutes les 30 secondes pour confirmer que l'écran fonctionne
+- Permet le monitoring en temps réel depuis les interfaces admin et établissement
 
-**Option allow_ad_content**
-- Activée par défaut (opt-in)
-- Toggle accessible dans les paramètres de l'établissement
-- Si désactivé, les contenus publicitaires du superadmin ne s'affichent pas sur les écrans de l'établissement
-- N'affecte pas les overlays et broadcasts de l'établissement lui-même
+**Mode hors ligne**
+- Les contenus sont mis en cache automatiquement
+- Si la connexion est perdue, la lecture continue avec les contenus cachés
+- Les statistiques de lecture sont mises en file d'attente et envoyées au retour de la connexion
 
-| État | Comportement |
-|------|--------------|
-| Activé (défaut) | Les publicités superadmin s'affichent normalement |
-| Désactivé | Les publicités superadmin sont filtrées |
+**Streaming adaptatif**
+- En mode OnlineTV, la qualité vidéo s'adapte automatiquement à la bande passante
+- Un indicateur affiche la résolution actuelle (1080p, 720p, 480p, etc.)
+- Pas de coupure : la qualité baisse plutôt que de couper
 
-### Gestion des Administrateurs
+## Devises et pays
 
-Le superadmin peut créer d'autres administrateurs avec des permissions granulaires :
+La plateforme supporte nativement 4 devises :
 
-| Permission | Description |
-|------------|-------------|
-| dashboard | Accès au tableau de bord |
-| organizations | Gestion des établissements |
-| screens | Gestion des écrans |
-| broadcasts | Gestion des diffusions |
-| stats | Accès aux statistiques |
-| billing | Gestion de la facturation |
-| registration_requests | Gestion des demandes |
-| settings | Paramètres du site |
-| users | Gestion des administrateurs |
+| Devise | Symbole | Pays principaux |
+|--------|---------|-----------------|
+| EUR (Euro) | € | France, Belgique, Allemagne... |
+| MAD (Dirham marocain) | DH | Maroc |
+| XOF (Franc CFA) | FCFA | Sénégal, Côte d'Ivoire, Mali... |
+| TND (Dinar tunisien) | DT | Tunisie |
 
-### Système de diffusion (Broadcast)
+Chaque établissement est associé à un pays et une devise. Tous les prix, reçus et statistiques s'affichent dans cette devise.
 
-Les superadmins peuvent diffuser du contenu vers plusieurs écrans simultanément :
+La base de données contient 208 pays et plus de 4 600 villes, permettant une couverture mondiale.
 
-**Types de ciblage**
+## Système de diffusion (Broadcast)
 
-| Ciblage | Description | Portée |
-|---------|-------------|--------|
-| Pays | Tous les écrans d'un pays | Large |
-| Ville | Tous les écrans d'une ville | Moyenne |
-| Établissement | Tous les écrans d'un établissement | Précise |
-| Écran | Un écran spécifique | Ciblée |
+Les diffusions centralisées sont un outil puissant pour l'opérateur.
+
+**Ciblage hiérarchique**
+- Par pays : touche tous les écrans du pays
+- Par ville : touche tous les écrans de la ville
+- Par établissement : touche tous les écrans de l'établissement
+- Par écran : touche un écran spécifique
 
 **Types de diffusion**
+- Overlay : bandeau défilant, image fixe ou logo en coin, affiché par-dessus le contenu
+- Contenu : s'insère dans la playlist avec une priorité configurable
 
-| Type | Description | Priorité playlist |
-|------|-------------|------------------|
-| Overlay | Bandeau défilant superposé | N/A (superposition) |
-| Contenu | S'intègre dans la playlist | Configurable (20-200) |
+**Programmation**
+- Immédiat : la diffusion démarre dès l'activation
+- Programmé : déclenchement à une date et heure précises
+- Fuseau horaire : 25+ zones supportées pour synchroniser avec les écrans locaux
 
-**Types d'overlay disponibles**
-- Ticker : Bandeau défilant horizontal
-- Image : Image en position fixe
-- Corner : Logo/image en coin d'écran
+**Récurrence**
+- Unique : une seule diffusion
+- Quotidien : répétition chaque jour
+- Hebdomadaire : sélection des jours (lundi, mardi, etc.)
+- Mensuel : répétition le même jour chaque mois
 
-**Modes de programmation**
+**Priorité et override**
+- Priorité de 20 à 200 (plus haut = plus fréquent dans la playlist)
+- Option "override" pour décaler temporairement les contenus existants
 
-| Mode | Description | Usage |
-|------|-------------|-------|
-| Immédiat | Diffusion instantanée dès activation | Annonces urgentes |
-| Programmé | Déclenchement à date/heure précise | Événements planifiés |
+## Calcul des prix
 
-**Fuseau horaire (NOUVEAU)**
+Le prix d'une diffusion se calcule ainsi :
 
-Les diffusions programmées supportent désormais un fuseau horaire cible pour assurer la synchronisation avec les écrans dans différentes régions :
+1. **Prix de base** = prix par minute de l'écran × (durée en secondes / 60)
+2. **Prix avec période** = prix de base × multiplicateur de la période horaire
+3. **Prix total** = prix avec période × nombre de diffusions
 
-| Région | Fuseaux horaires supportés |
-|--------|---------------------------|
-| Europe | Paris, London, Berlin, Madrid, Rome, Brussels, Zurich |
-| Afrique | Casablanca, Tunis, Algiers, Dakar, Abidjan, Lagos, Johannesburg, Cairo |
-| Amérique | New York, Chicago, Los Angeles, Toronto, Sao Paulo |
-| Asie/Océanie | Dubai, Riyadh, Tokyo, Shanghai, Singapore, Sydney |
+Exemple concret :
+- Écran à 2€/minute
+- Créneau de 15 secondes = 0,50€ par diffusion
+- Période "soir" avec multiplicateur x1.8 = 0,90€ par diffusion
+- 100 diffusions = 90€ total
 
-Le fuseau horaire par défaut est Europe/Paris.
+## Validation des contenus
 
-**Système de récurrence (NOUVEAU)**
+Le système valide automatiquement plusieurs critères :
 
-| Type | Description | Exemple |
-|------|-------------|---------|
-| Unique | Une seule diffusion | Événement ponctuel |
-| Quotidien | Répétition chaque jour | Promo du jour |
-| Hebdomadaire | Jours de la semaine sélectionnés | Happy Hour vendredi/samedi |
-| Mensuel | Répétition mensuelle | Offre du 1er du mois |
+**Pour les images**
+- Format accepté : JPEG, PNG, GIF, WebP
+- Résolution exacte requise (doit correspondre à l'écran)
+- Taille maximale respectée
 
-**Priorité et Override (NOUVEAU)**
+**Pour les vidéos**
+- Format accepté : MP4, WebM, MOV
+- Durée ≤ durée du créneau choisi
+- Résolution vérifiée
+- Taille maximale respectée
 
-| Priorité | Usage | Override |
-|----------|-------|----------|
-| 20-50 | Fillers, contenu de fond | Non |
-| 80-100 | Contenu standard | Non |
-| 100-150 | Contenu prioritaire | Optionnel |
-| 150-200 | Contenu urgent | Oui (décale la playlist) |
+Les contenus non conformes sont rejetés automatiquement avec un message explicatif. Les contenus conformes passent en file d'attente pour validation manuelle par l'établissement.
 
-L'option "Override playlist" permet de décaler temporairement les contenus existants pour insérer la diffusion à l'heure exacte programmée.
+## Reçus de réservation
 
-**Cascade hiérarchique**
-- Sélectionner "France" affecte tous les écrans en France
-- Les diffusions s'additionnent aux overlays locaux
-- Priorité configurable pour contrôler l'ordre d'affichage
+Après une réservation, l'annonceur peut télécharger son reçu dans deux formats :
 
-### Génération de reçus
-
-Deux formats disponibles après réservation :
-
-**Reçu Image (Thermique)**
+**Image thermique**
 - Style ticket de caisse noir et blanc
-- En-tête : Nom établissement + Nom écran
+- En-tête avec le nom de l'établissement et de l'écran
 - Numéro de réservation encadré
-- Détails : créneau, durée, diffusions
-- Tarification avec devise locale
+- Détails : créneau, durée, nombre de diffusions
+- Prix dans la devise locale
 - QR code de vérification
-- Footer avec date et statut
+- Date et statut
 
-**Reçu PDF**
+**PDF**
 - Format A4 imprimable
 - Mêmes informations que l'image
-- Compatible imprimantes standards
-
-### Validation des contenus
-
-Règles de validation strictes :
-- **Images** : Vérification résolution, ratio exact requis
-- **Vidéos** : Extraction durée, rejet si > durée slot choisi
-- **Taille** : Respect de la limite configurée par écran
-
-Workflow :
-1. Client uploade un contenu
-2. Validation automatique des specs techniques
-3. File d'attente pour l'établissement
-4. Validation ou refus manuel avec motif
-5. Notification du client
-
-### Playlist et priorités
-
-Ordre de diffusion (du plus prioritaire au moins prioritaire) :
-
-| Type de contenu | Priorité | Source |
-|-----------------|----------|--------|
-| **Diffusions (Broadcasts)** | 200 | Superadmin |
-| Contenus payants validés | 100 | Clients |
-| Contenus internes | 80 | Établissement |
-| Fillers / démos | 20 | Auto-généré |
-
-Le player récupère la playlist via API et enchaîne les contenus avec les overlays actifs (locaux + broadcasts).
-
-### Mode OnlineTV (IPTV)
-
-Le mode OnlineTV permet de diffuser des chaînes TV en direct sur les écrans :
-
-**Fonctionnalités**
-| Fonction | Description |
-|----------|-------------|
-| Streaming M3U/HLS | Support des flux M3U, M3U8 via HLS.js |
-| Fallback MPEG-TS | Support des flux TS via mpegts.js |
-| Bascule instantanée | Changement rapide entre playlist et TV |
-| Overlays actifs | Les bandeaux restent visibles pendant la TV |
-| Gestion chaînes | Liste personnalisable par établissement |
-| Fallback automatique | Repli en cas d'erreur de stream |
-| **Contrôle audio** | Audio activé par défaut, mute/unmute disponible |
-| **Streaming adaptatif (ABR)** | Ajustement automatique de la qualité selon la bande passante |
-
-**Configuration par établissement**
-- Activation OnlineTV au niveau de l'établissement
-- Activation par écran (chaque écran peut avoir le mode activé ou non)
-- URL de la liste M3U configurable
-- Sélection de la chaîne active par écran
-
-**Technologies de streaming**
-| Bibliothèque | Usage | Formats supportés |
-|--------------|-------|-------------------|
-| HLS.js | Streaming principal avec ABR | M3U8, HLS |
-| mpegts.js | Fallback streaming | MPEG-TS (.ts) |
-
-**Streaming Adaptatif (ABR) - Décembre 2025**
-
-Le lecteur OnlineTV fonctionne désormais comme YouTube et Netflix avec un système de streaming adaptatif :
-
-| Fonctionnalité | Description |
-|----------------|-------------|
-| Qualité automatique | Ajuste la qualité vidéo en temps réel selon la bande passante |
-| Estimation EWMA | Algorithme de moyenne mobile pour prédire la bande passante |
-| Buffers optimisés | 30-120 secondes de tampon pour éviter les coupures |
-| Indicateur de qualité | Affichage en temps réel de la résolution et du débit |
-| Transitions fluides | Changement de qualité sans interruption de lecture |
-| Récupération automatique | 8 tentatives avec délai de 500ms pour les erreurs réseau |
-
-**Indicateur de qualité visuel**
-
-| Badge | Résolution | Description |
-|-------|------------|-------------|
-| FHD | 1080p+ | Full HD, connexion excellente |
-| HD | 720p | Haute définition |
-| SD | 480p | Définition standard |
-| LD | 360p | Basse définition |
-| LOW | < 360p | Très basse qualité |
-
-**Avantages**
-- Garde l'attention des visiteurs quand il n'y a pas de publicité
-- Les overlays et diffusions restent visibles
-- Bascule automatique ou manuelle entre modes
-- Audio synchronisé avec l'état mute/unmute du player
-- **Pas de lag** : La qualité s'adapte au lieu de couper
-
-### Contrôle Audio du Player
-
-Le player dispose d'un système de contrôle audio complet :
-
-**État audio**
-| État | Description |
-|------|-------------|
-| Son activé | Audio par défaut au démarrage |
-| Mute | Audio désactivé, icône muet affichée |
-
-**Méthodes de contrôle**
-| Méthode | Action |
-|---------|--------|
-| Bouton | Clic sur l'icône audio en bas à droite |
-| Raccourci | Touche 'M' pour basculer mute/unmute |
-
-**Synchronisation audio**
-- L'état mute est synchronisé entre vidéo et IPTV
-- Changement de mode (playlist ↔ TV) préserve l'état audio
-- L'icône reflète toujours l'état courant
-
-**Raccourcis clavier du Player**
-| Touche | Action |
-|--------|--------|
-| F11 | Mode plein écran |
-| M | Mute / Unmute audio |
-| Espace | Pause / Play |
-
-**Écran d'accueil**
-L'écran d'accueil affiche les raccourcis clavier disponibles pour guider l'utilisateur.
-
-### Mode Hors Ligne (Offline Caching) - Décembre 2025
-
-Le player dispose d'un système de cache intelligent permettant la lecture continue même en cas de perte de connexion internet.
-
-**Fonctionnalités**
-| Fonction | Description |
-|----------|-------------|
-| Cache automatique | Les médias (images, vidéos) sont automatiquement mis en cache |
-| Playlist locale | La playlist courante est sauvegardée dans IndexedDB |
-| Détection connexion | Surveillance en temps réel de l'état de la connexion |
-| Synchronisation auto | Synchronisation automatique au retour de la connexion |
-| Indicateur visuel | Badge "Mode hors ligne" affiché en cas de déconnexion |
-| File d'attente logs | Les statistiques de lecture sont mises en file d'attente |
-
-**Technologies utilisées**
-| Technologie | Usage |
-|-------------|-------|
-| Service Worker | Interception des requêtes et cache des médias |
-| IndexedDB | Stockage local de la playlist et des logs en attente |
-| Cache API | Stockage des fichiers médias pour lecture hors ligne |
-| Background Sync | Synchronisation des logs quand la connexion revient |
-
-**Comportement**
-
-1. **Connexion normale** :
-   - La playlist est récupérée depuis le serveur
-   - Les médias sont automatiquement pré-cachés en arrière-plan
-   - Les statistiques de lecture sont envoyées immédiatement
-
-2. **Perte de connexion** :
-   - Le badge "Mode hors ligne" apparaît
-   - La lecture continue avec les contenus cachés
-   - Les statistiques sont mises en file d'attente locale
-
-3. **Retour de connexion** :
-   - La playlist est rafraîchie automatiquement
-   - Les statistiques en attente sont synchronisées
-   - Le badge "Mode hors ligne" disparaît
-
-**Prérequis navigateur**
-- Service Workers : Chrome 45+, Firefox 44+, Safari 11.1+, Edge 17+
-- IndexedDB : Tous les navigateurs modernes
-- Dégradation gracieuse pour les navigateurs non supportés
-
-### Contenus internes (établissement)
-
-Les établissements peuvent créer leurs propres contenus promotionnels :
-
-**Fonctionnalités**
-| Fonction | Description |
-|----------|-------------|
-| Upload fichier | Interface drag & drop avec aperçu temps réel |
-| Aperçu résolution | Simulation à la résolution exacte de l'écran |
-| Sélection période | Même calendrier que les réservations clients |
-| Sélection heures | Heures de début et fin spécifiques (08:00-22:00 par défaut) |
-| Calcul disponibilités | API identique au système de réservation |
-| Distribution équitable | Passages répartis sur les jours de la période |
-
-**Champs**
-| Champ | Description |
-|-------|-------------|
-| Nom | Identification du contenu |
-| Priorité | 1-100 (défaut 80, plus haut = plus fréquent) |
-| Date début/fin | Période de diffusion |
-| Heure début/fin | Heures de diffusion journalières |
-| Passages total | Nombre total de diffusions sur la période |
-| Passages/jour | Calculé automatiquement (ceiling division) |
-
-**Calcul distribution**
-```
-passages_par_jour = ceil(passages_total / nombre_jours)
-```
-Exemple : 5 passages sur 7 jours = 1 passage/jour (arrondi supérieur pour ne perdre aucun passage)
-
-### Fillers automatiques
-
-À la création d'un écran, un filler par défaut est généré automatiquement :
-- Image avec QR code de réservation
-- Texte "Votre publicité ici"
-- Dimensions adaptées à l'écran
-- Peut être remplacé ou désactivé
-
-### Actions rapides du tableau de bord
-
-Le tableau de bord des établissements inclut une section "Actions rapides" permettant d'effectuer des opérations courantes directement :
-
-**Fonctionnalités**
-| Action | Description |
-|--------|-------------|
-| Voir Playlist | Accès direct à la playlist de l'écran sélectionné |
-| Voir OnlineTV | Accès aux chaînes IPTV de l'écran |
-| Lancer Playlist | Bascule l'écran en mode playlist |
-| Lancer OnlineTV | Bascule l'écran en mode TV |
-
-**Sélecteur d'écran**
-- Lorsqu'un établissement possède plusieurs écrans, un menu déroulant permet de choisir l'écran cible
-- Les liens et formulaires s'adaptent dynamiquement à l'écran sélectionné
-- L'état de l'écran (online/offline) est affiché en temps réel
-
-### Statistiques
-
-Données disponibles par établissement :
-- Nombre de diffusions par contenu
-- Revenus par écran, jour, période
-- Revenus par devise
-- Uptime des écrans
-- Temps moyen de validation
-- Réservations en attente
-
-### Sélection Pays et Ville
-
-La plateforme intègre un système complet de sélection géographique :
-
-**Données mondiales exhaustives**
-- 208 pays avec codes ISO, drapeaux et devises par défaut
-- Plus de 4 600 villes réparties sur tous les continents
-- Moyenne de 22 villes par pays (minimum 1, maximum 30)
-- Chargement dynamique des villes via API AJAX
-
-**Fonctionnalités**
-- Sélection du pays lors de la création d'organisation
-- Chargement automatique des villes correspondantes
-- Recherche avec autocomplétion
-- Support multilingue (noms en français)
-
-**Couverture géographique**
-| Continent | Pays | Villes (moy.) |
-|-----------|------|---------------|
-| Afrique | 54+ | 20-30 |
-| Europe | 45+ | 20-30 |
-| Asie | 48+ | 20-30 |
-| Amérique | 35+ | 20-30 |
-| Océanie | 14+ | 15-20 |
-
-## Roadmap
-
-### Facturation hebdomadaire
-
-Le système génère des factures chaque semaine via plusieurs mécanismes :
-
-**Processus de facturation**
-- Génération on-demand lorsqu'une organisation accède à la page "Factures"
-- Endpoint cron disponible (`/billing/cron/generate-invoices`) pour automatisation externe
-- Une facture par organisation avec tous les écrans combinés
-- Calcul automatique de la commission basée sur le taux de l'organisation
-
-**Configuration cron externe (recommandé)**
-```bash
-# Ajouter au crontab pour générer les factures chaque dimanche à 23h
-59 23 * * 0 curl -X POST https://votre-domaine.com/billing/cron/generate-invoices
-```
-
-**Statuts des factures**
-
-| Statut | Description |
-|--------|-------------|
-| pending | En attente de paiement |
-| paid | Payé (preuve uploadée) |
-| validated | Validé par superadmin |
-| cancelled | Annulé |
-
-**Preuves de paiement**
-- Upload par l'organisation (PDF, PNG, JPG)
-- Validation par le superadmin
-- Historique conservé
-
-**Calculs**
-- Commission = Revenu brut × Taux commission organisation
-- TVA calculée sur la commission (taux plateforme configurable)
-- Total = Commission + TVA
-
-### Contenu Publicitaire (Ad Content) - Mass Targeting
-
-Le superadmin peut créer des campagnes publicitaires ciblant plusieurs écrans simultanément :
-
-**Création de campagne**
-
-| Étape | Description |
-|-------|-------------|
-| 1. Informations | Nom, annonceur, description |
-| 2. Type de contenu | Image ou vidéo |
-| 3. Durée créneau | 10s, 15s, 20s, 30s, 60s |
-| 4. Ciblage géographique | Pays, ville, établissement ou écran |
-| 5. Dates et heures | Période de diffusion avec datetime-local |
-| 6. Passages minimum | Filtrage des écrans par disponibilité |
-| 7. Sélection écrans | Liste des écrans éligibles avec tout sélectionner |
-| 8. Upload média | Image ou vidéo |
-| 9. Tarification | Prix total, devise, commission |
-
-**Ciblage multi-niveaux**
-
-| Type | Description | Filtrage supplémentaire |
-|------|-------------|------------------------|
-| Pays | Tous les écrans d'un pays | Type établissement (payant/gratuit/tous) |
-| Ville | Tous les écrans d'une ville | Type établissement |
-| Établissement | Tous les écrans d'un établissement | - |
-| Écran | Un écran spécifique | - |
-
-**Calcul de disponibilité**
-- Utilise le même algorithme que les réservations clients
-- Filtre les écrans ayant au moins le nombre de passages minimum requis
-- Affiche le résumé : nombre d'écrans, passages disponibles, jours
-
-**Facturation des campagnes**
-- Prix total de la campagne configurable
-- Commission établissements configurable (par défaut selon paramètres)
-- Génération de factures par établissement participant
-- Multi-devise selon les établissements ciblés
-
-**Statuts des campagnes**
-
-| Statut | Description |
-|--------|-------------|
-| pending | En attente de validation |
-| active | Campagne en cours de diffusion |
-| completed | Campagne terminée |
-| cancelled | Campagne annulée |
-
-## Roadmap
-
-### Phase 2 (à venir)
-
-- [ ] Intégration paiement Stripe multi-devise
-- [ ] Notifications email automatiques
-- [ ] WebSocket temps réel pour état écrans
-- [ ] Dashboard client avec historique
-- [ ] Rapports PDF téléchargeables
-- [ ] Overlay type image (logo fixe) pour établissements
-
-### Phase 3 (futur)
-
-- [ ] Marketplace inter-établissements
-- [ ] API publique pour intégrations
-- [ ] Application mobile player
-- [ ] Analytics avancés
-- [ ] Multi-langue interface
-- [ ] Campagnes programmées multi-écrans
-
-## Limites techniques
-
-| Paramètre | Limite |
-|-----------|--------|
-| Taille max fichier | Configurable par écran (défaut 50 Mo, max 200 Mo) |
-| Formats images | JPEG, PNG, GIF, WebP |
-| Formats vidéos | MP4, WebM, MOV |
-| Durée vidéo | Doit correspondre au slot choisi |
-| Résolution | Doit correspondre exactement à l'écran |
-| Devises supportées | EUR, MAD, XOF, TND (+ 200 autres via pays) |
-| Pays supportés | 208 pays (couverture mondiale) |
-| Villes par pays | 1-30 (moyenne 22) |
-| Diffusions simultanées | Illimité |
-| Ciblages par diffusion | 1 (pays, ville, établissement ou écran) |
+- Compatible avec toutes les imprimantes
+
+## Facturation hebdomadaire
+
+Le système de facturation fonctionne par cycle hebdomadaire (lundi à dimanche).
+
+**Génération**
+- Automatique lorsqu'un établissement accède à sa page de factures
+- Ou via un endpoint pour automatisation externe
+
+**Contenu de la facture**
+- Période couverte
+- Revenus bruts de l'établissement
+- Commission calculée (revenus × taux de commission)
+- TVA sur la commission
+- Total à reverser
+
+**Workflow**
+1. Facture générée avec statut "en attente"
+2. L'établissement uploade sa preuve de paiement
+3. L'opérateur vérifie et valide
+4. La facture passe en statut "validée"
+
+## Contenu publicitaire de l'opérateur (Ad Content)
+
+L'opérateur peut créer des campagnes publicitaires ciblées.
+
+**Création**
+- Nom et description de la campagne
+- Sélection des écrans cibles (par pays, ville, établissement ou écran)
+- Upload du contenu (image ou vidéo)
+- Dates de début et fin
+- Nombre de diffusions quotidiennes
+
+**Suivi**
+- Statistiques de diffusion par écran
+- Facturation aux annonceurs
+- Export des rapports
+
+**Contrôle par l'établissement**
+- Chaque établissement peut désactiver cette fonctionnalité
+- Dans ce cas, les contenus de l'opérateur ne s'affichent pas sur ses écrans
+
+## Données géographiques
+
+Le fichier `utils/world_data.py` contient une base de données géographique complète :
+
+- 208 pays avec code ISO, drapeau, continent et devise par défaut
+- Plus de 4 600 villes (1 à 30 par pays, moyenne de 22)
+- Couverture de tous les continents
+
+L'API `/api/cities/<country_code>` retourne la liste des villes pour un pays donné, utilisée pour les formulaires avec autocomplétion.
+
+## Fonctionnalités prévues
+
+Ces fonctionnalités ne sont pas encore disponibles mais sont planifiées :
+
+- Paiement en ligne (intégration Stripe)
+- Notifications email (validation, refus, rapports)
+- Liste noire de contenus
+- Audit logs (traçabilité des actions)

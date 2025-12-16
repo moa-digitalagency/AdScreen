@@ -1,211 +1,287 @@
-ALGORITHME DE RESERVATION ET PLAYLIST
-=====================================
+# Algorithmes métier
 
-LOGIQUE PRINCIPALE
-------------------
-1. PRIX BASE : Établissement fixe PRIX_PAR_MINUTE (ex: 2€/min) pour son écran
-2. SLOTS : Établissement crée plages en SECONDES (10s, 15s, 30s) pour image/vidéo
-3. PRIX_AUTO : Prix_slot = (duree_secondes / 60) * prix_par_minute
-   Exemple: slot 15s à 2€/min = (15/60)*2 = 0.50€ par diffusion
+Ce document explique la logique de calcul utilisée par Shabaka AdScreen pour les prix, les disponibilités et la diffusion des contenus.
 
-4. RESERVATION CLIENT :
-   - Remplit infos (nom, email, tel)
-   - Choisit TYPE (image/vidéo) + SLOT (15s)
-   - Sélectionne DATES (ex: 1-5 décembre)
-   - Système ANALYSE playlist existante → affiche DISPOS LIBRES
+## Calcul des prix
 
-5. CALCUL DISPONIBILITE :
-   - Pour chaque jour de la période :
-     - Divise en PERIODES (matin:6-12h, midi:12-14h, soir:18-22h etc)
-     - Compte secondes LIBRES par période (60min*60s = 3600s disponibles)
-     - Soustrait slots RESERVES existants
-     - Affiche slots libres : "15s dispo: 240 fois dans matin"
+### Principe de base
 
-6. CHOIX CLIENT :
-   - "Je veux 100 passages de 15s dans matin 1-5 déc"
-   - COUT_TOTAL = 100 * 0.50€ = 50€
-   - Système RESERVE 100*15s = 1500 secondes EQUITABLEMENT répartis
+Chaque écran a un **prix par minute** défini par l'établissement. Tout le reste en découle.
 
-7. REPARTITION EQUITABLE :
-   - 5 jours = 100 passages → 20 passages/jour
-   - Matin = 6h = 21600s → 20*15s = 300s occupés (1.4% capacité)
-   - Algo place les 20 passages uniformément dans les 6h (toutes les 18min)
+**Exemple** : Un écran à 2€/minute
 
-8. PROCHAINES RESERVATIONS :
-   - Recalcule dispos en IGNORANT les 1500s réservés
-   - Ex: matin jour1 : 21600s - 300s = 21300s libres → 1420 slots 15s dispo
+### Créneaux horaires
 
-==========================
-Règle pour lecteur de visionnage
-==========================
+Les créneaux (time slots) sont définis en secondes. Le prix d'un créneau se calcule ainsi :
 
-- Si c'est une image, elle est afficher dans la durer du slot choisie
-- Si c'est une vidéo, meme si elle n'a pas les secondes totales réservées (exemple video est de 13s mais slot réservé est de 15s, le lecteur va lire la video et garder le dernier frame a l’écran jusqu'a pour 2s supplémentaire pour atteindre 15s réglementaire ainsi de suite.
+```
+Prix du créneau = Prix par minute × (Durée en secondes / 60)
+```
 
-=================
-EXEMPLE CONCRET
-=================
-ÉCRAN : Prix 2€/min, slot 15s → 0.50€/diffusion
-CLIENT1 : 100 passages matin 1-5 déc → 1500s → 50€
+| Durée | Calcul | Prix |
+|-------|--------|------|
+| 10 secondes | 2€ × (10/60) | 0,33€ |
+| 15 secondes | 2€ × (15/60) | 0,50€ |
+| 30 secondes | 2€ × (30/60) | 1,00€ |
+| 60 secondes | 2€ × (60/60) | 2,00€ |
 
-Jour 1 matin (6h=21600s):
-- Places 20 slots 15s → 300s occupés
-- Positions: 6h05, 6h23, 6h41, 6h59... toutes les 18min
+### Multiplicateurs de période
 
-CLIENT2 arrive après :
-- Matin jour1: 21600s - 300s = 21300s libres
-- 21300/15 = 1420 slots 15s DISPONIBLES
+Chaque période de la journée a un multiplicateur qui ajuste le prix :
 
-=================
-MODE ONLINETV
-=================
+| Période | Horaires | Multiplicateur | Logique |
+|---------|----------|----------------|---------|
+| Matin | 06h-12h | ×0,8 | Moins d'affluence |
+| Midi | 12h-14h | ×1,5 | Heure de pointe |
+| Après-midi | 14h-18h | ×1,0 | Tarif de référence |
+| Soir | 18h-22h | ×1,8 | Prime time |
+| Nuit | 22h-06h | ×0,5 | Tarif réduit |
 
-LOGIQUE ONLINETV
-----------------
-1. ACTIVATION : L'établissement active OnlineTV et configure une URL M3U
-2. PAR ÉCRAN : Chaque écran peut avoir OnlineTV activé/désactivé
-3. BASCULE : Mode "playlist" (défaut) ou "iptv" (OnlineTV)
-4. OVERLAYS : Restent actifs en mode OnlineTV (bandeaux, diffusions)
+**Prix avec période** = Prix du créneau × Multiplicateur
 
-FLUX TECHNIQUE
---------------
-1. Établissement configure URL M3U (liste de chaînes)
-2. Service iptv_service.py parse le M3U → liste de chaînes
-3. Manager sélectionne une chaîne pour un écran
-4. Player détecte mode "iptv" via API playlist
-5. HLS.js charge le stream M3U/HLS
-6. Overlays continuent à s'afficher par-dessus le stream
+Exemple : Créneau de 15 secondes (0,50€) en soirée (×1,8) = 0,90€
 
-PRIORITÉS EN MODE ONLINETV
---------------------------
-- Le stream OnlineTV remplace la playlist
-- Les overlays locaux (établissement) restent actifs
-- Les diffusions (broadcasts) restent actives
-- Les heartbeats continuent normalement
+### Prix total d'une réservation
 
-FALLBACK
---------
-- Si stream échoue → HLS.js tente récupération automatique
-- Si HLS échoue → mpegts.js prend le relais pour flux MPEG-TS
-- Si récupération échoue → affichage message erreur
-- Possibilité de repasser en mode playlist manuellement
+```
+Prix total = Prix avec période × Nombre de diffusions
+```
 
-=================
-STREAMING ADAPTATIF (ABR)
-=================
+Exemple : 100 diffusions à 0,90€ = 90€
 
-LOGIQUE ABR (Décembre 2025)
----------------------------
-Le streaming OnlineTV utilise désormais l'Adaptive Bitrate Streaming (ABR) comme YouTube/Netflix :
+## Calcul des disponibilités
 
-1. ESTIMATION BANDE PASSANTE :
-   - Algorithme EWMA (Exponentially Weighted Moving Average)
-   - Coefficients Fast (3.0) et Slow (9.0) pour réactivité optimale
-   - Mesure continue pendant le téléchargement des segments
+### Capacité d'une période
 
-2. SÉLECTION QUALITÉ AUTOMATIQUE :
-   - startLevel: -1 (auto, pas de niveau forcé)
-   - abrBandWidthFactor: 0.95 (utilise 95% de la bande passante estimée)
-   - abrBandWidthUpFactor: 0.7 (monte en qualité à 70% du seuil)
+Pour calculer combien de diffusions sont disponibles, on part du temps total de la période.
 
-3. GESTION DES BUFFERS :
-   - backBufferLength: 60s (tampon arrière)
-   - maxBufferLength: 30s (tampon avant standard)
-   - maxMaxBufferLength: 120s (tampon avant maximum)
-   - maxBufferSize: 60MB
+**Exemple** : Période "matin" de 6h à 12h = 6 heures = 21 600 secondes
 
-4. RÉCUPÉRATION ERREURS :
-   - fragLoadingMaxRetry: 8 (tentatives par fragment)
-   - fragLoadingRetryDelay: 500ms (délai entre tentatives)
-   - manifestLoadingMaxRetry: 6
-   - levelLoadingMaxRetry: 6
+```
+Nombre de créneaux disponibles = Temps total / Durée du créneau
+```
 
-COMPORTEMENT ABR
-----------------
-| Situation | Action |
-|-----------|--------|
-| Bande passante baisse | Qualité descend automatiquement |
-| Bande passante remonte | Qualité remonte progressivement |
-| Erreur réseau | Retry automatique sans interruption |
-| Fragment manquant | Continue avec qualité inférieure |
+Pour des créneaux de 15 secondes : 21 600 / 15 = 1 440 diffusions possibles
 
-INDICATEUR QUALITÉ
-------------------
-L'indicateur visuel affiche :
-- Résolution actuelle (ex: 720p, 1080p)
-- Badge qualité (FHD/HD/SD/LD/LOW)
-- Barre de bande passante (vert=bon, jaune=moyen, rouge=faible)
-- Débit en Mbps
+### Impact des réservations existantes
 
-NIVEAUX QUALITÉ
----------------
-| Badge | Résolution | Débit typique |
-|-------|------------|---------------|
-| FHD | 1080p+ | 4+ Mbps |
-| HD | 720p | 2-4 Mbps |
-| SD | 480p | 1-2 Mbps |
-| LD | 360p | 0.5-1 Mbps |
-| LOW | <360p | <0.5 Mbps |
+Quand une réservation est faite, on soustrait le temps occupé :
 
-AUDIO
------
-- Son activé par défaut sur tous les flux
-- État audio synchronisé entre vidéo et IPTV
-- Touche 'M' pour basculer mute/unmute
-- Bouton audio visible en bas à droite du player
+```
+Créneaux restants = (Temps total - Temps réservé) / Durée du créneau
+```
 
-=================
-CONTRÔLE AUDIO PLAYER
-=================
+Exemple :
+- Période matin : 21 600 secondes
+- Réservation existante : 100 × 15 secondes = 1 500 secondes
+- Temps restant : 21 600 - 1 500 = 20 100 secondes
+- Créneaux disponibles : 20 100 / 15 = 1 340 diffusions
 
-LOGIQUE AUDIO
--------------
-1. ÉTAT INITIAL : Audio activé (muted = false)
-2. SYNCHRONISATION : État partagé entre videoEl et iptvEl
-3. BASCULE : Touche 'M' ou clic sur bouton toggle mute/unmute
-4. PERSISTANCE : État conservé lors du changement de mode (playlist ↔ TV)
+### Calcul sur plusieurs jours
 
-IMPLÉMENTATION
---------------
-1. Variable globale `isMuted` gère l'état
-2. Fonction `updateMuteState()` applique l'état aux deux éléments
-3. EventListener sur keydown pour touche 'M'
-4. Bouton avec icône dynamique (fa-volume-up / fa-volume-mute)
+Pour une réservation sur plusieurs jours, on calcule les disponibilités pour chaque jour et période, puis on somme.
 
-SYNCHRONISATION VIDEO/IPTV
---------------------------
-- Quand on bascule de playlist → IPTV : l'état mute est appliqué au stream
-- Quand on bascule de IPTV → playlist : l'état mute est appliqué à la vidéo
-- L'icône du bouton reflète toujours l'état courant
+```
+Disponibilité totale = Σ (disponibilité par jour × nombre de jours)
+```
 
-RACCOURCIS CLAVIER
-------------------
-| Touche | Action |
-|--------|--------|
-| F11 | Mode plein écran |
-| M | Mute / Unmute |
-| Espace | Pause / Play |
+## Répartition équitable des diffusions
 
-=================
-CONTRÔLE PUBLICITÉS
-=================
+Quand un client réserve 100 diffusions sur 5 jours, on ne les met pas toutes le premier jour. On les répartit équitablement.
 
-LOGIQUE ALLOW_AD_CONTENT
-------------------------
-1. Chaque établissement a un paramètre `allow_ad_content` (défaut: TRUE)
-2. Accessible via les paramètres de l'établissement (toggle)
-3. Affecte uniquement les contenus publicitaires du superadmin (AdContent)
+### Algorithme de distribution
 
-FILTRAGE
---------
-- Si allow_ad_content = TRUE (ou NULL) → Publicités superadmin affichées
-- Si allow_ad_content = FALSE → Publicités superadmin filtrées
+```
+Diffusions par jour = ceil(Diffusions totales / Nombre de jours)
+```
 
-CIBLAGE CONCERNÉ
-----------------
-- Ciblage par pays : vérifie allow_ad_content de chaque organisation
-- Ciblage par ville : vérifie allow_ad_content de chaque organisation
-- Ciblage par organisation : vérifie allow_ad_content de l'organisation ciblée
-- Ciblage par écran : vérifie allow_ad_content de l'organisation de l'écran
+La fonction `ceil` (arrondi supérieur) garantit qu'on ne perd aucune diffusion.
 
-NOTE: N'affecte pas les overlays, broadcasts et contenus internes de l'établissement
+Exemple :
+- 100 diffusions sur 7 jours
+- 100 / 7 = 14,28
+- ceil(14,28) = 15 diffusions par jour
+- 15 × 7 = 105 → les 5 dernières diffusions ne seront pas utilisées (le système s'arrête à 100)
+
+### Espacement des diffusions
+
+Dans une période donnée, les diffusions sont espacées uniformément.
+
+```
+Intervalle = Durée de la période / Nombre de diffusions
+```
+
+Exemple :
+- Période matin : 6 heures = 21 600 secondes
+- 15 diffusions de 15 secondes
+- Intervalle : 21 600 / 15 = 1 440 secondes = 24 minutes
+
+Les diffusions sont placées à 6h00, 6h24, 6h48, 7h12, etc.
+
+## Lecture des contenus
+
+### Ordre de la playlist
+
+La playlist est triée par priorité décroissante :
+
+| Type | Priorité | Source |
+|------|----------|--------|
+| Diffusions opérateur | 200 | Broadcasts avec override |
+| Contenus payants | 100 | Réservations clients |
+| Contenus internes | 80 | Établissement |
+| Contenus publicitaires opérateur | 60 | AdContent |
+| Fillers | 20 | Générés automatiquement |
+
+À priorité égale, l'ordre est déterminé par la date de création.
+
+### Durée d'affichage
+
+**Images** : Affichées pendant la durée du créneau réservé (10, 15 ou 30 secondes).
+
+**Vidéos** : Lues intégralement. Si la vidéo est plus courte que le créneau, la dernière image reste affichée jusqu'à atteindre la durée totale.
+
+Exemple : Vidéo de 13 secondes dans un créneau de 15 secondes → 13 secondes de vidéo + 2 secondes sur la dernière image.
+
+### Épuisement des diffusions
+
+Chaque réservation a un quota de diffusions. À chaque passage :
+
+1. Le player signale la diffusion au serveur
+2. Le compteur de diffusions effectuées est incrémenté
+3. Quand le quota est atteint, le contenu est retiré de la playlist
+4. Le serveur répond `exhausted: true` pour confirmer
+
+## Mode OnlineTV
+
+Quand le mode OnlineTV est activé pour un écran :
+
+1. Le player détecte `mode: "iptv"` dans la réponse de l'API playlist
+2. Il arrête la lecture de la playlist
+3. Il démarre le flux HLS configuré
+4. Les overlays (locaux et broadcasts) restent affichés par-dessus
+5. Les heartbeats continuent normalement
+
+### Fallback
+
+Si le flux HLS échoue :
+1. HLS.js tente une récupération automatique (8 essais)
+2. Si HLS échoue, mpegts.js prend le relais pour les flux MPEG-TS
+3. Si tout échoue, un message d'erreur s'affiche
+4. L'établissement peut repasser en mode playlist manuellement
+
+## Streaming adaptatif (ABR)
+
+Le player OnlineTV utilise l'Adaptive Bitrate Streaming pour ajuster la qualité vidéo en temps réel.
+
+### Estimation de la bande passante
+
+L'algorithme EWMA (Exponentially Weighted Moving Average) estime la bande passante disponible :
+
+```
+Nouvelle estimation = α × Mesure actuelle + (1-α) × Estimation précédente
+```
+
+Deux coefficients sont utilisés :
+- Fast (α = 0.33) pour réagir rapidement aux changements
+- Slow (α = 0.11) pour une moyenne stable
+
+### Sélection de la qualité
+
+Le player choisit la qualité maximale qui tient dans 95% de la bande passante estimée.
+
+Pour monter en qualité, il faut atteindre 70% du seuil supérieur (pour éviter les oscillations).
+
+### Buffers
+
+| Paramètre | Valeur | Rôle |
+|-----------|--------|------|
+| Buffer arrière | 60 secondes | Permet de revenir en arrière |
+| Buffer avant | 30-120 secondes | Anticipe les variations de débit |
+| Taille max | 60 Mo | Limite la consommation mémoire |
+
+### Récupération d'erreurs
+
+En cas d'erreur réseau :
+- 8 tentatives par fragment
+- Délai de 500 ms entre les tentatives
+- Si un fragment échoue, passage à une qualité inférieure
+- Pas d'interruption visible pour l'utilisateur
+
+### Indicateur de qualité
+
+L'indicateur affiche :
+- La résolution actuelle (720p, 1080p, etc.)
+- Un badge de qualité (FHD, HD, SD, LD, LOW)
+- Une barre colorée selon la bande passante :
+  - Vert : >5 Mbps
+  - Jaune : 2-5 Mbps
+  - Orange : 1-2 Mbps
+  - Rouge : <1 Mbps
+
+## Contrôle de l'audio
+
+### État par défaut
+
+L'audio est **activé** par défaut. C'est un choix pour les établissements où le son fait partie de l'expérience.
+
+### Synchronisation
+
+L'état mute/unmute est partagé entre :
+- Les vidéos de la playlist
+- Le flux IPTV
+
+Quand on bascule de la playlist vers l'IPTV (ou inversement), l'état audio est conservé.
+
+### Contrôles
+
+- Bouton visuel en bas à droite de l'écran
+- Touche M pour basculer mute/unmute
+- L'icône change selon l'état (volume-up / volume-mute)
+
+## Contrôle des publicités opérateur
+
+Les établissements peuvent refuser les publicités diffusées par l'opérateur (AdContent).
+
+### Paramètre `allow_ad_content`
+
+- Par défaut : `true` (opt-in)
+- Modifiable dans les paramètres de l'établissement
+- Affecte uniquement les contenus AdContent, pas les overlays ni les broadcasts
+
+### Filtrage
+
+Quand la playlist est générée :
+1. On vérifie si l'établissement autorise les publicités opérateur
+2. Si non, les contenus AdContent ciblant cet établissement (ou son pays/ville) sont exclus
+3. Les overlays et broadcasts continuent de s'afficher
+
+### Ciblage concerné
+
+Le paramètre `allow_ad_content` est vérifié pour tous les types de ciblage :
+- Ciblage par pays → Vérifié pour chaque établissement du pays
+- Ciblage par ville → Vérifié pour chaque établissement de la ville
+- Ciblage par établissement → Vérifié pour l'établissement ciblé
+- Ciblage par écran → Vérifié pour l'établissement propriétaire de l'écran
+
+## Contenus internes
+
+Les établissements peuvent créer leurs propres contenus promotionnels.
+
+### Programmation
+
+Comme pour les réservations clients :
+- Date de début et de fin
+- Heures de début et de fin (08h-22h par défaut)
+- Nombre total de passages
+
+### Distribution
+
+```
+Passages par jour = ceil(Passages totaux / Nombre de jours)
+```
+
+Les passages sont répartis équitablement sur la période choisie.
+
+### Priorité
+
+Les contenus internes ont une priorité de 80, entre les contenus payants (100) et les fillers (20). Ils s'affichent donc régulièrement, mais les publicités payantes restent prioritaires.

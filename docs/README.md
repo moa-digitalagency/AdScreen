@@ -1,175 +1,102 @@
-# Shabaka AdScreen
+# Documentation Shabaka AdScreen
 
-Plateforme SaaS de gestion d'écrans publicitaires numériques (DOOH - Digital Out-Of-Home).
+Bienvenue dans la documentation de Shabaka AdScreen, la plateforme de monétisation d'écrans publicitaires.
 
-## Vue d'ensemble
+## Qu'est-ce que Shabaka AdScreen ?
 
-Shabaka AdScreen permet aux établissements (cafés, restaurants, centres commerciaux) de monétiser leurs écrans en offrant des créneaux publicitaires à des annonceurs locaux. La plateforme prend en charge plusieurs devises (EUR, MAD, TND, XOF) et propose un système complet de réservation, validation et diffusion de contenus.
+Shabaka AdScreen permet aux commerces de transformer leurs écrans en source de revenus. Un restaurant, un bar ou un centre commercial peut proposer de l'espace publicitaire à des annonceurs locaux, qui réservent et paient directement via un QR code.
 
-## Caractéristiques principales
+La plateforme gère tout : la réservation, la validation des contenus, la diffusion, la facturation. Elle fonctionne dans 208 pays avec 4 devises natives (Euro, Dirham marocain, Franc CFA, Dinar tunisien).
 
-### Gestion Multi-devises
-- **EUR** (Euro) - France, Belgique, Allemagne, etc.
-- **MAD** (Dirham Marocain) - Maroc
-- **TND** (Dinar Tunisien) - Tunisie
-- **XOF** (Franc CFA) - Sénégal, Côte d'Ivoire, Mali, etc.
+## Organisation de la documentation
 
-### Types d'écrans
-- Écrans paysage (16:9) : 1920x1080, 3840x2160
-- Écrans portrait (9:16) : 1080x1920
-- Résolutions personnalisées
+### Pour comprendre le produit
 
-### Créneaux horaires
-- Images : 10s, 15s, 30s
-- Vidéos : 15s, 30s, 60s
-- Tarification dynamique par période (matin, midi, après-midi, soir, nuit)
+**[Présentation commerciale](COMMERCIAL_PRESENTATION.md)** - Le pitch complet pour présenter Shabaka AdScreen à des investisseurs ou des clients potentiels. Vision, problèmes résolus, avantages concurrentiels, modèle économique.
 
-### Système de diffusion (Broadcasts)
-- Ciblage multi-niveaux : pays, ville, établissement, écran
-- Types d'overlay : bandeau texte, image fixe, coin logo
-- Modes : immédiat ou programmé avec récurrence
-- Priorités configurables (20-200)
-- Fuseaux horaires internationaux (25+ zones)
+**[Guide des fonctionnalités](features.md)** - La liste exhaustive de tout ce que sait faire la plateforme, organisée par type d'utilisateur (opérateur, établissement, annonceur, écran).
 
-### Mode OnlineTV (IPTV)
-- Support M3U/M3U8 et flux HLS via HLS.js
-- Fallback MPEG-TS avec mpegts.js
-- Bascule instantanée playlist/TV
-- Overlays actifs pendant la diffusion TV
-- Contrôle audio complet (mute/unmute)
+### Pour utiliser la plateforme
 
-### Système de Player
-- Authentification par code unique et mot de passe
-- Playlist dynamique avec rafraîchissement automatique
-- Overlay système : bandeaux défilants, images, logos en coin
-- Heartbeat automatique pour monitoring
-- Mode plein écran (F11)
-- Contrôle audio avec raccourci clavier (M)
-- Support vidéo et streaming IPTV avec son
+**[Comptes de démonstration](demo_accounts.md)** - Les identifiants de test et les scénarios pour explorer chaque interface. Indispensable pour une première prise en main.
 
-### Établissements gratuits
-- Mode gratuit disponible pour établissements partenaires
-- Accès limité : contenus internes et overlays uniquement
-- Pas de réservations clients ni de facturation
+**[Algorithmes métier](Algo.md)** - Comment sont calculés les prix, les disponibilités, la répartition des diffusions. Utile pour comprendre la logique commerciale.
 
-### Validation des contenus
-- Vérification automatique des résolutions
-- Support formats : JPEG, PNG, GIF, WebP, MP4, WebM, MOV
-- Validation durée des vidéos
-- Workflow d'approbation/rejet
+### Pour déployer et maintenir
 
-### Facturation automatisée
-- Cycle hebdomadaire (lundi à dimanche)
-- Commission configurable par établissement
-- Workflow de preuve de paiement
-- Export PDF des factures
+**[Guide de déploiement](deployment.md)** - Installation sur Replit ou un serveur classique, configuration, maintenance, dépannage.
 
-## Documentation
+**[Déploiement VPS](VPS_DEPLOYMENT.md)** - Instructions spécifiques pour installer l'application sur un serveur privé virtuel avec systemd et Nginx.
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](architecture.md) | Structure technique et diagrammes |
-| [Fonctionnalités](features.md) | Liste détaillée des fonctionnalités |
-| [Algorithme](Algo.md) | Logique métier détaillée |
-| [Comptes démo](demo_accounts.md) | Données de test et scénarios |
-| [Déploiement](deployment.md) | Guide d'installation et configuration |
-| [Présentation commerciale](COMMERCIAL_PRESENTATION.md) | Pitch et argumentaire commercial |
+### Pour développer
 
-## Structure du projet
+**[Architecture technique](architecture.md)** - Structure du code, modèle de données, flux d'information. Le point d'entrée pour les développeurs.
 
-```
-shabaka-adscreen/
-├── main.py                 # Point d'entrée
-├── app.py                  # Configuration Flask
-├── init_db.py              # Initialisation base de données
-├── init_db_demo.py         # Données de démonstration
-├── models/                 # Modèles SQLAlchemy
-│   ├── user.py             # Utilisateurs (super-admin, admin, managers)
-│   ├── organization.py     # Établissements
-│   ├── screen.py           # Écrans
-│   ├── reservation.py      # Réservations clients
-│   ├── broadcast.py        # Diffusions centralisées
-│   ├── overlay.py          # Overlays locaux
-│   ├── online_tv.py        # Chaînes TV et streaming
-│   ├── invoice.py          # Factures
-│   └── ...
-├── routes/                 # Routes Flask
-│   ├── admin/              # Interface super-admin
-│   ├── org/                # Interface établissement
-│   ├── client/             # Interface annonceur
-│   ├── player/             # API et interface player
-│   └── billing/            # Facturation
-├── services/               # Services métier
-│   ├── playlist_service.py # Génération playlists
-│   └── broadcast_service.py # Logique broadcasts
-├── templates/              # Templates Jinja2
-│   ├── admin/              # Templates admin
-│   ├── org/                # Templates établissement
-│   ├── client/             # Templates client
-│   └── player/             # Templates player
-├── static/                 # Fichiers statiques
-│   ├── css/                # Styles
-│   ├── js/                 # JavaScript
-│   ├── uploads/            # Fichiers uploadés
-│   │   ├── contents/       # Contenus publicitaires
-│   │   ├── fillers/        # Contenus de remplissage
-│   │   ├── internal/       # Contenus internes
-│   │   └── broadcasts/     # Contenus diffusions
-│   └── favicon*.svg        # Favicons par interface
-└── docs/                   # Documentation
-```
+**[API Mobile](API_MOBILE_DOCUMENTATION.md)** - Documentation complète de l'API REST pour intégrer la plateforme dans d'autres applications.
 
-## Technologies
+**[API Mobile sécurisée v1](API_MOBILE_V1_SECURE.md)** - La version JWT de l'API avec authentification par tokens et rate limiting.
 
-| Composant | Technologie |
-|-----------|-------------|
-| Backend | Python 3.11, Flask 3.x |
-| Base de données | PostgreSQL 16 (Neon) |
-| ORM | SQLAlchemy 2.x |
-| Authentification | Flask-Login |
-| Frontend | Tailwind CSS, Font Awesome |
-| Player vidéo | HLS.js, mpegts.js |
-| QR Codes | qrcode, Pillow |
-| PDF | ReportLab |
-| Serveur WSGI | Gunicorn |
+**[SDK Player Mobile](PLAYER_MOBILE_SDK.md)** - Guide pour développer un player natif Android ou iOS qui se synchronise avec le backend.
 
-## Accès rapides
+## Les quatre interfaces
 
-| Interface | URL | Utilisateur |
-|-----------|-----|-------------|
-| Super-admin | `/admin` | Administrateur plateforme |
-| Établissement | `/org` | Manager d'établissement |
-| Client | `/book/<code>` | Annonceur (via QR code) |
-| Player | `/player` | Écran de diffusion |
+Shabaka AdScreen expose quatre interfaces distinctes, chacune pour un type d'utilisateur :
 
-## Démarrage rapide
+### Interface opérateur (`/admin`)
 
-```bash
-# Installation des dépendances
-pip install -r requirements.txt
+C'est la console de pilotage. L'opérateur (vous ou votre équipe) y gère :
+- Les établissements et leurs commissions
+- Les diffusions centralisées vers les écrans
+- Les administrateurs et leurs permissions
+- La facturation hebdomadaire
+- Les paramètres globaux (SEO, WhatsApp, maintenance)
 
-# Initialisation de la base de données
-python init_db.py
+### Interface établissement (`/org`)
 
-# (Optionnel) Création des données de démo
-python init_db_demo.py
+Chaque établissement accède à son propre tableau de bord pour :
+- Configurer ses écrans (résolution, prix, types de contenu)
+- Valider ou refuser les contenus soumis par les annonceurs
+- Gérer ses bandeaux défilants et contenus internes
+- Consulter ses statistiques et revenus
+- Accéder à ses factures
 
-# Démarrage du serveur
-gunicorn --bind 0.0.0.0:5000 --reload main:app
-```
+### Interface annonceur (`/book/<code>`)
 
-## Comptes de démonstration
+Les annonceurs accèdent via le QR code de l'écran. Ils peuvent :
+- Voir les caractéristiques et le prix de l'écran
+- Choisir leur créneau (durée, période, nombre de diffusions)
+- Uploader leur contenu (image ou vidéo)
+- Recevoir un reçu (image thermique ou PDF)
+- Suivre le statut de leur réservation
 
-Pour tester la plateforme, utilisez les comptes créés par `init_db_demo.py` :
+### Interface player (`/player`)
 
-| Rôle | Email | Mot de passe |
-|------|-------|--------------|
-| Super-admin | admin@shabaka-adscreen.com | admin123 |
-| Manager | manager@restaurant-paris.fr | demo123 |
-| Player | Code écran + mot de passe | screen123 |
+C'est l'interface de diffusion, affichée sur les écrans publicitaires. Elle :
+- Enchaîne les contenus selon leur priorité
+- Affiche les bandeaux et overlays par-dessus
+- Envoie un signal régulier pour confirmer que l'écran fonctionne
+- Peut basculer en mode TV quand il n'y a pas de publicité
 
-Voir [demo_accounts.md](demo_accounts.md) pour la liste complète.
+## Stack technique
 
-## Licence
+Le backend est en Python avec Flask, SQLAlchemy et PostgreSQL. Le frontend utilise des templates Jinja2 avec Tailwind CSS. Pas de framework JavaScript complexe : les pages sont générées côté serveur.
 
-Propriétaire - Shabaka AdScreen
+Le player utilise HLS.js pour le streaming adaptatif et des Service Workers pour le cache hors ligne.
+
+L'application tourne sur Gunicorn et peut être déployée sur Replit, un VPS classique ou tout environnement compatible Python.
+
+## Premiers pas
+
+1. **Explorer** : Lancez les données de démonstration avec `python init_db_demo.py` et connectez-vous avec les comptes de test
+2. **Comprendre** : Lisez le [guide des fonctionnalités](features.md) pour avoir une vue d'ensemble
+3. **Configurer** : Suivez le [guide de déploiement](deployment.md) pour mettre en production
+4. **Personnaliser** : Consultez l'[architecture technique](architecture.md) pour adapter le code à vos besoins
+
+## Besoin d'aide ?
+
+La documentation couvre l'essentiel, mais si vous bloquez sur un point précis :
+- Vérifiez la section Troubleshooting du [guide de déploiement](deployment.md)
+- Consultez les logs de l'application pour identifier les erreurs
+- Les données de démonstration permettent de tester chaque fonctionnalité isolément
+
+Bonne exploration !
