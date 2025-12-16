@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking
+from services.translation_service import t
 from datetime import datetime, date, time
 import os
 import secrets
@@ -96,17 +97,17 @@ def submit_booking(screen_code):
         calculated_plays = None
     
     if 'file' not in request.files:
-        flash('Veuillez sélectionner un fichier.', 'error')
+        flash(t('flash.select_file'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     
     file = request.files['file']
     
     if not file.filename:
-        flash('Veuillez sélectionner un fichier.', 'error')
+        flash(t('flash.select_file'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     
     if not allowed_file(file.filename, content_type):
-        flash('Format de fichier non supporté.', 'error')
+        flash(t('flash.file_format_not_supported'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     
     slot = TimeSlot.query.filter_by(
@@ -116,7 +117,7 @@ def submit_booking(screen_code):
     ).first()
     
     if not slot:
-        flash('Créneau non disponible.', 'error')
+        flash(t('flash.slot_not_available'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     
     period = TimePeriod.query.get(period_id) if period_id else None
@@ -143,7 +144,7 @@ def submit_booking(screen_code):
         )
         if not valid:
             os.remove(file_path)
-            flash(f'Image non valide: {error}', 'error')
+            flash(t('flash.image_invalid', error=error), 'error')
             return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     else:
         valid, width, height, duration, error = validate_video(
@@ -154,7 +155,7 @@ def submit_booking(screen_code):
         )
         if not valid:
             os.remove(file_path)
-            flash(f'Vidéo non valide: {error}', 'error')
+            flash(t('flash.video_invalid', error=error), 'error')
             return redirect(url_for('booking.screen_booking', screen_code=screen_code))
     
     content = Content(

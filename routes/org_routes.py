@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking, Filler, InternalContent, StatLog, ScreenOverlay
+from services.translation_service import t
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import os
@@ -20,7 +21,7 @@ def org_required(f):
         if current_user.is_superadmin():
             return redirect(url_for('admin.dashboard'))
         if not current_user.organization_id:
-            flash('Vous devez être associé à un établissement.', 'error')
+            flash(t('flash.org_required'), 'error')
             return redirect(url_for('auth.logout'))
         return f(*args, **kwargs)
     return decorated_function
@@ -34,11 +35,11 @@ def paid_org_required(f):
         if current_user.is_superadmin():
             return redirect(url_for('admin.dashboard'))
         if not current_user.organization_id:
-            flash('Vous devez être associé à un établissement.', 'error')
+            flash(t('flash.org_required'), 'error')
             return redirect(url_for('auth.logout'))
         org = current_user.organization
         if not org.is_paid:
-            flash('Cette fonctionnalité n\'est pas disponible pour les établissements gratuits.', 'error')
+            flash(t('flash.feature_not_available_free'), 'error')
             return redirect(url_for('org.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -209,7 +210,7 @@ def settings():
             vat_rate = 0
         
         if not name:
-            flash('Le nom de l\'établissement est obligatoire.', 'error')
+            flash(t('flash.org_name_required'), 'error')
             return render_template('org/settings.html',
                 org=org,
                 currencies=currencies,
@@ -236,7 +237,7 @@ def settings():
         org.allow_ad_content = allow_ad_content
         db.session.commit()
         
-        flash('Paramètres mis à jour avec succès!', 'success')
+        flash(t('flash.settings_updated'), 'success')
         return redirect(url_for('org.settings'))
     
     return render_template('org/settings.html',
@@ -349,7 +350,7 @@ def new_screen():
         
         db.session.commit()
         
-        flash('Écran créé avec succès!', 'success')
+        flash(t('flash.screen_created'), 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
     currency_info = get_currency_by_code(org.currency or 'EUR')
@@ -463,7 +464,7 @@ def edit_screen(screen_id):
             screen.set_password(new_password)
         
         db.session.commit()
-        flash('Écran mis à jour avec succès!', 'success')
+        flash(t('flash.screen_updated'), 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen.id))
     
     currency_info = get_currency_by_code(org.currency or 'EUR')
@@ -501,7 +502,7 @@ def screen_slots(screen_id):
                 db.session.add(slot)
         
         db.session.commit()
-        flash('Créneaux mis à jour avec succès!', 'success')
+        flash(t('flash.slots_updated'), 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     org = current_user.organization
@@ -542,7 +543,7 @@ def screen_periods(screen_id):
                 db.session.add(period)
         
         db.session.commit()
-        flash('Périodes mises à jour avec succès!', 'success')
+        flash(t('flash.periods_updated'), 'success')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     org = current_user.organization
@@ -573,7 +574,7 @@ def screen_fillers(screen_id):
                 elif ext in ['mp4', 'webm', 'mov']:
                     content_type = 'video'
                 else:
-                    flash('Format de fichier non supporté.', 'error')
+                    flash(t('flash.file_format_not_supported'), 'error')
                     return redirect(url_for('org.screen_fillers', screen_id=screen_id))
                 
                 new_filename = f"{secrets.token_hex(8)}_{filename}"
@@ -756,7 +757,7 @@ def screen_internal(screen_id):
                 db.session.add(internal)
                 db.session.commit()
                 
-                flash('Contenu interne ajouté avec succès!', 'success')
+                flash(t('flash.internal_content_added'), 'success')
         
         return redirect(url_for('org.screen_internal', screen_id=screen_id))
     

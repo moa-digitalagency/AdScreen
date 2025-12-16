@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from models import Screen, SiteSetting
 from services.qr_service import generate_enhanced_qr_base64, generate_qr_base64
+from services.translation_service import t
 
 screen_bp = Blueprint('screen', __name__)
 
@@ -41,8 +42,10 @@ def toggle_screen(screen_id):
     screen.is_active = not screen.is_active
     db.session.commit()
     
-    status = "activé" if screen.is_active else "désactivé"
-    flash(f'Écran {status}.', 'success')
+    if screen.is_active:
+        flash(t('flash.screen_activated'), 'success')
+    else:
+        flash(t('flash.screen_deactivated'), 'success')
     return redirect(url_for('org.screen_detail', screen_id=screen_id))
 
 
@@ -57,7 +60,7 @@ def delete_screen(screen_id):
     db.session.delete(screen)
     db.session.commit()
     
-    flash('Écran supprimé.', 'success')
+    flash(t('flash.screen_deleted'), 'success')
     return redirect(url_for('org.screens'))
 
 
@@ -76,7 +79,7 @@ def set_mode(screen_id):
         mode = 'playlist'
     
     if mode == 'iptv' and not screen.iptv_enabled:
-        flash('OnlineTV n\'est pas activé pour cet écran. Activez-le dans les paramètres.', 'error')
+        flash(t('flash.iptv_not_enabled'), 'error')
         if redirect_dashboard:
             return redirect(url_for('org.dashboard'))
         return redirect(url_for('org.screen_iptv', screen_id=screen_id))
@@ -84,8 +87,10 @@ def set_mode(screen_id):
     screen.current_mode = mode
     db.session.commit()
     
-    mode_label = 'OnlineTV' if mode == 'iptv' else 'Playlist'
-    flash(f'Mode {mode_label} activé pour {screen.name}.', 'success')
+    if mode == 'iptv':
+        flash(t('flash.iptv_mode_activated', name=screen.name), 'success')
+    else:
+        flash(t('flash.playlist_mode_activated', name=screen.name), 'success')
     
     if redirect_dashboard:
         return redirect(url_for('org.dashboard'))
@@ -101,7 +106,7 @@ def set_iptv_channel(screen_id):
     ).first_or_404()
     
     if not screen.iptv_enabled:
-        flash('OnlineTV n\'est pas activé pour cet écran.', 'error')
+        flash(t('flash.iptv_not_enabled'), 'error')
         return redirect(url_for('org.screen_detail', screen_id=screen_id))
     
     channel_url = request.form.get('channel_url', '')
@@ -112,5 +117,5 @@ def set_iptv_channel(screen_id):
     screen.current_mode = 'iptv'
     db.session.commit()
     
-    flash(f'Chaîne "{channel_name}" sélectionnée.', 'success')
+    flash(t('flash.channel_selected', name=channel_name), 'success')
     return redirect(url_for('org.screen_iptv', screen_id=screen_id))

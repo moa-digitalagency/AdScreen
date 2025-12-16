@@ -580,6 +580,26 @@
     "user_created": "Utilisateur créé avec succès!",
     "user_updated": "Utilisateur mis à jour avec succès!",
     "user_activated": "Utilisateur activé.",
-    "user_deactivated": "Utilisateur désactivé."
+    "user_deactivated": "Utilisateur désactivé.",
+    "content_name_required": "Le nom du contenu est obligatoire.",
+    "ad_content_created": "Contenu publicitaire \"{name}\" créé avec succès! Référence: {reference}",
+    "ad_content_updated": "Contenu publicitaire \"{name}\" mis à jour avec succès!",
+    "content_paused": "Contenu \"{name}\" mis en pause.",
+    "content_reactivated": "Contenu \"{name}\" réactivé.",
+    "content_activated": "Contenu \"{name}\" activé immédiatement.",
+    "content_deleted": "Contenu \"{name}\" supprimé.",
+    "invoices_active_expired_only": "Les factures ne peuvent être générées que pour les contenus actifs ou expirés.",
+    "invoice_validated_readonly": "Cette facture a été validée et ne peut plus être modifiée.",
+    "billing_not_available_free": "La facturation n'est pas disponible pour les établissements gratuits.",
+    "payment_proof_uploaded": "Preuve de paiement téléchargée avec succès! En attente de validation.",
+    "feature_not_available_free": "Cette fonctionnalité n'est pas disponible pour les établissements gratuits.",
+    "iptv_mode_activated": "Mode OnlineTV activé pour {name}.",
+    "playlist_mode_activated": "Mode Playlist activé pour {name}.",
+    "permission_denied": "Vous n'avez pas accès à cette fonctionnalité.",
+    "manager_email_used": "Cet email gestionnaire est déjà utilisé.",
+    "username_used": "Ce nom d'utilisateur est déjà utilisé.",
+    "image_invalid": "Image non valide: {error}",
+    "video_invalid": "Vidéo non valide: {error}",
+    "channel_selected": "Chaîne \"{name}\" sélectionnée."
   }
 }

@@ -580,6 +580,26 @@
     "user_created": "User created successfully!",
     "user_updated": "User updated successfully!",
     "user_activated": "User activated.",
-    "user_deactivated": "User deactivated."
+    "user_deactivated": "User deactivated.",
+    "content_name_required": "The content name is required.",
+    "ad_content_created": "Advertising content \"{name}\" created successfully! Reference: {reference}",
+    "ad_content_updated": "Advertising content \"{name}\" updated successfully!",
+    "content_paused": "Content \"{name}\" paused.",
+    "content_reactivated": "Content \"{name}\" reactivated.",
+    "content_activated": "Content \"{name}\" activated immediately.",
+    "content_deleted": "Content \"{name}\" deleted.",
+    "invoices_active_expired_only": "Invoices can only be generated for active or expired content.",
+    "invoice_validated_readonly": "This invoice has been validated and can no longer be modified.",
+    "billing_not_available_free": "Billing is not available for free organizations.",
+    "payment_proof_uploaded": "Payment proof uploaded successfully! Awaiting validation.",
+    "feature_not_available_free": "This feature is not available for free organizations.",
+    "iptv_mode_activated": "OnlineTV mode activated for {name}.",
+    "playlist_mode_activated": "Playlist mode activated for {name}.",
+    "permission_denied": "You do not have access to this feature.",
+    "manager_email_used": "This manager email is already in use.",
+    "username_used": "This username is already in use.",
+    "image_invalid": "Invalid image: {error}",
+    "video_invalid": "Invalid video: {error}",
+    "channel_selected": "Channel \"{name}\" selected."
   }
 }

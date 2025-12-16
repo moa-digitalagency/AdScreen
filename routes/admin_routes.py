@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 from app import db
 from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest, Invoice, PaymentProof, Broadcast
+from services.translation_service import t
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from services.currency_service import (
@@ -34,7 +35,7 @@ def superadmin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_superadmin():
-            flash('Accès réservé aux super administrateurs.', 'error')
+            flash(t('flash.superadmin_required'), 'error')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -45,15 +46,15 @@ def admin_required(permission=None):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                flash('Veuillez vous connecter.', 'error')
+                flash(t('flash.please_login'), 'error')
                 return redirect(url_for('auth.login'))
             
             if not current_user.is_admin():
-                flash('Accès réservé aux administrateurs.', 'error')
+                flash(t('flash.admin_required'), 'error')
                 return redirect(url_for('auth.login'))
             
             if permission and not current_user.has_permission(permission):
-                flash('Vous n\'avez pas accès à cette fonctionnalité.', 'error')
+                flash(t('flash.permission_denied'), 'error')
                 return redirect(url_for('admin.dashboard'))
             
             return f(*args, **kwargs)
@@ -406,8 +407,10 @@ def toggle_organization(org_id):
     org.is_active = not org.is_active
     db.session.commit()
     
-    status = "activé" if org.is_active else "désactivé"
-    flash(f'Établissement {status} avec succès.', 'success')
+    if org.is_active:
+        flash(t('flash.org_activated'), 'success')
+    else:
+        flash(t('flash.org_deactivated'), 'success')
     return redirect(url_for('admin.organizations'))
 
 
@@ -435,23 +438,23 @@ def organization_new():
         password = request.form.get('password', '')
         
         if not name or not org_email:
-            flash('Le nom et l\'email sont obligatoires.', 'error')
+            flash(t('flash.name_email_required'), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if not username or not password or len(password) < 6:
-            flash('Le nom d\'utilisateur et un mot de passe (min 6 caractères) sont obligatoires.', 'error')
+            flash(t('flash.username_password_required'), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if Organization.query.filter_by(email=org_email).first():
-            flash('Un établissement avec cet email existe déjà.', 'error')
+            flash(t('flash.org_email_exists'), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if User.query.filter_by(email=manager_email).first():
-            flash('Cet email gestionnaire est déjà utilisé.', 'error')
+            flash(t('flash.manager_email_used'), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         if User.query.filter_by(username=username).first():
-            flash('Ce nom d\'utilisateur est déjà utilisé.', 'error')
+            flash(t('flash.username_used'), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
         
         is_paid = request.form.get('is_paid', '1') == '1'
@@ -488,11 +491,11 @@ def organization_new():
             db.session.add(user)
             db.session.commit()
             
-            flash(f'Établissement "{name}" créé avec succès!', 'success')
+            flash(t('flash.org_created', name=name), 'success')
             return redirect(url_for('admin.organizations'))
         except Exception as e:
             db.session.rollback()
-            flash(f'Erreur lors de la création: {str(e)}', 'error')
+            flash(t('flash.creation_error', error=str(e)), 'error')
             return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
     
     return render_template('admin/organization_form.html', org=None, currencies=currencies, countries=countries)
@@ -518,7 +521,7 @@ def organization_edit(org_id):
         currency = request.form.get('currency', org.currency or 'EUR')
         
         if not name or not email:
-            flash('Le nom et l\'email sont obligatoires.', 'error')
+            flash(t('flash.name_email_required'), 'error')
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
         existing = Organization.query.filter(
@@ -526,7 +529,7 @@ def organization_edit(org_id):
             Organization.id != org_id
         ).first()
         if existing:
-            flash('Un autre établissement avec cet email existe déjà.', 'error')
+            flash(t('flash.org_email_exists'), 'error')
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
         
         is_paid = request.form.get('is_paid', '1') == '1'

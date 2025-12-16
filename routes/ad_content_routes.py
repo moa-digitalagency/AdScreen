@@ -12,6 +12,7 @@ from utils.countries import get_all_countries
 from utils.currencies import get_currency_by_code
 from utils.world_data import WORLD_CITIES
 from services.availability_service import calculate_availability
+from services.translation_service import t
 from sqlalchemy import func, or_
 
 ad_content_bp = Blueprint('ad_content', __name__)
@@ -21,7 +22,7 @@ def superadmin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_superadmin():
-            flash('Accès réservé aux super administrateurs.', 'error')
+            flash(t('flash.superadmin_required'), 'error')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -91,7 +92,7 @@ def create():
         target_org_type = request.form.get('target_org_type', 'all')
         
         if not name:
-            flash('Le nom du contenu est obligatoire.', 'error')
+            flash(t('flash.content_name_required'), 'error')
             return render_template('admin/ad_contents/form.html',
                 ad=None,
                 countries=countries,
@@ -204,7 +205,7 @@ def create():
         db.session.add(ad)
         db.session.commit()
         
-        flash(f'Contenu publicitaire "{name}" créé avec succès! Référence: {ad.reference}', 'success')
+        flash(t('flash.ad_content_created', name=name, reference=ad.reference), 'success')
         return redirect(url_for('ad_content.list_ads'))
     
     return render_template('admin/ad_contents/form.html',
@@ -236,7 +237,7 @@ def edit(ad_id):
         target_org_type = request.form.get('target_org_type', 'all')
         
         if not name:
-            flash('Le nom du contenu est obligatoire.', 'error')
+            flash(t('flash.content_name_required'), 'error')
             return render_template('admin/ad_contents/form.html',
                 ad=ad,
                 countries=countries,
@@ -338,7 +339,7 @@ def edit(ad_id):
         
         db.session.commit()
         
-        flash(f'Contenu publicitaire "{name}" mis à jour avec succès!', 'success')
+        flash(t('flash.ad_content_updated', name=name), 'success')
         return redirect(url_for('ad_content.list_ads'))
     
     return render_template('admin/ad_contents/form.html',
@@ -359,13 +360,13 @@ def toggle(ad_id):
     
     if ad.status == AdContent.STATUS_ACTIVE:
         ad.status = AdContent.STATUS_PAUSED
-        flash(f'Contenu "{ad.name}" mis en pause.', 'info')
+        flash(t('flash.content_paused', name=ad.name), 'info')
     elif ad.status == AdContent.STATUS_PAUSED:
         ad.status = AdContent.STATUS_ACTIVE
-        flash(f'Contenu "{ad.name}" réactivé.', 'success')
+        flash(t('flash.content_reactivated', name=ad.name), 'success')
     elif ad.status == AdContent.STATUS_SCHEDULED:
         ad.status = AdContent.STATUS_ACTIVE
-        flash(f'Contenu "{ad.name}" activé immédiatement.', 'success')
+        flash(t('flash.content_activated', name=ad.name), 'success')
     
     db.session.commit()
     return redirect(url_for('ad_content.list_ads'))
@@ -390,7 +391,7 @@ def delete(ad_id):
     db.session.delete(ad)
     db.session.commit()
     
-    flash(f'Contenu "{name}" supprimé.', 'success')
+    flash(t('flash.content_deleted', name=name), 'success')
     return redirect(url_for('ad_content.list_ads'))
 
 
@@ -514,7 +515,7 @@ def validate_invoice(invoice_id):
     
     db.session.commit()
     
-    flash(f'Facture {invoice.invoice_number} validée.', 'success')
+    flash(t('flash.invoice_validated', number=invoice.invoice_number), 'success')
     return redirect(url_for('ad_content.invoices'))
 
 
@@ -529,7 +530,7 @@ def mark_invoice_paid(invoice_id):
     
     db.session.commit()
     
-    flash(f'Facture {invoice.invoice_number} marquée comme payée.', 'success')
+    flash(t('flash.invoice_marked_paid', number=invoice.invoice_number), 'success')
     return redirect(url_for('ad_content.invoices'))
 
 
@@ -540,12 +541,12 @@ def generate_invoices(ad_id):
     ad = AdContent.query.get_or_404(ad_id)
     
     if ad.status not in [AdContent.STATUS_ACTIVE, AdContent.STATUS_EXPIRED]:
-        flash('Les factures ne peuvent être générées que pour les contenus actifs ou expirés.', 'error')
+        flash(t('flash.invoices_active_expired_only'), 'error')
         return redirect(url_for('ad_content.view', ad_id=ad_id))
     
     screens = ad.get_target_screens()
     if not screens:
-        flash('Aucun écran ciblé par ce contenu.', 'error')
+        flash(t('flash.no_screens_targeted'), 'error')
         return redirect(url_for('ad_content.view', ad_id=ad_id))
     
     orgs = {}

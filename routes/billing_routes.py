@@ -4,6 +4,7 @@ from functools import wraps
 from app import db
 from models import Screen, Booking, Organization, Invoice, PaymentProof, User
 from models.site_setting import SiteSetting
+from services.translation_service import t
 from datetime import datetime, timedelta, date
 from sqlalchemy import func, and_
 import os
@@ -33,7 +34,7 @@ def org_required(f):
         if current_user.is_superadmin():
             return redirect(url_for('admin.dashboard'))
         if not current_user.organization_id:
-            flash('Vous devez être associé à un établissement.', 'error')
+            flash(t('flash.org_required'), 'error')
             return redirect(url_for('auth.logout'))
         return f(*args, **kwargs)
     return decorated_function
@@ -47,11 +48,11 @@ def paid_org_required(f):
         if current_user.is_superadmin():
             return redirect(url_for('admin.dashboard'))
         if not current_user.organization_id:
-            flash('Vous devez être associé à un établissement.', 'error')
+            flash(t('flash.org_required'), 'error')
             return redirect(url_for('auth.logout'))
         org = current_user.organization
         if not org.is_paid:
-            flash('La facturation n\'est pas disponible pour les établissements gratuits.', 'error')
+            flash(t('flash.billing_not_available_free'), 'error')
             return redirect(url_for('org.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
@@ -334,12 +335,12 @@ def regenerate_invoice(invoice_id):
     ).first_or_404()
     
     if invoice.status == Invoice.STATUS_VALIDATED:
-        flash('Cette facture a été validée et ne peut plus être modifiée.', 'error')
+        flash(t('flash.invoice_validated_readonly'), 'error')
         return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
     
     generate_invoice_for_week(org.id, invoice.week_start_date, invoice.week_end_date)
     
-    flash('Facture régénérée avec succès!', 'success')
+    flash(t('flash.invoice_regenerated'), 'success')
     return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
 
 
@@ -355,22 +356,22 @@ def upload_payment_proof(invoice_id):
     ).first_or_404()
     
     if invoice.status == Invoice.STATUS_VALIDATED:
-        flash('Cette facture a déjà été validée.', 'error')
+        flash(t('flash.invoice_already_validated'), 'error')
         return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
     
     if 'proof_file' not in request.files:
-        flash('Aucun fichier sélectionné.', 'error')
+        flash(t('flash.no_file_selected'), 'error')
         return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
     
     file = request.files['proof_file']
     notes = request.form.get('notes', '')
     
     if file.filename == '':
-        flash('Aucun fichier sélectionné.', 'error')
+        flash(t('flash.no_file_selected'), 'error')
         return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
     
     if not allowed_file(file.filename):
-        flash('Type de fichier non autorisé. Formats acceptés: PDF, PNG, JPG, JPEG, GIF', 'error')
+        flash(t('flash.file_type_not_allowed'), 'error')
         return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
     
     filename = secure_filename(file.filename)
@@ -399,7 +400,7 @@ def upload_payment_proof(invoice_id):
     
     db.session.commit()
     
-    flash('Preuve de paiement téléchargée avec succès! En attente de validation.', 'success')
+    flash(t('flash.payment_proof_uploaded'), 'success')
     return redirect(url_for('billing.invoice_detail', invoice_id=invoice_id))
 
 
