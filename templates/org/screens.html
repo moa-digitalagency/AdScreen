@@ -14,7 +14,7 @@
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800">{{ screen.name }}</h3>
-                        <p class="text-sm text-gray-500">{{ screen.location or (t('screens.location') if current_lang() == 'en' else 'Non défini') }}</p>
+                        <p class="text-sm text-gray-500">{{ screen.location or t('common.none') }}</p>
                     </div>
                 </div>
                 <span class="inline-flex items-center gap-1">
@@ -29,7 +29,7 @@
                     <p class="font-mono font-medium text-gray-800">{{ screen.resolution_width }}x{{ screen.resolution_height }}</p>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3">
-                    <p class="text-xs text-gray-500">{% if current_lang() == 'fr' %}Orientation{% else %}Orientation{% endif %}</p>
+                    <p class="text-xs text-gray-500">{{ t('common.details') }}</p>
                     <p class="font-medium text-gray-800 capitalize">{{ screen.orientation }}</p>
                 </div>
             </div>
@@ -52,7 +52,7 @@
             <a href="{{ url_for('org.screen_detail', screen_id=screen.id) }}" 
                class="btn-primary btn-sm">
                 <i class="fas fa-cog"></i>
-                {% if current_lang() == 'fr' %}Gérer{% else %}Manage{% endif %}
+                {{ t('common.edit') }}
             </a>
             <a href="{{ url_for('screen.generate_qr', screen_id=screen.id) }}" 
                class="btn-secondary btn-sm">
@@ -67,7 +67,7 @@
             <i class="fas fa-tv text-gray-400 text-3xl"></i>
         </div>
         <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ t('screens.no_screens') }}</h3>
-        <p class="text-gray-500 mb-6">{% if current_lang() == 'fr' %}Créez votre premier écran pour commencer à recevoir des publicités{% else %}Create your first screen to start receiving advertisements{% endif %}</p>
+        <p class="text-gray-500 mb-6">{{ t('screens.create_first') }}</p>
         <a href="{{ url_for('org.new_screen') }}" class="btn-primary">
             <i class="fas fa-plus"></i>
             {{ t('screens.create_first') }}

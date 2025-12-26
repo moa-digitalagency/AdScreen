@@ -1,30 +1,30 @@
 {% extends "admin/base.html" %}
 
-{% block page_title %}{% if ad %}Modifier{% else %}Nouveau{% endif %} Contenu Pub{% endblock %}
+{% block page_title %}{% if ad %}{{ t('common.edit') }}{% else %} {{ t('common.add') }} {% endif %} {{ t('nav.ad_content') }}{% endblock %}
 
 {% block main_content %}
 <div class="max-w-5xl">
     <div class="mb-6">
         <a href="{{ url_for('ad_content.list_ads') }}" class="text-gray-500 hover:text-gray-700">
-            <i class="fas fa-arrow-left mr-2"></i>Retour aux contenus
+            <i class="fas fa-arrow-left mr-2"></i>{{ t('common.back') }}
         </a>
     </div>
 
     <div class="bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white mb-6">
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
-            {% if ad %}Modifier le contenu publicitaire{% else %}Nouveau contenu publicitaire{% endif %}
+            {% if ad %}{{ t('screens.edit_screen') }}{% else %}{{ t('nav.new_screen') }}{% endif %}
         </h1>
         <p class="text-white/80 text-sm sm:text-base mb-3 sm:mb-4">
-            {% if ad %}Référence: {{ ad.reference }}{% else %}Diffusez votre contenu sur plusieurs écrans avec ciblage de masse{% endif %}
+            {% if ad %}{{ t('booking.reservation_number') }}: {{ ad.reference }}{% else %}{{ t('features.auto_broadcast_desc') }}{% endif %}
         </p>
         <div class="flex flex-wrap gap-2 sm:gap-3">
             <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                 <i class="fas fa-bullseye"></i>
-                Ciblage de masse
+                {{ t('features.validation_title') }}
             </span>
             <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                 <i class="fas fa-chart-line"></i>
-                Multi-écrans
+                {{ t('nav.screens') }}
             </span>
         </div>
     </div>
@@ -40,19 +40,19 @@
             </div>
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                    <label class="label">Nom du contenu *</label>
+                    <label class="label">{{ t('common.name') }} *</label>
                     <input type="text" name="name" value="{{ ad.name if ad else '' }}" required
                            class="input-field" placeholder="Ex: Campagne été 2024">
                 </div>
                 <div>
-                    <label class="label">Entreprise annonceur</label>
+                    <label class="label">{{ t('booking.company_name') }}</label>
                     <input type="text" name="advertiser_company" value="{{ ad.advertiser_company if ad else '' }}"
-                           class="input-field" placeholder="Nom de l'entreprise">
+                           class="input-field" placeholder="{{ t('auth.org_placeholder') }}">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="label">Description</label>
+                    <label class="label">{{ t('common.description') }}</label>
                     <textarea name="description" rows="2" class="input-field"
-                              placeholder="Description du contenu...">{{ ad.description if ad else '' }}</textarea>
+                              placeholder="{{ t('common.description') }}...">{{ ad.description if ad else '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -60,7 +60,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <div class="flex items-center gap-2 sm:gap-3 mb-4">
                 <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">2</div>
-                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Type de contenu</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">{{ t('booking.content_type') }}</h2>
             </div>
             <div class="grid grid-cols-2 gap-3 sm:gap-4">
                 <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition content-type-label" data-type="image">
@@ -71,7 +71,7 @@
                             <i class="fas fa-image text-blue-600 text-lg sm:text-xl"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-800 text-sm sm:text-base">Image</p>
+                            <p class="font-medium text-gray-800 text-sm sm:text-base">{{ t('contents.image') }}</p>
                             <p class="text-xs sm:text-sm text-gray-500">JPG, PNG, GIF, WEBP</p>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                             <i class="fas fa-video text-purple-600 text-lg sm:text-xl"></i>
                         </div>
                         <div>
-                            <p class="font-medium text-gray-800 text-sm sm:text-base">Video</p>
+                            <p class="font-medium text-gray-800 text-sm sm:text-base">{{ t('contents.video') }}</p>
                             <p class="text-xs sm:text-sm text-gray-500">MP4, WebM, MOV</p>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <div class="flex items-center gap-2 sm:gap-3 mb-4">
                 <div class="w-7 h-7 sm:w-8 sm:h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">3</div>
-                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Durée du créneau</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">{{ t('booking.slot_duration_label') }}</h2>
             </div>
             <div class="flex flex-wrap gap-2 sm:gap-3">
                 {% for duration in [10, 15, 20, 30, 60] %}
