@@ -35,9 +35,9 @@ RATE_LIMITS = {
         "write": "30 per minute"
     },
     "player": {
-        "heartbeat": "120 per minute",
-        "playlist": "60 per minute",
-        "log_play": "120 per minute"
+        "heartbeat": "300 per minute",
+        "playlist": "300 per minute",
+        "log_play": "300 per minute"
     },
     "public": {
         "default": "30 per minute"
