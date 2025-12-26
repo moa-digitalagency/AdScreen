@@ -33,6 +33,7 @@ class Screen(db.Model):
     current_mode = db.Column(db.String(20), default='playlist')  # 'playlist' or 'iptv'
     current_iptv_channel = db.Column(db.String(512), nullable=True)
     current_iptv_channel_name = db.Column(db.String(256), nullable=True)
+    security_buffer_minutes = db.Column(db.Integer, default=30)
     
     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False)
     organization = db.relationship('Organization', back_populates='screens')

@@ -276,6 +276,7 @@ def new_screen():
         accepts_images = 'accepts_images' in request.form
         accepts_videos = 'accepts_videos' in request.form
         max_file_size = int(request.form.get('max_file_size', 50))
+        security_buffer_minutes = int(request.form.get('security_buffer_minutes', 30))
         password = request.form.get('password')
         price_per_minute = float(request.form.get('price_per_minute', 2.0))
         iptv_enabled = 'iptv_enabled' in request.form and org.has_iptv
@@ -289,6 +290,7 @@ def new_screen():
             accepts_images=accepts_images,
             accepts_videos=accepts_videos,
             max_file_size_mb=max_file_size,
+            security_buffer_minutes=security_buffer_minutes,
             price_per_minute=price_per_minute,
             organization_id=current_user.organization_id,
             iptv_enabled=iptv_enabled
@@ -430,6 +432,7 @@ def edit_screen(screen_id):
         screen.accepts_images = 'accepts_images' in request.form
         screen.accepts_videos = 'accepts_videos' in request.form
         screen.max_file_size_mb = int(request.form.get('max_file_size', 50))
+        screen.security_buffer_minutes = int(request.form.get('security_buffer_minutes', 30))
         screen.iptv_enabled = 'iptv_enabled' in request.form and org.has_iptv
         
         new_price_per_minute = float(request.form.get('price_per_minute', 2.0))

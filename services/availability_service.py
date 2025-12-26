@@ -118,6 +118,10 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
     period_summary = {}
     
     current_date = start_date
+    now_dt = datetime.now()
+    buffer_delta = timedelta(minutes=screen.security_buffer_minutes or 30)
+    min_start_dt = now_dt + buffer_delta
+    
     while current_date <= end_date:
         day_info = {
             'date': current_date.isoformat(),
@@ -128,11 +132,40 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
         all_screen_periods = screen.time_periods
         
         for period in periods:
-            period_duration = get_period_duration_seconds(period)
-            reserved = get_reserved_seconds_for_period(
-                screen.id, period.id, current_date, all_screen_periods
-            )
-            available = max(0, period_duration - reserved)
+            # Check if period is in the past considering security buffer
+            period_start_dt = datetime.combine(current_date, datetime.min.time().replace(hour=period.start_hour))
+            if period_start_dt < min_start_dt:
+                # If period is completely in the past (before buffer), it's not available
+                # If it's partially in the past, we could be more precise, but for now we skip or adjust
+                # Let's adjust available time if it's today and overlaps with buffer
+                if current_date == now_dt.date():
+                    # Calculate how much of the period is left after min_start_dt
+                    period_end_hour = period.end_hour if period.end_hour > period.start_hour else 24
+                    period_end_dt = datetime.combine(current_date, datetime.min.time().replace(hour=period_end_hour % 24))
+                    if period_end_hour == 24:
+                        period_end_dt += timedelta(days=1)
+                    
+                    if min_start_dt >= period_end_dt:
+                        # Period is completely before security buffer
+                        available = 0
+                    else:
+                        # Period is partially after security buffer
+                        effective_start = max(period_start_dt, min_start_dt)
+                        available_duration = (period_end_dt - effective_start).total_seconds()
+                        period_duration = get_period_duration_seconds(period)
+                        reserved = get_reserved_seconds_for_period(
+                            screen.id, period.id, current_date, all_screen_periods
+                        )
+                        available = max(0, available_duration - reserved)
+                else:
+                    available = 0
+            else:
+                period_duration = get_period_duration_seconds(period)
+                reserved = get_reserved_seconds_for_period(
+                    screen.id, period.id, current_date, all_screen_periods
+                )
+                available = max(0, period_duration - reserved)
+            
             available_plays = int(available / target_slot_duration)
             
             day_info['periods'].append({
