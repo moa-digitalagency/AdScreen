@@ -404,7 +404,7 @@
                                     {{ screen.organization.city or screen.organization.country or '-' }}
                                 </span>
                             </div>
-                            <a href="{{ url_for('booking.book_screen', screen_id=screen.id) }}" class="btn-primary text-xs !py-1.5 !px-3">
+                            <a href="{{ url_for('booking.screen_booking', screen_code=screen.unique_code) }}" class="btn-primary text-xs !py-1.5 !px-3">
                                 {{ t('featured_screens.book_now') }}
                             </a>
                         </div>
