@@ -367,7 +367,6 @@
     <div id="info">
         <div id="currentInfo">En attente...</div>
         <div id="nextInfo" style="color: rgba(255,255,255,0.5); margin-top: 4px;"></div>
-        <div id="screenResolution" style="color: rgba(255,255,255,0.4); margin-top: 6px; font-size: 11px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;"></div>
     </div>
 
     <div id="debugInfo"></div>
@@ -653,18 +652,6 @@
                     `Suivant: ${nextCategoryLabel} - ${nextItem.name || 'Contenu'}`;
             } else {
                 nextInfoEl.textContent = 'Boucle en cours...';
-            }
-        }
-
-        function updateScreenResolution() {
-            const screenResEl = document.getElementById('screenResolution');
-            if (screenResEl) {
-                const width = window.innerWidth || screen.width;
-                const height = window.innerHeight || screen.height;
-                const devicePixelRatio = window.devicePixelRatio || 1;
-                const physicalWidth = screen.width || width;
-                const physicalHeight = screen.height || height;
-                screenResEl.innerHTML = `📺 Écran: ${width}×${height} (Physique: ${physicalWidth}×${physicalHeight}, DPR: ${devicePixelRatio.toFixed(1)})`;
             }
         }
 
@@ -2132,10 +2119,6 @@
             player.debugEl = document.getElementById('debugInfo');
             
             debug('Player starting...');
-            
-            updateScreenResolution();
-            window.addEventListener('resize', updateScreenResolution);
-            window.addEventListener('orientationchange', updateScreenResolution);
             
             await offlineManager.init();
             

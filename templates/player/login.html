@@ -54,9 +54,10 @@
         </div>
 
         <div class="mt-4 text-center">
-            <div id="screenResolution" class="bg-gray-900/50 rounded-lg p-3 text-gray-500 text-xs font-mono">
-                📺 Détection en cours...
-            </div>
+            <button onclick="detectScreenResolution()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-2 mx-auto">
+                <i class="fas fa-desktop"></i>
+                {{ t('hero.cta_detect') }}
+            </button>
         </div>
 
         <div class="mt-6 text-center">
@@ -68,33 +69,67 @@
     </div>
 </div>
 
+<div id="resolution-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-gray-700">
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-desktop text-blue-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2" id="resolution-title">{{ t('hero.cta_detect') }}</h3>
+            <p class="text-gray-400 text-sm" id="resolution-subtitle">{{ t('common.loading') }}</p>
+        </div>
+        <div id="resolution-content" class="text-center">
+            <div class="animate-pulse flex items-center justify-center gap-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div class="w-3 h-3 bg-blue-500 rounded-full" style="animation-delay: 0.2s"></div>
+                <div class="w-3 h-3 bg-blue-500 rounded-full" style="animation-delay: 0.4s"></div>
+            </div>
+        </div>
+        <button onclick="closeResolutionModal()" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition">
+            {{ t('common.close') }}
+        </button>
+    </div>
+</div>
+
 <script>
-    function updateScreenResolution() {
-        const resEl = document.getElementById('screenResolution');
-        if (resEl) {
-            const width = window.innerWidth || screen.width;
-            const height = window.innerHeight || screen.height;
-            const physicalWidth = screen.width || width;
-            const physicalHeight = screen.height || height;
-            const dpr = window.devicePixelRatio || 1;
-            const orientation = window.innerHeight > window.innerWidth ? 'Portrait' : 'Paysage';
-            
-            resEl.innerHTML = `📺 ${width}×${height} (Physique: ${physicalWidth}×${physicalHeight} | DPR: ${dpr.toFixed(1)} | ${orientation})`;
-        }
-    }
+function detectScreenResolution() {
+    const modal = document.getElementById('resolution-modal');
+    const content = document.getElementById('resolution-content');
+    const subtitle = document.getElementById('resolution-subtitle');
     
-    // Détection initiale
-    document.addEventListener('DOMContentLoaded', updateScreenResolution);
+    modal.classList.remove('hidden');
     
-    // Mise à jour lors du redimensionnement ou changement d'orientation
-    window.addEventListener('resize', updateScreenResolution);
-    window.addEventListener('orientationchange', updateScreenResolution);
-    
-    // Fallback si DOMContentLoaded ne se déclenche pas
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateScreenResolution);
-    } else {
-        updateScreenResolution();
-    }
+    setTimeout(() => {
+        const width = window.screen.width;
+        const height = window.screen.height;
+        const ratio = (width / height).toFixed(2);
+        
+        let orientation = width > height ? '{{ t("screens.resolution") }} Paysage' : '{{ t("screens.resolution") }} Portrait';
+        let aspectRatio = '16:9';
+        if (Math.abs(ratio - 1.78) < 0.1) aspectRatio = '16:9';
+        else if (Math.abs(ratio - 1.33) < 0.1) aspectRatio = '4:3';
+        else if (Math.abs(ratio - 1.6) < 0.1) aspectRatio = '16:10';
+        else if (Math.abs(ratio - 0.56) < 0.1) aspectRatio = '9:16';
+        
+        subtitle.textContent = orientation;
+        content.innerHTML = `
+            <div class="bg-gray-900/50 rounded-xl p-4 mb-4">
+                <div class="text-3xl font-bold text-blue-400 mb-1">${width} x ${height}</div>
+                <div class="text-sm text-gray-400">Ratio: ${aspectRatio}</div>
+            </div>
+            <p class="text-sm text-gray-500">
+                {{ t('screens.create_first') }}
+            </p>
+        `;
+    }, 1000);
+}
+
+function closeResolutionModal() {
+    document.getElementById('resolution-modal').classList.add('hidden');
+}
+
+document.getElementById('resolution-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeResolutionModal();
+});
 </script>
 {% endblock %}
