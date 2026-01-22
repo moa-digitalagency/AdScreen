@@ -426,9 +426,20 @@
             qualityCapped: false,
             qualityRecoveryTimer: null,
             
+            // Robustness settings for 24/7 operation
+            watchdogInterval: null,
+            lastActivityTime: Date.now(),
+            memoryCleanupInterval: null,
+            autoReloadTimer: null,
+            networkRetryCount: 0,
+            maxNetworkRetries: 10,
+            
             CONTROLS_HIDE_DELAY: 10000,
             PLAYLIST_REFRESH_INTERVAL: 5000,
             MIN_DISPLAY_TIME: 1000,
+            AUTO_RELOAD_HOURS: 24,
+            WATCHDOG_INTERVAL: 60000,
+            MEMORY_CLEANUP_INTERVAL: 300000,
             
             imageEl: null,
             videoEl: null,
@@ -438,10 +449,148 @@
 
         function debug(msg) {
             console.log('[Player]', msg);
+            player.lastActivityTime = Date.now();
             if (player.debugEl) {
                 const time = new Date().toLocaleTimeString();
                 player.debugEl.innerHTML = `[${time}] ${msg}<br>` + 
                     (player.debugEl.innerHTML || '').split('<br>').slice(0, 10).join('<br>');
+            }
+        }
+
+        // Watchdog: detect if player is stuck and recover
+        function startWatchdog() {
+            if (player.watchdogInterval) clearInterval(player.watchdogInterval);
+            
+            player.watchdogInterval = setInterval(() => {
+                const now = Date.now();
+                const timeSinceActivity = now - player.lastActivityTime;
+                
+                // If no activity for 5 minutes, try to recover
+                if (timeSinceActivity > 300000) {
+                    console.warn('[Watchdog] No activity for 5 minutes, attempting recovery...');
+                    recoverPlayer();
+                }
+                
+                // Check if video is frozen (for playlist mode)
+                if (player.mode === 'playlist' && player.state === PlayerState.PLAYING) {
+                    if (player.videoEl && !player.videoEl.paused && player.videoEl.readyState >= 2) {
+                        const currentTime = player.videoEl.currentTime;
+                        if (player._lastVideoTime === currentTime && currentTime > 0) {
+                            player._videoFreezeCount = (player._videoFreezeCount || 0) + 1;
+                            if (player._videoFreezeCount >= 3) {
+                                console.warn('[Watchdog] Video frozen, skipping to next...');
+                                player._videoFreezeCount = 0;
+                                advanceToNext();
+                            }
+                        } else {
+                            player._videoFreezeCount = 0;
+                        }
+                        player._lastVideoTime = currentTime;
+                    }
+                }
+                
+                // Check IPTV health
+                if (player.mode === 'iptv' && player.iptvEl) {
+                    if (player.iptvEl.error) {
+                        console.warn('[Watchdog] IPTV error detected, attempting reload...');
+                        reloadIptvStream();
+                    }
+                }
+            }, player.WATCHDOG_INTERVAL);
+            
+            debug('Watchdog started');
+        }
+
+        // Memory cleanup to prevent leaks during 24/7 operation
+        function startMemoryCleanup() {
+            if (player.memoryCleanupInterval) clearInterval(player.memoryCleanupInterval);
+            
+            player.memoryCleanupInterval = setInterval(() => {
+                // Clear debug log to prevent memory buildup
+                if (player.debugEl && player.debugEl.innerHTML.length > 5000) {
+                    player.debugEl.innerHTML = player.debugEl.innerHTML.split('<br>').slice(0, 5).join('<br>');
+                }
+                
+                // Release blob URLs for images
+                if (player.imageEl && player.imageEl.src && player.imageEl.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(player.imageEl.src);
+                }
+                
+                // Force garbage collection hint
+                if (window.gc) {
+                    try { window.gc(); } catch(e) {}
+                }
+                
+                debug('Memory cleanup performed');
+            }, player.MEMORY_CLEANUP_INTERVAL);
+            
+            debug('Memory cleanup scheduler started');
+        }
+
+        // Schedule automatic page reload every 24h to prevent memory fatigue
+        function scheduleAutoReload() {
+            if (player.autoReloadTimer) clearTimeout(player.autoReloadTimer);
+            
+            const reloadTime = player.AUTO_RELOAD_HOURS * 60 * 60 * 1000;
+            player.autoReloadTimer = setTimeout(() => {
+                console.log('[AutoReload] Scheduled 24h reload, refreshing page...');
+                window.location.reload();
+            }, reloadTime);
+            
+            debug(`Auto-reload scheduled in ${player.AUTO_RELOAD_HOURS}h`);
+        }
+
+        // Recover player from stuck state
+        function recoverPlayer() {
+            debug('Attempting player recovery...');
+            player.lastActivityTime = Date.now();
+            
+            if (player.mode === 'iptv') {
+                reloadIptvStream();
+            } else {
+                // Force advance to next item
+                if (player.playlist.length > 0) {
+                    advanceToNext();
+                } else {
+                    fetchPlaylist();
+                }
+            }
+        }
+
+        // Reload IPTV stream
+        function reloadIptvStream() {
+            if (player.iptvUrl) {
+                debug('Reloading IPTV stream...');
+                switchToIptvMode();
+            }
+        }
+
+        // Network error handler with exponential backoff
+        function handleNetworkFailure() {
+            player.networkRetryCount++;
+            
+            if (player.networkRetryCount <= player.maxNetworkRetries) {
+                const backoffDelay = Math.min(1000 * Math.pow(2, player.networkRetryCount - 1), 30000);
+                debug(`Network failure, retry ${player.networkRetryCount}/${player.maxNetworkRetries} in ${backoffDelay}ms`);
+                
+                setTimeout(() => {
+                    fetchPlaylist();
+                }, backoffDelay);
+            } else {
+                debug('Max network retries reached, waiting for connection...');
+                // Reset retry count after a longer wait
+                setTimeout(() => {
+                    player.networkRetryCount = 0;
+                    fetchPlaylist();
+                }, 60000);
+            }
+        }
+
+        // Reset network retry count on success
+        function resetNetworkRetries() {
+            if (player.networkRetryCount > 0) {
+                player.networkRetryCount = 0;
+                debug('Network connection restored');
             }
         }
 
@@ -2130,6 +2279,41 @@
             sendHeartbeat();
             
             player.refreshInterval = setInterval(fetchPlaylist, player.PLAYLIST_REFRESH_INTERVAL);
+            
+            // Start robustness systems for 24/7 operation
+            startWatchdog();
+            startMemoryCleanup();
+            scheduleAutoReload();
+            
+            // Handle visibility changes (browser tab hidden/shown)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    debug('Tab became visible, refreshing...');
+                    player.lastActivityTime = Date.now();
+                    fetchPlaylist();
+                }
+            });
+            
+            // Handle network reconnection
+            window.addEventListener('online', () => {
+                debug('Network connection restored');
+                resetNetworkRetries();
+                fetchPlaylist();
+            });
+            
+            window.addEventListener('offline', () => {
+                debug('Network connection lost');
+            });
+            
+            // Prevent screen sleep/lock on supported browsers
+            if ('wakeLock' in navigator) {
+                try {
+                    navigator.wakeLock.request('screen').then(lock => {
+                        debug('Wake lock acquired - screen will stay on');
+                        player.wakeLock = lock;
+                    }).catch(e => debug('Wake lock not available'));
+                } catch(e) {}
+            }
             
             if (player.playlist.length > 0) {
                 debug('Starting playback with ' + player.playlist.length + ' items');
