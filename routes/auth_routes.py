@@ -28,9 +28,12 @@ def sitemap():
     # Dynamic pages (Screens)
     screens = Screen.query.filter_by(is_active=True).all()
     for screen in screens:
+        lastmod = datetime.now().strftime('%Y-%m-%d')
+        if hasattr(screen, 'created_at') and screen.created_at:
+            lastmod = screen.created_at.strftime('%Y-%m-%d')
         pages.append({
             'url': f"{domain_url}{url_for('booking.screen_booking', screen_code=screen.unique_code)}",
-            'lastmod': (screen.updated_at or datetime.now()).strftime('%Y-%m-%d'),
+            'lastmod': lastmod,
             'priority': '0.6'
         })
         
