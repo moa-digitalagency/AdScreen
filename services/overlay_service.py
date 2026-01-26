@@ -185,6 +185,15 @@ def cleanup_expired_broadcast_overlays():
     """
     now = datetime.utcnow()
     
+    # Optimize: Check count first
+    expired_count = ScreenOverlay.query.filter(
+        ScreenOverlay.source == ScreenOverlay.SOURCE_BROADCAST,
+        ScreenOverlay.end_time < now
+    ).count()
+
+    if expired_count == 0:
+        return 0
+
     expired_overlays = ScreenOverlay.query.filter(
         ScreenOverlay.source == ScreenOverlay.SOURCE_BROADCAST,
         ScreenOverlay.end_time < now

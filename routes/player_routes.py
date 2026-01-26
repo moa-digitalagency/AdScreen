@@ -9,6 +9,8 @@ import urllib.parse
 import urllib3
 import logging
 import re
+import socket
+import ipaddress
 
 urllib3.disable_warnings()
 
@@ -100,7 +102,12 @@ def get_playlist():
     if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
         from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
         
-        sync_broadcast_overlays(screen)
+        # Optimize: Sync only if not done recently (e.g., last 60s)
+        last_sync = session.get('last_overlay_sync')
+        now_ts = datetime.utcnow().timestamp()
+        if not last_sync or (now_ts - last_sync) > 60:
+             sync_broadcast_overlays(screen)
+             session['last_overlay_sync'] = now_ts
         
         active_overlay_objects = get_active_overlays_for_screen(screen.id)
         iptv_overlays = [o.to_dict() for o in active_overlay_objects]
@@ -214,7 +221,12 @@ def get_playlist():
     
     from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
     
-    sync_broadcast_overlays(screen)
+    # Optimize: Sync only if not done recently (e.g., last 60s)
+    last_sync = session.get('last_overlay_sync')
+    now_ts = datetime.utcnow().timestamp()
+    if not last_sync or (now_ts - last_sync) > 60:
+         sync_broadcast_overlays(screen)
+         session['last_overlay_sync'] = now_ts
     
     active_overlay_objects = get_active_overlays_for_screen(screen.id)
     active_overlays = [o.to_dict() for o in active_overlay_objects]
@@ -359,6 +371,31 @@ def stream_proxy():
     
     if not url.startswith(('http://', 'https://')):
         return jsonify({'error': t('flash.invalid_url')}), 400
+
+    # SSRF Protection
+    try:
+        parsed_url = urllib.parse.urlparse(url)
+        hostname = parsed_url.hostname
+        if not hostname:
+            return jsonify({'error': t('flash.invalid_url')}), 400
+
+        # Resolve hostname to IP
+        try:
+            ip_str = socket.gethostbyname(hostname)
+            ip_obj = ipaddress.ip_address(ip_str)
+
+            # Check if private, loopback, or reserved
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local:
+                 logger.warning(f"SSRF attempt blocked for URL: {url} (IP: {ip_str})")
+                 return jsonify({'error': 'Access denied to internal resources'}), 403
+
+        except socket.gaierror:
+            # Could not resolve hostname
+            return jsonify({'error': t('flash.invalid_url')}), 400
+
+    except Exception as e:
+        logger.error(f"Error validating URL: {e}")
+        return jsonify({'error': t('flash.invalid_url')}), 400
     
     is_manifest = '.m3u' in url.lower() or '.m3u8' in url.lower()
     is_ts_segment = '.ts' in url.lower()
@@ -481,6 +518,9 @@ def tv_stream(screen_code):
     Convert MPEG-TS stream to HLS and save segments to disk.
     Returns M3U8 manifest with rewritten segment URLs.
     """
+    if not re.match(r'^[a-zA-Z0-9]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     from services.hls_converter import HLSConverter
     import time
     
@@ -545,6 +585,9 @@ def tv_stream(screen_code):
 @player_bp.route('/tv-segment/<screen_code>/<segment_name>')
 def tv_segment(screen_code, segment_name):
     """Serve HLS segments (.ts files) from disk."""
+    if not re.match(r'^[a-zA-Z0-9]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     from flask import send_file
     from services.hls_converter import HLSConverter
     
@@ -573,6 +616,9 @@ def tv_segment(screen_code, segment_name):
 @player_bp.route('/tv-stop/<screen_code>', methods=['POST'])
 def stop_tv_stream(screen_code):
     """Stop the TV stream for a screen (kill FFmpeg process)."""
+    if not re.match(r'^[a-zA-Z0-9]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     from services.hls_converter import HLSConverter
     
     try:
@@ -587,6 +633,9 @@ def stop_tv_stream(screen_code):
 @player_bp.route('/change-channel/<screen_code>', methods=['POST'])
 def change_channel(screen_code):
     """Change la chaîne TV - attend que FFmpeg soit prêt"""
+    if not re.match(r'^[a-zA-Z0-9]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     from services.hls_converter import HLSConverter
     import time
     
