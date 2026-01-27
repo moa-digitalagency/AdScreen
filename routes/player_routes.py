@@ -5,14 +5,44 @@ from models import Screen, Content, Booking, Filler, InternalContent, StatLog, H
 from models.ad_content import AdContent, AdContentStat
 from services.translation_service import t
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 import urllib.parse
 import urllib3
 import logging
 import re
+import socket
+import ipaddress
 
 urllib3.disable_warnings()
 
 logger = logging.getLogger(__name__)
+
+def is_safe_url(url, allow_private=False):
+    """Check if URL resolves to a safe IP address (not local/private unless allowed)."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+
+        try:
+            ip = ipaddress.ip_address(hostname)
+        except ValueError:
+            try:
+                ip_str = socket.gethostbyname(hostname)
+                ip = ipaddress.ip_address(ip_str)
+            except (socket.gaierror, Exception):
+                return False
+
+        if ip.is_loopback:
+            return False
+
+        if not allow_private and (ip.is_private or ip.is_reserved or ip.is_link_local):
+            return False
+
+        return True
+    except Exception:
+        return False
 
 player_bp = Blueprint('player', __name__)
 
@@ -93,7 +123,7 @@ def get_playlist():
     db.session.expire_all()
     db.session.rollback()
     
-    screen = db.session.query(Screen).filter_by(id=session['screen_id']).first()
+    screen = db.session.query(Screen).options(joinedload(Screen.time_periods)).filter_by(id=session['screen_id']).first()
     if not screen:
         return jsonify({'error': t('flash.screen_not_found')}), 404
     
@@ -142,7 +172,7 @@ def get_playlist():
                 current_period = period
                 break
     
-    paid_contents = Content.query.join(Booking).filter(
+    paid_contents = Content.query.options(joinedload(Content.booking)).join(Booking).filter(
         Content.screen_id == screen.id,
         Content.status == 'approved',
         Content.in_playlist == True,
@@ -359,6 +389,10 @@ def stream_proxy():
     
     if not url.startswith(('http://', 'https://')):
         return jsonify({'error': t('flash.invalid_url')}), 400
+
+    if not is_safe_url(url):
+        logger.warning(f"Blocked SSRF attempt to {url}")
+        return jsonify({'error': t('flash.invalid_url')}), 400
     
     is_manifest = '.m3u' in url.lower() or '.m3u8' in url.lower()
     is_ts_segment = '.ts' in url.lower()
@@ -484,6 +518,9 @@ def tv_stream(screen_code):
     from services.hls_converter import HLSConverter
     import time
     
+    if 'screen_id' not in session:
+        return jsonify({'error': t('flash.not_authenticated')}), 401
+
     db.session.expire_all()
     
     screen = Screen.query.filter_by(unique_code=screen_code).first()
@@ -491,6 +528,9 @@ def tv_stream(screen_code):
     if not screen:
         return jsonify({'error': t('flash.screen_not_found')}), 404
     
+    if screen.id != session['screen_id']:
+        return jsonify({'error': t('flash.not_authenticated')}), 403
+
     if not screen.current_iptv_channel:
         return jsonify({'error': t('flash.no_iptv_channel')}), 400
     
@@ -547,6 +587,14 @@ def tv_segment(screen_code, segment_name):
     """Serve HLS segments (.ts files) from disk."""
     from flask import send_file
     from services.hls_converter import HLSConverter
+
+    if 'screen_id' not in session:
+        return jsonify({'error': t('flash.not_authenticated')}), 401
+
+    # Optional: Verify screen_code matches session if we want to be strict
+    screen = Screen.query.filter_by(unique_code=screen_code).first()
+    if not screen or screen.id != session['screen_id']:
+        return jsonify({'error': t('flash.not_authenticated')}), 403
     
     segment_path = HLSConverter.get_segment_path(screen_code, segment_name)
     
@@ -575,6 +623,13 @@ def stop_tv_stream(screen_code):
     """Stop the TV stream for a screen (kill FFmpeg process)."""
     from services.hls_converter import HLSConverter
     
+    if 'screen_id' not in session:
+        return jsonify({'error': t('flash.not_authenticated')}), 401
+
+    screen = Screen.query.filter_by(unique_code=screen_code).first()
+    if not screen or screen.id != session['screen_id']:
+        return jsonify({'error': t('flash.not_authenticated')}), 403
+
     try:
         logger.info(f'[{screen_code}] Received stop request')
         HLSConverter.stop_stream(screen_code)
@@ -590,6 +645,16 @@ def change_channel(screen_code):
     from services.hls_converter import HLSConverter
     import time
     
+    if 'screen_id' not in session:
+        return jsonify({'error': t('flash.not_authenticated')}), 401
+
+    screen = Screen.query.filter_by(unique_code=screen_code).first()
+    if not screen:
+        return jsonify({'error': 'Screen not found'}), 404
+
+    if screen.id != session['screen_id']:
+        return jsonify({'error': t('flash.not_authenticated')}), 403
+
     try:
         data = request.get_json()
         channel_url = data.get('channel_url')
@@ -597,10 +662,15 @@ def change_channel(screen_code):
         
         if not channel_url:
             return jsonify({'error': 'No channel URL'}), 400
-        
-        screen = Screen.query.filter_by(unique_code=screen_code).first()
-        if not screen:
-            return jsonify({'error': 'Screen not found'}), 404
+
+        if not channel_url.startswith(('http://', 'https://', 'udp://', 'rtmp://', 'rtsp://')):
+             return jsonify({'error': 'Invalid protocol'}), 400
+
+        # For HTTP/HTTPS, we check for SSRF. For UDP/RTMP etc it depends on ffmpeg handling but usually
+        # not local file access unless file:// is used (which is blocked by startswith above)
+        if channel_url.startswith(('http://', 'https://')):
+            if not is_safe_url(channel_url):
+                return jsonify({'error': 'Invalid URL'}), 400
         
         logger.info(f'[{screen_code}] Channel change request: {channel_name}')
         
