@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 class HLSConverter:
     HLS_TEMP_DIR = Path(tempfile.gettempdir()) / 'adscreen_hls'
-    RUNNING_PROCESSES = {}
     _current_urls = {}
     _lock = threading.Lock()
     
@@ -32,19 +31,48 @@ class HLSConverter:
         return cls.get_output_dir(screen_code) / 'stream.m3u8'
     
     @classmethod
+    def get_pid_file(cls, screen_code):
+        return cls.get_output_dir(screen_code) / 'ffmpeg.pid'
+
+    @classmethod
+    def _save_pid(cls, screen_code, pid):
+        try:
+            pid_file = cls.get_pid_file(screen_code)
+            pid_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(pid_file, 'w') as f:
+                f.write(str(pid))
+        except Exception as e:
+            logger.error(f"[{screen_code}] Failed to save PID: {e}")
+
+    @classmethod
+    def _get_pid(cls, screen_code):
+        try:
+            pid_file = cls.get_pid_file(screen_code)
+            if pid_file.exists():
+                with open(pid_file, 'r') as f:
+                    return int(f.read().strip())
+        except Exception:
+            pass
+        return None
+
+    @classmethod
     def get_current_url(cls, screen_code):
+        # Note: In multi-worker setup, this cache might be local to worker.
+        # Ideally this should be in DB or Redis. For now we keep it as is,
+        # but rely on is_running() for process status.
         with cls._lock:
             return cls._current_urls.get(screen_code)
     
     @classmethod
     def is_running(cls, screen_code):
-        with cls._lock:
-            if screen_code in cls.RUNNING_PROCESSES:
-                proc = cls.RUNNING_PROCESSES[screen_code]
-                if proc.poll() is None:
-                    return True
-                else:
-                    del cls.RUNNING_PROCESSES[screen_code]
+        pid = cls._get_pid(screen_code)
+        if pid:
+            try:
+                os.kill(pid, 0)
+                return True
+            except OSError:
+                # Process not found
+                return False
         return False
     
     @staticmethod
@@ -52,29 +80,31 @@ class HLSConverter:
         """Arrête et tue complètement le processus FFmpeg + nettoie les fichiers"""
         
         with HLSConverter._lock:
-            if screen_code in HLSConverter.RUNNING_PROCESSES:
-                process = HLSConverter.RUNNING_PROCESSES[screen_code]
-                
+            pid = HLSConverter._get_pid(screen_code)
+            if pid:
                 try:
-                    logger.info(f'[{screen_code}] Killing FFmpeg process (PID: {process.pid})')
+                    logger.info(f'[{screen_code}] Killing FFmpeg process (PID: {pid})')
+                    os.kill(pid, signal.SIGTERM)
                     
-                    process.terminate()
-                    try:
-                        process.wait(timeout=2)
-                    except subprocess.TimeoutExpired:
-                        logger.warning(f'[{screen_code}] Force killing process')
-                        process.kill()
+                    # Wait a bit
+                    for _ in range(20):
                         try:
-                            process.wait(timeout=2)
-                        except:
-                            pass
+                            os.kill(pid, 0)
+                            time.sleep(0.1)
+                        except OSError:
+                            break
+                    else:
+                         logger.warning(f'[{screen_code}] Force killing process')
+                         try:
+                             os.kill(pid, signal.SIGKILL)
+                         except OSError:
+                             pass
                     
                     logger.info(f'[{screen_code}] Process killed')
-                
-                except Exception as e:
+                except OSError as e:
                     logger.error(f'[{screen_code}] Error killing process: {e}')
-                
-                del HLSConverter.RUNNING_PROCESSES[screen_code]
+                except Exception as e:
+                    logger.error(f'[{screen_code}] Unexpected error killing process: {e}')
             
             if screen_code in HLSConverter._current_urls:
                 del HLSConverter._current_urls[screen_code]
@@ -146,7 +176,7 @@ class HLSConverter:
             )
             
             with HLSConverter._lock:
-                HLSConverter.RUNNING_PROCESSES[screen_code] = process
+                HLSConverter._save_pid(screen_code, process.pid)
                 HLSConverter._current_urls[screen_code] = source_url
             
             logger.info(f'[{screen_code}] FFmpeg PID: {process.pid}')
@@ -162,12 +192,9 @@ class HLSConverter:
                 except Exception as e:
                     logger.error(f'[{screen_code}] Process error: {e}')
                 finally:
-                    with HLSConverter._lock:
-                        if screen_code in HLSConverter.RUNNING_PROCESSES:
-                            if HLSConverter.RUNNING_PROCESSES[screen_code] == process:
-                                del HLSConverter.RUNNING_PROCESSES[screen_code]
-                        if screen_code in HLSConverter._current_urls:
-                            del HLSConverter._current_urls[screen_code]
+                    # Clean up is done by stop_existing_process or when a new process starts
+                    pass
+
                     logger.info(f'[{screen_code}] Process ended')
             
             thread = threading.Thread(target=monitor_process, daemon=True)
