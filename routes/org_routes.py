@@ -6,6 +6,7 @@ from models import Screen, TimeSlot, TimePeriod, Content, Booking, Filler, Inter
 from services.translation_service import t
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 import os
 import secrets
 from werkzeug.utils import secure_filename
@@ -1454,7 +1455,10 @@ def screen_availability(screen_id):
     from utils.currencies import get_currency_by_code
     from datetime import date
     
-    screen = Screen.query.filter_by(
+    screen = Screen.query.options(
+        joinedload(Screen.time_periods),
+        joinedload(Screen.time_slots)
+    ).filter_by(
         id=screen_id,
         organization_id=current_user.organization_id
     ).first_or_404()

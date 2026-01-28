@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+from sqlalchemy import or_
 from models import Screen, Booking, TimePeriod, TimeSlot
 
 
@@ -11,7 +12,7 @@ def get_period_duration_seconds(period):
     return hours * 3600
 
 
-def get_reserved_seconds_for_period(screen_id, period_id, target_date, all_periods=None):
+def get_reserved_seconds_for_period(screen_id, period_id, target_date, all_periods=None, preloaded_bookings=None):
     """
     Calculate total reserved seconds for a specific period on a specific date.
     Includes:
@@ -23,16 +24,38 @@ def get_reserved_seconds_for_period(screen_id, period_id, target_date, all_perio
         period_id: The period ID to check
         target_date: The date to check
         all_periods: List of all periods for the screen (for prorating NULL period bookings)
+        preloaded_bookings: Optional list of pre-fetched bookings to avoid DB queries
     """
-    from sqlalchemy import or_
+    period_bookings = []
+    null_period_bookings = []
     
-    period_bookings = Booking.query.filter(
-        Booking.screen_id == screen_id,
-        Booking.status.in_(['pending', 'active']),
-        Booking.start_date <= target_date,
-        or_(Booking.end_date >= target_date, Booking.end_date == None),
-        Booking.time_period_id == period_id
-    ).all()
+    if preloaded_bookings is not None:
+        for booking in preloaded_bookings:
+            # Check date overlap
+            start_ok = booking.start_date <= target_date
+            end_ok = (booking.end_date is None) or (booking.end_date >= target_date)
+
+            if start_ok and end_ok:
+                if booking.time_period_id == period_id:
+                    period_bookings.append(booking)
+                elif booking.time_period_id is None:
+                    null_period_bookings.append(booking)
+    else:
+        period_bookings = Booking.query.filter(
+            Booking.screen_id == screen_id,
+            Booking.status.in_(['pending', 'active']),
+            Booking.start_date <= target_date,
+            or_(Booking.end_date >= target_date, Booking.end_date == None),
+            Booking.time_period_id == period_id
+        ).all()
+
+        null_period_bookings = Booking.query.filter(
+            Booking.screen_id == screen_id,
+            Booking.status.in_(['pending', 'active']),
+            Booking.start_date <= target_date,
+            or_(Booking.end_date >= target_date, Booking.end_date == None),
+            Booking.time_period_id == None
+        ).all()
     
     total_reserved_seconds = 0
     for booking in period_bookings:
@@ -43,14 +66,6 @@ def get_reserved_seconds_for_period(screen_id, period_id, target_date, all_perio
                 total_reserved_seconds += plays_per_day * booking.slot_duration
         else:
             total_reserved_seconds += booking.num_plays * booking.slot_duration
-    
-    null_period_bookings = Booking.query.filter(
-        Booking.screen_id == screen_id,
-        Booking.status.in_(['pending', 'active']),
-        Booking.start_date <= target_date,
-        or_(Booking.end_date >= target_date, Booking.end_date == None),
-        Booking.time_period_id == None
-    ).all()
     
     if null_period_bookings and all_periods:
         total_day_seconds = sum(get_period_duration_seconds(p) for p in all_periods)
@@ -113,6 +128,14 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
     
     target_slot_duration = slot_duration if slot_duration else (slots[0].duration_seconds if slots else 15)
     
+    # Pre-fetch all relevant bookings for the entire date range
+    all_bookings = Booking.query.filter(
+        Booking.screen_id == screen.id,
+        Booking.status.in_(['pending', 'active']),
+        Booking.start_date <= end_date,
+        or_(Booking.end_date >= start_date, Booking.end_date == None)
+    ).all()
+
     total_available_seconds = 0
     daily_breakdown = []
     period_summary = {}
@@ -154,7 +177,7 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
                         available_duration = (period_end_dt - effective_start).total_seconds()
                         period_duration = get_period_duration_seconds(period)
                         reserved = get_reserved_seconds_for_period(
-                            screen.id, period.id, current_date, all_screen_periods
+                            screen.id, period.id, current_date, all_screen_periods, all_bookings
                         )
                         available = max(0, available_duration - reserved)
                 else:
@@ -162,7 +185,7 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
             else:
                 period_duration = get_period_duration_seconds(period)
                 reserved = get_reserved_seconds_for_period(
-                    screen.id, period.id, current_date, all_screen_periods
+                    screen.id, period.id, current_date, all_screen_periods, all_bookings
                 )
                 available = max(0, period_duration - reserved)
             
