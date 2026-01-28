@@ -1,9 +1,14 @@
+import time
 from datetime import datetime
 from app import db
 
 
 class SiteSetting(db.Model):
     __tablename__ = 'site_settings'
+
+    # Cache simple pour éviter les requêtes DB répétitives
+    _cache = {}
+    _cache_ttl = 60  # secondes
     
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
@@ -15,23 +20,36 @@ class SiteSetting(db.Model):
     
     @classmethod
     def get(cls, key, default=None):
+        now = time.time()
+
+        # Vérification du cache
+        if key in cls._cache:
+            val, timestamp = cls._cache[key]
+            if now - timestamp < cls._cache_ttl:
+                return val
+
         setting = cls.query.filter_by(key=key).first()
-        if setting is None:
-            return default
+        result = default
+
+        if setting is not None:
+            if setting.value_type == 'boolean':
+                result = setting.value.lower() in ('true', '1', 'yes')
+            elif setting.value_type == 'integer':
+                try:
+                    result = int(setting.value)
+                except (ValueError, TypeError):
+                    result = default
+            elif setting.value_type == 'float':
+                try:
+                    result = float(setting.value)
+                except (ValueError, TypeError):
+                    result = default
+            else:
+                result = setting.value
         
-        if setting.value_type == 'boolean':
-            return setting.value.lower() in ('true', '1', 'yes')
-        elif setting.value_type == 'integer':
-            try:
-                return int(setting.value)
-            except (ValueError, TypeError):
-                return default
-        elif setting.value_type == 'float':
-            try:
-                return float(setting.value)
-            except (ValueError, TypeError):
-                return default
-        return setting.value
+        # Mise à jour du cache
+        cls._cache[key] = (result, now)
+        return result
     
     @classmethod
     def set(cls, key, value, value_type='string', category='general', description=None):
@@ -46,6 +64,11 @@ class SiteSetting(db.Model):
             setting.description = description
         
         db.session.commit()
+
+        # Invalidation/Mise à jour du cache
+        if key in cls._cache:
+            del cls._cache[key]
+
         return setting
     
     @classmethod
