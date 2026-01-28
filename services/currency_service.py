@@ -1,9 +1,9 @@
 import os
 import json
 import logging
+import threading
+import requests
 from datetime import datetime, timedelta
-from urllib.request import urlopen, Request
-from urllib.error import URLError
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +48,12 @@ DEFAULT_RATES = {
 }
 
 
-def _load_cache():
-    """Load cached exchange rates from file."""
+def _load_from_cache_file():
+    """Load raw cache data from file."""
     try:
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, 'r') as f:
-                cache_data = json.load(f)
-                cache_time = datetime.fromisoformat(cache_data.get('timestamp', '2000-01-01'))
-                if datetime.utcnow() - cache_time < timedelta(hours=CACHE_DURATION_HOURS):
-                    return cache_data.get('rates', {})
+                return json.load(f)
     except Exception as e:
         logger.warning(f"Error loading exchange rate cache: {e}")
     return None
@@ -78,15 +75,17 @@ def _save_cache(rates):
 def _fetch_rates_from_api():
     """Fetch exchange rates from the API."""
     try:
-        req = Request(ECB_API_URL, headers={'User-Agent': 'ShabakaAdScreen/1.0'})
-        with urlopen(req, timeout=10) as response:
-            data = json.loads(response.read().decode())
-            if data.get('result') == 'success':
-                rates = data.get('rates', {})
-                _save_cache(rates)
-                logger.info("Successfully fetched exchange rates from API")
-                return rates
-    except URLError as e:
+        headers = {'User-Agent': 'ShabakaAdScreen/1.0'}
+        response = requests.get(ECB_API_URL, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        if data.get('result') == 'success':
+            rates = data.get('rates', {})
+            _save_cache(rates)
+            logger.info("Successfully fetched exchange rates from API")
+            return rates
+    except requests.RequestException as e:
         logger.warning(f"Error fetching exchange rates from API: {e}")
     except Exception as e:
         logger.warning(f"Unexpected error fetching exchange rates: {e}")
@@ -96,20 +95,34 @@ def _fetch_rates_from_api():
 def get_exchange_rates():
     """
     Get current exchange rates with EUR as base currency.
-    First tries cache, then API, then fallback to default rates.
+    First tries cache, then API (in background if stale), fallback to default rates.
     
     Returns:
         dict: Dictionary of currency codes to exchange rates
     """
-    cached_rates = _load_cache()
-    if cached_rates:
-        return cached_rates
+    cache_data = _load_from_cache_file()
+
+    if cache_data:
+        try:
+            timestamp = datetime.fromisoformat(cache_data.get('timestamp', '2000-01-01'))
+            rates = cache_data.get('rates', {})
+
+            # Check if cache is valid
+            if datetime.utcnow() - timestamp < timedelta(hours=CACHE_DURATION_HOURS):
+                return rates
+
+            # Cache expired - return stale data but refresh in background
+            logger.info("Exchange rate cache expired. Refreshing in background.")
+            threading.Thread(target=_fetch_rates_from_api, daemon=True).start()
+            return rates
+
+        except Exception as e:
+            logger.warning(f"Error parsing cache data: {e}")
     
-    api_rates = _fetch_rates_from_api()
-    if api_rates:
-        return api_rates
+    # Cache missing or invalid - fetch in background and return defaults to avoid blocking
+    logger.info("Exchange rate cache missing. Fetching in background, returning defaults.")
+    threading.Thread(target=_fetch_rates_from_api, daemon=True).start()
     
-    logger.warning("Using default exchange rates")
     return DEFAULT_RATES.copy()
 
 
