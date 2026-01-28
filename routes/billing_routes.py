@@ -134,24 +134,34 @@ def run_scheduled_invoice_generation():
         return 0, "Not invoice generation time"
     
     last_week_start, last_week_end = get_last_week()
-    all_orgs = Organization.query.filter_by(is_active=True).all()
+
+    # Eager load screens to avoid N+1 queries in generate_invoice_for_week
+    all_orgs = Organization.query.options(joinedload(Organization.screens)).filter_by(is_active=True).all()
+
+    # Bulk fetch existing invoices for the week to avoid N+1 queries
+    existing_invoices = db.session.query(Invoice.organization_id).filter_by(
+        week_start_date=last_week_start,
+        week_end_date=last_week_end
+    ).all()
+    existing_org_ids = {inv[0] for inv in existing_invoices}
     
     generated_count = 0
     for org in all_orgs:
-        existing = Invoice.query.filter_by(
-            organization_id=org.id,
-            week_start_date=last_week_start,
-            week_end_date=last_week_end
-        ).first()
-        if not existing:
-            invoice = generate_invoice_for_week(org.id, last_week_start, last_week_end)
+        if org.id not in existing_org_ids:
+            invoice = generate_invoice_for_week(
+                org.id,
+                last_week_start,
+                last_week_end,
+                org=org,
+                check_existing=False
+            )
             if invoice:
                 generated_count += 1
     
     return generated_count, f"Generated {generated_count} invoices for week {last_week_start} to {last_week_end}"
 
 
-def generate_invoice_for_week(organization_id, week_start, week_end):
+def generate_invoice_for_week(organization_id, week_start, week_end, org=None, check_existing=True):
     """
     Generate an invoice for a specific week for an organization.
     - Only generates if gross_revenue > 0
@@ -160,15 +170,19 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
     """
     from models import SiteSetting
     
-    org = Organization.query.options(joinedload(Organization.screens)).filter_by(id=organization_id).first()
+    if org is None:
+        org = Organization.query.options(joinedload(Organization.screens)).filter_by(id=organization_id).first()
+
     if not org:
         return None
     
-    existing_invoice = Invoice.query.filter_by(
-        organization_id=organization_id,
-        week_start_date=week_start,
-        week_end_date=week_end
-    ).first()
+    existing_invoice = None
+    if check_existing:
+        existing_invoice = Invoice.query.filter_by(
+            organization_id=organization_id,
+            week_start_date=week_start,
+            week_end_date=week_end
+        ).first()
     
     screen_ids = [s.id for s in org.screens]
     
@@ -261,7 +275,7 @@ def invoices():
             week_end_date=week_end
         ).first()
         if not existing:
-            generate_invoice_for_week(org.id, week_start, week_end)
+            generate_invoice_for_week(org.id, week_start, week_end, org=org, check_existing=False)
     
     status_filter = request.args.get('status', 'all')
     
