@@ -17,6 +17,265 @@ from services.currency_service import (
 
 admin_bp = Blueprint('admin', __name__)
 
+# Simple in-memory cache for dashboard stats
+_dashboard_cache = {
+    'data': None,
+    'expires_at': 0
+}
+CACHE_DURATION = 300  # 5 minutes in seconds
+
+def get_dashboard_stats(force_refresh=False):
+    """
+    Get dashboard statistics with caching and optimized queries.
+    Returns a dictionary of statistics.
+    """
+    import time
+    from sqlalchemy import case
+    from utils.currencies import get_currency_by_code, get_country_by_code
+    
+    global _dashboard_cache
+    
+    now = time.time()
+    if not force_refresh and _dashboard_cache['data'] and _dashboard_cache['expires_at'] > now:
+        return _dashboard_cache['data']
+
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    
+    # Combined count queries using conditional aggregation
+    # We can't easily combine Org and Screen counts in one query without a cross join or union which might be slower/complex
+    # So we keep them separate but efficient.
+    total_orgs = Organization.query.count()
+    active_orgs = Organization.query.filter_by(is_active=True).count()
+    total_screens = Screen.query.count()
+    online_screens = Screen.query.filter(Screen.status.in_(['online', 'playing'])).count()
+    
+    # Combined revenue queries
+    revenue_stats = db.session.query(
+        func.sum(Booking.total_price),
+        func.sum(case((Booking.created_at >= week_ago, Booking.total_price), else_=0)),
+        func.sum(case((Booking.created_at >= month_ago, Booking.total_price), else_=0))
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).first()
+    
+    total_revenue = revenue_stats[0] or 0
+    weekly_revenue = revenue_stats[1] or 0
+    monthly_revenue = revenue_stats[2] or 0
+    
+    # Platform commission
+    # Calculate directly in DB
+    total_platform_commission = db.session.query(
+        func.sum(Booking.total_price * Organization.commission_rate / 100)
+    ).select_from(Organization).join(
+        Screen, Screen.organization_id == Organization.id
+    ).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).scalar() or 0
+    
+    weekly_commission = db.session.query(
+        func.sum(Booking.total_price * Organization.commission_rate / 100)
+    ).select_from(Organization).join(
+        Screen, Screen.organization_id == Organization.id
+    ).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid',
+        Booking.created_at >= week_ago
+    ).scalar() or 0
+    
+    # Revenue by currency
+    revenue_by_currency = db.session.query(
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
+    ).select_from(Organization).join(
+        Screen, Screen.organization_id == Organization.id
+    ).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).group_by(Organization.currency).all()
+    
+    currency_stats = []
+    for currency_code, total, commission in revenue_by_currency:
+        currency_info = get_currency_by_code(currency_code or 'EUR')
+        currency_stats.append({
+            'code': currency_code or 'EUR',
+            'name': currency_info.get('name', currency_code),
+            'flag': currency_info.get('flag', ''),
+            'symbol': currency_info.get('symbol', currency_code),
+            'total': total or 0,
+            'commission': commission or 0
+        })
+    
+    # Country stats
+    # Optimization: Combined query for org/screen counts per country could be complex.
+    # But revenue by country can be combined for time ranges.
+    
+    orgs_by_country = db.session.query(
+        Organization.country,
+        func.count(Organization.id).label('org_count')
+    ).group_by(Organization.country).all()
+    
+    screens_by_country = db.session.query(
+        Organization.country,
+        func.count(Screen.id).label('screen_count')
+    ).join(Screen, Screen.organization_id == Organization.id).group_by(Organization.country).all()
+    
+    orgs_count_map = {c: count for c, count in orgs_by_country}
+    screens_count_map = {c: count for c, count in screens_by_country}
+    
+    # Combined revenue by country query
+    # We group by country and currency
+    combined_revenue_by_country = db.session.query(
+        Organization.country,
+        Organization.currency,
+        func.sum(Booking.total_price).label('total'),
+        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission'),
+        func.sum(case((Booking.created_at >= today, Booking.total_price), else_=0)).label('daily_total'),
+        func.sum(case((Booking.created_at >= today, Booking.total_price * Organization.commission_rate / 100), else_=0)).label('daily_commission'),
+        func.sum(case((Booking.created_at >= week_ago, Booking.total_price), else_=0)).label('weekly_total'),
+        func.sum(case((Booking.created_at >= week_ago, Booking.total_price * Organization.commission_rate / 100), else_=0)).label('weekly_commission'),
+        func.sum(case((Booking.created_at >= month_ago, Booking.total_price), else_=0)).label('monthly_total'),
+        func.sum(case((Booking.created_at >= month_ago, Booking.total_price * Organization.commission_rate / 100), else_=0)).label('monthly_commission')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).group_by(Organization.country, Organization.currency).all()
+
+    avg_commission_by_country = db.session.query(
+        Organization.country,
+        func.avg(Organization.commission_rate).label('avg_commission')
+    ).group_by(Organization.country).all()
+    avg_commission_map = {c: avg for c, avg in avg_commission_by_country}
+    
+    country_data = {}
+
+    for row in combined_revenue_by_country:
+        country_code = row.country
+        currency_code = row.currency
+
+        cc = country_code or 'FR'
+        if cc not in country_data:
+            country_info = get_country_by_code(cc)
+            country_data[cc] = {
+                'country_code': cc,
+                'country_name': country_info.get('name', cc),
+                'country_flag': country_info.get('flag', ''),
+                'org_count': orgs_count_map.get(cc, 0),
+                'screen_count': screens_count_map.get(cc, 0),
+                'avg_commission': avg_commission_map.get(cc, 0),
+                'currencies': []
+            }
+
+        currency_info = get_currency_by_code(currency_code or 'EUR')
+        curr_code = currency_code or 'EUR'
+
+        country_data[cc]['currencies'].append({
+            'currency_code': curr_code,
+            'currency_symbol': currency_info.get('symbol', currency_code),
+            'total': row.total or 0,
+            'commission': row.commission or 0,
+            'daily_total': row.daily_total or 0,
+            'daily_commission': row.daily_commission or 0,
+            'weekly_total': row.weekly_total or 0,
+            'weekly_commission': row.weekly_commission or 0,
+            'monthly_total': row.monthly_total or 0,
+            'monthly_commission': row.monthly_commission or 0
+        })
+
+    for cc in orgs_count_map:
+        if cc not in country_data:
+            country_info = get_country_by_code(cc)
+            country_data[cc] = {
+                'country_code': cc,
+                'country_name': country_info.get('name', cc),
+                'country_flag': country_info.get('flag', ''),
+                'org_count': orgs_count_map.get(cc, 0),
+                'screen_count': screens_count_map.get(cc, 0),
+                'avg_commission': avg_commission_map.get(cc, 0),
+                'currencies': []
+            }
+
+    country_stats = list(country_data.values())
+    
+    # Top Orgs - return serialized data
+    top_orgs_query = db.session.query(
+        Organization,
+        func.sum(Booking.total_price).label('revenue')
+    ).join(Screen, Screen.organization_id == Organization.id).join(
+        Booking, Booking.screen_id == Screen.id
+    ).filter(
+        Booking.payment_status == 'paid'
+    ).group_by(Organization.id).order_by(func.sum(Booking.total_price).desc()).limit(5).all()
+    
+    top_orgs_data = []
+    for org, revenue in top_orgs_query:
+        top_orgs_data.append({
+            'id': org.id,
+            'name': org.name,
+            'email': org.email,
+            'revenue': revenue,
+            'currency': org.currency,
+            'commission_rate': org.commission_rate,
+            'commission': org.calculate_platform_commission(revenue)
+        })
+
+    # Pre-calculate base currency conversions
+    # This requires knowing admin_base_currency which is a setting.
+    # We can fetch it here.
+    admin_base_currency = SiteSetting.get('admin_base_currency', 'EUR')
+    
+    revenues_by_currency = {}
+    commissions_by_currency = {}
+    weekly_rev_dict = {}
+    monthly_rev_dict = {}
+    
+    for row in revenue_by_currency:
+        code = row.currency or 'EUR'
+        revenues_by_currency[code] = row.total or 0
+        commissions_by_currency[code] = row.commission or 0
+
+    # We need weekly/monthly by currency again for global conversion
+    # But we can iterate over the combined_revenue_by_country to sum them up!
+    # Avoiding more queries.
+    for row in combined_revenue_by_country:
+        code = row.currency or 'EUR'
+        weekly_rev_dict[code] = weekly_rev_dict.get(code, 0) + (row.weekly_total or 0)
+        monthly_rev_dict[code] = monthly_rev_dict.get(code, 0) + (row.monthly_total or 0)
+
+    data = {
+        'total_orgs': total_orgs,
+        'active_orgs': active_orgs,
+        'total_screens': total_screens,
+        'online_screens': online_screens,
+        'total_revenue': total_revenue,
+        'weekly_revenue': weekly_revenue,
+        'monthly_revenue': monthly_revenue,
+        'total_platform_commission': total_platform_commission,
+        'weekly_commission': weekly_commission,
+        'currency_stats': currency_stats,
+        'country_stats': country_stats,
+        'top_orgs_data': top_orgs_data,
+        'admin_base_currency': admin_base_currency,
+        'revenues_by_currency': revenues_by_currency,
+        'commissions_by_currency': commissions_by_currency,
+        'weekly_rev_dict': weekly_rev_dict,
+        'monthly_rev_dict': monthly_rev_dict
+    }
+    
+    _dashboard_cache = {
+        'data': data,
+        'expires_at': now + CACHE_DURATION
+    }
+
+    return data
+
 
 def parse_float_safe(value, default=0.0):
     """Safely parse a float value, returning default if invalid."""
@@ -48,15 +307,15 @@ def admin_required(permission=None):
             if not current_user.is_authenticated:
                 flash(t('flash.please_login'), 'error')
                 return redirect(url_for('auth.login'))
-            
+
             if not current_user.is_admin():
                 flash(t('flash.admin_required'), 'error')
                 return redirect(url_for('auth.login'))
-            
+
             if permission and not current_user.has_permission(permission):
                 flash(t('flash.permission_denied'), 'error')
                 return redirect(url_for('admin.dashboard'))
-            
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -68,270 +327,47 @@ def admin_required(permission=None):
 def dashboard():
     from utils.currencies import get_currency_by_code
     
-    total_orgs = Organization.query.count()
-    active_orgs = Organization.query.filter_by(is_active=True).count()
-    total_screens = Screen.query.count()
-    online_screens = Screen.query.filter(Screen.status.in_(['online', 'playing'])).count()
+    force_refresh = request.args.get('refresh', 'false').lower() == 'true'
+    stats = get_dashboard_stats(force_refresh=force_refresh)
     
-    today = datetime.utcnow().date()
-    week_ago = today - timedelta(days=7)
-    month_ago = today - timedelta(days=30)
-    
-    total_revenue = db.session.query(func.sum(Booking.total_price)).filter(
-        Booking.payment_status == 'paid'
-    ).scalar() or 0
-    
-    weekly_revenue = db.session.query(func.sum(Booking.total_price)).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= week_ago
-    ).scalar() or 0
-    
-    monthly_revenue = db.session.query(func.sum(Booking.total_price)).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= month_ago
-    ).scalar() or 0
-    
-    orgs_with_revenue = db.session.query(
-        Organization,
-        func.sum(Booking.total_price).label('gross_revenue')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid'
-    ).group_by(Organization.id).all()
-    
-    total_platform_commission = sum(
-        org.calculate_platform_commission(gross_revenue or 0) 
-        for org, gross_revenue in orgs_with_revenue
-    )
-    
-    weekly_commission = 0
-    orgs_weekly = db.session.query(
-        Organization,
-        func.sum(Booking.total_price).label('gross_revenue')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= week_ago
-    ).group_by(Organization.id).all()
-    
-    weekly_commission = sum(
-        org.calculate_platform_commission(gross_revenue or 0) 
-        for org, gross_revenue in orgs_weekly
-    )
-    
-    revenue_by_currency = db.session.query(
-        Organization.currency,
-        func.sum(Booking.total_price).label('total'),
-        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid'
-    ).group_by(Organization.currency).all()
-    
-    currency_stats = []
-    for currency_code, total, commission in revenue_by_currency:
-        currency_info = get_currency_by_code(currency_code or 'EUR')
-        currency_stats.append({
-            'code': currency_code or 'EUR',
-            'name': currency_info.get('name', currency_code),
-            'flag': currency_info.get('flag', ''),
-            'symbol': currency_info.get('symbol', currency_code),
-            'total': total or 0,
-            'commission': commission or 0
-        })
-    
-    from utils.currencies import get_country_by_code
-    
-    orgs_by_country = db.session.query(
-        Organization.country,
-        func.count(Organization.id).label('org_count')
-    ).group_by(Organization.country).all()
-    
-    screens_by_country = db.session.query(
-        Organization.country,
-        func.count(Screen.id).label('screen_count')
-    ).join(Screen, Screen.organization_id == Organization.id).group_by(Organization.country).all()
-    
-    orgs_count_map = {c: count for c, count in orgs_by_country}
-    screens_count_map = {c: count for c, count in screens_by_country}
-    
-    revenue_by_country = db.session.query(
-        Organization.country,
-        Organization.currency,
-        func.sum(Booking.total_price).label('total'),
-        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid'
-    ).group_by(Organization.country, Organization.currency).all()
-    
-    revenue_by_country_daily = db.session.query(
-        Organization.country,
-        Organization.currency,
-        func.sum(Booking.total_price).label('total'),
-        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= today
-    ).group_by(Organization.country, Organization.currency).all()
-    
-    revenue_by_country_weekly = db.session.query(
-        Organization.country,
-        Organization.currency,
-        func.sum(Booking.total_price).label('total'),
-        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= week_ago
-    ).group_by(Organization.country, Organization.currency).all()
-    
-    revenue_by_country_monthly = db.session.query(
-        Organization.country,
-        Organization.currency,
-        func.sum(Booking.total_price).label('total'),
-        func.sum(Booking.total_price * Organization.commission_rate / 100).label('commission')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= month_ago
-    ).group_by(Organization.country, Organization.currency).all()
-    
-    avg_commission_by_country = db.session.query(
-        Organization.country,
-        func.avg(Organization.commission_rate).label('avg_commission')
-    ).group_by(Organization.country).all()
-    avg_commission_map = {c: avg for c, avg in avg_commission_by_country}
-    
-    def build_currency_map(data):
-        result = {}
-        for country_code, currency_code, total, commission in data:
-            cc = country_code or 'FR'
-            if cc not in result:
-                result[cc] = {}
-            currency_info = get_currency_by_code(currency_code or 'EUR')
-            result[cc][currency_code or 'EUR'] = {
-                'currency_code': currency_code or 'EUR',
-                'currency_symbol': currency_info.get('symbol', currency_code),
-                'total': total or 0,
-                'commission': commission or 0
-            }
-        return result
-    
-    daily_map = build_currency_map(revenue_by_country_daily)
-    weekly_map = build_currency_map(revenue_by_country_weekly)
-    monthly_map = build_currency_map(revenue_by_country_monthly)
-    
-    country_data = {}
-    for country_code, currency_code, total, commission in revenue_by_country:
-        cc = country_code or 'FR'
-        if cc not in country_data:
-            country_info = get_country_by_code(cc)
-            country_data[cc] = {
-                'country_code': cc,
-                'country_name': country_info.get('name', cc),
-                'country_flag': country_info.get('flag', ''),
-                'org_count': orgs_count_map.get(cc, 0),
-                'screen_count': screens_count_map.get(cc, 0),
-                'avg_commission': avg_commission_map.get(cc, 0),
-                'currencies': []
-            }
-        currency_info = get_currency_by_code(currency_code or 'EUR')
-        curr_code = currency_code or 'EUR'
-        country_data[cc]['currencies'].append({
-            'currency_code': curr_code,
-            'currency_symbol': currency_info.get('symbol', currency_code),
-            'total': total or 0,
-            'commission': commission or 0,
-            'daily_total': daily_map.get(cc, {}).get(curr_code, {}).get('total', 0),
-            'daily_commission': daily_map.get(cc, {}).get(curr_code, {}).get('commission', 0),
-            'weekly_total': weekly_map.get(cc, {}).get(curr_code, {}).get('total', 0),
-            'weekly_commission': weekly_map.get(cc, {}).get(curr_code, {}).get('commission', 0),
-            'monthly_total': monthly_map.get(cc, {}).get(curr_code, {}).get('total', 0),
-            'monthly_commission': monthly_map.get(cc, {}).get(curr_code, {}).get('commission', 0)
-        })
-    
-    for cc in orgs_count_map:
-        if cc not in country_data:
-            country_info = get_country_by_code(cc)
-            country_data[cc] = {
-                'country_code': cc,
-                'country_name': country_info.get('name', cc),
-                'country_flag': country_info.get('flag', ''),
-                'org_count': orgs_count_map.get(cc, 0),
-                'screen_count': screens_count_map.get(cc, 0),
-                'avg_commission': avg_commission_map.get(cc, 0),
-                'currencies': []
-            }
-    
-    country_stats = list(country_data.values())
-    
+    # Non-cached dynamic data
     recent_orgs = Organization.query.order_by(Organization.created_at.desc()).limit(5).all()
     recent_bookings = Booking.query.filter_by(payment_status='paid').order_by(
         Booking.created_at.desc()
     ).limit(10).all()
     
-    top_orgs = db.session.query(
-        Organization,
-        func.sum(Booking.total_price).label('revenue')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid'
-    ).group_by(Organization.id).order_by(func.sum(Booking.total_price).desc()).limit(5).all()
-    
+    # Always fetch the latest base currency setting, even if stats are cached
     admin_base_currency = SiteSetting.get('admin_base_currency', 'EUR')
     admin_currency_info = get_currency_by_code(admin_base_currency)
     
-    revenues_by_currency = {}
-    commissions_by_currency = {}
-    for currency_code, total, commission in revenue_by_currency:
-        code = currency_code or 'EUR'
-        revenues_by_currency[code] = total or 0
-        commissions_by_currency[code] = commission or 0
-    
-    converted_revenue = calculate_revenue_in_base_currency(revenues_by_currency, admin_base_currency)
-    converted_commission = calculate_revenue_in_base_currency(commissions_by_currency, admin_base_currency)
-    
-    weekly_revenues_by_currency = db.session.query(
-        Organization.currency,
-        func.sum(Booking.total_price).label('total')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= week_ago
-    ).group_by(Organization.currency).all()
-    
-    weekly_rev_dict = {(c or 'EUR'): t or 0 for c, t in weekly_revenues_by_currency}
-    converted_weekly_revenue = calculate_revenue_in_base_currency(weekly_rev_dict, admin_base_currency)
-    
-    monthly_revenues_by_currency = db.session.query(
-        Organization.currency,
-        func.sum(Booking.total_price).label('total')
-    ).join(Screen, Screen.organization_id == Organization.id).join(
-        Booking, Booking.screen_id == Screen.id
-    ).filter(
-        Booking.payment_status == 'paid',
-        Booking.created_at >= month_ago
-    ).group_by(Organization.currency).all()
-    
-    monthly_rev_dict = {(c or 'EUR'): t or 0 for c, t in monthly_revenues_by_currency}
-    converted_monthly_revenue = calculate_revenue_in_base_currency(monthly_rev_dict, admin_base_currency)
-    
+    # Perform currency conversions (these are fast, but could be moved to cached function if needed)
+    # However, `convert_to_base_currency` might depend on latest rates.
+    # If we cache the converted values in `get_dashboard_stats`, we rely on cached stats.
+    # The `stats` dict already contains unconverted values.
+
+    # Re-calculating conversions here to ensure we use latest rates if rates were updated
+    # but stats are cached. Or we can just use what's in cache if we want to be consistent.
+    # The `get_dashboard_stats` function does NOT return converted values for everything yet.
+
+    converted_revenue = calculate_revenue_in_base_currency(stats['revenues_by_currency'], admin_base_currency)
+    converted_commission = calculate_revenue_in_base_currency(stats['commissions_by_currency'], admin_base_currency)
+
+    converted_weekly_revenue = calculate_revenue_in_base_currency(stats['weekly_rev_dict'], admin_base_currency)
+    converted_monthly_revenue = calculate_revenue_in_base_currency(stats['monthly_rev_dict'], admin_base_currency)
+
+    # Augment cached stats with current conversion info
+    # We copy to avoid mutating the cached dict
+    currency_stats = [dict(s) for s in stats['currency_stats']]
     for stat in currency_stats:
         stat['converted_total'] = convert_to_base_currency(stat['total'], stat['code'], admin_base_currency)
         stat['converted_commission'] = convert_to_base_currency(stat['commission'], stat['code'], admin_base_currency)
         stat['conversion_rate'] = get_conversion_rate(stat['code'], admin_base_currency)
     
+    country_stats = []
+    # deep copy for country_stats because it has nested lists
+    import copy
+    country_stats = copy.deepcopy(stats['country_stats'])
+
     for stat in country_stats:
         for curr in stat.get('currencies', []):
             curr['converted_total'] = convert_to_base_currency(curr['total'], curr['currency_code'], admin_base_currency)
@@ -343,20 +379,20 @@ def dashboard():
     rates_last_updated = get_rates_last_updated()
     
     return render_template('admin/dashboard.html',
-        total_orgs=total_orgs,
-        active_orgs=active_orgs,
-        total_screens=total_screens,
-        online_screens=online_screens,
-        total_revenue=total_revenue,
-        weekly_revenue=weekly_revenue,
-        monthly_revenue=monthly_revenue,
-        total_platform_commission=total_platform_commission,
-        weekly_commission=weekly_commission,
+        total_orgs=stats['total_orgs'],
+        active_orgs=stats['active_orgs'],
+        total_screens=stats['total_screens'],
+        online_screens=stats['online_screens'],
+        total_revenue=stats['total_revenue'],
+        weekly_revenue=stats['weekly_revenue'],
+        monthly_revenue=stats['monthly_revenue'],
+        total_platform_commission=stats['total_platform_commission'],
+        weekly_commission=stats['weekly_commission'],
         currency_stats=currency_stats,
         country_stats=country_stats,
         recent_orgs=recent_orgs,
         recent_bookings=recent_bookings,
-        top_orgs=top_orgs,
+        top_orgs=stats['top_orgs_data'],
         admin_base_currency=admin_base_currency,
         admin_currency_symbol=admin_currency_info.get('symbol', admin_base_currency),
         converted_revenue=converted_revenue,

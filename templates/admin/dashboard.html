@@ -387,7 +387,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for org, revenue in top_orgs %}
+                    {% for item in top_orgs %}
                     <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                         <td class="py-3 px-4 sm:px-0">
                             <div class="flex items-center gap-2 sm:gap-3">
@@ -395,15 +395,15 @@
                                     <i class="fas fa-store text-gray-600 text-sm"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="font-medium text-gray-800 text-sm truncate">{{ org.name }}</p>
-                                    <p class="text-xs text-gray-500 truncate">{{ org.email }}</p>
+                                    <p class="font-medium text-gray-800 text-sm truncate">{{ item.name }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ item.email }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3 font-semibold text-gray-800 text-sm">{{ "%.2f"|format(revenue) }}€</td>
-                        <td class="py-3 text-emerald-600 font-medium text-sm">{{ "%.2f"|format(org.calculate_platform_commission(revenue)) }}€</td>
+                        <td class="py-3 font-semibold text-gray-800 text-sm">{{ "%.2f"|format(item.revenue) }}€</td>
+                        <td class="py-3 text-emerald-600 font-medium text-sm">{{ "%.2f"|format(item.commission) }}€</td>
                         <td class="py-3">
-                            <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{{ org.commission_rate }}%</span>
+                            <span class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">{{ item.commission_rate }}%</span>
                         </td>
                     </tr>
                     {% else %}
