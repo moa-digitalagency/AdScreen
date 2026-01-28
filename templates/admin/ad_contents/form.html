@@ -728,6 +728,7 @@ function calculateScreens() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRF-Token': '{{ csrf_token() }}'
         },
         body: JSON.stringify({
             target_type: targetType,

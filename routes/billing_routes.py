@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Billing routes for invoicing and payments
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, make_response
 from flask_login import login_required, current_user
 from functools import wraps

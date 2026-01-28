@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Main application entry point and configuration
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 import os
 import logging
 import secrets
@@ -151,12 +158,6 @@ def validate_csrf_token():
             for prefix in CSRF_EXEMPT_PREFIXES:
                 if request.endpoint.startswith(prefix):
                     return
-        
-        if request.is_json or (request.content_type and 'application/json' in request.content_type):
-            return
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return
         
         token_from_form = request.form.get('csrf_token')
         token_from_header = request.headers.get('X-CSRF-Token')

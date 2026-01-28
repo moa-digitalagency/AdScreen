@@ -1,12 +1,29 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Authentication and public routes
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User, Organization, SiteSetting, RegistrationRequest, Screen
 from services.translation_service import t
 import urllib.parse
+from urllib.parse import urlparse, urljoin
 from datetime import datetime
+import ipaddress
 
 auth_bp = Blueprint('auth', __name__)
+
+def is_safe_url(target):
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
 
 @auth_bp.route('/robots.txt')
 def robots_txt():
@@ -100,6 +117,9 @@ def login():
             login_user(user)
             next_page = request.args.get('next')
             
+            if not is_safe_url(next_page):
+                next_page = None
+
             if user.is_superadmin():
                 return redirect(next_page or url_for('admin.dashboard'))
             return redirect(next_page or url_for('org.dashboard'))
@@ -314,18 +334,26 @@ def detect_country_from_ip(request):
     
     real_ip = get_real_ip(request)
     
-    if real_ip and not real_ip.startswith(('127.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.', '192.168.', '::1', 'localhost')):
+    if real_ip:
         try:
-            import urllib.request
-            import json
+            # Validate IP to prevent SSRF
+            try:
+                ip_obj = ipaddress.ip_address(real_ip)
+                is_private = ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved
+            except ValueError:
+                is_private = True
             
-            api_url = f"http://ip-api.com/json/{real_ip}?fields=countryCode,status"
-            req = urllib.request.Request(api_url, headers={'User-Agent': 'Mozilla/5.0'})
-            
-            with urllib.request.urlopen(req, timeout=2) as response:
-                data = json.loads(response.read().decode())
-                if data.get('status') == 'success' and data.get('countryCode'):
-                    return data['countryCode']
+            if not is_private:
+                import urllib.request
+                import json
+
+                api_url = f"http://ip-api.com/json/{real_ip}?fields=countryCode,status"
+                req = urllib.request.Request(api_url, headers={'User-Agent': 'Mozilla/5.0'})
+
+                with urllib.request.urlopen(req, timeout=2) as response:
+                    data = json.loads(response.read().decode())
+                    if data.get('status') == 'success' and data.get('countryCode'):
+                        return data['countryCode']
         except Exception as e:
             logging.debug(f"IP geolocation failed for {real_ip}: {e}")
     
