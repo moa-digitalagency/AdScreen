@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Player routes for playback and stream management
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 # pyright: reportArgumentType=false
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify, Response, make_response
 from app import db
@@ -26,9 +33,11 @@ def is_safe_url(url, allow_private=False):
             return False
 
         try:
+            # If hostname is already an IP
             ip = ipaddress.ip_address(hostname)
         except ValueError:
             try:
+                # Resolve hostname
                 ip_str = socket.gethostbyname(hostname)
                 ip = ipaddress.ip_address(ip_str)
             except (socket.gaierror, Exception):
@@ -407,9 +416,10 @@ def stream_proxy():
         logger.info(f"Detected MPEG-TS stream: {url}")
     
     try:
+        # Disable redirects to prevent Blind SSRF
         http = urllib3.PoolManager(
             timeout=urllib3.Timeout(connect=10.0, read=None),
-            retries=urllib3.Retry(total=3, redirect=10)
+            retries=urllib3.Retry(total=3, redirect=0)
         )
         
         headers = {
@@ -419,8 +429,29 @@ def stream_proxy():
         }
         
         if is_manifest:
-            response = http.request('GET', url, headers=headers, timeout=30)
+            # Handle redirects manually
+            current_url = url
+            response = None
+            for _ in range(5): # Max 5 redirects
+                try:
+                    if not is_safe_url(current_url):
+                        return jsonify({'error': 'Unsafe redirect'}), 400
+
+                    response = http.request('GET', current_url, headers=headers, timeout=30, redirect=False)
+                    if 300 <= response.status < 400 and 'Location' in response.headers:
+                        current_url = response.headers['Location']
+                        # Handle relative redirects
+                        if not current_url.startswith(('http://', 'https://')):
+                            current_url = urllib.parse.urljoin(url, current_url)
+                        continue
+                    break
+                except urllib3.exceptions.MaxRetryError:
+                    if response: break # Should not happen with loop
+                    return jsonify({'error': 'Connection failed'}), 500
             
+            if not response:
+                return jsonify({'error': 'Request failed'}), 500
+
             content_type = response.headers.get('Content-Type', 'application/vnd.apple.mpegurl')
             
             try:
@@ -450,13 +481,38 @@ def stream_proxy():
         else:
             logger.info(f"Starting stream proxy for: {url}")
             
-            upstream_response = http.request(
-                'GET', url, 
-                headers=headers, 
-                preload_content=False,
-                timeout=urllib3.Timeout(connect=15.0, read=None)
-            )
+            # Manual redirect handling for stream
+            current_url = url
+            upstream_response = None
             
+            for _ in range(5):
+                if not is_safe_url(current_url):
+                     return jsonify({'error': 'Unsafe redirect'}), 400
+
+                try:
+                    upstream_response = http.request(
+                        'GET', current_url,
+                        headers=headers,
+                        preload_content=False,
+                        timeout=urllib3.Timeout(connect=15.0, read=None),
+                        redirect=False
+                    )
+
+                    if 300 <= upstream_response.status < 400 and 'Location' in upstream_response.headers:
+                        new_loc = upstream_response.headers['Location']
+                        if not new_loc.startswith(('http://', 'https://')):
+                            new_loc = urllib.parse.urljoin(current_url, new_loc)
+                        current_url = new_loc
+                        upstream_response.release_conn()
+                        continue
+                    break
+                except Exception:
+                    if upstream_response: upstream_response.release_conn()
+                    raise
+
+            if not upstream_response:
+                 return jsonify({'error': 'Stream connection failed'}), 500
+
             logger.info(f"Upstream response status: {upstream_response.status}")
             
             def generate_stream():
@@ -518,6 +574,9 @@ def tv_stream(screen_code):
     from services.hls_converter import HLSConverter
     import time
     
+    if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
 
@@ -645,6 +704,9 @@ def change_channel(screen_code):
     from services.hls_converter import HLSConverter
     import time
     
+    if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+        return jsonify({'error': 'Invalid screen code'}), 400
+
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
 

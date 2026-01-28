@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Booking routes for public screen reservation
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking

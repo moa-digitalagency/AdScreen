@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Mobile API routes for players and management
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 from flask import Blueprint, jsonify, request, g
 from app import db
 from models import Screen, User, Content, Booking, StatLog, HeartbeatLog

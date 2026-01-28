@@ -1,3 +1,10 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Service for converting streams to HLS using FFmpeg
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 import subprocess
 import os
 import signal
@@ -7,6 +14,7 @@ import threading
 import time
 import shutil
 from pathlib import Path
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +142,13 @@ class HLSConverter:
         Convertit MPEG-TS en HLS
         wait_for_manifest: Attend que le manifeste soit prêt avant de retourner
         """
+        # Validate inputs
+        if not source_url or source_url.startswith('-'):
+            raise ValueError("Invalid source URL")
+
+        if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+            raise ValueError("Invalid screen code")
+
         HLSConverter.init()
         
         output_dir = HLSConverter.HLS_TEMP_DIR / screen_code
@@ -147,6 +162,7 @@ class HLSConverter:
             '-y',
             '-hide_banner',
             '-loglevel', 'warning',
+            '-protocol_whitelist', 'file,http,https,tcp,udp,rtp,rtmp,rtsp',
             '-reconnect', '1',
             '-reconnect_streamed', '1',
             '-reconnect_delay_max', '5',
@@ -166,6 +182,7 @@ class HLSConverter:
         
         try:
             logger.info(f'[{screen_code}] Starting FFmpeg conversion')
+            # Mask URL in logs if needed, but logging source is usually fine if not containing credentials
             logger.info(f'[{screen_code}] Source: {source_url[:60]}...')
             
             process = subprocess.Popen(
