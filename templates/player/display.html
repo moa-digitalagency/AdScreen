@@ -425,6 +425,7 @@
             lastBufferTime: null,
             qualityCapped: false,
             qualityRecoveryTimer: null,
+            lastEtag: null,
             
             // Robustness settings for 24/7 operation
             watchdogInterval: null,
@@ -806,7 +807,21 @@
 
         async function fetchPlaylist() {
             try {
-                const response = await fetch('/player/api/playlist');
+                const headers = {};
+                if (player.lastEtag) {
+                    headers['If-None-Match'] = player.lastEtag;
+                }
+
+                const response = await fetch('/player/api/playlist', { headers });
+
+                if (response.status === 304) {
+                    return;
+                }
+
+                if (response.ok && response.headers.has('ETag')) {
+                    player.lastEtag = response.headers.get('ETag');
+                }
+
                 const data = await response.json();
                 
                 if (data.error) {
@@ -2101,7 +2116,21 @@
         const originalFetchPlaylist = fetchPlaylist;
         fetchPlaylist = async function() {
             try {
-                const response = await fetch('/player/api/playlist');
+                const headers = {};
+                if (player.lastEtag) {
+                    headers['If-None-Match'] = player.lastEtag;
+                }
+
+                const response = await fetch('/player/api/playlist', { headers });
+
+                if (response.status === 304) {
+                    return;
+                }
+
+                if (response.ok && response.headers.has('ETag')) {
+                    player.lastEtag = response.headers.get('ETag');
+                }
+
                 const data = await response.json();
                 
                 if (data.error && data.offline) {
