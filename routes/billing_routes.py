@@ -271,9 +271,26 @@ def invoices():
     
     invoices = query.order_by(Invoice.week_start_date.desc()).all()
     
-    total_pending = sum(i.commission_amount for i in invoices if i.status == Invoice.STATUS_PENDING)
-    total_paid = sum(i.commission_amount for i in invoices if i.status in [Invoice.STATUS_PAID, Invoice.STATUS_VALIDATED])
-    total_validated = sum(i.commission_amount for i in invoices if i.status == Invoice.STATUS_VALIDATED)
+    total_pending = 0
+    total_paid = 0
+    total_validated = 0
+
+    # Pre-fetch status constants for performance
+    STATUS_PENDING = Invoice.STATUS_PENDING
+    STATUS_PAID = Invoice.STATUS_PAID
+    STATUS_VALIDATED = Invoice.STATUS_VALIDATED
+
+    for i in invoices:
+        status = i.status
+        amount = i.commission_amount
+
+        if status == STATUS_PENDING:
+            total_pending += amount
+        elif status == STATUS_PAID:
+            total_paid += amount
+        elif status == STATUS_VALIDATED:
+            total_paid += amount
+            total_validated += amount
     
     currency_info = get_currency_by_code(org.currency or 'EUR')
     currency_symbol = currency_info.get('symbol', org.currency or 'EUR')
