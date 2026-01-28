@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.DS_Store
+*.db
+*.sqlite3
+instance/
+static/uploads/
+tests/homepage.png
+tests/dashboard.png
+tests/login_page.png

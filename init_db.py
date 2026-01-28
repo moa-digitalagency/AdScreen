@@ -23,16 +23,25 @@ logger = logging.getLogger(__name__)
 
 def get_column_type_sql(column):
     """Convertit le type SQLAlchemy en type SQL pour ALTER TABLE."""
-    from sqlalchemy import Boolean, Integer, Float, String, Text, DateTime, Date
-    
+    from sqlalchemy import Boolean, Integer, Float, String, Text, DateTime, Date, Time, Numeric, SmallInteger, LargeBinary
+    from sqlalchemy.dialects.postgresql import JSON, JSONB, UUID
+
     col_type = type(column.type)
     
     if col_type == Boolean:
         return "BOOLEAN"
     elif col_type == Integer:
         return "INTEGER"
+    elif col_type == SmallInteger:
+        return "SMALLINT"
     elif col_type == Float:
         return "FLOAT"
+    elif col_type == Numeric:
+        precision = getattr(column.type, 'precision', None)
+        scale = getattr(column.type, 'scale', None)
+        if precision and scale:
+            return f"NUMERIC({precision}, {scale})"
+        return "NUMERIC"
     elif col_type == String:
         length = getattr(column.type, 'length', 255) or 255
         return f"VARCHAR({length})"
@@ -42,6 +51,14 @@ def get_column_type_sql(column):
         return "TIMESTAMP"
     elif col_type == Date:
         return "DATE"
+    elif col_type == Time:
+        return "TIME"
+    elif col_type == LargeBinary:
+        return "BYTEA"
+    elif col_type in (JSON, JSONB):
+        return "JSONB"
+    elif col_type == UUID:
+        return "UUID"
     else:
         return "TEXT"
 
@@ -64,40 +81,27 @@ def sync_missing_columns(db):
     Synchronise les colonnes manquantes dans les tables existantes.
     Ajoute automatiquement les colonnes définies dans les modèles mais absentes de la DB.
     """
-    from models import (
-        User, Organization, Screen, TimeSlot, TimePeriod,
-        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
-        Broadcast, AdContent, AdContentInvoice, AdContentStat
-    )
-    
-    models = [
-        User, Organization, Screen, TimeSlot, TimePeriod,
-        Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-        SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
-        Broadcast, AdContent, AdContentInvoice, AdContentStat
-    ]
+    # Force l'import de tous les modèles pour qu'ils soient enregistrés dans db.metadata
+    import models  # noqa: F401
     
     inspector = inspect(db.engine)
-    existing_tables = inspector.get_table_names()
+    existing_tables = set(inspector.get_table_names())
     
     columns_added = 0
     
-    for model in models:
-        table_name = model.__tablename__
-        
+    # Itérer sur toutes les tables définies dans SQLAlchemy
+    for table_name, table in db.metadata.tables.items():
         if table_name not in existing_tables:
             continue
-        
+
         existing_columns = {col['name'] for col in inspector.get_columns(table_name)}
-        model_columns = {col.name: col for col in model.__table__.columns}
         
-        for col_name, column in model_columns.items():
+        for col_name, column in table.columns.items():
             if col_name not in existing_columns:
                 col_type = get_column_type_sql(column)
                 default_sql = get_default_value_sql(column)
                 
-                alter_sql = f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS "{col_name}" {col_type}'
+                alter_sql = f'ALTER TABLE "{table_name}" ADD COLUMN IF NOT EXISTS "{col_name}" {col_type}'
                 
                 if default_sql:
                     alter_sql += f" DEFAULT {default_sql}"
@@ -142,40 +146,13 @@ def init_database(drop_existing=False):
         
         logger.info("Base de données initialisée avec succès!")
         
-        from models import (
-            User, Organization, Screen, TimeSlot, TimePeriod,
-            Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog,
-            SiteSetting, RegistrationRequest, ScreenOverlay, Invoice, PaymentProof,
-            Broadcast, AdContent, AdContentInvoice, AdContentStat
-        )
-        
-        tables = [
-            ('users', User),
-            ('organizations', Organization),
-            ('screens', Screen),
-            ('time_slots', TimeSlot),
-            ('time_periods', TimePeriod),
-            ('contents', Content),
-            ('bookings', Booking),
-            ('fillers', Filler),
-            ('internal_contents', InternalContent),
-            ('stat_logs', StatLog),
-            ('heartbeat_logs', HeartbeatLog),
-            ('site_settings', SiteSetting),
-            ('registration_requests', RegistrationRequest),
-            ('screen_overlays', ScreenOverlay),
-            ('invoices', Invoice),
-            ('payment_proofs', PaymentProof),
-            ('broadcasts', Broadcast),
-            ('ad_contents', AdContent),
-            ('ad_content_invoices', AdContentInvoice),
-            ('ad_content_stats', AdContentStat),
-        ]
-        
-        logger.info("\nTables créées :")
-        for table_name, model in tables:
+        # Récapitulatif dynamique
+        logger.info("\nTables vérifiées :")
+        for table_name in db.metadata.tables.keys():
             try:
-                count = model.query.count()
+                # On utilise directement SQL pour compter pour éviter d'avoir besoin des classes Model importées spécifiquement
+                result = db.session.execute(text(f'SELECT COUNT(*) FROM "{table_name}"'))
+                count = result.scalar()
                 logger.info(f"  {table_name}: {count} enregistrements")
             except Exception as e:
                 logger.warning(f"  {table_name}: erreur de lecture - {e}")
