@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 """
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Script d'initialisation de la base de données (migrations auto)
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+
 Script d'initialisation de la base de données Shabaka AdScreen
 Crée toutes les tables définies dans les modèles SQLAlchemy.
 Ajoute automatiquement les colonnes manquantes aux tables existantes.
