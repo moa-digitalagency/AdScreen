@@ -1,6 +1,6 @@
 """
  * Nom de l'application : Shabaka AdScreen
- * Description : Player routes for playback and stream management
+ * Description : Player routes for playback and stream management (Security Audited)
  * Produit de : MOA Digital Agency, www.myoneart.com
  * Fait par : Aisance KALONJI, www.aisancekalonji.com
  * Auditer par : La CyberConfiance, www.cyberconfiance.com
@@ -25,7 +25,10 @@ urllib3.disable_warnings()
 logger = logging.getLogger(__name__)
 
 def is_safe_url(url, allow_private=False):
-    """Check if URL resolves to a safe IP address (not local/private unless allowed)."""
+    """
+    Check if URL resolves to a safe IP address (not local/private unless allowed).
+    Prevents SSRF by resolving hostname and checking against private ranges.
+    """
     try:
         parsed = urllib.parse.urlparse(url)
         hostname = parsed.hostname
@@ -38,6 +41,8 @@ def is_safe_url(url, allow_private=False):
         except ValueError:
             try:
                 # Resolve hostname
+                # Note: This is susceptible to DNS Rebinding. For critical HTTP requests,
+                # use the resolved IP with the original Host header.
                 ip_str = socket.gethostbyname(hostname)
                 ip = ipaddress.ip_address(ip_str)
             except (socket.gaierror, Exception):
@@ -728,11 +733,9 @@ def change_channel(screen_code):
         if not channel_url.startswith(('http://', 'https://', 'udp://', 'rtmp://', 'rtsp://')):
              return jsonify({'error': 'Invalid protocol'}), 400
 
-        # For HTTP/HTTPS, we check for SSRF. For UDP/RTMP etc it depends on ffmpeg handling but usually
-        # not local file access unless file:// is used (which is blocked by startswith above)
-        if channel_url.startswith(('http://', 'https://')):
-            if not is_safe_url(channel_url):
-                return jsonify({'error': 'Invalid URL'}), 400
+        # SEC: Check for SSRF on ALL protocols (HTTP, HTTPS, RTMP, RTSP, UDP, etc.)
+        if not is_safe_url(channel_url):
+            return jsonify({'error': 'Invalid URL or Forbidden Destination'}), 400
         
         logger.info(f'[{screen_code}] Channel change request: {channel_name}')
         

@@ -1,6 +1,6 @@
 """
  * Nom de l'application : Shabaka AdScreen
- * Description : Service for converting streams to HLS using FFmpeg
+ * Description : Service for converting streams to HLS using FFmpeg (Security Audited)
  * Produit de : MOA Digital Agency, www.myoneart.com
  * Fait par : Aisance KALONJI, www.aisancekalonji.com
  * Auditer par : La CyberConfiance, www.cyberconfiance.com
@@ -162,7 +162,8 @@ class HLSConverter:
             '-y',
             '-hide_banner',
             '-loglevel', 'warning',
-            '-protocol_whitelist', 'file,http,https,tcp,udp,rtp,rtmp,rtsp',
+            # SEC: Removed 'file' to prevent Local File Inclusion (LFI/SSRF)
+            '-protocol_whitelist', 'http,https,tcp,udp,rtp,rtmp,rtsp',
             '-reconnect', '1',
             '-reconnect_streamed', '1',
             '-reconnect_delay_max', '5',

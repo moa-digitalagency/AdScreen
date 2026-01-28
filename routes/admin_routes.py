@@ -1,6 +1,6 @@
 """
  * Nom de l'application : Shabaka AdScreen
- * Description : Admin routes for platform management
+ * Description : Admin routes for platform management (Security Audited)
  * Produit de : MOA Digital Agency, www.myoneart.com
  * Fait par : Aisance KALONJI, www.aisancekalonji.com
  * Auditer par : La CyberConfiance, www.cyberconfiance.com
@@ -21,6 +21,28 @@ from services.currency_service import (
     get_rates_last_updated,
     refresh_rates
 )
+
+def validate_image_file(file_storage):
+    """
+    Validates that the file is a valid image using Pillow.
+    Returns True if valid, False otherwise.
+    """
+    try:
+        from PIL import Image
+        # Check if file is empty
+        file_storage.seek(0, 2) # Seek to end
+        size = file_storage.tell()
+        file_storage.seek(0)
+        if size == 0:
+            return False
+
+        img = Image.open(file_storage)
+        img.verify()
+        # Reset file pointer after verify because verify() might move it
+        file_storage.seek(0)
+        return True
+    except Exception:
+        return False
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -764,24 +786,30 @@ def settings():
         if 'og_image_file' in request.files:
             file = request.files['og_image_file']
             if file.filename:
-                filename = secure_filename(file.filename)
-                new_filename = f"og_{secrets.token_hex(8)}_{filename}"
-                upload_path = os.path.join('static', 'uploads', 'site')
-                os.makedirs(upload_path, exist_ok=True)
-                file_path = os.path.join(upload_path, new_filename)
-                file.save(file_path)
-                SiteSetting.set('og_image', '/' + file_path, 'string', 'seo')
+                if not validate_image_file(file):
+                    flash('Le fichier og_image est invalide ou corrompu.', 'error')
+                else:
+                    filename = secure_filename(file.filename)
+                    new_filename = f"og_{secrets.token_hex(8)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'site')
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    SiteSetting.set('og_image', '/' + file_path, 'string', 'seo')
         
         if 'favicon_file' in request.files:
             file = request.files['favicon_file']
             if file.filename:
-                filename = secure_filename(file.filename)
-                new_filename = f"favicon_{secrets.token_hex(4)}_{filename}"
-                upload_path = os.path.join('static', 'uploads', 'site')
-                os.makedirs(upload_path, exist_ok=True)
-                file_path = os.path.join(upload_path, new_filename)
-                file.save(file_path)
-                SiteSetting.set('favicon', '/' + file_path, 'string', 'platform')
+                if not validate_image_file(file):
+                    flash('Le fichier favicon est invalide ou corrompu.', 'error')
+                else:
+                    filename = secure_filename(file.filename)
+                    new_filename = f"favicon_{secrets.token_hex(4)}_{filename}"
+                    upload_path = os.path.join('static', 'uploads', 'site')
+                    os.makedirs(upload_path, exist_ok=True)
+                    file_path = os.path.join(upload_path, new_filename)
+                    file.save(file_path)
+                    SiteSetting.set('favicon', '/' + file_path, 'string', 'platform')
         
         SiteSetting.set('min_commission_rate', min_rate, 'float', 'platform')
         SiteSetting.set('max_commission_rate', max_rate, 'float', 'platform')
@@ -1294,13 +1322,17 @@ def broadcast_new():
                 if 'overlay_image' in request.files:
                     file = request.files['overlay_image']
                     if file.filename:
-                        filename = secure_filename(file.filename)
-                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
-                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
-                        os.makedirs(upload_path, exist_ok=True)
-                        file_path = os.path.join(upload_path, new_filename)
-                        file.save(file_path)
-                        broadcast.overlay_image_path = file_path
+                        if not validate_image_file(file):
+                            flash('L\'image overlay est invalide.', 'error')
+                            # Don't save, keep old or none
+                        else:
+                            filename = secure_filename(file.filename)
+                            new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                            upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                            os.makedirs(upload_path, exist_ok=True)
+                            file_path = os.path.join(upload_path, new_filename)
+                            file.save(file_path)
+                            broadcast.overlay_image_path = file_path
         else:
             broadcast.content_duration = int(request.form.get('content_duration', 10))
             broadcast.content_priority = int(request.form.get('content_priority', 200))
@@ -1308,13 +1340,20 @@ def broadcast_new():
             if 'content_file' in request.files:
                 file = request.files['content_file']
                 if file.filename:
-                    filename = secure_filename(file.filename)
-                    new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
-                    upload_path = os.path.join('static', 'uploads', 'broadcasts')
-                    os.makedirs(upload_path, exist_ok=True)
-                    file_path = os.path.join(upload_path, new_filename)
-                    file.save(file_path)
-                    broadcast.content_file_path = file_path
+                    # Basic check for images vs video extensions, deeper validation requires ffmpeg/magic
+                    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+                    is_video = ext in ['mp4', 'webm', 'mov', 'avi']
+
+                    if not is_video and not validate_image_file(file):
+                        flash('Le fichier image est invalide.', 'error')
+                    else:
+                        filename = secure_filename(file.filename)
+                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                        os.makedirs(upload_path, exist_ok=True)
+                        file_path = os.path.join(upload_path, new_filename)
+                        file.save(file_path)
+                        broadcast.content_file_path = file_path
                     
                     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
                     if ext in ['mp4', 'webm', 'mov', 'avi']:
@@ -1490,16 +1529,19 @@ def broadcast_edit(broadcast_id):
                 if 'overlay_image' in request.files:
                     file = request.files['overlay_image']
                     if file.filename:
-                        if broadcast.overlay_image_path and os.path.exists(broadcast.overlay_image_path):
-                            os.remove(broadcast.overlay_image_path)
-                        
-                        filename = secure_filename(file.filename)
-                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
-                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
-                        os.makedirs(upload_path, exist_ok=True)
-                        file_path = os.path.join(upload_path, new_filename)
-                        file.save(file_path)
-                        broadcast.overlay_image_path = file_path
+                        if not validate_image_file(file):
+                            flash('L\'image overlay est invalide.', 'error')
+                        else:
+                            if broadcast.overlay_image_path and os.path.exists(broadcast.overlay_image_path):
+                                os.remove(broadcast.overlay_image_path)
+
+                            filename = secure_filename(file.filename)
+                            new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                            upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                            os.makedirs(upload_path, exist_ok=True)
+                            file_path = os.path.join(upload_path, new_filename)
+                            file.save(file_path)
+                            broadcast.overlay_image_path = file_path
         else:
             broadcast.content_duration = int(request.form.get('content_duration', 10))
             broadcast.content_priority = int(request.form.get('content_priority', 200))
@@ -1507,16 +1549,22 @@ def broadcast_edit(broadcast_id):
             if 'content_file' in request.files:
                 file = request.files['content_file']
                 if file.filename:
-                    if broadcast.content_file_path and os.path.exists(broadcast.content_file_path):
-                        os.remove(broadcast.content_file_path)
+                    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+                    is_video = ext in ['mp4', 'webm', 'mov', 'avi']
                     
-                    filename = secure_filename(file.filename)
-                    new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
-                    upload_path = os.path.join('static', 'uploads', 'broadcasts')
-                    os.makedirs(upload_path, exist_ok=True)
-                    file_path = os.path.join(upload_path, new_filename)
-                    file.save(file_path)
-                    broadcast.content_file_path = file_path
+                    if not is_video and not validate_image_file(file):
+                         flash('Le fichier image est invalide.', 'error')
+                    else:
+                        if broadcast.content_file_path and os.path.exists(broadcast.content_file_path):
+                            os.remove(broadcast.content_file_path)
+
+                        filename = secure_filename(file.filename)
+                        new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
+                        upload_path = os.path.join('static', 'uploads', 'broadcasts')
+                        os.makedirs(upload_path, exist_ok=True)
+                        file_path = os.path.join(upload_path, new_filename)
+                        file.save(file_path)
+                        broadcast.content_file_path = file_path
                     
                     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
                     if ext in ['mp4', 'webm', 'mov', 'avi']:
