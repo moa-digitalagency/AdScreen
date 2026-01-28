@@ -7,6 +7,7 @@ from models.site_setting import SiteSetting
 from services.translation_service import t
 from datetime import datetime, timedelta, date
 from sqlalchemy import func, and_
+from sqlalchemy.orm import joinedload
 import os
 import secrets
 from werkzeug.utils import secure_filename
@@ -159,7 +160,7 @@ def generate_invoice_for_week(organization_id, week_start, week_end):
     """
     from models import SiteSetting
     
-    org = Organization.query.get(organization_id)
+    org = Organization.query.options(joinedload(Organization.screens)).filter_by(id=organization_id).first()
     if not org:
         return None
     
