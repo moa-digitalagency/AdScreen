@@ -11,6 +11,7 @@ from app import db
 from models import Screen, Content, Booking, Filler, InternalContent, StatLog, HeartbeatLog, ScreenOverlay, Broadcast
 from models.ad_content import AdContent, AdContentStat
 from services.translation_service import t
+from services.input_validator import is_safe_url
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 import urllib.parse
@@ -25,40 +26,6 @@ import hashlib
 urllib3.disable_warnings()
 
 logger = logging.getLogger(__name__)
-
-def is_safe_url(url, allow_private=False):
-    """
-    Check if URL resolves to a safe IP address (not local/private unless allowed).
-    Prevents SSRF by resolving hostname and checking against private ranges.
-    """
-    try:
-        parsed = urllib.parse.urlparse(url)
-        hostname = parsed.hostname
-        if not hostname:
-            return False
-
-        try:
-            # If hostname is already an IP
-            ip = ipaddress.ip_address(hostname)
-        except ValueError:
-            try:
-                # Resolve hostname
-                # Note: This is susceptible to DNS Rebinding. For critical HTTP requests,
-                # use the resolved IP with the original Host header.
-                ip_str = socket.gethostbyname(hostname)
-                ip = ipaddress.ip_address(ip_str)
-            except (socket.gaierror, Exception):
-                return False
-
-        if ip.is_loopback:
-            return False
-
-        if not allow_private and (ip.is_private or ip.is_reserved or ip.is_link_local):
-            return False
-
-        return True
-    except Exception:
-        return False
 
 player_bp = Blueprint('player', __name__)
 
@@ -755,7 +722,7 @@ def change_channel(screen_code):
              return jsonify({'error': 'Invalid protocol'}), 400
 
         # SEC: Check for SSRF on ALL protocols (HTTP, HTTPS, RTMP, RTSP, UDP, etc.)
-        if not is_safe_url(channel_url):
+        if not is_safe_url(channel_url, allowed_protocols=('http', 'https', 'udp', 'rtmp', 'rtsp', 'tcp')):
             return jsonify({'error': 'Invalid URL or Forbidden Destination'}), 400
         
         logger.info(f'[{screen_code}] Channel change request: {channel_name}')

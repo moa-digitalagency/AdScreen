@@ -15,6 +15,7 @@ import time
 import shutil
 from pathlib import Path
 import re
+from services.input_validator import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,10 @@ class HLSConverter:
         if not source_url or source_url.startswith('-'):
             raise ValueError("Invalid source URL")
 
+        # Security check: Check for SSRF/LFI
+        if not is_safe_url(source_url, allowed_protocols=('http', 'https', 'udp', 'rtp', 'rtmp', 'rtsp', 'tcp')):
+             raise ValueError("Invalid or unsafe source URL (SSRF/LFI blocked)")
+
         if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
             raise ValueError("Invalid screen code")
 
@@ -163,6 +168,7 @@ class HLSConverter:
             '-hide_banner',
             '-loglevel', 'warning',
             # SEC: Removed 'file' to prevent Local File Inclusion (LFI/SSRF)
+            # SEC: Explicitly whitelist allowed protocols
             '-protocol_whitelist', 'http,https,tcp,udp,rtp,rtmp,rtsp',
             '-reconnect', '1',
             '-reconnect_streamed', '1',

@@ -1,4 +1,14 @@
+"""
+ * Nom de l'application : Shabaka AdScreen
+ * Description : Input validation services (Security Audited)
+ * Produit de : MOA Digital Agency, www.myoneart.com
+ * Fait par : Aisance KALONJI, www.aisancekalonji.com
+ * Auditer par : La CyberConfiance, www.cyberconfiance.com
+"""
 import re
+import socket
+import ipaddress
+import urllib.parse
 from email_validator import validate_email, EmailNotValidError
 from functools import wraps
 from flask import request, jsonify
@@ -105,13 +115,69 @@ def validate_screen_code(code: str) -> str:
     return code
 
 
-def validate_url(url: str, field_name: str = "url") -> str:
+def is_safe_url(url: str, allow_private: bool = False, allowed_protocols: tuple = ('http', 'https')) -> bool:
+    """
+    Check if URL resolves to a safe IP address (not local/private unless allowed).
+    Prevents SSRF by resolving hostname and checking against private ranges.
+    """
+    if not url:
+        return False
+
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in allowed_protocols:
+            return False
+
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+
+        try:
+            # If hostname is already an IP
+            ip = ipaddress.ip_address(hostname)
+        except ValueError:
+            try:
+                # Resolve hostname
+                ip_str = socket.gethostbyname(hostname)
+                ip = ipaddress.ip_address(ip_str)
+            except (socket.gaierror, Exception):
+                return False
+
+        if ip.is_loopback:
+            return False
+
+        if not allow_private and (ip.is_private or ip.is_reserved or ip.is_link_local):
+            return False
+
+        return True
+    except Exception:
+        return False
+
+
+def is_safe_redirect_url(target: str, host_url: str) -> bool:
+    """
+    Checks if the target URL is safe for redirection (Open Redirect protection).
+    Ensures the target is on the same domain or relative.
+    """
+    if not target:
+        return False
+    try:
+        ref_url = urllib.parse.urlparse(host_url)
+        test_url = urllib.parse.urlparse(urllib.parse.urljoin(host_url, target))
+        return test_url.scheme in ('http', 'https') and \
+               ref_url.netloc == test_url.netloc
+    except Exception:
+        return False
+
+
+def validate_url(url: str, field_name: str = "url", check_reachability: bool = False) -> str:
     if not url:
         return None
     
     if not url.startswith(('http://', 'https://')):
         raise ValidationError(field_name, "URL must start with http:// or https://")
     
+    # Regex for basic format validation
     url_pattern = re.compile(
         r'^https?://'
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'
@@ -124,6 +190,10 @@ def validate_url(url: str, field_name: str = "url") -> str:
     if not url_pattern.match(url):
         raise ValidationError(field_name, "Invalid URL format")
     
+    if check_reachability:
+        if not is_safe_url(url):
+            raise ValidationError(field_name, "URL is not reachable or unsafe (SSRF protection)")
+
     return url
 
 
