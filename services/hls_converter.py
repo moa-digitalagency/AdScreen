@@ -31,8 +31,14 @@ class HLSConverter:
     def init(cls):
         cls.HLS_TEMP_DIR.mkdir(parents=True, exist_ok=True)
     
+    @staticmethod
+    def _validate_screen_code(screen_code):
+        if not screen_code or not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+             raise ValueError("Invalid screen code")
+
     @classmethod
     def get_output_dir(cls, screen_code):
+        cls._validate_screen_code(screen_code)
         return cls.HLS_TEMP_DIR / screen_code
     
     @classmethod
@@ -118,7 +124,11 @@ class HLSConverter:
             if screen_code in HLSConverter._current_urls:
                 del HLSConverter._current_urls[screen_code]
         
-        output_dir = HLSConverter.HLS_TEMP_DIR / screen_code
+        try:
+            output_dir = HLSConverter.get_output_dir(screen_code)
+        except ValueError:
+            return
+
         if output_dir.exists():
             try:
                 logger.info(f'[{screen_code}] Cleaning up files in {output_dir}')
@@ -151,12 +161,11 @@ class HLSConverter:
         if not is_safe_url(source_url, allowed_protocols=('http', 'https', 'udp', 'rtp', 'rtmp', 'rtsp', 'tcp')):
              raise ValueError("Invalid or unsafe source URL (SSRF/LFI blocked)")
 
-        if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
-            raise ValueError("Invalid screen code")
+        HLSConverter._validate_screen_code(screen_code)
 
         HLSConverter.init()
         
-        output_dir = HLSConverter.HLS_TEMP_DIR / screen_code
+        output_dir = HLSConverter.get_output_dir(screen_code)
         output_dir.mkdir(parents=True, exist_ok=True)
         
         manifest_path = output_dir / 'stream.m3u8'

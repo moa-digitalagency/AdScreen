@@ -252,19 +252,13 @@ def get_playlist():
         active_ad_contents = AdContent.query.filter(
             AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
         ).all()
-        status_changed = False
+        # Optimization: removed status update loop from hot path to prevent write locks
         for ad in active_ad_contents:
-            old_status = ad.status
-            ad.update_status()
-            if ad.status != old_status:
-                status_changed = True
+            # We rely on is_currently_active() which checks dates in memory
             if ad.is_currently_active() and ad.applies_to_screen(screen):
                 ad_dict = ad.to_content_dict()
                 ad_dict['priority'] = 50
                 playlist.append(ad_dict)
-
-        if status_changed:
-            db.session.commit()
 
         playlist.sort(key=lambda x: x['priority'], reverse=True)
 
@@ -306,21 +300,34 @@ def heartbeat():
         return jsonify({'error': t('flash.screen_not_found')}), 404
     
     data = request.get_json() or {}
-    status = data.get('status', 'online')
+    new_status = data.get('status', 'online')
     
-    screen.last_heartbeat = datetime.utcnow()
-    screen.status = status
+    now = datetime.utcnow()
+    should_log = False
+
+    # Log only on status change or if last log is old (> 1 hour)
+    if screen.status != new_status:
+        should_log = True
+    elif screen.last_heartbeat and (now - screen.last_heartbeat).total_seconds() > 3600:
+        should_log = True
+    elif not screen.last_heartbeat:
+        should_log = True
+
+    screen.last_heartbeat = now
+    screen.status = new_status
+
+    if should_log:
+        log = HeartbeatLog(
+            screen_id=screen.id,
+            status=new_status
+        )
+        db.session.add(log)
     
-    log = HeartbeatLog(
-        screen_id=screen.id,
-        status=status
-    )
-    db.session.add(log)
     db.session.commit()
     
     return jsonify({
         'success': True,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now.isoformat()
     })
 
 
