@@ -11,6 +11,7 @@ from functools import wraps
 from app import db
 from models import Screen, TimeSlot, TimePeriod, Content, Booking, Filler, InternalContent, StatLog, ScreenOverlay
 from services.translation_service import t
+from services.input_validator import is_safe_redirect_url
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -1078,7 +1079,11 @@ def toggle_filler(screen_id, filler_id):
     
     status = 'activé' if filler.is_active else 'désactivé'
     flash(f'Filler {status}!', 'success')
-    return redirect(request.referrer or url_for('org.screen_fillers', screen_id=screen_id))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.screen_fillers', screen_id=screen_id))
 
 
 @org_bp.route('/screen/<int:screen_id>/internal/<int:internal_id>/toggle', methods=['POST'])
@@ -1096,7 +1101,11 @@ def toggle_screen_internal(screen_id, internal_id):
     
     status = 'activé' if internal.is_active else 'désactivé'
     flash(f'Contenu interne {status}!', 'success')
-    return redirect(request.referrer or url_for('org.screen_internal', screen_id=screen_id))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.screen_internal', screen_id=screen_id))
 
 
 @org_bp.route('/screen/<int:screen_id>/internal/<int:internal_id>/delete', methods=['POST'])
@@ -1117,7 +1126,11 @@ def delete_screen_internal(screen_id, internal_id):
     db.session.commit()
     
     flash('Contenu interne supprimé.', 'success')
-    return redirect(request.referrer or url_for('org.screen_internal', screen_id=screen_id))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.screen_internal', screen_id=screen_id))
 
 
 @org_bp.route('/stats')
@@ -1206,7 +1219,11 @@ def suspend_content(content_id):
     db.session.commit()
     
     flash('Contenu suspendu.', 'info')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/content/<int:content_id>/activate', methods=['POST'])
@@ -1225,7 +1242,11 @@ def activate_content(content_id):
     db.session.commit()
     
     flash('Contenu activé!', 'success')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/content/<int:content_id>/delete', methods=['POST'])
@@ -1247,7 +1268,11 @@ def delete_content(content_id):
     db.session.commit()
     
     flash('Contenu supprimé.', 'success')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/screen/<int:screen_id>/playlist')
@@ -1307,7 +1332,11 @@ def remove_content_from_playlist(content_id):
     db.session.commit()
     
     flash('Contenu retiré de la playlist.', 'info')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/content/<int:content_id>/add-to-playlist', methods=['POST'])
@@ -1323,7 +1352,11 @@ def add_content_to_playlist(content_id):
     db.session.commit()
     
     flash('Contenu ajouté à la playlist!', 'success')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/filler/<int:filler_id>/remove-from-playlist', methods=['POST'])
@@ -1339,7 +1372,11 @@ def remove_filler_from_playlist(filler_id):
     db.session.commit()
     
     flash('Filler retiré de la playlist.', 'info')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/filler/<int:filler_id>/add-to-playlist', methods=['POST'])
@@ -1355,7 +1392,11 @@ def add_filler_to_playlist(filler_id):
     db.session.commit()
     
     flash('Filler ajouté à la playlist!', 'success')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/internal/<int:internal_id>/remove-from-playlist', methods=['POST'])
@@ -1371,7 +1412,11 @@ def remove_internal_from_playlist(internal_id):
     db.session.commit()
     
     flash('Contenu interne retiré de la playlist.', 'info')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/internal/<int:internal_id>/add-to-playlist', methods=['POST'])
@@ -1387,7 +1432,11 @@ def add_internal_to_playlist(internal_id):
     db.session.commit()
     
     flash('Contenu interne ajouté à la playlist!', 'success')
-    return redirect(request.referrer or url_for('org.contents'))
+
+    referrer = request.referrer
+    if is_safe_redirect_url(referrer, request.host_url):
+        return redirect(referrer)
+    return redirect(url_for('org.contents'))
 
 
 @org_bp.route('/booking/<int:booking_id>/receipt/image')

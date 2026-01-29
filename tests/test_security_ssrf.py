@@ -7,7 +7,7 @@ os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['INIT_DB_MODE'] = 'true' # Skip init logic
 os.environ['SESSION_SECRET'] = 'test'
 
-from routes.player_routes import is_safe_url
+from services.input_validator import is_safe_url
 
 class TestSSRF(unittest.TestCase):
     @patch('socket.gethostbyname')
@@ -33,11 +33,14 @@ class TestSSRF(unittest.TestCase):
         self.assertFalse(is_safe_url('not_a_url'))
 
     def test_schemes(self):
-        # Test that allowed schemes are not part of is_safe_url (it focuses on IP)
-        # But we verify it parses correctly
+        # Test that allowed schemes are not part of is_safe_url default (it focuses on http/https by default)
         with patch('socket.gethostbyname', return_value='8.8.8.8'):
-            self.assertTrue(is_safe_url('rtsp://8.8.8.8/stream'))
-            self.assertTrue(is_safe_url('udp://8.8.8.8:1234'))
+            # Should fail by default
+            self.assertFalse(is_safe_url('rtsp://8.8.8.8/stream'))
+
+            # Should pass if allowed
+            self.assertTrue(is_safe_url('rtsp://8.8.8.8/stream', allowed_protocols=('rtsp',)))
+            self.assertTrue(is_safe_url('udp://8.8.8.8:1234', allowed_protocols=('udp',)))
 
 if __name__ == '__main__':
     unittest.main()

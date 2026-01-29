@@ -10,20 +10,13 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User, Organization, SiteSetting, RegistrationRequest, Screen
 from services.translation_service import t
+from services.input_validator import is_safe_redirect_url
 import urllib.parse
 from urllib.parse import urlparse, urljoin
 from datetime import datetime
 import ipaddress
 
 auth_bp = Blueprint('auth', __name__)
-
-def is_safe_url(target):
-    if not target:
-        return False
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-           ref_url.netloc == test_url.netloc
 
 @auth_bp.route('/robots.txt')
 def robots_txt():
@@ -117,7 +110,7 @@ def login():
             login_user(user)
             next_page = request.args.get('next')
             
-            if not is_safe_url(next_page):
+            if not is_safe_redirect_url(next_page, request.host_url):
                 next_page = None
 
             if user.is_superadmin():

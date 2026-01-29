@@ -58,6 +58,15 @@ login_manager.login_message = "Veuillez vous connecter pour accéder à cette pa
 
 INIT_DB_MODE = os.environ.get('INIT_DB_MODE', 'false').lower() == 'true'
 
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if app.config.get('SESSION_COOKIE_SECURE'):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
 with app.app_context():
     import models
     db.create_all()
