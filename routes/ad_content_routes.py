@@ -55,8 +55,32 @@ def list_ads():
     if status_filter:
         query = query.filter(AdContent.status == status_filter)
     
-    for ad in query.all():
-        ad.update_status()
+    # Optimization: Bulk status update
+    now = datetime.utcnow()
+
+    # 1. Expire ads where end date has passed
+    db.session.query(AdContent).filter(
+        AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
+        AdContent.status.notin_([AdContent.STATUS_PAUSED, AdContent.STATUS_CANCELLED, AdContent.STATUS_EXPIRED]),
+        AdContent.end_date < now
+    ).update({AdContent.status: AdContent.STATUS_EXPIRED, AdContent.updated_at: now}, synchronize_session=False)
+
+    # 2. Activate ads where current period is valid
+    db.session.query(AdContent).filter(
+        AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
+        AdContent.status.notin_([AdContent.STATUS_PAUSED, AdContent.STATUS_CANCELLED, AdContent.STATUS_ACTIVE]),
+        AdContent.start_date <= now,
+        or_(AdContent.end_date == None, AdContent.end_date >= now)
+    ).update({AdContent.status: AdContent.STATUS_ACTIVE, AdContent.updated_at: now}, synchronize_session=False)
+
+    # 3. Schedule future ads
+    db.session.query(AdContent).filter(
+        AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
+        AdContent.status.notin_([AdContent.STATUS_PAUSED, AdContent.STATUS_CANCELLED, AdContent.STATUS_SCHEDULED]),
+        AdContent.start_date > now,
+        or_(AdContent.end_date == None, AdContent.end_date >= now)
+    ).update({AdContent.status: AdContent.STATUS_SCHEDULED, AdContent.updated_at: now}, synchronize_session=False)
+
     db.session.commit()
     
     ads = query.order_by(AdContent.created_at.desc()).paginate(
