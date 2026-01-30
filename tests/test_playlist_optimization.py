@@ -64,7 +64,8 @@ class TestPlaylistOptimization(unittest.TestCase):
             # Ad 3: Target CSV (Correct)
             ad3 = AdContent(name="Ad3", reference="REF3", file_path="ad3.jpg",
                             status=AdContent.STATUS_ACTIVE,
-                            target_type=AdContent.TARGET_SCREENS, selected_screen_ids=f"{self.screen_id},999")
+                            target_type=AdContent.TARGET_SCREENS)
+            ad3.set_selected_screen_ids([self.screen_id, 999])
 
             # Ad 4: Target Other Screen (Incorrect)
             ad4 = AdContent(name="Ad4", reference="REF4", file_path="ad4.jpg",

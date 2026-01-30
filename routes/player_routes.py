@@ -307,12 +307,7 @@ def get_playlist():
                  AdContent.target_country == org_country),
             and_(AdContent.target_type == AdContent.TARGET_COUNTRY, AdContent.target_country == org_country),
             and_(AdContent.target_type == AdContent.TARGET_SCREENS,
-                 or_(
-                     AdContent.selected_screen_ids == str(screen.id),
-                     AdContent.selected_screen_ids.like(f"{screen.id},%"),
-                     AdContent.selected_screen_ids.like(f"%,{screen.id}"),
-                     AdContent.selected_screen_ids.like(f"%,{screen.id},%")
-                 )
+                 AdContent.screens.any(id=screen.id)
             )
         )
 
