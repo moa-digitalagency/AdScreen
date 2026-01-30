@@ -9,6 +9,7 @@ class SiteSetting(db.Model):
     # Cache simple pour éviter les requêtes DB répétitives
     _cache = {}
     _cache_ttl = 60  # secondes
+    _last_preload_time = 0
     
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
@@ -28,28 +29,70 @@ class SiteSetting(db.Model):
             if now - timestamp < cls._cache_ttl:
                 return val
 
+        # Optimization: If we preloaded recently, and key is missing, it doesn't exist in DB.
+        # This prevents N+1 queries for missing keys.
+        if now - cls._last_preload_time < cls._cache_ttl:
+            return default
+
         setting = cls.query.filter_by(key=key).first()
         result = default
 
         if setting is not None:
-            if setting.value_type == 'boolean':
-                result = setting.value.lower() in ('true', '1', 'yes')
-            elif setting.value_type == 'integer':
-                try:
-                    result = int(setting.value)
-                except (ValueError, TypeError):
-                    result = default
-            elif setting.value_type == 'float':
-                try:
-                    result = float(setting.value)
-                except (ValueError, TypeError):
-                    result = default
-            else:
-                result = setting.value
-        
+            result = cls._parse_value(setting, default)
+
         # Mise à jour du cache
         cls._cache[key] = (result, now)
         return result
+
+    @classmethod
+    def _parse_value(cls, setting, default=None):
+        if setting.value_type == 'boolean':
+            return setting.value.lower() in ('true', '1', 'yes')
+        elif setting.value_type == 'integer':
+            try:
+                return int(setting.value)
+            except (ValueError, TypeError):
+                return default
+        elif setting.value_type == 'float':
+            try:
+                return float(setting.value)
+            except (ValueError, TypeError):
+                return default
+        else:
+            return setting.value
+
+    @classmethod
+    def preload_cache(cls):
+        """Preloads all settings into cache to prevent N+1 queries."""
+        now = time.time()
+        # If cache is already fresh (globally), skip
+        if now - cls._last_preload_time < cls._cache_ttl:
+            return
+
+        settings = cls.query.all()
+        for setting in settings:
+            # Re-implement parsing logic here slightly differently to handle "no default"
+            # If parsing fails, we skip caching so get() returns its provided default
+            val = setting.value
+            skip_cache = False
+
+            if setting.value_type == 'boolean':
+                val = setting.value.lower() in ('true', '1', 'yes')
+            elif setting.value_type == 'integer':
+                try:
+                    val = int(setting.value)
+                except (ValueError, TypeError):
+                    skip_cache = True
+            elif setting.value_type == 'float':
+                try:
+                    val = float(setting.value)
+                except (ValueError, TypeError):
+                    skip_cache = True
+
+            if not skip_cache:
+                cls._cache[setting.key] = (val, now)
+        
+        cls._last_preload_time = now
     
     @classmethod
     def set(cls, key, value, value_type='string', category='general', description=None):
