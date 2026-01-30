@@ -219,6 +219,8 @@ def inject_currency():
 @app.context_processor
 def inject_site_settings():
     from models import SiteSetting
+    # Preload all settings to avoid N+1 queries
+    SiteSetting.preload_cache()
     return {
         'site_settings': {
             'platform_name': SiteSetting.get('platform_name', 'Shabaka AdScreen'),
