@@ -85,7 +85,7 @@ def get_reserved_seconds_for_period(screen_id, period_id, target_date, all_perio
     return total_reserved_seconds
 
 
-def calculate_availability(screen, start_date, end_date, period_id=None, slot_duration=None, content_type='image'):
+def calculate_availability(screen, start_date, end_date, period_id=None, slot_duration=None, content_type='image', preloaded_bookings=None):
     """
     Calculate available slots for a screen during a date range.
     
@@ -129,12 +129,22 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
     target_slot_duration = slot_duration if slot_duration else (slots[0].duration_seconds if slots else 15)
     
     # Pre-fetch all relevant bookings for the entire date range
-    all_bookings = Booking.query.filter(
-        Booking.screen_id == screen.id,
-        Booking.status.in_(['pending', 'active']),
-        Booking.start_date <= end_date,
-        or_(Booking.end_date >= start_date, Booking.end_date == None)
-    ).all()
+    if preloaded_bookings is not None:
+        # Filter preloaded bookings to ensure they match date range and status
+        # Note: Caller is responsible for passing bookings for this screen
+        all_bookings = [
+            b for b in preloaded_bookings
+            if b.status in ['pending', 'active'] and
+               b.start_date <= end_date and
+               (b.end_date is None or b.end_date >= start_date)
+        ]
+    else:
+        all_bookings = Booking.query.filter(
+            Booking.screen_id == screen.id,
+            Booking.status.in_(['pending', 'active']),
+            Booking.start_date <= end_date,
+            or_(Booking.end_date >= start_date, Booking.end_date == None)
+        ).all()
 
     total_available_seconds = 0
     daily_breakdown = []
