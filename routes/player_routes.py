@@ -14,6 +14,7 @@ from services.translation_service import t
 from services.input_validator import is_safe_url
 from datetime import datetime
 from sqlalchemy.orm import joinedload
+import time
 import urllib.parse
 import urllib3
 import logging
@@ -29,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 player_bp = Blueprint('player', __name__)
 
+# Cache setup
+SCREEN_MODE_CACHE = {}
+CACHE_TTL = 10  # seconds
 
 @player_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -83,18 +87,34 @@ def get_screen_mode():
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
     
-    # Use standard SQLAlchemy query, no expire_all/rollback to keep cache
-    screen = Screen.query.get(session['screen_id'])
-    if not screen:
-        return jsonify({'error': t('flash.screen_not_found')}), 404
+    screen_id = session['screen_id']
+    now = time.time()
+    data = None
     
-    data = {
-        'mode': screen.current_mode or 'playlist',
-        'iptv_enabled': screen.iptv_enabled,
-        'iptv_channel_url': screen.get_iptv_url() if screen.current_mode == 'iptv' else None,
-        'iptv_channel_name': screen.current_iptv_channel_name if screen.current_mode == 'iptv' else None,
-        # 'timestamp': datetime.utcnow().isoformat() # Removed to stable ETag
-    }
+    # Check cache
+    cache_entry = SCREEN_MODE_CACHE.get(screen_id)
+    if cache_entry and now - cache_entry['timestamp'] < CACHE_TTL:
+        data = cache_entry['data']
+
+    if not data:
+        # Use standard SQLAlchemy query, no expire_all/rollback to keep cache
+        screen = Screen.query.get(screen_id)
+        if not screen:
+            return jsonify({'error': t('flash.screen_not_found')}), 404
+
+        data = {
+            'mode': screen.current_mode or 'playlist',
+            'iptv_enabled': screen.iptv_enabled,
+            'iptv_channel_url': screen.get_iptv_url() if screen.current_mode == 'iptv' else None,
+            'iptv_channel_name': screen.current_iptv_channel_name if screen.current_mode == 'iptv' else None,
+            # 'timestamp': datetime.utcnow().isoformat() # Removed to stable ETag
+        }
+
+        # Update cache
+        SCREEN_MODE_CACHE[screen_id] = {
+            'data': data,
+            'timestamp': now
+        }
 
     # ETag generation
     content_str = json.dumps(data, sort_keys=True)
@@ -103,8 +123,10 @@ def get_screen_mode():
     if etag in request.if_none_match:
         return Response(status=304)
 
-    data['timestamp'] = datetime.utcnow().isoformat()
-    response = jsonify(data)
+    # Make a copy to avoid modifying cached data
+    response_data = data.copy()
+    response_data['timestamp'] = datetime.utcnow().isoformat()
+    response = jsonify(response_data)
     response.headers['ETag'] = f'"{etag}"'
     response.headers['Cache-Control'] = 'no-cache' # Revalidate with ETag
     return response
@@ -565,7 +587,6 @@ def tv_stream(screen_code):
     Returns M3U8 manifest with rewritten segment URLs.
     """
     from services.hls_converter import HLSConverter
-    import time
     
     if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
         return jsonify({'error': 'Invalid screen code'}), 400
@@ -695,7 +716,6 @@ def stop_tv_stream(screen_code):
 def change_channel(screen_code):
     """Change la chaîne TV - attend que FFmpeg soit prêt"""
     from services.hls_converter import HLSConverter
-    import time
     
     if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
         return jsonify({'error': 'Invalid screen code'}), 400
@@ -747,6 +767,10 @@ def change_channel(screen_code):
         screen.current_iptv_channel_name = channel_name
         screen.current_mode = 'iptv'
         db.session.commit()
+
+        # Invalidate cache
+        SCREEN_MODE_CACHE.pop(screen.id, None)
+
         logger.info(f'[{screen_code}] Database updated')
         
         return jsonify({
