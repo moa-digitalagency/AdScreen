@@ -4,6 +4,12 @@ import json
 from app import db
 
 
+ad_screen_association = db.Table('ad_screen_association',
+    db.Column('ad_content_id', db.Integer, db.ForeignKey('ad_contents.id'), primary_key=True),
+    db.Column('screen_id', db.Integer, db.ForeignKey('screens.id'), primary_key=True)
+)
+
+
 class AdContent(db.Model):
     """Contenu publicitaire vendu par le superadmin aux annonceurs"""
     __tablename__ = 'ad_contents'
@@ -24,7 +30,7 @@ class AdContent(db.Model):
     target_city = db.Column(db.String(128), nullable=True)
     target_organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
     target_screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=True)
-    selected_screen_ids = db.Column(db.Text, nullable=True)
+    selected_screen_ids = db.Column(db.Text, nullable=True) # Deprecated in favor of screens relationship
     
     ORG_TYPE_ALL = 'all'
     ORG_TYPE_PAID = 'paid'
@@ -73,6 +79,7 @@ class AdContent(db.Model):
     
     target_organization = db.relationship('Organization', foreign_keys=[target_organization_id], backref='ad_contents')
     target_screen = db.relationship('Screen', foreign_keys=[target_screen_id], backref='ad_contents')
+    screens = db.relationship('Screen', secondary=ad_screen_association, backref='targeted_ads')
     creator = db.relationship('User', foreign_keys=[created_by], backref='ad_contents_created')
     
     def generate_reference(self):
@@ -163,20 +170,19 @@ class AdContent(db.Model):
         return False
     
     def get_selected_screen_ids(self):
-        """Parse the selected_screen_ids field and return a list of integers"""
-        if not self.selected_screen_ids:
-            return []
-        try:
-            return [int(x) for x in self.selected_screen_ids.split(',') if x.strip()]
-        except (ValueError, AttributeError):
-            return []
+        """Return a list of integers from the screens relationship"""
+        return [s.id for s in self.screens]
     
     def set_selected_screen_ids(self, screen_ids):
-        """Set the selected_screen_ids field from a list of integers"""
-        if not screen_ids:
-            self.selected_screen_ids = None
-        else:
+        """Set the screens relationship from a list of integers"""
+        from models import Screen
+        self.screens = []
+        if screen_ids:
+            self.screens = Screen.query.filter(Screen.id.in_(screen_ids)).all()
+            # Maintain backward compatibility
             self.selected_screen_ids = ','.join(str(x) for x in screen_ids)
+        else:
+            self.selected_screen_ids = None
     
     def get_target_screens(self):
         from models import Screen, Organization
@@ -185,13 +191,7 @@ class AdContent(db.Model):
             return []
         
         if self.target_type == self.TARGET_SCREENS:
-            screen_ids = self.get_selected_screen_ids()
-            if not screen_ids:
-                return []
-            return Screen.query.filter(
-                Screen.id.in_(screen_ids),
-                Screen.is_active == True
-            ).all()
+            return [s for s in self.screens if s.is_active]
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id)
@@ -238,8 +238,7 @@ class AdContent(db.Model):
                 org_type_suffix = " (Gratuits)"
         
         if self.target_type == self.TARGET_SCREENS:
-            screen_ids = self.get_selected_screen_ids()
-            return f"{len(screen_ids)} écrans sélectionnés"
+            return f"{len(self.screens)} écrans sélectionnés"
         
         if self.target_type == self.TARGET_SCREEN:
             screen = Screen.query.get(self.target_screen_id) if self.target_screen_id else None
