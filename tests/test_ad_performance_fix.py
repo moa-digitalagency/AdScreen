@@ -1,4 +1,13 @@
 import unittest
+import os
+import sys
+
+# Set environment variables BEFORE importing app
+os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
+os.environ['SESSION_SECRET'] = 'test-secret'
+os.environ['JWT_SECRET_KEY'] = 'test-jwt-secret'
+os.environ['INIT_DB_MODE'] = 'false'
+
 from datetime import datetime, timedelta
 from app import app, db
 from models.ad_content import AdContent
@@ -8,11 +17,10 @@ class TestAdContentOptimization(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.app = app.test_client()
 
         with app.app_context():
-            db.create_all()
+            # db.create_all() # handled by app.py
 
             # Create superadmin
             self.admin = User(
@@ -30,6 +38,7 @@ class TestAdContentOptimization(unittest.TestCase):
         with app.app_context():
             db.session.remove()
             db.drop_all()
+            db.create_all()
 
     def login(self):
         with self.app.session_transaction() as sess:

@@ -14,6 +14,7 @@ from services.translation_service import t
 from services.input_validator import is_safe_url
 from datetime import datetime
 from sqlalchemy.orm import joinedload
+from sqlalchemy import or_, and_, func
 import time
 import urllib.parse
 import urllib3
@@ -139,7 +140,10 @@ def get_playlist():
     
     # Optimization: Removed aggressive db.session.expire_all()
     
-    screen = db.session.query(Screen).options(joinedload(Screen.time_periods)).filter_by(id=session['screen_id']).first()
+    screen = db.session.query(Screen).options(
+        joinedload(Screen.time_periods),
+        joinedload(Screen.organization)
+    ).filter_by(id=session['screen_id']).first()
     if not screen:
         return jsonify({'error': t('flash.screen_not_found')}), 404
     
@@ -271,16 +275,66 @@ def get_playlist():
                 if broadcast.broadcast_type == 'content':
                     playlist.append(broadcast.to_content_dict())
 
+        # Optimization: Efficiently fetch relevant ads
+        now = datetime.utcnow()
+        is_paid_org = screen.organization.is_paid if screen.organization else False
+        org_id = screen.organization_id
+        org_city = screen.organization.city.lower() if screen.organization and screen.organization.city else ''
+        org_country = screen.organization.country if screen.organization else ''
+
+        # Build filter conditions
+        status_filter = AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
+
+        time_filter = or_(
+            AdContent.schedule_type == AdContent.SCHEDULE_IMMEDIATE,
+            and_(
+                AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
+                or_(AdContent.start_date == None, AdContent.start_date <= now),
+                or_(AdContent.end_date == None, AdContent.end_date >= now)
+            )
+        )
+
+        org_type_filter = or_(
+            AdContent.target_org_type == AdContent.ORG_TYPE_ALL,
+            AdContent.target_org_type == (AdContent.ORG_TYPE_PAID if is_paid_org else AdContent.ORG_TYPE_FREE)
+        )
+
+        target_filter = or_(
+            and_(AdContent.target_type == AdContent.TARGET_SCREEN, AdContent.target_screen_id == screen.id),
+            and_(AdContent.target_type == AdContent.TARGET_ORGANIZATION, AdContent.target_organization_id == org_id),
+            and_(AdContent.target_type == AdContent.TARGET_CITY,
+                 func.lower(AdContent.target_city) == org_city,
+                 AdContent.target_country == org_country),
+            and_(AdContent.target_type == AdContent.TARGET_COUNTRY, AdContent.target_country == org_country),
+            and_(AdContent.target_type == AdContent.TARGET_SCREENS,
+                 or_(
+                     AdContent.selected_screen_ids == str(screen.id),
+                     AdContent.selected_screen_ids.like(f"{screen.id},%"),
+                     AdContent.selected_screen_ids.like(f"%,{screen.id}"),
+                     AdContent.selected_screen_ids.like(f"%,{screen.id},%")
+                 )
+            )
+        )
+
         active_ad_contents = AdContent.query.filter(
-            AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
+            status_filter,
+            time_filter,
+            org_type_filter,
+            target_filter
         ).all()
+
         status_changed = False
         for ad in active_ad_contents:
+            # Final check in Python (handles edge cases and logic not fully covered by SQL)
+            if not ad.applies_to_screen(screen):
+                continue
+
             old_status = ad.status
             ad.update_status()
             if ad.status != old_status:
                 status_changed = True
-            if ad.is_currently_active() and ad.applies_to_screen(screen):
+
+            if ad.is_currently_active():
                 ad_dict = ad.to_content_dict()
                 ad_dict['priority'] = 50
                 playlist.append(ad_dict)
