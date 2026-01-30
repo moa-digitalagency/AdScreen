@@ -783,6 +783,15 @@ def calculate_available_screens():
     
     all_screens = query.all()
     
+    # Pre-fetch TimeSlots for all screens to avoid N+1 queries
+    screen_ids = [s.id for s in all_screens]
+    slots = TimeSlot.query.filter(
+        TimeSlot.screen_id.in_(screen_ids),
+        TimeSlot.content_type == content_type,
+        TimeSlot.duration_seconds == slot_duration
+    ).all()
+    slots_map = {s.screen_id: s for s in slots}
+
     available_screens = []
     total_available_plays = 0
     
@@ -803,11 +812,7 @@ def calculate_available_screens():
             org_currency = org.currency if org and org.currency else 'EUR'
             currency_info = get_currency_by_code(org_currency)
             
-            slot = TimeSlot.query.filter_by(
-                screen_id=screen.id,
-                content_type=content_type,
-                duration_seconds=slot_duration
-            ).first()
+            slot = slots_map.get(screen.id)
             
             price_per_play = slot.price_per_play if slot else 0.0
             estimated_price = price_per_play * min_plays
@@ -870,6 +875,15 @@ def calculate_ad_price():
     
     screens = Screen.query.filter(Screen.id.in_(screen_ids)).all()
     
+    # Pre-fetch TimeSlots for all screens
+    fetched_screen_ids = [s.id for s in screens]
+    slots = TimeSlot.query.filter(
+        TimeSlot.screen_id.in_(fetched_screen_ids),
+        TimeSlot.content_type == content_type,
+        TimeSlot.duration_seconds == slot_duration
+    ).all()
+    slots_map = {s.screen_id: s for s in slots}
+
     total_price = 0
     screen_prices = []
     
@@ -877,11 +891,7 @@ def calculate_ad_price():
         org = screen.organization
         org_currency = org.currency if org and org.currency else 'EUR'
         
-        slot = TimeSlot.query.filter_by(
-            screen_id=screen.id,
-            content_type=content_type,
-            duration_seconds=slot_duration
-        ).first()
+        slot = slots_map.get(screen.id)
         
         price_per_play = slot.price_per_play if slot else 0.0
         screen_total = price_per_play * num_plays
