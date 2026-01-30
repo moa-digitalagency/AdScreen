@@ -262,9 +262,9 @@ class HLSConverter:
             raise
     
     @classmethod
-    def start_conversion(cls, source_url, screen_code):
+    def start_conversion(cls, source_url, screen_code, wait_for_manifest=True):
         """Démarre une nouvelle conversion (appelle convert_mpegts_to_hls_file)"""
-        return cls.convert_mpegts_to_hls_file(source_url, screen_code, wait_for_manifest=True)
+        return cls.convert_mpegts_to_hls_file(source_url, screen_code, wait_for_manifest=wait_for_manifest)
     
     @classmethod
     def get_fresh_manifest(cls, screen_code):

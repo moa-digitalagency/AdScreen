@@ -676,7 +676,7 @@ def tv_stream(screen_code):
     try:
         if not HLSConverter.is_running(screen_code):
             logger.info(f'[{screen_code}] Starting new HLS conversion for: {channel_name}')
-            HLSConverter.start_conversion(source_url, screen_code)
+            HLSConverter.start_conversion(source_url, screen_code, wait_for_manifest=False)
         
         manifest_path = HLSConverter.get_manifest_path(screen_code)
         
@@ -686,13 +686,13 @@ def tv_stream(screen_code):
             time.sleep(0.1)
         
         if not manifest_path.exists():
-            logger.error(f'[{screen_code}] Manifest still not found')
-            return jsonify({'error': 'Manifest not available'}), 503
+            logger.info(f'[{screen_code}] Manifest not ready yet (processing)')
+            return jsonify({'status': 'processing', 'message': 'Stream conversion starting'}), 202
         
         manifest_content = HLSConverter.get_fresh_manifest(screen_code)
         
         if not manifest_content:
-            return jsonify({'error': 'Manifest not available yet'}), 503
+            return jsonify({'status': 'processing', 'message': 'Manifest empty'}), 202
         
         manifest_content = HLSConverter.rewrite_manifest(manifest_content, screen_code)
         

@@ -963,6 +963,31 @@
             return lowerUrl.includes('.m3u8') || lowerUrl.includes('output=m3u8');
         }
         
+        async function waitForStreamReady(url) {
+            let retries = 0;
+            const maxRetries = 30; // 30 seconds max wait
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(url);
+                    if (response.status === 200) {
+                        return true;
+                    }
+                    if (response.status !== 202) {
+                        debug('Stream check failed with status: ' + response.status);
+                        return false;
+                    }
+                } catch (e) {
+                    debug('Stream check network error: ' + e.message);
+                }
+
+                debug('Stream processing (202), waiting...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                retries++;
+            }
+            return false;
+        }
+
         function loadMpegTsStream(streamUrl, useHlsConvert = false) {
             if (player.hlsInstance) {
                 player.hlsInstance.destroy();
@@ -982,8 +1007,17 @@
             
             if (useHlsConvert) {
                 debug('Loading MPEG-TS via HLS conversion: ' + hlsConvertUrl);
-                updateIptvStatus('loading', 'Conversion HLS...');
-                loadHlsStream(hlsConvertUrl, false);
+                updateIptvStatus('loading', 'Démarrage conversion...');
+
+                waitForStreamReady(hlsConvertUrl).then(ready => {
+                    if (ready) {
+                        debug('Stream ready, starting HLS playback');
+                        loadHlsStream(hlsConvertUrl, false);
+                    } else {
+                        debug('Stream preparation timeout');
+                        updateIptvStatus('error', 'Erreur conversion (Timeout)');
+                    }
+                });
                 return;
             }
             
