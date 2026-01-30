@@ -430,5 +430,4 @@ class AdContentStat(db.Model):
             ad_content.total_impressions += 1
             ad_content.total_duration_played += duration
         
-        db.session.commit()
         return stat
