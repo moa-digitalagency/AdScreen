@@ -21,6 +21,7 @@ from utils.world_data import WORLD_CITIES
 from services.availability_service import calculate_availability
 from services.translation_service import t
 from sqlalchemy import func, or_
+from sqlalchemy.orm import joinedload
 
 ad_content_bp = Blueprint('ad_content', __name__)
 
@@ -760,7 +761,10 @@ def calculate_available_screens():
     if num_days <= 0:
         return jsonify({'error': 'La date de fin doit etre apres la date de debut'}), 400
     
-    query = Screen.query.filter_by(is_active=True).join(Organization).filter(Organization.is_active == True)
+    query = Screen.query.options(
+        joinedload(Screen.time_periods),
+        joinedload(Screen.time_slots)
+    ).filter_by(is_active=True).join(Organization).filter(Organization.is_active == True)
     
     if target_org_type == 'paid':
         query = query.filter(Organization.is_paid == True)
@@ -792,6 +796,21 @@ def calculate_available_screens():
     ).all()
     slots_map = {s.screen_id: s for s in slots}
 
+    # Pre-fetch Bookings for all screens to avoid N+1 queries
+    bookings = Booking.query.filter(
+        Booking.screen_id.in_(screen_ids),
+        Booking.status.in_(['pending', 'active']),
+        Booking.start_date <= end_dt,
+        or_(Booking.end_date >= start_dt, Booking.end_date == None)
+    ).all()
+
+    # Group bookings by screen_id
+    bookings_map = {}
+    for booking in bookings:
+        if booking.screen_id not in bookings_map:
+            bookings_map[booking.screen_id] = []
+        bookings_map[booking.screen_id].append(booking)
+
     available_screens = []
     total_available_plays = 0
     
@@ -802,7 +821,8 @@ def calculate_available_screens():
             continue
         
         availability = calculate_availability(
-            screen, start_date_str, end_date_str, None, slot_duration, content_type
+            screen, start_date_str, end_date_str, None, slot_duration, content_type,
+            preloaded_bookings=bookings_map.get(screen.id, [])
         )
         
         screen_available_plays = availability['available_plays']
