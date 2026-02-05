@@ -321,7 +321,9 @@ def get_playlist():
         status_changed = False
         for ad in active_ad_contents:
             # Final check in Python (handles edge cases and logic not fully covered by SQL)
-            if not ad.applies_to_screen(screen):
+            # We skip detailed targeting checks because the SQL query already filters by target.
+            # This avoids N+1 queries for TARGET_SCREENS.
+            if not ad.applies_to_screen(screen, check_targeting=False):
                 continue
 
             old_status = ad.status

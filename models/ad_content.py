@@ -131,7 +131,7 @@ class AdContent(db.Model):
             return not org.is_paid
         return True
     
-    def applies_to_screen(self, screen):
+    def applies_to_screen(self, screen, check_targeting=True):
         if not self.is_currently_active():
             return False
         
@@ -145,6 +145,9 @@ class AdContent(db.Model):
         if not self._matches_org_type(org):
             return False
         
+        if not check_targeting:
+            return True
+
         if self.target_type == self.TARGET_SCREENS:
             screen_ids = self.get_selected_screen_ids()
             return screen.id in screen_ids
