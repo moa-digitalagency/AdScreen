@@ -78,7 +78,8 @@
     "ad_content": "Contenu Pub",
     "requests": "Demandes",
     "admin_users": "Utilisateurs Admin",
-    "new_screen": "Nouvel écran"
+    "new_screen": "Nouvel écran",
+    "menu_toggle": "Ouvrir/Fermer le menu"
   },
   "hero": {
     "badge": "Un Produit de Shabaka InnovLab",
@@ -174,7 +175,11 @@
     "terms": "Conditions d'utilisation",
     "legal_notice": "Mentions légales",
     "all_rights": "Tous droits réservés",
-    "made_with": "Fait avec"
+    "made_with": "Fait avec",
+    "social_facebook": "Facebook",
+    "social_twitter": "Twitter",
+    "social_instagram": "Instagram",
+    "social_linkedin": "LinkedIn"
   },
   "auth": {
     "login_title": "Connexion",
