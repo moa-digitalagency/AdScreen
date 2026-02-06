@@ -733,7 +733,7 @@ def clear_demo_data():
         
         # Drop tables in correct order to avoid circular dependency
         tables_to_drop = [
-            'ad_content_stats', 'ad_content_invoices', 'ad_contents',
+            'ad_content_stats', 'ad_content_invoices', 'ad_screen_association', 'ad_contents',
             'broadcasts', 'payment_proofs', 'invoices',
             'stat_logs', 'heartbeat_logs', 'screen_overlays',
             'contents', 'bookings', 'fillers', 'internal_contents',
@@ -742,9 +742,15 @@ def clear_demo_data():
             'users', 'organizations'
         ]
         
+        is_sqlite = db.engine.dialect.name == 'sqlite'
+
         for table in tables_to_drop:
             try:
-                db.session.execute(text(f'DROP TABLE IF EXISTS {table} CASCADE'))
+                if is_sqlite:
+                    # SQLite does not support CASCADE
+                    db.session.execute(text(f'DROP TABLE IF EXISTS "{table}"'))
+                else:
+                    db.session.execute(text(f'DROP TABLE IF EXISTS "{table}" CASCADE'))
             except Exception as e:
                 logger.debug(f"Table {table}: {e}")
         

@@ -107,7 +107,15 @@ def sync_missing_columns(db):
                 col_type = get_column_type_sql(column)
                 default_sql = get_default_value_sql(column)
                 
-                alter_sql = f'ALTER TABLE "{table_name}" ADD COLUMN IF NOT EXISTS "{col_name}" {col_type}'
+                # Check dialect to use appropriate syntax
+                is_sqlite = db.engine.dialect.name == 'sqlite'
+
+                if is_sqlite:
+                    # SQLite does not support IF NOT EXISTS for columns
+                    alter_sql = f'ALTER TABLE "{table_name}" ADD COLUMN "{col_name}" {col_type}'
+                else:
+                    # Postgres and others usually support IF NOT EXISTS
+                    alter_sql = f'ALTER TABLE "{table_name}" ADD COLUMN IF NOT EXISTS "{col_name}" {col_type}'
                 
                 if default_sql:
                     alter_sql += f" DEFAULT {default_sql}"
