@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Shabaka AdScreen{% endblock %} - {% if current_lang() == 'fr' %}Location Écrans Publicitaires{% else %}Advertising Screen Rental{% endif %}</title>
+    <title>{% block title %}Shabaka AdScreen{% endblock %} - {{ t('meta.title_suffix') }}</title>
     {% if site_settings.favicon %}
     <link rel="icon" href="{{ site_settings.favicon }}">
     <link rel="apple-touch-icon" href="{{ site_settings.favicon }}">
@@ -67,6 +67,14 @@
         </div>
     </div>
     
+    <script>
+    window.CURRENT_LOCALE = {{ current_lang() | tojson }};
+    window.I18N = {
+        confirm_delete_default: {{ t('js.confirm_delete_default') | tojson }},
+        copy_success: {{ t('js.copy_success') | tojson }},
+        copy_error: {{ t('js.copy_error') | tojson }}
+    };
+    </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
     function toggleLangMenu() {

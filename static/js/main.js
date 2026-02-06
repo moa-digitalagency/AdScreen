@@ -190,18 +190,18 @@ function closeModal(modalId) {
 }
 
 function confirmDelete(message, form) {
-    if (confirm(message || 'Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+    if (confirm(message || window.I18N.confirm_delete_default)) {
         form.submit();
     }
     return false;
 }
 
 function formatNumber(num) {
-    return new Intl.NumberFormat('fr-FR').format(num);
+    return new Intl.NumberFormat(window.CURRENT_LOCALE || 'fr-FR').format(num);
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat(window.CURRENT_LOCALE || 'fr-FR', {
         style: 'currency',
         currency: 'EUR'
     }).format(amount);
@@ -209,7 +209,7 @@ function formatCurrency(amount) {
 
 function formatDate(dateStr) {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
+    return new Intl.DateTimeFormat(window.CURRENT_LOCALE || 'fr-FR', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
@@ -218,9 +218,9 @@ function formatDate(dateStr) {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        showToast('Copié dans le presse-papier !', 'success');
+        showToast(window.I18N.copy_success, 'success');
     }).catch(() => {
-        showToast('Erreur lors de la copie', 'error');
+        showToast(window.I18N.copy_error, 'error');
     });
 }
 
