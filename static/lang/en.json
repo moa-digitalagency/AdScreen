@@ -606,5 +606,13 @@
     "image_invalid": "Invalid image: {error}",
     "video_invalid": "Invalid video: {error}",
     "channel_selected": "Channel \"{name}\" selected."
+  },
+  "meta": {
+    "title_suffix": "Advertising Screen Rental"
+  },
+  "js": {
+    "confirm_delete_default": "Are you sure you want to delete this item?",
+    "copy_success": "Copied to clipboard!",
+    "copy_error": "Error copying"
   }
 }
