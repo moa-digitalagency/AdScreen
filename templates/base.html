@@ -36,7 +36,7 @@
             {% for category, message in messages %}
             <div class="flash-message toast toast-{% if category == 'error' %}error{% elif category == 'success' %}success{% elif category == 'warning' %}warning{% else %}info{% endif %}">
                 <span>{{ message }}</span>
-                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75">
+                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75" aria-label="{{ t('common.close') }}">
                     <i class="fas fa-times"></i>
                 </button>
             </div>

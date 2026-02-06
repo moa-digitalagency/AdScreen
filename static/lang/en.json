@@ -78,7 +78,8 @@
     "ad_content": "Ad Content",
     "requests": "Requests",
     "admin_users": "Admin Users",
-    "new_screen": "New Screen"
+    "new_screen": "New Screen",
+    "menu_toggle": "Toggle navigation menu"
   },
   "hero": {
     "badge": "A Product by Shabaka InnovLab",
@@ -174,7 +175,11 @@
     "terms": "Terms of Use",
     "legal_notice": "Legal Notice",
     "all_rights": "All rights reserved",
-    "made_with": "Made with"
+    "made_with": "Made with",
+    "social_facebook": "Facebook",
+    "social_twitter": "Twitter",
+    "social_instagram": "Instagram",
+    "social_linkedin": "LinkedIn"
   },
   "auth": {
     "login_title": "Login",

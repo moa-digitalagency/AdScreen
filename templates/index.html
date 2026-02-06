@@ -27,7 +27,7 @@
                             <i class="fas fa-sign-in-alt"></i>
                             {{ t('common.login') }}
                         </a>
-                        <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition">
+                        <button data-mobile-menu-toggle class="md:hidden p-2 text-gray-600 hover:text-emerald-600 transition" aria-label="{{ t('nav.menu_toggle') }}">
                             <i class="fas fa-bars text-lg"></i>
                         </button>
                     </div>
@@ -463,22 +463,22 @@
                     </p>
                     <div class="flex gap-4">
                         {% if site_settings.facebook_url %}
-                        <a href="{{ site_settings.facebook_url }}" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <a href="{{ site_settings.facebook_url }}" target="_blank" class="text-gray-400 hover:text-white transition" aria-label="{{ t('footer.social_facebook') }}">
                             <i class="fab fa-facebook-f"></i>
                         </a>
                         {% endif %}
                         {% if site_settings.twitter_url %}
-                        <a href="{{ site_settings.twitter_url }}" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <a href="{{ site_settings.twitter_url }}" target="_blank" class="text-gray-400 hover:text-white transition" aria-label="{{ t('footer.social_twitter') }}">
                             <i class="fab fa-twitter"></i>
                         </a>
                         {% endif %}
                         {% if site_settings.instagram_url %}
-                        <a href="{{ site_settings.instagram_url }}" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <a href="{{ site_settings.instagram_url }}" target="_blank" class="text-gray-400 hover:text-white transition" aria-label="{{ t('footer.social_instagram') }}">
                             <i class="fab fa-instagram"></i>
                         </a>
                         {% endif %}
                         {% if site_settings.linkedin_url %}
-                        <a href="{{ site_settings.linkedin_url }}" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <a href="{{ site_settings.linkedin_url }}" target="_blank" class="text-gray-400 hover:text-white transition" aria-label="{{ t('footer.social_linkedin') }}">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
                         {% endif %}
