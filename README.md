@@ -1,160 +1,122 @@
-# Shabaka AdScreen
+# Shabaka AdScreen 🚀
 
-**Transformez vos écrans en source de revenus**
+![Python Version](https://img.shields.io/badge/python-3.11%2B-blue?style=for-the-badge&logo=python)
+![Framework](https://img.shields.io/badge/flask-3.0%2B-green?style=for-the-badge&logo=flask)
+![Database](https://img.shields.io/badge/postgres-14%2B-336791?style=for-the-badge&logo=postgresql)
+![Status](https://img.shields.io/badge/status-production_ready-success?style=for-the-badge)
 
-Shabaka AdScreen est une plateforme développée par Shabaka InnovLab qui permet aux commerces - restaurants, bars, centres commerciaux, hôtels - de rentabiliser leurs écrans d'affichage. Les annonceurs locaux réservent des créneaux publicitaires directement via un QR code, sans intermédiaire.
+**La solution SaaS complète pour transformer n'importe quel écran en source de revenus.**
+Shabaka AdScreen permet aux établissements (Hôtels, Restaurants, Malls) de gérer leur affichage dynamique et de vendre des espaces publicitaires en libre-service via QR Code.
 
-## Ce que fait la plateforme
+---
 
-La plateforme connecte trois acteurs :
+## 📑 Table des Matières
 
-**Les établissements** installent l'application sur leurs écrans et définissent leurs tarifs. Chaque écran génère un QR code unique que les clients peuvent scanner pour réserver de l'espace publicitaire.
+- [Fonctionnalités Clés](#-fonctionnalités-clés)
+- [Stack Technique](#-stack-technique)
+- [Architecture](#-architecture)
+- [Installation Rapide](#-installation-rapide)
+- [Documentation Complète](#-documentation-complète)
 
-**Les annonceurs** scannent le QR code, voient les disponibilités et les prix, uploadent leur contenu (image ou vidéo), paient et reçoivent un reçu. C'est aussi simple que ça.
+---
 
-**L'opérateur** (vous) gère l'ensemble depuis une console d'administration : établissements, commissions, diffusions centralisées, facturation automatique.
+## ✨ Fonctionnalités Clés
 
-## Couverture internationale
+*   **📺 Player Universel** : Compatible Web, Android, Tizen. Supporte le mode Hors-ligne et le Streaming IPTV (HLS).
+*   **💰 Booking Engine** : Réservation d'espaces publicitaires par QR Code. Paiement intégré, validation automatique des formats.
+*   **📊 Dashboard Partenaire** : Gestion des écrans, validation des contenus, suivi des revenus en temps réel.
+*   **🧾 Facturation Automatisée** : Génération hebdomadaire des factures et calcul des commissions plateforme.
+*   **📱 API Mobile** : Une API RESTful sécurisée (JWT) pour le pilotage à distance via application mobile.
 
-La plateforme fonctionne dans 208 pays avec plus de 4 600 villes référencées. Quatre devises sont nativement supportées :
+---
 
-- Euro (EUR) pour la France et l'Europe
-- Dirham marocain (MAD) pour le Maroc
-- Franc CFA (XOF) pour l'Afrique de l'Ouest
-- Dinar tunisien (TND) pour la Tunisie
+## 🛠 Stack Technique
 
-Les prix, reçus et statistiques s'affichent automatiquement dans la devise de chaque établissement.
+Ce projet repose sur une architecture robuste et éprouvée :
 
-## Comment ça marche
+*   **Backend** : Python 3.11, Flask, SQLAlchemy, Gunicorn (Gevent).
+*   **Base de Données** : PostgreSQL (Prod), SQLite (Dev).
+*   **Frontend** : Jinja2, Tailwind CSS 3.4, Vanilla JS.
+*   **Traitement Média** : FFmpeg (Streaming/HLS), Pillow (Images).
+*   **Sécurité** : CSRF Protection, Rate Limiting, Input Sanitization.
 
-### Pour un établissement
+---
 
-1. Créez votre compte et configurez vos écrans (résolution, orientation, tarifs)
-2. Imprimez ou affichez le QR code généré automatiquement
-3. Validez ou refusez les contenus soumis par les annonceurs
-4. Consultez vos statistiques et revenus
+## 🏗 Architecture
 
-### Pour un annonceur
+Le système suit une architecture **Monolithique Modulaire** (MVC) :
 
-1. Scannez le QR code de l'écran qui vous intéresse
-2. Choisissez la durée, la période horaire et le nombre de diffusions
-3. Uploadez votre image ou vidéo
-4. Payez et téléchargez votre reçu
+```mermaid
+graph TD
+    User[Utilisateur / Annonceur] -->|HTTPS| Nginx
+    Nginx -->|Reverse Proxy| Gunicorn
+    Gunicorn -->|WSGI| FlaskApp
+    FlaskApp -->|ORM| PostgreSQL
+    FlaskApp -->|File System| StaticFiles[Assets / Uploads]
+    FlaskApp -->|Subprocess| FFmpeg[Transcodage Vidéo]
+```
 
-### Pour l'opérateur
+---
 
-1. Gérez les établissements et leurs commissions
-2. Diffusez des messages sur tous les écrans d'un pays, d'une ville ou d'un établissement
-3. Suivez les revenus globaux et la santé du réseau
-4. Générez automatiquement les factures hebdomadaires
-
-## Fonctionnalités principales
-
-### Gestion des écrans
-- Résolutions personnalisables (HD, Full HD, 4K, portrait ou paysage)
-- Types de contenu : images, vidéos ou les deux
-- Limite de taille de fichier configurable par écran
-- Monitoring en temps réel (statut online/offline, uptime)
-
-### Tarification flexible
-- Prix par minute défini par l'établissement
-- Créneaux de 10, 15, 30 ou 60 secondes
-- Multiplicateurs horaires (matin, midi, soir, nuit)
-- Calcul automatique du prix final
-
-### Validation des contenus
-- Vérification automatique de la résolution et du format
-- Contrôle de la durée des vidéos
-- File d'attente pour validation manuelle
-- Motifs de refus personnalisables
-
-### Diffusions centralisées
-- L'opérateur peut pousser du contenu vers n'importe quel écran
-- Ciblage par pays, ville, établissement ou écran spécifique
-- Programmation avec dates et récurrence (quotidien, hebdomadaire, mensuel)
-- Priorité configurable pour contrôler l'ordre d'affichage
-
-### Mode OnlineTV
-- Diffusez des chaînes TV en direct quand il n'y a pas de publicité
-- Les bandeaux publicitaires restent visibles par-dessus le flux TV
-- Streaming adaptatif qui ajuste la qualité selon la connexion
-
-### Overlays et bandeaux
-- Texte défilant personnalisable (couleurs, vitesse, position)
-- Affichage par-dessus le contenu principal
-- Géré par l'établissement ou diffusé centralement
-
-### Facturation automatique
-- Cycle hebdomadaire (lundi à dimanche)
-- Commission configurable par établissement
-- Upload des preuves de paiement
-- Export PDF des factures
-
-## Installation
+## 🚀 Installation Rapide
 
 ### Prérequis
+*   Python 3.11+
+*   PostgreSQL
+*   FFmpeg
 
-- Python 3.11 ou supérieur
-- PostgreSQL 14 ou supérieur
-- ffmpeg (pour la validation des vidéos)
+### Démarrage Local
 
-### Configuration
+1.  **Cloner le dépôt**
+    ```bash
+    git clone https://github.com/votre-org/shabaka-adscreen.git
+    cd shabaka-adscreen
+    ```
 
-Définissez ces variables d'environnement :
+2.  **Installer les dépendances**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
-```bash
-DATABASE_URL=postgresql://utilisateur:motdepasse@localhost:5432/shabaka_adscreen
-SESSION_SECRET=une-clé-secrète-longue-et-aléatoire
-SUPERADMIN_EMAIL=admin@votre-domaine.com
-SUPERADMIN_PASSWORD=un-mot-de-passe-solide
-```
+3.  **Configurer l'environnement**
+    ```bash
+    export FLASK_ENV=development
+    export SESSION_SECRET="dev-secret"
+    export DATABASE_URL="sqlite:///shabaka.db" # Ou PostgreSQL
+    ```
 
-### Lancement
+4.  **Initialiser la Base de Données**
+    ```bash
+    python init_db.py       # Création des tables
+    python init_db_demo.py  # (Optionnel) Données de test
+    ```
 
-```bash
-# Installer les dépendances
-pip install -r requirements.txt
+5.  **Lancer le serveur**
+    ```bash
+    python main.py
+    ```
+    Accédez à `http://localhost:5000`
 
-# Initialiser la base de données
-python init_db.py
+---
 
-# Démarrer l'application
-gunicorn --bind 0.0.0.0:5000 --reload main:app
-```
+## 📚 Documentation Complète
 
-L'application est accessible sur `http://localhost:5000`
+Toute la documentation technique et fonctionnelle se trouve dans le dossier `docs/`.
 
-## Tester la plateforme
+| Document | Description | Cible |
+| :--- | :--- | :--- |
+| [**Fonctionnalités Détaillées**](docs/Shabaka_AdScreen_Fonctionnalites_Detaillees.md) | La "Bible" du projet. Tout ce que le système fait. | Tout le monde |
+| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Stack, Blueprints, HLS, Flux de données. | Développeurs |
+| [**Schéma de Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèles, relations et champs clés. | Développeurs |
+| [**Guide de Déploiement**](docs/Shabaka_AdScreen_Guide_Deploiement.md) | Installation VPS, Nginx, Systemd, SSL. | DevOps |
+| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Mobile (JWT) et Player (Session). | Développeurs Mobile/Web |
+| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Mesures de protection (CSRF, Rate Limit...). | RSSI / Auditeurs |
+| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide pour les Organisations et Annonceurs. | Utilisateurs Finaux |
 
-Lancez les données de démonstration pour explorer toutes les fonctionnalités :
+---
 
-```bash
-python init_db_demo.py
-```
-
-Cela crée 7 établissements dans 4 pays, 10 écrans et plusieurs diffusions de test.
-
-**Compte administrateur** : `admin@shabaka-adscreen.com` / `admin123`
-
-**Comptes établissements** (mot de passe : `demo123`) :
-- `manager@restaurant-paris.fr` - Restaurant parisien
-- `manager@cafe-marrakech.ma` - Café au Maroc
-- `manager@dakar-beach.sn` - Restaurant au Sénégal
-- `manager@tunis-cafe.tn` - Café en Tunisie
-
-**Mot de passe player** pour tous les écrans : `screen123`
-
-## Documentation
-
-La documentation complète se trouve dans le dossier `docs/` :
-
-- [Guide des fonctionnalités](docs/features.md) - Détail de toutes les fonctionnalités
-- [Architecture technique](docs/architecture.md) - Structure du code et des données
-- [Guide de déploiement](docs/deployment.md) - Installation en production
-- [Comptes de démonstration](docs/demo_accounts.md) - Données de test
-- [Présentation commerciale](docs/COMMERCIAL_PRESENTATION.md) - Pour convaincre vos clients
-- [API Mobile](docs/API_MOBILE_V1_SECURE.md) - Pour développer une app mobile
-
-## Licence
-
-Propriétaire - Tous droits réservés - Shabaka InnovLab
+<p align="center">
+  Fait avec ❤️ par l'équipe technique Shabaka AdScreen.
+</p>
