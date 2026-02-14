@@ -104,8 +104,8 @@
                 <iframe src="{{ url_for('player.display', screen_code=screen.unique_code) }}" 
                         class="w-full h-full border-0"
                         style="pointer-events: none; transform: scale(0.25); transform-origin: top left; width: 400%; height: 400%;"></iframe>
-                <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition cursor-pointer"
-                     onclick="window.open('{{ url_for('player.display', screen_code=screen.unique_code) }}', '_blank')">
+                <div id="preview-click-zone" class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition cursor-pointer"
+                     data-url="{{ url_for('player.display', screen_code=screen.unique_code) }}">
                     <span class="bg-white text-gray-800 px-3 py-1 rounded-lg text-sm font-medium">
                         <i class="fas fa-expand mr-1"></i>Ouvrir
                     </span>
@@ -165,7 +165,7 @@
                     </button>
                 </form>
                 <form action="{{ url_for('screen.delete_screen', screen_id=screen.id) }}" method="POST" 
-                      onsubmit="return confirm('Supprimer cet écran ? Cette action est irréversible.')">
+                      data-confirm="Supprimer cet écran ? Cette action est irréversible.">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full btn-danger-outline btn-sm justify-center">
                         <i class="fas fa-trash"></i>
@@ -258,4 +258,5 @@
         </div>
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/org_screen_detail.js') }}"></script>
 {% endblock %}

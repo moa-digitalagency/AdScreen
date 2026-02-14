@@ -3,7 +3,7 @@
 {% block page_title %}{% if screen %}Modifier {{ screen.name }}{% else %}Nouvel écran{% endif %}{% endblock %}
 
 {% block main_content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto" id="screen-form-container" data-currency-symbol="{{ currency_symbol }}">
     <div class="mb-6">
         <a href="{{ url_for('org.screens') }}" class="text-gray-500 hover:text-gray-700">
             <i class="fas fa-arrow-left mr-2"></i>Retour aux écrans
@@ -193,20 +193,5 @@
     </div>
 </div>
 
-<script>
-const currencySymbol = '{{ currency_symbol }}';
-document.getElementById('price_per_minute').addEventListener('input', function() {
-    const pricePerMinute = parseFloat(this.value) || 2.0;
-    document.getElementById('price_10s').textContent = ((10 / 60) * pricePerMinute).toFixed(2) + currencySymbol;
-    document.getElementById('price_15s').textContent = ((15 / 60) * pricePerMinute).toFixed(2) + currencySymbol;
-    document.getElementById('price_30s').textContent = ((30 / 60) * pricePerMinute).toFixed(2) + currencySymbol;
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const priceInput = document.getElementById('price_per_minute');
-    if (priceInput) {
-        priceInput.dispatchEvent(new Event('input'));
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='js/org_screen_form.js') }}"></script>
 {% endblock %}

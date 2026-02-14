@@ -135,7 +135,7 @@
                 <i class="fas fa-download"></i>
                 {{ t('booking.download_receipt') }}
             </a>
-            <button onclick="window.print()" class="btn-secondary">
+            <button id="print-btn" class="btn-secondary">
                 <i class="fas fa-print"></i>
                 {{ t('booking.print') }}
             </button>
@@ -148,142 +148,8 @@
     </div>
 </div>
 
-<style>
-@media print {
-    @page {
-        size: 58mm auto;
-        margin: 0;
-    }
-    
-    body {
-        margin: 0;
-        padding: 0;
-        width: 58mm;
-        font-family: 'Courier New', monospace;
-        font-size: 10px;
-        line-height: 1.3;
-    }
-    
-    body * {
-        visibility: hidden;
-    }
-    
-    #thermal-receipt, #thermal-receipt * {
-        visibility: visible !important;
-    }
-    
-    #thermal-receipt {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 58mm;
-        padding: 2mm;
-        box-sizing: border-box;
-        font-family: 'Courier New', monospace;
-        font-size: 10px;
-        color: #000;
-        background: #fff;
-    }
-    
-    .thermal-header {
-        text-align: center;
-        border-bottom: 1px dashed #000;
-        padding-bottom: 3mm;
-        margin-bottom: 3mm;
-    }
-    
-    .thermal-title {
-        font-size: 12px;
-        font-weight: bold;
-        margin-bottom: 2mm;
-    }
-    
-    .thermal-subtitle {
-        font-size: 9px;
-    }
-    
-    .thermal-reservation {
-        text-align: center;
-        border: 1px solid #000;
-        padding: 2mm;
-        margin: 3mm 0;
-    }
-    
-    .thermal-reservation-number {
-        font-size: 14px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-    
-    .thermal-qr {
-        text-align: center;
-        margin: 3mm 0;
-    }
-    
-    .thermal-qr img {
-        width: 25mm !important;
-        height: 25mm !important;
-    }
-    
-    .thermal-line {
-        display: flex;
-        justify-content: space-between;
-        margin: 1mm 0;
-        font-size: 9px;
-    }
-    
-    .thermal-line-label {
-        color: #333;
-    }
-    
-    .thermal-line-value {
-        font-weight: bold;
-        text-align: right;
-        max-width: 28mm;
-        word-wrap: break-word;
-    }
-    
-    .thermal-separator {
-        border-top: 1px dashed #000;
-        margin: 2mm 0;
-    }
-    
-    .thermal-total {
-        font-size: 14px;
-        font-weight: bold;
-        text-align: center;
-        margin: 3mm 0;
-        padding: 2mm;
-        border: 2px solid #000;
-    }
-    
-    .thermal-status {
-        text-align: center;
-        font-size: 9px;
-        padding: 2mm;
-        border: 1px dashed #000;
-        margin: 3mm 0;
-    }
-    
-    .thermal-footer {
-        text-align: center;
-        font-size: 8px;
-        margin-top: 3mm;
-        padding-top: 2mm;
-        border-top: 1px dashed #000;
-    }
-    
-    #receipt {
-        display: none !important;
-    }
-}
-
-@media screen {
-    #thermal-receipt {
-        display: none;
-    }
-}
-</style>
+<script src="{{ url_for('static', filename='js/booking_success.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/booking_success.css') }}">
 
 <div id="thermal-receipt">
     <div class="thermal-header">

@@ -93,8 +93,7 @@
                 <i class="fas fa-tv mr-1"></i>{% if current_lang() == 'fr' %}Écran:{% else %}Screen:{% endif %}
             </label>
             <select id="quick-action-screen" 
-                    class="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]"
-                    onchange="updateQuickActions(this.value)">
+                    class="text-xs sm:text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[140px]">
                 {% for screen in screens %}
                 <option value="{{ screen.id }}" 
                         data-name="{{ screen.name }}"
@@ -163,33 +162,7 @@
     </div>
 </div>
 
-<script>
-function updateQuickActions(screenId) {
-    const select = document.getElementById('quick-action-screen');
-    const selectedOption = select.options[select.selectedIndex];
-    const screenName = selectedOption.dataset.name;
-    const screenStatus = selectedOption.dataset.status;
-    
-    const playlistLink = document.getElementById('qa-playlist-link');
-    const iptvLink = document.getElementById('qa-iptv-link');
-    const playlistForm = document.getElementById('qa-playlist-form');
-    const iptvForm = document.getElementById('qa-iptv-form');
-    const currentScreenName = document.getElementById('qa-current-screen-name');
-    const currentScreenInfo = document.getElementById('qa-current-screen-info');
-    
-    playlistLink.href = `/org/screen/${screenId}/playlist`;
-    iptvLink.href = `/org/screen/${screenId}/iptv`;
-    playlistForm.action = `/screen/${screenId}/mode`;
-    iptvForm.action = `/screen/${screenId}/mode`;
-    
-    currentScreenName.textContent = screenName;
-    
-    const statusDot = currentScreenInfo.querySelector('.status-dot');
-    if (statusDot) {
-        statusDot.className = `status-dot status-${screenStatus} w-2 h-2 ml-2 inline-block`;
-    }
-}
-</script>
+<script src="{{ url_for('static', filename='js/org_dashboard.js') }}"></script>
 {% endif %}
 
 <div class="grid lg:grid-cols-3 gap-4 sm:gap-6">

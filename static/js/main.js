@@ -311,3 +311,47 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/* Extracted from base.html */
+function toggleLangMenu() {
+    const menu = document.getElementById('lang-menu');
+    const chevron = document.getElementById('lang-chevron');
+    if (menu && chevron) {
+        menu.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+}
+
+document.addEventListener('click', function(e) {
+    const switcher = document.getElementById('lang-switcher');
+    const menu = document.getElementById('lang-menu');
+    const chevron = document.getElementById('lang-chevron');
+
+    if (switcher && !switcher.contains(e.target) && menu && chevron) {
+        menu.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+});
+
+/* Event listeners for refactored elements */
+document.addEventListener('DOMContentLoaded', function() {
+    // Language Switcher Toggle
+    const langBtn = document.getElementById('lang-toggle-btn');
+    if (langBtn) {
+        langBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleLangMenu();
+        });
+    }
+
+    // Flash Message Close Buttons
+    document.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('.flash-close-btn');
+        if (closeBtn) {
+            const message = closeBtn.closest('.flash-message');
+            if (message) {
+                message.remove();
+            }
+        }
+    });
+});
