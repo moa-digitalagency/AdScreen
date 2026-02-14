@@ -36,7 +36,7 @@
             {% for category, message in messages %}
             <div class="flash-message toast toast-{% if category == 'error' %}error{% elif category == 'success' %}success{% elif category == 'warning' %}warning{% else %}info{% endif %}">
                 <span>{{ message }}</span>
-                <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-75" aria-label="{{ t('common.close') }}">
+                <button class="ml-2 hover:opacity-75 flash-close-btn" aria-label="{{ t('common.close') }}">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -47,7 +47,7 @@
     
     <div id="lang-switcher" class="fixed left-6" style="bottom: 120px; z-index: 100000;">
         <div class="relative">
-            <button onclick="toggleLangMenu()" class="flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2.5 border border-gray-200 hover:shadow-xl transition-all duration-200 group">
+            <button id="lang-toggle-btn" class="flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2.5 border border-gray-200 hover:shadow-xl transition-all duration-200 group">
                 <i class="fas fa-globe text-emerald-500"></i>
                 <span class="text-sm font-medium text-gray-700">{{ t('language.french') if current_lang() == 'fr' else t('language.english') }}</span>
                 <i class="fas fa-chevron-up text-gray-400 text-xs transition-transform duration-200" id="lang-chevron"></i>
@@ -76,22 +76,6 @@
     };
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script>
-    function toggleLangMenu() {
-        const menu = document.getElementById('lang-menu');
-        const chevron = document.getElementById('lang-chevron');
-        menu.classList.toggle('hidden');
-        chevron.classList.toggle('rotate-180');
-    }
-    
-    document.addEventListener('click', function(e) {
-        const switcher = document.getElementById('lang-switcher');
-        if (!switcher.contains(e.target)) {
-            document.getElementById('lang-menu').classList.add('hidden');
-            document.getElementById('lang-chevron').classList.remove('rotate-180');
-        }
-    });
-    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

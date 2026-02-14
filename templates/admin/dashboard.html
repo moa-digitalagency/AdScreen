@@ -89,40 +89,7 @@
                 <span class="sm:hidden" id="refreshTextMobile">Actualiser</span>
             </button>
         </form>
-        <script>
-            (function() {
-                var form = document.getElementById('refreshRatesForm');
-                var btn = document.getElementById('refreshRatesBtn');
-                var icon = document.getElementById('refreshIcon');
-                var textDesktop = document.getElementById('refreshTextDesktop');
-                var textMobile = document.getElementById('refreshTextMobile');
-                
-                form.addEventListener('submit', function(e) {
-                    btn.disabled = true;
-                    icon.classList.add('fa-spin');
-                    textDesktop.textContent = 'Actualisation...';
-                    textMobile.textContent = 'En cours...';
-                    
-                    setTimeout(function() {
-                        if (btn.disabled) {
-                            btn.disabled = false;
-                            icon.classList.remove('fa-spin');
-                            textDesktop.textContent = 'Actualiser les taux';
-                            textMobile.textContent = 'Actualiser';
-                        }
-                    }, 15000);
-                });
-                
-                window.addEventListener('pageshow', function(event) {
-                    if (event.persisted) {
-                        btn.disabled = false;
-                        icon.classList.remove('fa-spin');
-                        textDesktop.textContent = 'Actualiser les taux';
-                        textMobile.textContent = 'Actualiser';
-                    }
-                });
-            })();
-        </script>
+        <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
     </div>
 </div>
 

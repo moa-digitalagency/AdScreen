@@ -1,0 +1,1818 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize player state
+    player.screenCode = document.body.dataset.screenCode;
+
+    // Bind controls
+    document.getElementById('startBtn').addEventListener('click', startPlayer);
+
+    document.querySelector('#controls button:nth-child(1)').addEventListener('click', togglePause);
+    document.querySelector('#controls button:nth-child(2)').addEventListener('click', toggleMute);
+    document.querySelector('#controls button:nth-child(3)').addEventListener('click', toggleFullscreen);
+    document.querySelector('#controls button:nth-child(4)').addEventListener('click', logout);
+
+    // Bind global events
+    document.addEventListener('mousemove', showControls);
+    document.addEventListener('mousedown', showControls);
+    document.addEventListener('keydown', (e) => {
+        showControls();
+        if (e.key === ' ' || e.key === 'p') {
+            e.preventDefault();
+            togglePause();
+        } else if (e.key === 'f' || e.key === 'F11') {
+            e.preventDefault();
+            toggleFullscreen();
+        } else if (e.key === 'n') {
+            e.preventDefault();
+            debug('Manual skip');
+            advanceToNext();
+        } else if (e.key === 'm') {
+            e.preventDefault();
+            toggleMute();
+        }
+    });
+
+    window.addEventListener('beforeunload', () => {
+        clearTimer();
+        if (player.heartbeatInterval) clearInterval(player.heartbeatInterval);
+        if (player.refreshInterval) clearInterval(player.refreshInterval);
+    });
+
+    document.getElementById('previewModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closePreviewModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closePreviewModal();
+    });
+});
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+const PlayerState = {
+    IDLE: 'idle',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    TRANSITIONING: 'transitioning'
+};
+
+const player = {
+    playlist: [],
+    overlays: [],
+    currentIndex: 0,
+    state: PlayerState.IDLE,
+    mode: 'playlist',
+    iptvUrl: null,
+    iptvChannelName: null,
+    screenCode: null, // Set in init
+    timerId: null,
+    heartbeatInterval: null,
+    refreshInterval: null,
+    controlsTimeout: null,
+    currentItemStartTime: null,
+    hlsInstance: null,
+    mpegtsPlayer: null,
+    isMuted: false,
+    currentBandwidth: null,
+    availableLevels: null,
+    isBuffering: false,
+    bufferStallCount: 0,
+    lastBufferTime: null,
+    qualityCapped: false,
+    qualityRecoveryTimer: null,
+    lastEtag: null,
+
+    // Robustness settings for 24/7 operation
+    watchdogInterval: null,
+    lastActivityTime: Date.now(),
+    memoryCleanupInterval: null,
+    autoReloadTimer: null,
+    networkRetryCount: 0,
+    maxNetworkRetries: 10,
+
+    CONTROLS_HIDE_DELAY: 10000,
+    PLAYLIST_REFRESH_INTERVAL: 5000,
+    MIN_DISPLAY_TIME: 1000,
+    AUTO_RELOAD_HOURS: 24,
+    WATCHDOG_INTERVAL: 60000,
+    MEMORY_CLEANUP_INTERVAL: 300000,
+
+    imageEl: null,
+    videoEl: null,
+    iptvEl: null,
+    debugEl: null
+};
+
+function debug(msg) {
+    console.log('[Player]', msg);
+    player.lastActivityTime = Date.now();
+    if (player.debugEl) {
+        const time = new Date().toLocaleTimeString();
+        player.debugEl.innerHTML = `[${time}] ${msg}<br>` +
+            (player.debugEl.innerHTML || '').split('<br>').slice(0, 10).join('<br>');
+    }
+}
+
+// Watchdog: detect if player is stuck and recover
+function startWatchdog() {
+    if (player.watchdogInterval) clearInterval(player.watchdogInterval);
+
+    player.watchdogInterval = setInterval(() => {
+        const now = Date.now();
+        const timeSinceActivity = now - player.lastActivityTime;
+
+        // If no activity for 5 minutes, try to recover
+        if (timeSinceActivity > 300000) {
+            console.warn('[Watchdog] No activity for 5 minutes, attempting recovery...');
+            recoverPlayer();
+        }
+
+        // Check if video is frozen (for playlist mode)
+        if (player.mode === 'playlist' && player.state === PlayerState.PLAYING) {
+            if (player.videoEl && !player.videoEl.paused && player.videoEl.readyState >= 2) {
+                const currentTime = player.videoEl.currentTime;
+                if (player._lastVideoTime === currentTime && currentTime > 0) {
+                    player._videoFreezeCount = (player._videoFreezeCount || 0) + 1;
+                    if (player._videoFreezeCount >= 3) {
+                        console.warn('[Watchdog] Video frozen, skipping to next...');
+                        player._videoFreezeCount = 0;
+                        advanceToNext();
+                    }
+                } else {
+                    player._videoFreezeCount = 0;
+                }
+                player._lastVideoTime = currentTime;
+            }
+        }
+
+        // Check IPTV health
+        if (player.mode === 'iptv' && player.iptvEl) {
+            if (player.iptvEl.error) {
+                console.warn('[Watchdog] IPTV error detected, attempting reload...');
+                reloadIptvStream();
+            }
+        }
+    }, player.WATCHDOG_INTERVAL);
+
+    debug('Watchdog started');
+}
+
+// Memory cleanup to prevent leaks during 24/7 operation
+function startMemoryCleanup() {
+    if (player.memoryCleanupInterval) clearInterval(player.memoryCleanupInterval);
+
+    player.memoryCleanupInterval = setInterval(() => {
+        // Clear debug log to prevent memory buildup
+        if (player.debugEl && player.debugEl.innerHTML.length > 5000) {
+            player.debugEl.innerHTML = player.debugEl.innerHTML.split('<br>').slice(0, 5).join('<br>');
+        }
+
+        // Release blob URLs for images
+        if (player.imageEl && player.imageEl.src && player.imageEl.src.startsWith('blob:')) {
+            URL.revokeObjectURL(player.imageEl.src);
+        }
+
+        // Force garbage collection hint
+        if (window.gc) {
+            try { window.gc(); } catch(e) {}
+        }
+
+        debug('Memory cleanup performed');
+    }, player.MEMORY_CLEANUP_INTERVAL);
+
+    debug('Memory cleanup scheduler started');
+}
+
+// Schedule automatic page reload every 24h to prevent memory fatigue
+function scheduleAutoReload() {
+    if (player.autoReloadTimer) clearTimeout(player.autoReloadTimer);
+
+    const reloadTime = player.AUTO_RELOAD_HOURS * 60 * 60 * 1000;
+    player.autoReloadTimer = setTimeout(() => {
+        console.log('[AutoReload] Scheduled 24h reload, refreshing page...');
+        window.location.reload();
+    }, reloadTime);
+
+    debug(`Auto-reload scheduled in ${player.AUTO_RELOAD_HOURS}h`);
+}
+
+// Recover player from stuck state
+function recoverPlayer() {
+    debug('Attempting player recovery...');
+    player.lastActivityTime = Date.now();
+
+    if (player.mode === 'iptv') {
+        reloadIptvStream();
+    } else {
+        // Force advance to next item
+        if (player.playlist.length > 0) {
+            advanceToNext();
+        } else {
+            fetchPlaylist();
+        }
+    }
+}
+
+// Reload IPTV stream
+function reloadIptvStream() {
+    if (player.iptvUrl) {
+        debug('Reloading IPTV stream...');
+        switchToIptvMode();
+    }
+}
+
+// Network error handler with exponential backoff
+function handleNetworkFailure() {
+    player.networkRetryCount++;
+
+    if (player.networkRetryCount <= player.maxNetworkRetries) {
+        const backoffDelay = Math.min(1000 * Math.pow(2, player.networkRetryCount - 1), 30000);
+        debug(`Network failure, retry ${player.networkRetryCount}/${player.maxNetworkRetries} in ${backoffDelay}ms`);
+
+        setTimeout(() => {
+            fetchPlaylist();
+        }, backoffDelay);
+    } else {
+        debug('Max network retries reached, waiting for connection...');
+        // Reset retry count after a longer wait
+        setTimeout(() => {
+            player.networkRetryCount = 0;
+            fetchPlaylist();
+        }, 60000);
+    }
+}
+
+// Reset network retry count on success
+function resetNetworkRetries() {
+    if (player.networkRetryCount > 0) {
+        player.networkRetryCount = 0;
+        debug('Network connection restored');
+    }
+}
+
+function showControls() {
+    document.body.classList.add('show-controls');
+    clearTimeout(player.controlsTimeout);
+    player.controlsTimeout = setTimeout(() => {
+        document.body.classList.remove('show-controls');
+    }, player.CONTROLS_HIDE_DELAY);
+}
+
+function clearTimer() {
+    if (player.timerId) {
+        clearTimeout(player.timerId);
+        player.timerId = null;
+    }
+}
+
+function scheduleNext(delayMs) {
+    clearTimer();
+    debug(`Scheduling next in ${delayMs}ms`);
+    player.timerId = setTimeout(() => {
+        advanceToNext();
+    }, delayMs);
+}
+
+function advanceToNext() {
+    if (player.state === PlayerState.PAUSED) {
+        debug('Paused, not advancing');
+        return;
+    }
+
+    if (player.playlist.length === 0) {
+        debug('Empty playlist, waiting...');
+        player.state = PlayerState.IDLE;
+        updateInfoDisplay(null);
+        return;
+    }
+
+    player.state = PlayerState.TRANSITIONING;
+    clearTimer();
+
+    player.currentIndex = (player.currentIndex + 1) % player.playlist.length;
+    debug(`Advancing to index ${player.currentIndex} of ${player.playlist.length}`);
+
+    playCurrentItem();
+}
+
+function playCurrentItem() {
+    if (player.state === PlayerState.PAUSED) {
+        debug('Paused, not playing');
+        return;
+    }
+
+    if (player.playlist.length === 0) {
+        debug('No items to play');
+        player.state = PlayerState.IDLE;
+        updateInfoDisplay(null);
+        return;
+    }
+
+    const item = player.playlist[player.currentIndex];
+    if (!item) {
+        debug('Invalid item at index ' + player.currentIndex);
+        player.currentIndex = 0;
+        if (player.playlist.length > 0) {
+            setTimeout(() => playCurrentItem(), 100);
+        }
+        return;
+    }
+
+    player.state = PlayerState.PLAYING;
+    player.currentItemStartTime = Date.now();
+
+    const duration = Math.max(3, parseInt(item.duration) || 10);
+    debug(`Playing: ${item.category}/${item.name || item.id} for ${duration}s`);
+
+    updateInfoDisplay(item);
+
+    if (item.type === 'image') {
+        playImage(item, duration);
+    } else if (item.type === 'video') {
+        playVideo(item, duration);
+    } else {
+        debug('Unknown content type: ' + item.type);
+        scheduleNext(1000);
+    }
+}
+
+function playImage(item, duration) {
+    player.videoEl.pause();
+    player.videoEl.removeAttribute('src');
+    player.videoEl.style.display = 'none';
+
+    player.imageEl.style.display = 'block';
+    player.imageEl.src = item.url;
+
+    player.imageEl.onload = () => {
+        debug('Image loaded: ' + item.url);
+        logPlay(item);
+    };
+
+    player.imageEl.onerror = () => {
+        debug('Image error: ' + item.url);
+        scheduleNext(500);
+    };
+
+    scheduleNext(duration * 1000);
+}
+
+function playVideo(item, duration) {
+    player.imageEl.style.display = 'none';
+
+    player.videoEl.onended = null;
+    player.videoEl.onerror = null;
+    player.videoEl.onloadeddata = null;
+    player.videoEl.ontimeupdate = null;
+
+    player.videoEl.style.display = 'block';
+    player.videoEl.src = item.url;
+    player.videoEl.currentTime = 0;
+    player.videoEl.loop = false;
+    player.videoEl.muted = player.isMuted;
+
+    let hasLogged = false;
+    let videoEnded = false;
+    const slotDuration = duration * 1000;
+    const startTime = Date.now();
+
+    const handleVideoEnd = () => {
+        if (videoEnded) return;
+        videoEnded = true;
+
+        const videoDuration = player.videoEl.duration || 0;
+        const elapsedTime = Date.now() - startTime;
+        const remainingSlotTime = slotDuration - elapsedTime;
+
+        if (remainingSlotTime > 100) {
+            debug(`Video ended (${videoDuration.toFixed(1)}s), keeping last frame for ${(remainingSlotTime/1000).toFixed(1)}s to complete ${duration}s slot`);
+            player.videoEl.pause();
+        } else {
+            debug('Video ended, slot duration reached');
+        }
+    };
+
+    player.videoEl.onloadeddata = () => {
+        const videoDuration = player.videoEl.duration || 0;
+        debug(`Video loaded, video duration: ${videoDuration.toFixed(1)}s, slot duration: ${duration}s`);
+
+        if (videoDuration < duration) {
+            debug(`Video shorter than slot (${videoDuration.toFixed(1)}s < ${duration}s) - will hold last frame`);
+        }
+
+        player.videoEl.play().then(() => {
+            if (!hasLogged) {
+                hasLogged = true;
+                logPlay(item);
+            }
+        }).catch(e => {
+            debug('Video play error: ' + e.message);
+            scheduleNext(500);
+        });
+    };
+
+    player.videoEl.onended = handleVideoEnd;
+
+    player.videoEl.onerror = (e) => {
+        debug('Video error: ' + (e.message || 'unknown'));
+        scheduleNext(500);
+    };
+
+    player.videoEl.ontimeupdate = () => {
+        if (!videoEnded && player.videoEl.currentTime >= player.videoEl.duration - 0.1) {
+            handleVideoEnd();
+        }
+    };
+
+    scheduleNext(slotDuration);
+}
+
+function updateInfoDisplay(item) {
+    const currentInfoEl = document.getElementById('currentInfo');
+    const nextInfoEl = document.getElementById('nextInfo');
+
+    if (!item) {
+        currentInfoEl.textContent = 'Aucun contenu disponible';
+        nextInfoEl.textContent = 'En attente de nouveaux contenus...';
+        return;
+    }
+
+    const categoryLabels = {
+        'paid': '💰 Publicité',
+        'internal': '📢 Promo',
+        'filler': '🎬 Démo'
+    };
+
+    const itemName = escapeHtml(item.name || 'Contenu');
+    const categoryLabel = escapeHtml(categoryLabels[item.category] || item.category);
+    currentInfoEl.innerHTML =
+        `<strong>${categoryLabel}</strong> - ${itemName}<br>
+            <span style="opacity: 0.7">Durée: ${escapeHtml(item.duration)}s ${item.remaining_plays ? `| Restant: ${escapeHtml(item.remaining_plays)}` : ''}</span>`;
+
+    if (player.playlist.length > 1) {
+        const nextIndex = (player.currentIndex + 1) % player.playlist.length;
+        const nextItem = player.playlist[nextIndex];
+        const nextCategoryLabel = categoryLabels[nextItem.category] || nextItem.category;
+        nextInfoEl.textContent =
+            `Suivant: ${nextCategoryLabel} - ${nextItem.name || 'Contenu'}`;
+    } else {
+        nextInfoEl.textContent = 'Boucle en cours...';
+    }
+}
+
+async function fetchPlaylist() {
+    try {
+        const headers = {};
+        if (player.lastEtag) {
+            headers['If-None-Match'] = player.lastEtag;
+        }
+
+        const response = await fetch('/player/api/playlist', { headers });
+
+        if (response.status === 304) {
+            return;
+        }
+
+        if (response.ok && response.headers.has('ETag')) {
+            player.lastEtag = response.headers.get('ETag');
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            debug('Playlist error: ' + data.error);
+            return;
+        }
+
+        const newMode = data.mode || 'playlist';
+        const previousMode = player.mode;
+
+        if (newMode === 'iptv' && data.iptv) {
+            player.mode = 'iptv';
+            const newIptvUrl = data.iptv.url;
+            const channelName = data.iptv.name;
+
+            player.overlays = data.overlays || [];
+            console.log('[OVERLAY DEBUG] IPTV mode - Received overlays:', JSON.stringify(player.overlays, null, 2));
+            debug(`IPTV mode - Overlays received: ${player.overlays.length}`);
+            renderOverlays();
+
+            console.log('[IPTV DEBUG] Current URL:', player.iptvUrl);
+            console.log('[IPTV DEBUG] New URL:', newIptvUrl);
+            console.log('[IPTV DEBUG] Channel:', channelName);
+            console.log('[IPTV DEBUG] Previous mode:', previousMode);
+            console.log('[IPTV DEBUG] URLs equal:', player.iptvUrl === newIptvUrl);
+
+            if (previousMode !== 'iptv' || player.iptvUrl !== newIptvUrl) {
+                console.log('[IPTV DEBUG] *** SWITCHING CHANNEL ***');
+                debug(`Switching to OnlineTV mode: ${channelName}`);
+                player.iptvUrl = newIptvUrl;
+                player.iptvChannelName = channelName;
+                switchToIptvMode();
+            } else {
+                console.log('[IPTV DEBUG] Same channel, no switch needed');
+            }
+            return;
+        }
+
+        if (previousMode === 'iptv' && newMode === 'playlist') {
+            debug('Switching from OnlineTV to playlist mode');
+            switchToPlaylistMode();
+        }
+
+        player.mode = 'playlist';
+        const newPlaylist = data.playlist || [];
+        player.overlays = data.overlays || [];
+
+        console.log('[OVERLAY DEBUG] Received overlays:', JSON.stringify(player.overlays, null, 2));
+        debug(`Overlays received: ${player.overlays.length}`);
+
+        if (player.playlist.length !== newPlaylist.length) {
+            debug(`Playlist updated: ${player.playlist.length} -> ${newPlaylist.length} items`);
+        }
+
+        if (player.currentIndex >= newPlaylist.length && newPlaylist.length > 0) {
+            player.currentIndex = 0;
+        }
+
+        player.playlist = newPlaylist;
+        renderOverlays();
+
+        if (player.state === PlayerState.IDLE && player.playlist.length > 0) {
+            debug('Starting playback from idle');
+            player.currentIndex = 0;
+            playCurrentItem();
+        }
+
+        if (player.playlist.length === 0) {
+            updateInfoDisplay(null);
+        }
+    } catch (error) {
+        debug('Fetch playlist error: ' + error.message);
+    }
+}
+
+async function switchToIptvMode() {
+    console.log('[IPTV DEBUG] switchToIptvMode() called');
+    console.log('[IPTV DEBUG] Current player.iptvUrl:', player.iptvUrl);
+    console.log('[IPTV DEBUG] Current player.iptvChannelName:', player.iptvChannelName);
+
+    clearTimer();
+    cancelQualityRecovery();
+
+    player.isBuffering = false;
+    player.bufferStallCount = 0;
+    player.qualityCapped = false;
+
+    player.imageEl.style.display = 'none';
+    player.videoEl.pause();
+    player.videoEl.style.display = 'none';
+
+    if (player.hlsInstance) {
+        console.log('[IPTV DEBUG] Destroying existing HLS instance');
+        player.hlsInstance.destroy();
+        player.hlsInstance = null;
+    }
+
+    if (player.mpegtsPlayer) {
+        console.log('[IPTV DEBUG] Destroying existing MPEG-TS player');
+        player.mpegtsPlayer.destroy();
+        player.mpegtsPlayer = null;
+    }
+
+    try {
+        console.log('[IPTV DEBUG] Stopping previous stream on server...');
+        debug('Stopping previous stream on server...');
+        await fetch('/player/tv-stop/' + player.screenCode, { method: 'POST' });
+        console.log('[IPTV DEBUG] Previous stream stopped, waiting 500ms...');
+        debug('Previous stream stopped');
+        await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (e) {
+        console.log('[IPTV DEBUG] Stop request error:', e.message);
+        debug('Stop request error (continuing): ' + e.message);
+    }
+
+    player.iptvEl.style.display = 'block';
+    player.iptvRetryCount = 0;
+    player.iptvMaxRetries = 3;
+    player.iptvRetryDelay = 2000;
+    player.useProxy = false;
+    player.originalIptvUrl = player.iptvUrl;
+
+    let streamUrl = player.iptvUrl;
+    debug('OnlineTV URL: ' + streamUrl);
+
+    updateIptvStatus('loading', 'Connexion...');
+
+    if (isHlsStream(streamUrl)) {
+        debug('Detected HLS stream (.m3u8), using hls.js');
+        loadHlsStream(streamUrl, false);
+    } else {
+        debug('Detected MPEG-TS stream, using mpegts.js via proxy');
+        loadMpegTsStream(streamUrl, true);
+    }
+}
+
+function isHlsStream(url) {
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('.m3u8') || lowerUrl.includes('output=m3u8');
+}
+
+async function waitForStreamReady(url) {
+    let retries = 0;
+    const maxRetries = 30; // 30 seconds max wait
+
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url);
+            if (response.status === 200) {
+                return true;
+            }
+            if (response.status !== 202) {
+                debug('Stream check failed with status: ' + response.status);
+                return false;
+            }
+        } catch (e) {
+            debug('Stream check network error: ' + e.message);
+        }
+
+        debug('Stream processing (202), waiting...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        retries++;
+    }
+    return false;
+}
+
+function loadMpegTsStream(streamUrl, useHlsConvert = false) {
+    if (player.hlsInstance) {
+        player.hlsInstance.destroy();
+        player.hlsInstance = null;
+    }
+
+    if (player.mpegtsPlayer) {
+        player.mpegtsPlayer.destroy();
+        player.mpegtsPlayer = null;
+    }
+
+    player.iptvEl.src = '';
+    player.iptvEl.load();
+
+    const hlsConvertUrl = '/player/tv-stream/' + player.screenCode + '?t=' + Date.now();
+    player.useProxy = useHlsConvert;
+
+    if (useHlsConvert) {
+        debug('Loading MPEG-TS via HLS conversion: ' + hlsConvertUrl);
+        updateIptvStatus('loading', 'Démarrage conversion...');
+
+        waitForStreamReady(hlsConvertUrl).then(ready => {
+            if (ready) {
+                debug('Stream ready, starting HLS playback');
+                loadHlsStream(hlsConvertUrl, false);
+            } else {
+                debug('Stream preparation timeout');
+                updateIptvStatus('error', 'Erreur conversion (Timeout)');
+            }
+        });
+        return;
+    }
+
+    const effectiveUrl = streamUrl;
+    debug('Loading MPEG-TS stream directly: ' + effectiveUrl);
+    updateIptvStatus('loading', 'Chargement MPEG-TS...');
+
+    if (typeof mpegts !== 'undefined' && mpegts.isSupported()) {
+        debug('Using mpegts.js for MPEG-TS stream');
+
+        player.mpegtsPlayer = mpegts.createPlayer({
+            type: 'mpegts',
+            isLive: true,
+            url: effectiveUrl
+        }, {
+            enableWorker: true,
+            enableStashBuffer: false,
+            stashInitialSize: 128,
+            liveBufferLatencyChasing: true,
+            liveBufferLatencyMaxLatency: 1.5,
+            liveBufferLatencyMinRemain: 0.3,
+            lazyLoad: false,
+            lazyLoadMaxDuration: 0,
+            deferLoadAfterSourceOpen: false
+        });
+
+        player.mpegtsPlayer.attachMediaElement(player.iptvEl);
+        player.iptvEl.muted = player.isMuted;
+        player.mpegtsPlayer.load();
+
+        player.mpegtsPlayer.on(mpegts.Events.ERROR, function(errorType, errorDetail, errorInfo) {
+            debug('MPEG-TS error: ' + errorType + ' - ' + errorDetail);
+            if (!useHlsConvert && player.iptvRetryCount < player.iptvMaxRetries) {
+                player.iptvRetryCount++;
+                debug('Retrying via HLS conversion (attempt ' + player.iptvRetryCount + ')');
+                updateIptvStatus('retrying', 'Reconnexion via conversion HLS...');
+                setTimeout(() => loadMpegTsStream(streamUrl, true), 1000);
+            } else {
+                updateIptvStatus('error', 'Lecture impossible');
+                showIptvError('Impossible de lire le flux MPEG-TS. Le serveur peut bloquer les connexions externes ou le flux n\'est pas disponible.');
+            }
+        });
+
+        player.mpegtsPlayer.on(mpegts.Events.LOADING_COMPLETE, function() {
+            debug('MPEG-TS loading complete');
+        });
+
+        player.mpegtsPlayer.on(mpegts.Events.RECOVERED_EARLY_EOF, function() {
+            debug('MPEG-TS recovered from early EOF');
+        });
+
+        player.mpegtsPlayer.on(mpegts.Events.MEDIA_INFO, function(mediaInfo) {
+            debug('MPEG-TS media info received');
+        });
+
+        const playPromise = player.iptvEl.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                debug('MPEG-TS stream started (direct)');
+                player.state = PlayerState.PLAYING;
+                player.iptvRetryCount = 0;
+                hideIptvError();
+                updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+            }).catch(e => {
+                debug('MPEG-TS play error: ' + e.message);
+                if (!useHlsConvert) {
+                    player.iptvRetryCount++;
+                    debug('Retrying via HLS conversion...');
+                    updateIptvStatus('retrying', 'Reconnexion via conversion HLS...');
+                    setTimeout(() => loadMpegTsStream(streamUrl, true), 1000);
+                } else {
+                    updateIptvStatus('error', 'Lecture impossible');
+                }
+            });
+        }
+    } else {
+        debug('mpegts.js not supported, trying HLS conversion');
+        loadMpegTsStream(streamUrl, true);
+    }
+
+    player.iptvEl.onerror = function(e) {
+        debug('MPEG-TS video error: ' + (e.message || 'Unknown error'));
+        if (!useHlsConvert) {
+            debug('Trying HLS conversion...');
+            loadMpegTsStream(streamUrl, true);
+        } else {
+            updateIptvStatus('error', 'Erreur de flux');
+        }
+    };
+}
+
+function getProxyUrl(originalUrl) {
+    return '/player/api/stream-proxy?url=' + encodeURIComponent(originalUrl);
+}
+
+function cancelQualityRecovery() {
+    if (player.qualityRecoveryTimer) {
+        clearTimeout(player.qualityRecoveryTimer);
+        player.qualityRecoveryTimer = null;
+    }
+}
+
+function scheduleQualityRecovery() {
+    cancelQualityRecovery();
+    player.qualityRecoveryTimer = setTimeout(function() {
+        player.qualityRecoveryTimer = null;
+        if (player.hlsInstance && !player.isBuffering && player.mode === 'iptv') {
+            const currentCap = player.hlsInstance.autoLevelCapping;
+            const levels = player.hlsInstance.levels;
+
+            if (currentCap >= 0 && levels && currentCap < levels.length - 1) {
+                player.hlsInstance.autoLevelCapping = currentCap + 1;
+                debug('Quality cap raised to level ' + (currentCap + 1));
+                updateQualityIndicator();
+                scheduleQualityRecovery();
+            } else if (currentCap >= 0) {
+                player.hlsInstance.autoLevelCapping = -1;
+                player.qualityCapped = false;
+                player.bufferStallCount = 0;
+                debug('Quality cap fully removed, ABR unrestricted');
+                updateQualityIndicator();
+            }
+        }
+    }, 10000);
+}
+
+function capQualityLevel() {
+    if (!player.hlsInstance || player.mode !== 'iptv') return;
+
+    const levels = player.hlsInstance.levels;
+    if (!levels || levels.length <= 1) return;
+
+    let currentLevel = player.hlsInstance.currentLevel;
+    if (currentLevel < 0) {
+        currentLevel = player.hlsInstance.loadLevel;
+    }
+    if (currentLevel < 0) {
+        currentLevel = player.hlsInstance.autoLevelCapping >= 0 ? player.hlsInstance.autoLevelCapping : levels.length - 1;
+    }
+
+    const currentCap = player.hlsInstance.autoLevelCapping;
+    let newCap;
+
+    if (currentCap === -1) {
+        newCap = Math.max(0, currentLevel - 1);
+    } else {
+        newCap = Math.max(0, currentCap - 1);
+    }
+
+    if (newCap !== currentCap) {
+        player.hlsInstance.autoLevelCapping = newCap;
+        player.qualityCapped = true;
+        cancelQualityRecovery();
+        debug('Quality capped to level ' + newCap + ' (cap was ' + currentCap + ', current level ' + currentLevel + ')');
+        updateQualityIndicator();
+    }
+
+    scheduleQualityRecovery();
+}
+
+function loadHlsStream(streamUrl, useProxy = false) {
+    if (player.hlsInstance) {
+        player.hlsInstance.destroy();
+        player.hlsInstance = null;
+    }
+
+    player.iptvEl.src = '';
+    player.iptvEl.load();
+
+    let effectiveUrl = useProxy ? getProxyUrl(streamUrl) : streamUrl;
+    if (effectiveUrl.includes('?')) {
+        effectiveUrl += '&t=' + Date.now();
+    } else {
+        effectiveUrl += '?t=' + Date.now();
+    }
+    player.useProxy = useProxy;
+
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        debug('Using HLS.js for OnlineTV stream (attempt ' + (player.iptvRetryCount + 1) + ', proxy: ' + useProxy + ')');
+        player.hlsInstance = new Hls({
+            debug: false,
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 30,
+            maxBufferLength: 10,
+            maxMaxBufferLength: 30,
+            maxBufferSize: 30 * 1000 * 1000,
+            maxBufferHole: 0.3,
+            highBufferWatchdogPeriod: 2,
+            nudgeOffset: 0.1,
+            nudgeMaxRetry: 5,
+            fragLoadingTimeOut: 10000,
+            manifestLoadingTimeOut: 10000,
+            levelLoadingTimeOut: 10000,
+            startFragPrefetch: true,
+            startLevel: -1,
+            capLevelToPlayerSize: true,
+            capLevelOnFPSDrop: true,
+            fpsDroppedMonitoringPeriod: 3000,
+            fpsDroppedMonitoringThreshold: 0.2,
+            abrEwmaDefaultEstimate: 500000,
+            abrEwmaFastLive: 2.0,
+            abrEwmaSlowLive: 6.0,
+            abrEwmaFastVoD: 2.0,
+            abrEwmaSlowVoD: 6.0,
+            abrBandWidthFactor: 0.8,
+            abrBandWidthUpFactor: 0.5,
+            abrMaxWithRealBitrate: true,
+            maxLoadingDelay: 2,
+            minAutoBitrate: 0,
+            manifestLoadingMaxRetry: 4,
+            fragLoadingMaxRetry: 6,
+            fragLoadingRetryDelay: 300,
+            levelLoadingMaxRetry: 4,
+            testBandwidth: true,
+            progressive: true,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 6,
+            liveDurationInfinity: true,
+            xhrSetup: function(xhr, url) {
+                xhr.withCredentials = false;
+            }
+        });
+
+        player.hlsInstance.loadSource(effectiveUrl);
+        player.hlsInstance.attachMedia(player.iptvEl);
+        player.iptvEl.muted = player.isMuted;
+        player.hlsInstance.startLoad();
+
+        player.hlsInstance.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+            debug('HLS manifest parsed, levels: ' + data.levels.length + ', starting playback');
+            player.availableLevels = data.levels;
+            player.iptvRetryCount = 0;
+            hideIptvError();
+            updateQualityIndicator();
+            updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+            player.iptvEl.play().then(() => {
+                debug('OnlineTV stream started' + (useProxy ? ' (via proxy)' : ''));
+                player.state = PlayerState.PLAYING;
+            }).catch(e => {
+                debug('OnlineTV play error: ' + e.message);
+                updateIptvStatus('error', 'Lecture impossible');
+            });
+        });
+
+        player.hlsInstance.on(Hls.Events.MANIFEST_LOADING, function() {
+            debug('Loading HLS manifest...');
+            updateIptvStatus('loading', 'Chargement...');
+        });
+
+        player.hlsInstance.on(Hls.Events.LEVEL_SWITCHED, function(event, data) {
+            const level = player.hlsInstance.levels[data.level];
+            if (level) {
+                const height = level.height || 'Auto';
+                const bitrate = Math.round(level.bitrate / 1000);
+                debug('Quality switched to: ' + height + 'p (' + bitrate + ' kbps)');
+                updateQualityIndicator();
+            }
+        });
+
+        player.hlsInstance.on(Hls.Events.FRAG_BUFFERED, function(event, data) {
+            const bw = player.hlsInstance.bandwidthEstimate;
+            if (bw) {
+                player.currentBandwidth = bw;
+                updateQualityIndicator();
+            }
+            player.lastBufferTime = Date.now();
+            player.bufferStallCount = 0;
+        });
+
+        player.hlsInstance.on(Hls.Events.FPS_DROP, function(event, data) {
+            debug('FPS dropped: ' + data.currentDropped + '/' + data.currentDecoded);
+            capQualityLevel();
+        });
+
+        player.hlsInstance.on(Hls.Events.FPS_DROP_LEVEL_CAPPING, function(event, data) {
+            debug('FPS drop level capping to ' + data.level);
+            player.qualityCapped = true;
+            updateQualityIndicator();
+        });
+
+        player.iptvEl.addEventListener('waiting', function() {
+            if (!player.isBuffering) {
+                player.isBuffering = true;
+                player.bufferStallCount = (player.bufferStallCount || 0) + 1;
+                debug('Buffering detected (stall #' + player.bufferStallCount + ')');
+                updateIptvStatus('loading', 'Mise en mémoire tampon...');
+
+                cancelQualityRecovery();
+
+                if (player.bufferStallCount >= 2) {
+                    capQualityLevel();
+                }
+            }
+        });
+
+        player.iptvEl.addEventListener('playing', function() {
+            if (player.isBuffering) {
+                player.isBuffering = false;
+                debug('Playback resumed after buffering');
+                updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+
+                scheduleQualityRecovery();
+            }
+        });
+
+        player.iptvEl.addEventListener('stalled', function() {
+            debug('Stream stalled, network may be slow');
+            capQualityLevel();
+        });
+
+        player.hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+            debug('HLS Error: ' + data.type + ' - ' + data.details);
+
+            if (data.fatal) {
+                switch(data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        debug('Network error, retrying in 2s...');
+                        updateIptvStatus('retrying', 'Reconnexion...');
+                        setTimeout(function() {
+                            if (player.hlsInstance) {
+                                player.hlsInstance.startLoad();
+                            }
+                        }, 2000);
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        debug('Media error, trying to recover...');
+                        updateIptvStatus('recovering', 'Récupération...');
+                        player.hlsInstance.recoverMediaError();
+                        break;
+                    default:
+                        debug('Fatal HLS error, trying direct playback');
+                        player.hlsInstance.destroy();
+                        player.hlsInstance = null;
+                        tryDirectPlayback(streamUrl);
+                        break;
+                }
+            } else if (data.details === 'fragLoadError') {
+                debug('Fragment load error (non-fatal), ABR will adjust quality...');
+            } else if (data.details === 'manifestLoadError' || data.details === 'manifestParsingError') {
+                handleNetworkError(streamUrl, data, useProxy);
+            }
+        });
+
+        player.hlsInstance.on(Hls.Events.FRAG_LOADED, function() {
+            player.iptvRetryCount = 0;
+            updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+        });
+
+    } else if (player.iptvEl.canPlayType('application/vnd.apple.mpegurl')) {
+        debug('Using native HLS support');
+        player.iptvEl.src = effectiveUrl;
+        player.iptvEl.muted = player.isMuted;
+        player.iptvEl.play().then(() => {
+            debug('OnlineTV stream started (native)');
+            player.state = PlayerState.PLAYING;
+            updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+        }).catch(e => {
+            debug('OnlineTV native play error: ' + e.message);
+            if (!useProxy) {
+                debug('Trying with proxy...');
+                loadHlsStream(streamUrl, true);
+            } else {
+                updateIptvStatus('error', 'Erreur de lecture');
+            }
+        });
+    } else {
+        debug('No HLS support, trying direct playback');
+        tryDirectPlayback(streamUrl);
+    }
+
+    document.getElementById('iptvInfo').style.display = 'block';
+    document.getElementById('info').style.display = 'none';
+
+    renderOverlays();
+}
+
+function handleNetworkError(streamUrl, data, currentlyUsingProxy = false) {
+    player.iptvRetryCount++;
+
+    if (player.iptvRetryCount <= player.iptvMaxRetries) {
+        const delay = player.iptvRetryDelay;
+        debug('Network error (' + data.details + '), retry ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + ' in ' + (delay/1000) + 's');
+        updateIptvStatus('retrying', 'Reconnexion ' + player.iptvRetryCount + '/' + player.iptvMaxRetries + '...');
+
+        setTimeout(() => {
+            if (player.mode === 'iptv') {
+                if (player.hlsInstance) {
+                    player.hlsInstance.destroy();
+                    player.hlsInstance = null;
+                }
+                loadHlsStream(streamUrl, currentlyUsingProxy);
+            }
+        }, delay);
+    } else if (!currentlyUsingProxy) {
+        debug('Direct connection failed, trying with CORS proxy...');
+        player.iptvRetryCount = 0;
+        updateIptvStatus('loading', 'Connexion via proxy...');
+
+        setTimeout(() => {
+            if (player.mode === 'iptv') {
+                if (player.hlsInstance) {
+                    player.hlsInstance.destroy();
+                    player.hlsInstance = null;
+                }
+                loadHlsStream(streamUrl, true);
+            }
+        }, 1000);
+    } else {
+        debug('Max retries reached, showing error');
+        updateIptvStatus('error', 'Chaîne indisponible');
+        showIptvError('La chaîne n\'est pas accessible. Causes possibles :<br><br>• La chaîne est hors ligne ou protégée<br>• L\'URL du stream n\'est plus valide<br>• Le serveur bloque les connexions externes<br><br>Essayez une autre chaîne ou vérifiez l\'URL M3U.');
+    }
+}
+
+function updateQualityIndicator() {
+    const indicator = document.getElementById('qualityIndicator');
+    const labelEl = document.getElementById('qualityLabel');
+    const badgeEl = document.getElementById('qualityBadge');
+    const fillEl = document.getElementById('bandwidthFill');
+    const bwTextEl = document.getElementById('bandwidthText');
+
+    if (!indicator || !player.hlsInstance || player.mode !== 'iptv') {
+        if (indicator) indicator.classList.remove('visible');
+        return;
+    }
+
+    indicator.classList.add('visible');
+
+    const currentLevel = player.hlsInstance.currentLevel;
+    const levels = player.hlsInstance.levels;
+    const bandwidth = player.currentBandwidth || player.hlsInstance.bandwidthEstimate || 0;
+
+    let qualityText = 'Auto';
+    let qualityClass = 'quality-high';
+    let badgeText = 'HD';
+
+    if (levels && levels.length > 0 && currentLevel >= 0 && currentLevel < levels.length) {
+        const level = levels[currentLevel];
+        const height = level.height;
+        const bitrate = level.bitrate;
+
+        if (height) {
+            qualityText = height + 'p';
+            if (height >= 1080) {
+                badgeText = 'FHD';
+                qualityClass = 'quality-high';
+            } else if (height >= 720) {
+                badgeText = 'HD';
+                qualityClass = 'quality-high';
+            } else if (height >= 480) {
+                badgeText = 'SD';
+                qualityClass = 'quality-medium';
+            } else if (height >= 360) {
+                badgeText = 'LD';
+                qualityClass = 'quality-low';
+            } else {
+                badgeText = 'LOW';
+                qualityClass = 'quality-very-low';
+            }
+        } else if (bitrate) {
+            const kbps = Math.round(bitrate / 1000);
+            qualityText = kbps + ' kbps';
+            if (bitrate >= 4000000) {
+                badgeText = 'HD';
+                qualityClass = 'quality-high';
+            } else if (bitrate >= 2000000) {
+                badgeText = 'SD';
+                qualityClass = 'quality-medium';
+            } else {
+                badgeText = 'LD';
+                qualityClass = 'quality-low';
+            }
+        }
+    }
+
+    if (labelEl) labelEl.textContent = qualityText;
+    if (badgeEl) {
+        badgeEl.textContent = badgeText;
+        badgeEl.className = 'quality-badge ' + qualityClass;
+    }
+
+    if (bandwidth > 0) {
+        const mbps = (bandwidth / 1000000).toFixed(1);
+        if (bwTextEl) bwTextEl.textContent = mbps + ' Mbps';
+
+        const maxBandwidth = 20000000;
+        const fillPercent = Math.min(100, (bandwidth / maxBandwidth) * 100);
+        if (fillEl) {
+            fillEl.style.width = fillPercent + '%';
+            if (bandwidth >= 5000000) {
+                fillEl.style.background = '#22c55e';
+            } else if (bandwidth >= 2000000) {
+                fillEl.style.background = '#eab308';
+            } else if (bandwidth >= 1000000) {
+                fillEl.style.background = '#f97316';
+            } else {
+                fillEl.style.background = '#ef4444';
+            }
+        }
+    }
+}
+
+function updateIptvStatus(status, message) {
+    const infoEl = document.getElementById('iptvInfo');
+    const nameEl = document.getElementById('iptvChannelName');
+
+    if (!infoEl || !nameEl) return;
+
+    nameEl.textContent = message;
+
+    infoEl.className = '';
+    infoEl.style.cssText = 'display: block; position: fixed; top: 20px; left: 20px; backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 8px; color: white; font-family: sans-serif; font-size: 14px; z-index: 60;';
+
+    switch(status) {
+        case 'loading':
+        case 'retrying':
+        case 'recovering':
+            infoEl.style.background = 'rgba(245, 158, 11, 0.9)';
+            break;
+        case 'error':
+            infoEl.style.background = 'rgba(239, 68, 68, 0.9)';
+            break;
+        case 'playing':
+        default:
+            infoEl.style.background = 'rgba(0,0,0,0.7)';
+            break;
+    }
+}
+
+function showIptvError(message) {
+    let errorEl = document.getElementById('iptvError');
+    if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.id = 'iptvError';
+        errorEl.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px 40px; border-radius: 16px; text-align: center; color: white; font-family: sans-serif; z-index: 100; max-width: 400px;';
+        document.body.appendChild(errorEl);
+    }
+
+    errorEl.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📺</div>
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Erreur de diffusion</h3>
+        <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">${escapeHtml(message)}</p>
+        <button onclick="retryIptvStream()" style="background: #3b82f6; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 8px;">
+            🔄 Réessayer
+        </button>
+        <button onclick="switchToPlaylistFromError()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+            📺 Playlist
+        </button>
+    `;
+    errorEl.style.display = 'block';
+}
+
+function hideIptvError() {
+    const errorEl = document.getElementById('iptvError');
+    if (errorEl) {
+        errorEl.style.display = 'none';
+    }
+}
+
+function retryIptvStream() {
+    hideIptvError();
+    player.iptvRetryCount = 0;
+    if (player.iptvUrl) {
+        if (isHlsStream(player.iptvUrl)) {
+            debug('Retry: HLS stream');
+            loadHlsStream(player.iptvUrl, false);
+        } else {
+            debug('Retry: MPEG-TS stream via proxy');
+            loadMpegTsStream(player.iptvUrl, true);
+        }
+    }
+}
+
+function switchToPlaylistFromError() {
+    hideIptvError();
+    switchToPlaylistMode();
+    fetchPlaylist();
+}
+
+function tryDirectPlayback(streamUrl) {
+    debug('Trying direct video playback');
+    updateIptvStatus('loading', 'Lecture directe...');
+
+    player.iptvEl.src = streamUrl;
+    player.iptvEl.muted = player.isMuted;
+    player.iptvEl.play().then(() => {
+        debug('OnlineTV direct stream started');
+        player.state = PlayerState.PLAYING;
+        updateIptvStatus('playing', player.iptvChannelName || 'OnlineTV');
+    }).catch(e => {
+        debug('OnlineTV direct play error: ' + e.message);
+        updateIptvStatus('error', 'Lecture impossible');
+        showIptvError('Format de flux non supporté. Essayez une autre chaîne.');
+    });
+}
+
+function switchToPlaylistMode() {
+    cancelQualityRecovery();
+
+    if (player.hlsInstance) {
+        player.hlsInstance.destroy();
+        player.hlsInstance = null;
+    }
+
+    if (player.mpegtsPlayer) {
+        player.mpegtsPlayer.destroy();
+        player.mpegtsPlayer = null;
+    }
+
+    player.iptvEl.pause();
+    player.iptvEl.removeAttribute('src');
+    player.iptvEl.style.display = 'none';
+
+    document.getElementById('iptvInfo').style.display = 'none';
+    document.getElementById('info').style.display = '';
+
+    const qualityIndicator = document.getElementById('qualityIndicator');
+    if (qualityIndicator) qualityIndicator.classList.remove('visible');
+
+    player.iptvUrl = null;
+    player.iptvChannelName = null;
+    player.currentBandwidth = null;
+    player.availableLevels = null;
+    player.isBuffering = false;
+    player.bufferStallCount = 0;
+    player.qualityCapped = false;
+    player.state = PlayerState.IDLE;
+}
+
+async function logPlay(item) {
+    try {
+        const response = await fetch('/player/api/log-play', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content_id: item.id,
+                content_type: item.type,
+                category: item.category,
+                duration: item.duration,
+                booking_id: item.booking_id
+            })
+        });
+
+        const result = await response.json();
+        if (result.exhausted) {
+            debug('Content exhausted, refreshing playlist');
+            fetchPlaylist();
+        }
+    } catch (error) {
+        debug('Log play error: ' + error.message);
+    }
+}
+
+async function sendHeartbeat() {
+    const status = player.state === PlayerState.PAUSED ? 'paused' : 'playing';
+    try {
+        await fetch('/player/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+
+        document.getElementById('statusDot').className = 'status-dot status-' + status;
+        document.getElementById('statusText').textContent =
+            player.state === PlayerState.PAUSED ? 'En pause' : 'En lecture';
+    } catch (error) {
+        document.getElementById('statusDot').className = 'status-dot status-offline';
+        document.getElementById('statusText').textContent = 'Hors ligne';
+    }
+}
+
+function togglePause() {
+    if (player.state === PlayerState.PAUSED) {
+        debug('Resuming playback');
+        player.state = PlayerState.PLAYING;
+        document.getElementById('pauseIcon').textContent = '⏸';
+
+        if (player.playlist.length > 0) {
+            playCurrentItem();
+        }
+    } else {
+        debug('Pausing playback');
+        player.state = PlayerState.PAUSED;
+        document.getElementById('pauseIcon').textContent = '▶';
+
+        clearTimer();
+        player.videoEl.pause();
+    }
+
+    sendHeartbeat();
+}
+
+function renderOverlays() {
+    console.log('[OVERLAY DEBUG] renderOverlays() called');
+    const headerEl = document.getElementById('overlayHeader');
+    const footerEl = document.getElementById('overlayFooter');
+    const bodyEl = document.getElementById('overlayBody');
+    const topLeftEl = document.getElementById('overlayTopLeft');
+    const topRightEl = document.getElementById('overlayTopRight');
+    const bottomLeftEl = document.getElementById('overlayBottomLeft');
+    const bottomRightEl = document.getElementById('overlayBottomRight');
+    const customEl = document.getElementById('overlayCustom');
+
+    const allContainers = [headerEl, footerEl, bodyEl, topLeftEl, topRightEl, bottomLeftEl, bottomRightEl, customEl];
+    console.log('[OVERLAY DEBUG] Clearing all ' + allContainers.length + ' containers');
+    allContainers.forEach(el => {
+        if (el) {
+            el.style.display = 'none';
+            el.innerHTML = '';
+        }
+    });
+
+    const overlays = player.overlays || [];
+    console.log('[OVERLAY DEBUG] Will render ' + overlays.length + ' overlays');
+    debug('Rendering ' + overlays.length + ' overlays');
+
+    overlays.forEach(overlay => {
+        if (!overlay.is_active) {
+            debug('Skipping inactive overlay: ' + overlay.id);
+            return;
+        }
+
+        let container;
+        let position = overlay.position || 'footer';
+        const positionMode = overlay.position_mode || 'linear';
+        const cornerPosition = overlay.corner_position || 'top_left';
+
+        if (position === 'corner' && cornerPosition) {
+            position = cornerPosition;
+        }
+
+        if (position === 'header') {
+            container = headerEl;
+        } else if (position === 'footer') {
+            container = footerEl;
+        } else if (position === 'body') {
+            container = bodyEl;
+        } else if (position === 'top_left') {
+            container = topLeftEl;
+        } else if (position === 'top_right') {
+            container = topRightEl;
+        } else if (position === 'bottom_left') {
+            container = bottomLeftEl;
+        } else if (position === 'bottom_right') {
+            container = bottomRightEl;
+        } else if (position === 'custom') {
+            container = customEl;
+            if (customEl) {
+                const posX = overlay.image_pos_x || 50;
+                const posY = overlay.image_pos_y || 50;
+                customEl.style.left = posX + '%';
+                customEl.style.top = posY + '%';
+                customEl.style.transform = 'translate(-50%, -50%)';
+            }
+        } else {
+            container = bodyEl;
+        }
+
+        if (!container) {
+            debug('Container not found for position: ' + position);
+            return;
+        }
+
+        container.style.display = 'block';
+
+        if (overlay.type === 'ticker') {
+            container.style.backgroundColor = overlay.background_color || '#000000';
+            const duration = Math.max(10, (overlay.message?.length || 50) / (overlay.scroll_speed / 10));
+            container.innerHTML = `
+                <div class="overlay-ticker" style="
+                    color: ${escapeHtml(overlay.text_color) || '#ffffff'};
+                    font-size: ${parseInt(overlay.font_size) || 24}px;
+                    animation-duration: ${duration}s;
+                ">${escapeHtml(overlay.message || '')}</div>
+            `;
+        } else if (overlay.type === 'image' && overlay.image_path) {
+            const opacity = parseFloat(overlay.image_opacity) || 1;
+            const widthPercent = parseInt(overlay.image_width_percent) || 20;
+            const safePath = encodeURI(overlay.image_path);
+
+            if (position === 'header' || position === 'footer' || position === 'body') {
+                container.innerHTML = `<img src="/${safePath}" class="overlay-image" style="opacity: ${opacity}; max-width: ${widthPercent}%;" />`;
+            } else {
+                const cornerSize = parseInt(overlay.corner_size) || 15;
+                container.innerHTML = `<img src="/${safePath}" style="opacity: ${opacity}; width: ${widthPercent}vw; max-width: 300px; height: auto;" />`;
+            }
+        } else if (overlay.type === 'corner' && overlay.image_path) {
+            const opacity = parseFloat(overlay.image_opacity) || 1;
+            const cornerSize = parseInt(overlay.corner_size) || 15;
+            const safePath = encodeURI(overlay.image_path);
+            container.innerHTML = `<img src="/${safePath}" style="opacity: ${opacity}; width: ${cornerSize}vw; max-width: 200px; height: auto;" />`;
+        }
+
+        debug('Rendered overlay: id=' + overlay.id + ', type=' + overlay.type + ', position=' + position);
+    });
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function toggleMute() {
+    player.isMuted = !player.isMuted;
+
+    if (player.videoEl) {
+        player.videoEl.muted = player.isMuted;
+    }
+    if (player.iptvEl) {
+        player.iptvEl.muted = player.isMuted;
+    }
+
+    const muteIcon = document.getElementById('muteIcon');
+    const muteText = document.getElementById('muteText');
+
+    if (player.isMuted) {
+        muteIcon.textContent = '🔇';
+        muteText.textContent = 'Muet';
+        debug('Audio muted');
+    } else {
+        muteIcon.textContent = '🔊';
+        muteText.textContent = 'Son';
+        debug('Audio unmuted');
+    }
+}
+
+function applyMuteState() {
+    if (player.videoEl) {
+        player.videoEl.muted = player.isMuted;
+    }
+    if (player.iptvEl) {
+        player.iptvEl.muted = player.isMuted;
+    }
+}
+
+function logout() {
+    window.location.href = '/player/logout';
+}
+
+async function startPlayer() {
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
+
+    player.imageEl = document.getElementById('imageContent');
+    player.videoEl = document.getElementById('videoContent');
+    player.iptvEl = document.getElementById('iptvContent');
+    player.debugEl = document.getElementById('debugInfo');
+
+    debug('Player starting...');
+
+    await offlineManager.init();
+
+    await fetchPlaylist();
+
+    document.getElementById('loading').classList.add('hidden');
+
+    player.heartbeatInterval = setInterval(sendHeartbeat, 30000);
+    sendHeartbeat();
+
+    player.refreshInterval = setInterval(fetchPlaylist, player.PLAYLIST_REFRESH_INTERVAL);
+
+    // Start robustness systems for 24/7 operation
+    startWatchdog();
+    startMemoryCleanup();
+    scheduleAutoReload();
+
+    // Handle visibility changes (browser tab hidden/shown)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            debug('Tab became visible, refreshing...');
+            player.lastActivityTime = Date.now();
+            fetchPlaylist();
+        }
+    });
+
+    // Handle network reconnection
+    window.addEventListener('online', () => {
+        debug('Network connection restored');
+        resetNetworkRetries();
+        fetchPlaylist();
+    });
+
+    window.addEventListener('offline', () => {
+        debug('Network connection lost');
+    });
+
+    // Prevent screen sleep/lock on supported browsers
+    if ('wakeLock' in navigator) {
+        try {
+            navigator.wakeLock.request('screen').then(lock => {
+                debug('Wake lock acquired - screen will stay on');
+                player.wakeLock = lock;
+            }).catch(e => debug('Wake lock not available'));
+        } catch(e) {}
+    }
+
+    if (player.playlist.length > 0) {
+        debug('Starting playback with ' + player.playlist.length + ' items');
+        player.currentIndex = 0;
+        playCurrentItem();
+    } else {
+        debug('No content available');
+        updateInfoDisplay(null);
+    }
+}
+
+const offlineManager = {
+    isOnline: navigator.onLine,
+    swRegistration: null,
+    db: null,
+    cachedPlaylist: null,
+    cacheStatusInterval: null,
+
+    async init() {
+        await this.registerServiceWorker();
+        await this.openDatabase();
+        this.setupConnectionListeners();
+        this.setupSwMessageHandler();
+
+        if (!this.isOnline) {
+            await this.loadCachedPlaylist();
+        }
+
+        debug('Offline manager initialized, online: ' + this.isOnline);
+        this.updateOfflineIndicator();
+    },
+
+    async registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                this.swRegistration = await navigator.serviceWorker.register('/static/js/player-sw.js', {
+                    scope: '/player/'
+                });
+                debug('Service Worker registered');
+
+                if ('sync' in self.registration) {
+                    await this.swRegistration.sync.register('sync-logs');
+                }
+            } catch (error) {
+                console.error('[Offline] SW registration failed:', error);
+            }
+        }
+    },
+
+    openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('ShabakaPlayerOffline', 2);
+
+            request.onerror = () => {
+                console.error('[Offline] IndexedDB error');
+                resolve(null);
+            };
+
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+
+                if (!db.objectStoreNames.contains('pendingLogs')) {
+                    db.createObjectStore('pendingLogs', { keyPath: 'timestamp' });
+                }
+
+                if (!db.objectStoreNames.contains('cachedPlaylist')) {
+                    db.createObjectStore('cachedPlaylist', { keyPath: 'id' });
+                }
+
+                if (!db.objectStoreNames.contains('mediaCache')) {
+                    db.createObjectStore('mediaCache', { keyPath: 'url' });
+                }
+            };
+        });
+    },
+
+    setupConnectionListeners() {
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            debug('Connection restored - syncing...');
+            this.updateOfflineIndicator();
+            this.onConnectionRestored();
+        });
+
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            debug('Connection lost - using cached content');
+            this.updateOfflineIndicator();
+        });
+    },
+
+    setupSwMessageHandler() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data.type === 'PRECACHE_COMPLETE') {
+                    debug('Media pre-cached: ' + event.data.urls.length + ' files');
+                }
+                if (event.data.type === 'CACHE_STATUS') {
+                    debug('Cache: ' + event.data.status.mediaCount + ' files (' + event.data.status.totalSizeMB + ' MB)');
+                }
+                if (event.data.type === 'SYNC_COMPLETE') {
+                    debug('Pending logs synced');
+                }
+            });
+        }
+    },
+
+    async onConnectionRestored() {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'SYNC_LOGS' });
+        }
+
+        await fetchPlaylist();
+        debug('Playlist refreshed after reconnection');
+    },
+
+    async savePlaylistToCache(playlistData) {
+        if (!this.db) return;
+
+        try {
+            const tx = this.db.transaction('cachedPlaylist', 'readwrite');
+            const store = tx.objectStore('cachedPlaylist');
+
+            await store.clear();
+
+            const entry = {
+                id: 'current',
+                data: playlistData,
+                timestamp: Date.now()
+            };
+            await store.put(entry);
+
+            this.cachedPlaylist = playlistData;
+            debug('Playlist cached locally');
+
+            this.precacheMediaFiles(playlistData);
+        } catch (error) {
+            console.error('[Offline] Failed to cache playlist:', error);
+        }
+    },
+
+    async loadCachedPlaylist() {
+        if (!this.db) return null;
+
+        try {
+            const tx = this.db.transaction('cachedPlaylist', 'readonly');
+            const store = tx.objectStore('cachedPlaylist');
+            const entry = await new Promise((resolve) => {
+                const req = store.get('current');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+
+            if (entry && entry.data) {
+                this.cachedPlaylist = entry.data;
+                debug('Loaded cached playlist from ' + new Date(entry.timestamp).toLocaleTimeString());
+                return entry.data;
+            }
+        } catch (error) {
+            console.error('[Offline] Failed to load cached playlist:', error);
+        }
+
+        return null;
+    },
+
+    precacheMediaFiles(playlistData) {
+        if (!playlistData.playlist || !('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+
+        const urls = playlistData.playlist
+            .filter(item => item.url && !item.url.startsWith('http'))
+            .map(item => item.url);
+
+        if (urls.length > 0) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'PRECACHE_MEDIA',
+                urls: urls
+            });
+            debug('Requested pre-cache for ' + urls.length + ' media files');
+        }
+    },
+
+    updateOfflineIndicator() {
+        let indicator = document.getElementById('offlineIndicator');
+
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'offlineIndicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 60px;
+                left: 20px;
+                background: rgba(239, 68, 68, 0.9);
+                backdrop-filter: blur(10px);
+                padding: 8px 16px;
+                border-radius: 20px;
+                color: white;
+                font-family: sans-serif;
+                font-size: 12px;
+                z-index: 100;
+                display: none;
+                align-items: center;
+                gap: 8px;
+                transition: opacity 0.3s;
+            `;
+            indicator.innerHTML = '<span>📴</span><span>Mode hors ligne</span>';
+            document.body.appendChild(indicator);
+        }
+
+        if (this.isOnline) {
+            indicator.style.display = 'none';
+        } else {
+            indicator.style.display = 'flex';
+        }
+    },
+
+    getCacheStatus() {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_CACHE_STATUS' });
+        }
+    },
+
+    async queueOfflineLog(logData) {
+        if (!this.db) return;
+
+        try {
+            const tx = this.db.transaction('pendingLogs', 'readwrite');
+            const store = tx.objectStore('pendingLogs');
+            logData.timestamp = Date.now();
+            await store.add(logData);
+            debug('Queued offline log');
+        } catch (error) {
+            console.error('[Offline] Failed to queue log:', error);
+        }
+    }
+};

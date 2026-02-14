@@ -79,7 +79,6 @@
                             </label>
                             <form method="GET" id="countryFilterForm">
                                 <select name="country" 
-                                        onchange="document.getElementById('countryFilterForm').submit()"
                                         class="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer">
                                     <option value="all" {% if country_filter == 'all' %}selected{% endif %}>
                                         {{ t('catalog.all_countries') }}
@@ -358,13 +357,5 @@
     </footer>
 </div>
 
-<script>
-document.querySelectorAll('[data-mobile-menu-toggle]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('[data-mobile-menu]').forEach(function(menu) {
-            menu.classList.toggle('hidden');
-        });
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/catalog.js') }}"></script>
 {% endblock %}
