@@ -614,5 +614,35 @@
     "confirm_delete_default": "Are you sure you want to delete this item?",
     "copy_success": "Copied to clipboard!",
     "copy_error": "Error copying"
+  },
+  "error_pages": {
+    "404": {
+      "title": "Page not found",
+      "description": "Oops, it seems you are lost.",
+      "search_placeholder": "Search...",
+      "back_home": "Back to Home",
+      "need_help": "Need immediate help?",
+      "whatsapp_support": "WhatsApp Support",
+      "lead_magnet_title": "To make it up to you",
+      "lead_magnet_offer": "Free 30-minute consultation",
+      "lead_magnet_cta": "Claim the offer"
+    },
+    "451": {
+      "title": "Legal Censorship or Block",
+      "description": "This page has been burned for legal reasons or censorship.",
+      "reference": "Fahrenheit 451",
+      "back_home": "Back to Home"
+    },
+    "400": {
+      "title": "Bad Request",
+      "description": "I almost understood, but your request is messed up.",
+      "syntax_error": "Client syntax error.",
+      "back_home": "Back to Home"
+    },
+    "403": {
+      "title": "Access Forbidden",
+      "description": "Restricted Area. You do not have the necessary permissions.",
+      "back_home": "Back to Home"
+    }
   }
 }

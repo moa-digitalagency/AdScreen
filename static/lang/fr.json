@@ -614,5 +614,35 @@
     "confirm_delete_default": "Êtes-vous sûr de vouloir supprimer cet élément ?",
     "copy_success": "Copié dans le presse-papier !",
     "copy_error": "Erreur lors de la copie"
+  },
+  "error_pages": {
+    "404": {
+      "title": "Page non trouvée",
+      "description": "Oups, il semblerait que vous soyez perdu.",
+      "search_placeholder": "Rechercher...",
+      "back_home": "Retour à l'accueil",
+      "need_help": "Besoin d'aide immédiate ?",
+      "whatsapp_support": "Support WhatsApp",
+      "lead_magnet_title": "Pour nous faire pardonner",
+      "lead_magnet_offer": "Consultation de 30 minutes offerte",
+      "lead_magnet_cta": "Profiter de l'offre"
+    },
+    "451": {
+      "title": "Censure ou blocage légal",
+      "description": "Cette page a été brûlée pour des raisons légales ou de censure.",
+      "reference": "Fahrenheit 451",
+      "back_home": "Retour à l'accueil"
+    },
+    "400": {
+      "title": "Mauvaise requête",
+      "description": "J'ai presque compris, mais ta demande est mal fichue.",
+      "syntax_error": "Erreur de syntaxe client.",
+      "back_home": "Retour à l'accueil"
+    },
+    "403": {
+      "title": "Accès interdit",
+      "description": "Zone restreinte. Vous n'avez pas les permissions nécessaires.",
+      "back_home": "Retour à l'accueil"
+    }
   }
 }

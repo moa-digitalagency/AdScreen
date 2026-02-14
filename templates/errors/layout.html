@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div class="w-full max-w-2xl text-center">
+        {% block error_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
