@@ -1,0 +1,25 @@
+{% extends "errors/layout.html" %}
+
+{% block title %}400 - {{ t('error_pages.400.title') }}{% endblock %}
+
+{% block error_content %}
+<div class="space-y-6">
+    <div class="mx-auto w-64 h-64">
+        <lottie-player src="https://assets10.lottiefiles.com/packages/lf20_qpwbv5gm.json"  background="transparent"  speed="1"  style="width: 100%; height: 100%;"  loop  autoplay></lottie-player>
+    </div>
+
+    <h1 class="text-4xl font-extrabold text-gray-900">{{ t('error_pages.400.title') }}</h1>
+
+    <div class="space-y-2">
+        <p class="text-xl text-gray-600">{{ t('error_pages.400.description') }}</p>
+        <p class="text-sm font-mono text-red-500 bg-red-50 inline-block px-3 py-1 rounded">{{ t('error_pages.400.syntax_error') }}</p>
+    </div>
+
+    <div class="pt-4">
+        <a href="{{ url_for('auth.index') }}" class="btn-primary inline-flex items-center gap-2">
+            <i class="fas fa-home"></i>
+            {{ t('error_pages.400.back_home') }}
+        </a>
+    </div>
+</div>
+{% endblock %}

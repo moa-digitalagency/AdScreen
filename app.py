@@ -9,9 +9,10 @@ import os
 import logging
 import secrets
 
-from flask import Flask, request, session, abort, redirect, g
+from flask import Flask, request, session, abort, redirect, g, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+import config
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -226,7 +227,7 @@ def inject_site_settings():
             'platform_name': SiteSetting.get('platform_name', 'Shabaka AdScreen'),
             'site_description': SiteSetting.get('site_description', ''),
             'support_email': SiteSetting.get('support_email', ''),
-            'admin_whatsapp_number': SiteSetting.get('admin_whatsapp_number', ''),
+            'admin_whatsapp_number': SiteSetting.get('admin_whatsapp_number', '') or config.WHATSAPP_NUMBER_DEFAULT,
             'facebook_url': SiteSetting.get('facebook_url', ''),
             'instagram_url': SiteSetting.get('instagram_url', ''),
             'twitter_url': SiteSetting.get('twitter_url', ''),
@@ -240,8 +241,26 @@ def inject_site_settings():
             'default_currency': SiteSetting.get('default_currency', 'EUR'),
             'copyright_text': SiteSetting.get('copyright_text', '© Shabaka AdScreen. Tous droits réservés.'),
             'made_with_text': SiteSetting.get('made_with_text', 'Fait avec ❤️ en France'),
+            'tidycal_url': config.TIDYCAL_URL,
         }
     }
+
+
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('errors/400.html'), 400
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('errors/403.html'), 403
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(451)
+def unavailable_for_legal_reasons(e):
+    return render_template('errors/451.html'), 451
 
 
 @app.route('/set-language/<lang>')

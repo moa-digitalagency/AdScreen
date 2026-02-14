@@ -1,0 +1,31 @@
+{% extends "errors/layout.html" %}
+
+{% block title %}451 - {{ t('error_pages.451.title') }}{% endblock %}
+
+{% block error_content %}
+<div class="space-y-6">
+    <div class="mx-auto w-64 h-64 opacity-80">
+        <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_4kji20Y9.json"  background="transparent"  speed="1"  style="width: 100%; height: 100%;"  loop  autoplay></lottie-player>
+    </div>
+
+    <div class="inline-block px-3 py-1 bg-gray-900 text-white font-mono text-sm tracking-widest uppercase mb-4">
+        Classified / Restricted
+    </div>
+
+    <h1 class="text-4xl font-extrabold text-gray-900">{{ t('error_pages.451.title') }}</h1>
+
+    <div class="space-y-2 max-w-lg mx-auto">
+        <p class="text-lg text-gray-700 font-serif italic border-l-4 border-gray-900 pl-4 py-2 bg-gray-100">
+            "{{ t('error_pages.451.reference') }}"
+        </p>
+        <p class="text-gray-600">{{ t('error_pages.451.description') }}</p>
+    </div>
+
+    <div class="pt-8">
+        <a href="{{ url_for('auth.index') }}" class="btn-outline inline-flex items-center gap-2 hover:bg-gray-900 hover:text-white hover:border-gray-900">
+            <i class="fas fa-arrow-left"></i>
+            {{ t('error_pages.451.back_home') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
