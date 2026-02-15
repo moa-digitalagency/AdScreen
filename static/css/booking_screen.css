@@ -1,0 +1,142 @@
+input[type="radio"]:checked + .slot-label {
+    border-color: #0ea5e9;
+    background-color: #f0f9ff;
+}
+
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.375rem;
+    width: 100%;
+}
+
+.availability-grid > div {
+    min-width: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 320px) {
+    body {
+        font-size: 14px;
+    }
+
+    .min-h-screen {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+
+    main {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+
+    #availability_section {
+        margin-left: -0.25rem;
+        margin-right: -0.25rem;
+    }
+
+    .availability-grid {
+        gap: 0.25rem !important;
+    }
+
+    .availability-grid > div {
+        padding: 0.25rem !important;
+        border-radius: 0.375rem !important;
+    }
+
+    .availability-grid .font-bold {
+        font-size: 0.875rem !important;
+    }
+
+    #plays_section .flex.items-center.justify-center {
+        gap: 0.375rem !important;
+    }
+
+    #plays_section button {
+        width: 2rem !important;
+        height: 2rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    #num_plays {
+        width: 4rem !important;
+        font-size: 1rem !important;
+        padding: 0.375rem !important;
+    }
+
+    .bg-primary-600 {
+        padding: 0.75rem !important;
+    }
+
+    #totalPrice {
+        font-size: 1.25rem !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .min-h-screen {
+        padding-left: 0.375rem;
+        padding-right: 0.375rem;
+    }
+
+    main {
+        padding-left: 0.375rem;
+        padding-right: 0.375rem;
+    }
+
+    input[type="date"],
+    input[type="time"] {
+        font-size: 13px;
+        padding: 0.375rem;
+    }
+
+    .availability-grid {
+        gap: 0.25rem;
+    }
+
+    .availability-grid > div {
+        padding: 0.375rem !important;
+    }
+
+    .text-xl {
+        font-size: 0.875rem;
+    }
+
+    .text-2xl {
+        font-size: 1rem;
+    }
+
+    .p-3, .sm\:p-4 {
+        padding: 0.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .text-3xl {
+        font-size: 1.5rem;
+    }
+
+    input[type="number"] {
+        font-size: 1.25rem;
+    }
+
+    .availability-grid {
+        gap: 0.375rem;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .transition {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+    }
+}
+
+.active\:scale-95:active {
+    transform: scale(0.95);
+}
+
+* {
+    box-sizing: border-box;
+}

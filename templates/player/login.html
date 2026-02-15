@@ -54,7 +54,7 @@
         </div>
 
         <div class="mt-4 text-center">
-            <button onclick="detectScreenResolution()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-2 mx-auto">
+            <button id="detect-resolution-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-2 mx-auto">
                 <i class="fas fa-desktop"></i>
                 {{ t('hero.cta_detect') }}
             </button>
@@ -69,7 +69,12 @@
     </div>
 </div>
 
-<div id="resolution-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+<div id="resolution-modal"
+     class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+     data-text-resolution="{{ t('screens.resolution') }}"
+     data-text-create-first="{{ t('screens.create_first') }}"
+     data-text-landscape="Paysage"
+     data-text-portrait="Portrait">
     <div class="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-gray-700">
         <div class="text-center mb-6">
             <div class="w-14 h-14 bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -85,51 +90,11 @@
                 <div class="w-3 h-3 bg-blue-500 rounded-full" style="animation-delay: 0.4s"></div>
             </div>
         </div>
-        <button onclick="closeResolutionModal()" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition">
+        <button id="close-resolution-modal-btn" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition">
             {{ t('common.close') }}
         </button>
     </div>
 </div>
 
-<script>
-function detectScreenResolution() {
-    const modal = document.getElementById('resolution-modal');
-    const content = document.getElementById('resolution-content');
-    const subtitle = document.getElementById('resolution-subtitle');
-    
-    modal.classList.remove('hidden');
-    
-    setTimeout(() => {
-        const width = window.screen.width;
-        const height = window.screen.height;
-        const ratio = (width / height).toFixed(2);
-        
-        let orientation = width > height ? '{{ t("screens.resolution") }} Paysage' : '{{ t("screens.resolution") }} Portrait';
-        let aspectRatio = '16:9';
-        if (Math.abs(ratio - 1.78) < 0.1) aspectRatio = '16:9';
-        else if (Math.abs(ratio - 1.33) < 0.1) aspectRatio = '4:3';
-        else if (Math.abs(ratio - 1.6) < 0.1) aspectRatio = '16:10';
-        else if (Math.abs(ratio - 0.56) < 0.1) aspectRatio = '9:16';
-        
-        subtitle.textContent = orientation;
-        content.innerHTML = `
-            <div class="bg-gray-900/50 rounded-xl p-4 mb-4">
-                <div class="text-3xl font-bold text-blue-400 mb-1">${width} x ${height}</div>
-                <div class="text-sm text-gray-400">Ratio: ${aspectRatio}</div>
-            </div>
-            <p class="text-sm text-gray-500">
-                {{ t('screens.create_first') }}
-            </p>
-        `;
-    }, 1000);
-}
-
-function closeResolutionModal() {
-    document.getElementById('resolution-modal').classList.add('hidden');
-}
-
-document.getElementById('resolution-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeResolutionModal();
-});
-</script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

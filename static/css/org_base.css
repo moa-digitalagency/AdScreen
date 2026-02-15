@@ -1,0 +1,31 @@
+#sidebar {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.sidebar-mobile-hidden {
+    transform: translateX(-100%);
+}
+.sidebar-mobile-visible {
+    transform: translateX(0);
+}
+@media (min-width: 1024px) {
+    .lg\:sidebar-mobile-visible {
+        transform: translateX(0) !important;
+    }
+}
+
+#sidebar nav {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+#sidebar nav::-webkit-scrollbar {
+    width: 6px;
+}
+#sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+#sidebar nav::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
+}

@@ -48,7 +48,7 @@
                 {% for content in paid_contents %}
                 <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                     <div class="w-20 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer relative group"
-                         onclick="openPreviewModal('{{ content.file_path }}', '{{ content.content_type }}')">
+                         data-preview-path="{{ content.file_path }}" data-preview-type="{{ content.content_type }}">
                         {% if content.content_type == 'image' %}
                         <img src="/{{ content.file_path }}" alt="Preview" class="w-full h-full object-cover">
                         {% else %}
@@ -90,7 +90,7 @@
                 {% for internal in internal_contents %}
                 <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                     <div class="w-20 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer relative group"
-                         onclick="openPreviewModal('{{ internal.file_path }}', '{{ internal.content_type }}')">
+                         data-preview-path="{{ internal.file_path }}" data-preview-type="{{ internal.content_type }}">
                         {% if internal.content_type == 'image' %}
                         <img src="/{{ internal.file_path }}" alt="Preview" class="w-full h-full object-cover">
                         {% else %}
@@ -134,7 +134,7 @@
                 {% for filler in fillers %}
                 <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                     <div class="w-20 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer relative group"
-                         onclick="openPreviewModal('{{ filler.file_path }}', '{{ filler.content_type }}')">
+                         data-preview-path="{{ filler.file_path }}" data-preview-type="{{ filler.content_type }}">
                         {% if filler.content_type == 'image' %}
                         <img src="/{{ filler.file_path }}" alt="Preview" class="w-full h-full object-cover">
                         {% else %}
@@ -288,7 +288,7 @@
 
 <div id="previewModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4">
     <div class="relative max-w-5xl w-full max-h-[90vh]">
-        <button onclick="closePreviewModal()" class="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition">
+        <button id="close-preview-btn" class="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition">
             <i class="fas fa-times text-2xl"></i>
         </button>
         <div class="flex items-center justify-center" id="previewContainer" style="min-height: 400px;">
@@ -296,39 +296,5 @@
     </div>
 </div>
 
-<script>
-function openPreviewModal(filePath, contentType) {
-    const modal = document.getElementById('previewModal');
-    const container = document.getElementById('previewContainer');
-    
-    if (contentType === 'image') {
-        container.innerHTML = `<img src="/${filePath}" alt="Preview" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl">`;
-    } else {
-        container.innerHTML = `<video src="/${filePath}" controls autoplay class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"></video>`;
-    }
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closePreviewModal() {
-    const modal = document.getElementById('previewModal');
-    const container = document.getElementById('previewContainer');
-    
-    const video = container.querySelector('video');
-    if (video) video.pause();
-    
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    container.innerHTML = '';
-}
-
-document.getElementById('previewModal').addEventListener('click', function(e) {
-    if (e.target === this) closePreviewModal();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closePreviewModal();
-});
-</script>
+<script src="{{ url_for('static', filename='js/org_screen_playlist.js') }}"></script>
 {% endblock %}
