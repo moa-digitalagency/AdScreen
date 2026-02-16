@@ -35,7 +35,8 @@ class TestPaletteUX(unittest.TestCase):
 
         # Check base.html for flash message close button
         base_html = self._read_template('base.html')
-        self.assertRegex(base_html, r'onclick="this\.parentElement\.remove\(\)"[^>]*aria-label="\{\{\s*t\(\'common\.close\'\)\s*\}\}"',
+        # Updated to check for class instead of inline onclick (which is prohibited)
+        self.assertRegex(base_html, r'class="[^"]*flash-close-btn[^"]*"[^>]*aria-label="\{\{\s*t\(\'common\.close\'\)\s*\}\}"',
                         "Missing aria-label on flash message close button in base.html")
 
         # Check index.html for menu toggle and social links

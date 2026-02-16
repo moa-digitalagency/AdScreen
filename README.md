@@ -5,46 +5,34 @@
 ![Database](https://img.shields.io/badge/postgres-14%2B-336791?style=for-the-badge&logo=postgresql)
 ![Status](https://img.shields.io/badge/status-production_ready-success?style=for-the-badge)
 
-**La solution SaaS complète pour transformer n'importe quel écran en source de revenus.**
-Shabaka AdScreen permet aux établissements (Hôtels, Restaurants, Malls) de gérer leur affichage dynamique et de vendre des espaces publicitaires en libre-service via QR Code.
+**Produit de : MOA Digital Agency LLC (myoneart.com)**
+**Auteur : Aisance KALONJI**
 
 ---
 
-## 📑 Table des Matières
+### ⚠️ AVERTISSEMENT LÉGAL - PROPRIÉTÉ PRIVÉE
 
-- [Fonctionnalités Clés](#-fonctionnalités-clés)
-- [Stack Technique](#-stack-technique)
-- [Architecture](#-architecture)
-- [Installation Rapide](#-installation-rapide)
-- [Documentation Complète](#-documentation-complète)
+**Copyright © 2024 MOA Digital Agency LLC (myoneart.com). Auteur : Aisance KALONJI. Tous droits réservés.**
 
----
-
-## ✨ Fonctionnalités Clés
-
-*   **📺 Player Universel** : Compatible Web, Android, Tizen. Supporte le mode Hors-ligne et le Streaming IPTV (HLS) avec Overlays.
-*   **💰 Booking Engine** : Réservation d'espaces publicitaires par QR Code. Deux modes : Achat de passages ou Campagne sur période (Date à Date).
-*   **📊 Dashboard Partenaire** : Gestion des écrans, validation des contenus, suivi des revenus en temps réel.
-*   **🧾 Facturation Automatisée** : Génération hebdomadaire des factures et calcul des commissions plateforme.
-*   **📱 API Mobile** : Une API RESTful sécurisée (JWT) pour le pilotage à distance via application mobile.
+Ce code source est la propriété exclusive de **MOA Digital Agency LLC**. Toute copie, distribution, modification, réutilisation totale ou partielle, ou ingénierie inverse est **STRICTEMENT INTERDITE** et fera l'objet de poursuites judiciaires immédiates.
+L'accès à ce dépôt ne confère aucun droit d'utilisation commerciale ou personnelle sans une licence écrite et signée par les ayants droit.
 
 ---
 
-## 🛠 Stack Technique
+## 💡 Le Pitch
 
-Ce projet repose sur une architecture robuste et éprouvée :
+**Shabaka AdScreen** est la solution SaaS ultime pour transformer n'importe quel écran en source de revenus autonome.
+Nous permettons aux établissements (Hôtels, Malls, Restaurants) de piloter leur affichage dynamique et de **vendre des espaces publicitaires en libre-service** via un simple QR Code.
 
-*   **Backend** : Python 3.11, Flask, SQLAlchemy, Gunicorn (Gevent).
-*   **Base de Données** : PostgreSQL (Prod), SQLite (Dev).
-*   **Frontend** : Jinja2, Tailwind CSS 3.4, Vanilla JS (Player).
-*   **Traitement Média** : FFmpeg (Streaming/HLS), Pillow (Images).
-*   **Sécurité** : CSRF Protection, Rate Limiting (Flask-Limiter), Input Sanitization.
+*   **Monétisation Automatique :** Vos écrans génèrent du cash pendant que vous dormez.
+*   **Contrôle Total :** Validation des pubs, gestion des playlists, et facturation automatisée.
+*   **Universel :** Compatible Web, Smart TV (Tizen/WebOS), Android et boîtiers IPTV.
 
 ---
 
 ## 🏗 Architecture
 
-Le système suit une architecture **Monolithique Modulaire** (MVC) organisée en Blueprints :
+Le système repose sur une architecture **Monolithique Modulaire** robuste, conçue pour la performance et la sécurité.
 
 ```mermaid
 graph TD
@@ -66,66 +54,78 @@ graph TD
 
 ---
 
-## 🚀 Installation Rapide
+## 📑 Table des Matières
+
+1.  [Stack Technique](#-stack-technique)
+2.  [Installation & Démarrage](#-installation--démarrage)
+3.  [Documentation Complète](#-documentation-complète)
+
+---
+
+## 🛠 Stack Technique
+
+*   **Backend :** Python 3.11, Flask, SQLAlchemy, Gunicorn.
+*   **Base de Données :** PostgreSQL (Prod), SQLite (Dev).
+*   **Frontend :** Jinja2, Tailwind CSS 3.4, Vanilla JS.
+*   **Média :** FFmpeg (HLS/Streaming), Pillow.
+*   **Sécurité :** Flask-Login, PyJWT, Bleach, CSRF Protection manuelle.
+
+---
+
+## 🚀 Installation & Démarrage
 
 ### Prérequis
 *   Python 3.11+
-*   PostgreSQL (ou SQLite pour test)
-*   FFmpeg (pour le traitement vidéo)
+*   PostgreSQL
+*   FFmpeg
 
-### Démarrage Local
+### Commandes
 
-1.  **Cloner le dépôt**
-    ```bash
-    git clone https://github.com/votre-org/shabaka-adscreen.git
-    cd shabaka-adscreen
-    ```
+```bash
+# 1. Cloner (Usage privé uniquement)
+git clone https://github.com/moa-digital/shabaka-adscreen.git
+cd shabaka-adscreen
 
-2.  **Installer les dépendances**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # ou venv\Scripts\activate sous Windows
-    pip install -r requirements.txt
-    ```
+# 2. Environnement Virtuel
+python3 -m venv venv
+source venv/bin/activate
 
-3.  **Configurer l'environnement**
-    ```bash
-    # Copier l'exemple (optionnel) ou définir les variables
-    export FLASK_ENV=development
-    export SESSION_SECRET="dev-secret-key"
-    export DATABASE_URL="sqlite:///shabaka.db"
-    ```
+# 3. Dépendances
+pip install -r requirements.txt
 
-4.  **Initialiser la Base de Données**
-    ```bash
-    python init_db.py       # Création des tables
-    # python init_db_demo.py  # (Optionnel) Pour peupler avec des données de démo
-    ```
+# 4. Configuration
+export FLASK_ENV=development
+export DATABASE_URL="sqlite:///shabaka.db"
+export SESSION_SECRET="votre_secret_key"
 
-5.  **Lancer le serveur**
-    ```bash
-    python main.py
-    ```
-    Accédez à `http://localhost:5000`
+# 5. Base de Données
+python init_db.py
+
+# 6. Lancer
+python main.py
+```
+
+Accédez à `http://localhost:5000`.
 
 ---
 
 ## 📚 Documentation Complète
 
-Toute la documentation technique et fonctionnelle se trouve dans le dossier `docs/`.
+L'ensemble de la documentation technique et fonctionnelle se trouve dans le dossier `docs/`.
 
-| Document | Description | Cible |
-| :--- | :--- | :--- |
-| [**Fonctionnalités & Bible Technique**](docs/features_full_list.md) | **À LIRE EN PREMIER.** La référence absolue de toutes les règles métier et validations. | Tous |
-| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Stack, Blueprints, HLS, Sécurité et Flux de données. | Devs / Archis |
-| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Mobile (JWT) et Player (Session). Codes d'erreurs. | Devs Mobile |
-| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide pour les Organisations et Annonceurs (Booking, Playlist). | Utilisateurs |
-| [**Schéma de Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèles, relations et champs clés. | Devs |
-| [**Guide de Déploiement**](docs/Shabaka_AdScreen_Guide_Deploiement.md) | Installation VPS, Nginx, Systemd, SSL. | DevOps |
-| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Mesures de protection (CSRF, Rate Limit...). | Auditeurs |
+| Document | Description |
+| :--- | :--- |
+| [**Fonctionnalités & Bible (Features List)**](docs/Shabaka_AdScreen_features_full_list.md) | **LA RÉFÉRENCE.** Détail exhaustif des règles métier. |
+| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Structure du code, flux de données et sécurité. |
+| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Player et Mobile (JWT). |
+| [**Schéma Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèle de données relationnel. |
+| [**Guide de Déploiement**](docs/Shabaka_AdScreen_Guide_Deploiement.md) | Mise en production sur VPS. |
+| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide d'utilisation pour les clients. |
+| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Rapport des mesures de sécurité implémentées. |
 
 ---
 
 <p align="center">
-  Fait avec ❤️ par l'équipe technique Shabaka AdScreen.
+  <b>PROPRIÉTÉ EXCLUSIVE DE MOA DIGITAL AGENCY LLC.</b><br>
+  Toute infraction sera poursuivie.
 </p>

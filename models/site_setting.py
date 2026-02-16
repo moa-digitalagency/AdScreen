@@ -112,6 +112,9 @@ class SiteSetting(db.Model):
         if key in cls._cache:
             del cls._cache[key]
 
+        # Invalidate preload timer to force DB check for new keys
+        cls._last_preload_time = 0
+
         return setting
     
     @classmethod

@@ -7,7 +7,7 @@ Ce document est la référence absolue de toutes les fonctionnalités, règles m
 ## 1. Cœur du Système (Core)
 
 ### 1.1 Authentification & Sécurité
-*   **Hashage Mot de Passe** : Utilisation de `werkzeug.security` (PBKDF2-SHA256) pour le stockage sécurisé.
+*   **Hashage Mot de Passe** : Utilisation de `werkzeug.security` (Scrypt par défaut, ou PBKDF2-SHA256 selon configuration) pour le stockage sécurisé.
 *   **Session Management** :
     *   Cookies `HttpOnly`, `SameSite=Lax`.
     *   `Secure` flag activé en production (via variable d'env `FLASK_ENV=production`).
