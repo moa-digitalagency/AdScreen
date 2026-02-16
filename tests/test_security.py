@@ -35,8 +35,8 @@ class TestSecurity(unittest.TestCase):
         self.assertFalse(is_safe_url('http://[::1]'), "IPv6 Loopback should be unsafe")
 
         # Schemes
-        self.assertTrue(is_safe_url('rtsp://8.8.8.8/stream'), "RTSP Public should be safe")
-        self.assertFalse(is_safe_url('rtsp://127.0.0.1/stream'), "RTSP Local should be unsafe")
+        self.assertTrue(is_safe_url('rtsp://8.8.8.8/stream', allowed_protocols=('rtsp',)), "RTSP Public should be safe")
+        self.assertFalse(is_safe_url('rtsp://127.0.0.1/stream', allowed_protocols=('rtsp',)), "RTSP Local should be unsafe")
 
 if __name__ == '__main__':
     unittest.main()
