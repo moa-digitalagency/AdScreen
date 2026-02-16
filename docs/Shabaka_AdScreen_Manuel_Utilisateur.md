@@ -47,13 +47,26 @@ Vous souhaitez diffuser une publicité sur un écran du réseau Shabaka.
 1.  Scannez le **QR Code** affiché sur l'écran ou cliquez sur le lien de réservation fourni par l'établissement.
 2.  Vous accédez à la fiche de l'écran avec ses tarifs et disponibilités.
 
-### 2.2 Choisir son Offre
+### 2.2 Choisir son Mode de Réservation
+Le système vous propose deux options selon vos besoins :
+
+#### Option A : Achat de Passages (Classique)
+*   Vous achetez un stock de diffusions (ex: 100 passages).
+*   Votre publicité est diffusée aussi souvent que possible jusqu'à épuisement du stock.
+*   *Idéal pour : Une promotion flash ou un événement court.*
+
+#### Option B : Campagne sur Période (Date à Date)
+*   Vous choisissez une date de début et une date de fin.
+*   Vous définissez un nombre de passages **par jour** (ex: 20/jour pendant 7 jours).
+*   Le système calcule le tarif global et garantit une distribution équitable sur toute la période.
+*   *Idéal pour : Une notoriété de marque ou une offre hebdomadaire.*
+
+### 2.3 Configuration de la Pub
 *   **Type de Média** : Image fixe ou Vidéo.
 *   **Durée** : Sélectionnez le temps d'affichage (ex: 15 secondes).
-*   **Période** : Choisissez le moment de la journée (Matin, Midi, Soir).
-*   **Récurrence** : Combien de fois votre pub doit passer ? (ex: 50 fois).
+*   **Période** : Choisissez le moment de la journée (Matin, Midi, Soir) pour cibler votre audience.
 
-### 2.3 Uploader le Contenu
+### 2.4 Uploader le Contenu
 Respectez scrupuleusement les contraintes techniques affichées :
 *   **Résolution** : Doit être identique à celle de l'écran (ex: 1920x1080).
 *   **Poids** : Max 100 Mo (généralement).
@@ -61,7 +74,7 @@ Respectez scrupuleusement les contraintes techniques affichées :
 
 *Astuce : Si votre image est refusée, vérifiez qu'elle n'est pas en 1921 pixels de large au lieu de 1920.*
 
-### 2.4 Paiement et Validation
+### 2.5 Paiement et Validation
 1.  Le système calcule le prix total TTC.
 2.  Validez la commande.
 3.  Téléchargez votre reçu (format ticket de caisse).

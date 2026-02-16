@@ -22,8 +22,8 @@ Shabaka AdScreen permet aux établissements (Hôtels, Restaurants, Malls) de gé
 
 ## ✨ Fonctionnalités Clés
 
-*   **📺 Player Universel** : Compatible Web, Android, Tizen. Supporte le mode Hors-ligne et le Streaming IPTV (HLS).
-*   **💰 Booking Engine** : Réservation d'espaces publicitaires par QR Code. Paiement intégré, validation automatique des formats.
+*   **📺 Player Universel** : Compatible Web, Android, Tizen. Supporte le mode Hors-ligne et le Streaming IPTV (HLS) avec Overlays.
+*   **💰 Booking Engine** : Réservation d'espaces publicitaires par QR Code. Deux modes : Achat de passages ou Campagne sur période (Date à Date).
 *   **📊 Dashboard Partenaire** : Gestion des écrans, validation des contenus, suivi des revenus en temps réel.
 *   **🧾 Facturation Automatisée** : Génération hebdomadaire des factures et calcul des commissions plateforme.
 *   **📱 API Mobile** : Une API RESTful sécurisée (JWT) pour le pilotage à distance via application mobile.
@@ -36,24 +36,32 @@ Ce projet repose sur une architecture robuste et éprouvée :
 
 *   **Backend** : Python 3.11, Flask, SQLAlchemy, Gunicorn (Gevent).
 *   **Base de Données** : PostgreSQL (Prod), SQLite (Dev).
-*   **Frontend** : Jinja2, Tailwind CSS 3.4, Vanilla JS.
+*   **Frontend** : Jinja2, Tailwind CSS 3.4, Vanilla JS (Player).
 *   **Traitement Média** : FFmpeg (Streaming/HLS), Pillow (Images).
-*   **Sécurité** : CSRF Protection, Rate Limiting, Input Sanitization.
+*   **Sécurité** : CSRF Protection, Rate Limiting (Flask-Limiter), Input Sanitization.
 
 ---
 
 ## 🏗 Architecture
 
-Le système suit une architecture **Monolithique Modulaire** (MVC) :
+Le système suit une architecture **Monolithique Modulaire** (MVC) organisée en Blueprints :
 
 ```mermaid
 graph TD
     User[Utilisateur / Annonceur] -->|HTTPS| Nginx
     Nginx -->|Reverse Proxy| Gunicorn
     Gunicorn -->|WSGI| FlaskApp
-    FlaskApp -->|ORM| PostgreSQL
-    FlaskApp -->|File System| StaticFiles[Assets / Uploads]
-    FlaskApp -->|Subprocess| FFmpeg[Transcodage Vidéo]
+
+    subgraph "Shabaka Core"
+        FlaskApp -->|Auth| Security[CSRF / Rate Limit]
+        Security -->|Route| Blueprints[Admin / Org / API / Booking]
+        Blueprints -->|ORM| PostgreSQL
+        Blueprints -->|Task| FFmpeg[Transcodage Vidéo]
+    end
+
+    FlaskApp -->|Serve| StaticFiles[Assets / Uploads]
+    Player[Écran / Player Web] -->|Polling JSON| FlaskApp
+    MobileApp[App Mobile] -->|JWT API| FlaskApp
 ```
 
 ---
@@ -62,8 +70,8 @@ graph TD
 
 ### Prérequis
 *   Python 3.11+
-*   PostgreSQL
-*   FFmpeg
+*   PostgreSQL (ou SQLite pour test)
+*   FFmpeg (pour le traitement vidéo)
 
 ### Démarrage Local
 
@@ -76,21 +84,22 @@ graph TD
 2.  **Installer les dépendances**
     ```bash
     python3 -m venv venv
-    source venv/bin/activate
+    source venv/bin/activate  # ou venv\Scripts\activate sous Windows
     pip install -r requirements.txt
     ```
 
 3.  **Configurer l'environnement**
     ```bash
+    # Copier l'exemple (optionnel) ou définir les variables
     export FLASK_ENV=development
-    export SESSION_SECRET="dev-secret"
-    export DATABASE_URL="sqlite:///shabaka.db" # Ou PostgreSQL
+    export SESSION_SECRET="dev-secret-key"
+    export DATABASE_URL="sqlite:///shabaka.db"
     ```
 
 4.  **Initialiser la Base de Données**
     ```bash
     python init_db.py       # Création des tables
-    python init_db_demo.py  # (Optionnel) Données de test
+    # python init_db_demo.py  # (Optionnel) Pour peupler avec des données de démo
     ```
 
 5.  **Lancer le serveur**
@@ -107,13 +116,13 @@ Toute la documentation technique et fonctionnelle se trouve dans le dossier `doc
 
 | Document | Description | Cible |
 | :--- | :--- | :--- |
-| [**Fonctionnalités Détaillées**](docs/Shabaka_AdScreen_Fonctionnalites_Detaillees.md) | La "Bible" du projet. Tout ce que le système fait. | Tout le monde |
-| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Stack, Blueprints, HLS, Flux de données. | Développeurs |
-| [**Schéma de Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèles, relations et champs clés. | Développeurs |
+| [**Fonctionnalités & Bible Technique**](docs/features_full_list.md) | **À LIRE EN PREMIER.** La référence absolue de toutes les règles métier et validations. | Tous |
+| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Stack, Blueprints, HLS, Sécurité et Flux de données. | Devs / Archis |
+| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Mobile (JWT) et Player (Session). Codes d'erreurs. | Devs Mobile |
+| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide pour les Organisations et Annonceurs (Booking, Playlist). | Utilisateurs |
+| [**Schéma de Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèles, relations et champs clés. | Devs |
 | [**Guide de Déploiement**](docs/Shabaka_AdScreen_Guide_Deploiement.md) | Installation VPS, Nginx, Systemd, SSL. | DevOps |
-| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Mobile (JWT) et Player (Session). | Développeurs Mobile/Web |
-| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Mesures de protection (CSRF, Rate Limit...). | RSSI / Auditeurs |
-| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide pour les Organisations et Annonceurs. | Utilisateurs Finaux |
+| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Mesures de protection (CSRF, Rate Limit...). | Auditeurs |
 
 ---
 
