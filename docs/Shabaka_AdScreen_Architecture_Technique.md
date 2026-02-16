@@ -82,18 +82,31 @@ Le module de facturation est semi-automatisé :
 *   **Calcul** : `Total Revenu - (Total Revenu * % Commission) = Net à Reverser`.
 *   **État** : Les factures passent par les états `PENDING` -> `PAID` (Preuve uploadée) -> `VALIDATED` (Confirmé par Admin).
 
+### 4.4 Injection de Contexte (Context Processors)
+Flask injecte automatiquement des variables globales dans tous les templates Jinja2 (`app.py`) :
+*   `inject_site_settings()` : Charge les configurations `SiteSetting` (Nom plateforme, Liens sociaux, Contact) avec mise en cache pour éviter le N+1.
+*   `inject_currency()` : Détermine le symbole monétaire (ex: '€', '$') en fonction de l'organisation de l'utilisateur connecté.
+*   `inject_csrf_token()` : Génère et injecte le token CSRF pour les formulaires.
+
 ## 5. Sécurité
 
 ### 5.1 Protection CSRF
 Une implémentation manuelle de CSRF est présente dans `app.py` (`validate_csrf_token`). Elle vérifie la présence d'un token synchronisé en session pour toutes les méthodes `POST`, `PUT`, `DELETE`, sauf pour les endpoints API exclus explicitement (webhooks, API mobile).
 
-### 5.2 Rate Limiting
+### 5.2 En-têtes HTTP (Security Headers)
+L'application applique strictement les en-têtes de sécurité recommandés par l'OWASP via un hook `after_request` :
+*   `X-Content-Type-Options: nosniff` : Empêche le mime-sniffing.
+*   `X-Frame-Options: SAMEORIGIN` : Protection contre le Clickjacking (iframe).
+*   `Referrer-Policy: strict-origin-when-cross-origin` : Confidentialité du referrer.
+*   `Strict-Transport-Security` (HSTS) : Force HTTPS (si activé en prod).
+
+### 5.3 Rate Limiting
 `Flask-Limiter` protège les routes sensibles :
 *   Login : 5 essais / minute.
 *   API Mobile : Limites strictes par IP/Token.
 *   Player Heartbeat : 120 requêtes / minute (pour éviter le DDoS interne).
 
-### 5.3 Validation des Entrées
+### 5.4 Validation des Entrées
 Tous les inputs utilisateurs (formulaires et JSON) sont validés via `services/input_validator.py` :
 *   Sanitization des chaînes (suppression HTML/Script).
 *   Validation stricte des types (int, float, uuid).
