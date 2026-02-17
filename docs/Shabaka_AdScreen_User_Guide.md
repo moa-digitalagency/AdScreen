@@ -1,4 +1,9 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+**© MOA Digital Agency (myoneart.com) - Auteur : Aisance KALONJI**
+*Ce code est la propriété exclusive de MOA Digital Agency. Usage interne uniquement. Toute reproduction ou distribution non autorisée est strictement interdite.*
+
+[Switch to English Version](./Shabaka_AdScreen_User_Guide_en.md)
+
+---
 
 # Shabaka AdScreen - Manuel Utilisateur
 

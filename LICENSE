@@ -1,24 +1,21 @@
-MIT License (Modified for Proprietary Use)
+LICENCE PROPRIÉTAIRE - STRICTEMENT CONFIDENTIEL
 
-Copyright (c) 2024 MOA Digital Agency & Aisance KALONJI
+Copyright (c) 2024 MOA Digital Agency - Aisance KALONJI
+Tous droits réservés.
 
-*** PROPRIETARY LICENSE - STRICTLY PRIVATE & CONFIDENTIAL ***
+Ce logiciel ("le Logiciel") est la propriété exclusive de MOA Digital Agency (www.myoneart.com) et de son auteur, Aisance KALONJI.
 
-This software is the exclusive property of MOA Digital Agency (www.myoneart.com) and its author, Aisance KALONJI.
-Unauthorized copying, cloning, modification, distribution, sub-licensing, or sale of this software, via any medium, is STRICTLY PROHIBITED.
+1. AUTORISATION D'USAGE RESTREINT
+L'autorisation d'utiliser, de copier et de modifier ce Logiciel est accordée UNIQUEMENT pour un usage interne, à des fins de sauvegarde, d'archivage, de maintenance et de déploiement sur les infrastructures gérées par MOA Digital Agency.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+2. INTERDICTIONS STRICTES
+Toute reproduction, distribution, sous-licence, vente, location ou transfert du Logiciel à des tiers, sous quelque forme que ce soit (code source, binaire, documentation), est STRICTEMENT INTERDITE sans l'autorisation écrite préalable et explicite de MOA Digital Agency.
+Il est interdit de procéder à l'ingénierie inverse, à la décompilation ou au désassemblage du Logiciel.
 
-PERMITTED USAGE:
-- Internal backup and archival purposes strictly within MOA Digital Agency infrastructure.
-- Deployment on authorized servers owned or managed by MOA Digital Agency.
+3. CONFIDENTIALITÉ
+Ce code source contient des informations confidentielles et des secrets commerciaux appartenant à MOA Digital Agency. La divulgation de tout ou partie du code source au public ou à des tiers non autorisés constitue une violation grave des droits de propriété intellectuelle.
 
-RESTRICTIONS:
-- You may NOT use this software for any commercial purpose outside of MOA Digital Agency's direct operations.
-- You may NOT reverse engineer, decompile, or disassemble any portion of the code.
-- You may NOT remove or alter any copyright, trademark, or other proprietary rights notices.
+4. ABSENCE DE GARANTIE (AS IS)
+CE LOGICIEL EST FOURNI "TEL QUEL", SANS AUCUNE GARANTIE D'AUCUNE SORTE, EXPRESSE OU IMPLICITE, Y COMPRIS MAIS SANS S'Y LIMITER, LES GARANTIES DE QUALITÉ MARCHANDE, D'ADÉQUATION À UN USAGE PARTICULIER ET D'ABSENCE DE CONTREFAÇON. EN AUCUN CAS LES AUTEURS OU LES DÉTENTEURS DU COPYRIGHT NE POURRONT ÊTRE TENUS RESPONSABLES DE TOUTE RÉCLAMATION, DOMMAGE OU AUTRE RESPONSABILITÉ, QUE CE SOIT DANS LE CADRE D'UNE ACTION CONTRACTUELLE, DÉLICTUELLE OU AUTRE, DÉCOULANT DE, OU EN RELATION AVEC LE LOGICIEL OU SON UTILISATION.
 
-VIOLATION:
-Any violation of these terms will result in immediate legal action and prosecution to the fullest extent of the law.
-
-For licensing inquiries, please contact: legal@myoneart.com
+Pour toute demande de licence commerciale ou de partenariat, veuillez contacter : legal@myoneart.com

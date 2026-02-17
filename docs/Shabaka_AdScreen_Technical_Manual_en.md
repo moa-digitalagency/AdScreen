@@ -1,12 +1,17 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+**© MOA Digital Agency (myoneart.com) - Author: Aisance KALONJI**
+*This code is the exclusive property of MOA Digital Agency. Internal use only. Unauthorized reproduction or distribution is strictly prohibited.*
+
+[Passer à la version Française](./Shabaka_AdScreen_Technical_Manual.md)
+
+---
 
 # Shabaka AdScreen - Technical Manual
 
-This document consolidates the technical architecture, security audit, database schema, API reference, and deployment guide for the Shabaka AdScreen platform.
+This document covers the technical architecture, security audit, database schema, API reference, and deployment guide for the Shabaka AdScreen platform.
 
 ### 1. Architecture Overview
 
-Shabaka AdScreen is a robust **Monolithic Modular** application built on the **Flask** framework (Python). It follows the **MVC (Model-View-Controller)** pattern:
+Shabaka AdScreen is a robust **Modular Monolith** application built on the **Flask** (Python) framework. It follows the **MVC (Model-View-Controller)** pattern:
 *   **Models**: Defined with **SQLAlchemy** (ORM).
 *   **Views**: **Jinja2** templating coupled with **Tailwind CSS**.
 *   **Controllers**: Routes organized into **Blueprints**.
@@ -15,9 +20,9 @@ Shabaka AdScreen is a robust **Monolithic Modular** application built on the **F
 The application is structured around Blueprints to isolate functional domains:
 ```
 /
-├── app.py                 # Entry point, config, extensions init
-├── models/                # DB Schema definitions
-│   ├── user.py            # User & Role management
+├── app.py                 # Entry point, config, extension init
+├── models/                # DB schema definitions
+│   ├── user.py            # User and role management
 │   ├── screen.py          # Screen configuration
 │   ├── booking.py         # Booking logic
 │   └── ...
@@ -25,13 +30,13 @@ The application is structured around Blueprints to isolate functional domains:
 │   ├── auth_routes.py     # Login, Register
 │   ├── admin_routes.py    # Superadmin Back-office
 │   ├── org_routes.py      # Organization Dashboard
-│   ├── screen_routes.py   # Screen technical management
-│   ├── booking_routes.py  # Public booking tunnel
+│   ├── screen_routes.py   # Technical screen management
+│   ├── booking_routes.py  # Public booking funnel
 │   ├── player_routes.py   # Player display logic
 │   ├── mobile_api_routes.py # JSON API for Mobile App
 │   └── ...
 ├── services/              # Complex business logic
-│   ├── hls_converter.py   # Proxy & Video Conversion (FFmpeg)
+│   ├── hls_converter.py   # Proxy and Video Conversion (FFmpeg)
 │   ├── playlist_service.py # Content selection algorithm
 │   └── billing_service.py # Weekly invoice generation
 └── static/                # Assets (CSS, JS, Uploads)
@@ -47,7 +52,7 @@ The application is structured around Blueprints to isolate functional domains:
 
 ### 3. Database Schema
 
-#### Identity & Access
+#### Identity and Access
 *   `User`: `id`, `email`, `password_hash`, `role` (superadmin, admin, manager), `organization_id`.
 *   `Organization`: `id`, `name`, `currency`, `commission_rate`, `vat_rate`.
 
@@ -56,7 +61,7 @@ The application is structured around Blueprints to isolate functional domains:
 *   `TimeSlot`: `duration_seconds` (10, 15, 30), `price_per_play`.
 *   `TimePeriod`: `start_hour`, `end_hour`, `price_multiplier`.
 
-#### Content & Booking
+#### Content and Booking
 *   `Content`: `filename`, `content_type` (image/video), `status`, `duration_seconds`.
 *   `Booking`: `num_plays` (purchased quota), `plays_completed`, `total_price`, `status`.
 *   `Invoice`: `week_start`, `gross_revenue`, `commission_amount`, `status` (pending/paid).
@@ -76,39 +81,39 @@ The application is structured around Blueprints to isolate functional domains:
 *   **CSRF**: Manual token validation on all state-changing methods (`POST`, `PUT`, `DELETE`), except API endpoints.
 *   **Rate Limiting**:
     *   Login: 5 req/min.
-    *   API Mobile: 60 req/min.
+    *   Mobile API: 60 req/min.
     *   Player Heartbeat: 120 req/min.
 *   **Headers**: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `HSTS`.
 
 #### 4.3 Input Validation
-*   **Uploads**: Strict MIME type check (Magic numbers) via Pillow/ffprobe. Files renamed with UUIDs.
+*   **Uploads**: Strict MIME type verification (Magic numbers) via Pillow/ffprobe. Files renamed with UUIDs.
 *   **SSRF**: Streaming proxy validates target IPs to prevent local network scanning.
 
 ### 5. API Reference
 
 #### 5.1 Management API (`/mobile/api/v1`)
 *   **Auth**: Bearer Token (JWT).
-*   `POST /auth/login`: Get Access/Refresh tokens.
-*   `GET /dashboard/summary`: Organization stats.
-*   `GET /dashboard/screens`: List screens and status.
+*   `POST /auth/login`: Obtain Access/Refresh tokens.
+*   `GET /dashboard/summary`: Organization statistics.
+*   `GET /dashboard/screens`: List of screens and status.
 
 #### 5.2 Player API (`/player/api`)
 *   **Auth**: Session Cookie.
-*   `GET /playlist`: Get JSON playlist (Next items to play).
-*   `POST /heartbeat`: Send "I'm alive" signal.
+*   `GET /playlist`: Retrieve JSON playlist (Next items to play).
+*   `POST /heartbeat`: Send heartbeat signal.
 *   `POST /log-play`: Report content playback (Decrements quota).
 
 ### 6. Deployment Guide
 
-#### 6.1 Requirements
+#### 6.1 Prerequisites
 *   VPS with Ubuntu 20.04/22.04.
 *   Python 3.11+, PostgreSQL, Nginx, FFmpeg.
 
 #### 6.2 Installation Steps
 1.  **Clone**: `git clone <repo_url>`
-2.  **Env**: Create `.env` file with `DATABASE_URL`, `SESSION_SECRET`, `FLASK_ENV=production`.
+2.  **Env**: Create a `.env` file with `DATABASE_URL`, `SESSION_SECRET`, `FLASK_ENV=production`.
 3.  **Deps**: `pip install -r requirements.txt`.
 4.  **DB**: `python init_db.py`.
 5.  **Service**:
     *   Use **Gunicorn** with Gevent workers: `gunicorn -k gevent -w 4 -b 127.0.0.1:8000 app:app`
-    *   Set up **Nginx** as reverse proxy (SSL Termination via Certbot).
+    *   Configure **Nginx** as reverse proxy (SSL termination via Certbot).

@@ -1,21 +1,26 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+**© MOA Digital Agency (myoneart.com) - Author: Aisance KALONJI**
+*This code is the exclusive property of MOA Digital Agency. Internal use only. Unauthorized reproduction or distribution is strictly prohibited.*
+
+[Passer à la version Française](./README.md)
+
+---
+
+![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue)
+![Framework](https://img.shields.io/badge/Framework-Flask-green)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-orange)
+![Status](https://img.shields.io/badge/Status-Proprietary-red)
+![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)
+![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
 
 # Shabaka AdScreen
 
-**The "Enterprise-Grade" Digital Signage solution for managing fleets of advertising screens and maximizing revenue.**
+**The "Enterprise-Grade" Digital Signage solution for managing advertising screen fleets and optimizing revenue.**
+
+Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants, malls) to monetize their screens via advertising. It offers a complete management interface for screen owners, a booking funnel for advertisers, and a robust web player capable of broadcasting multimedia content and IPTV streams.
 
 ---
 
-### ⚠️ LEGAL NOTICE
-
-**THIS SOFTWARE IS THE EXCLUSIVE PROPERTY OF MOA DIGITAL AGENCY (Aisance KALONJI).**
-
-Any unauthorized use, copying, modification, distribution, or sale of this source code is **STRICTLY PROHIBITED** and will result in immediate legal action.
-This repository is intended solely for internal use, backup, and deployment on infrastructure authorized by MOA Digital Agency.
-
----
-
-## 🏛️ System Architecture
+### 🏛️ System Architecture
 
 ```mermaid
 graph TD
@@ -39,7 +44,7 @@ graph TD
 
         subgraph "Services"
             Booking --> BillingService[Billing]
-            Player --> PlaylistAlgo[Prioritization Algo]
+            Player --> PlaylistAlgo[Priority Algo]
             API --> AuthJWT[JWT Service]
         end
     end
@@ -50,35 +55,25 @@ graph TD
     BillingService -.->|Cron Job| Invoices[Invoice Generation]
 ```
 
-## 📑 Table of Contents
+---
 
-1.  [Description](#description)
-2.  [Tech Stack](#-tech-stack)
-3.  [Installation & Start](#-installation--start)
-4.  [Documentation](#-documentation)
-5.  [License](#-license)
+### ⚠️ LEGAL NOTICE
 
-## 📝 Description
+> **THIS SOFTWARE IS THE EXCLUSIVE PROPERTY OF MOA DIGITAL AGENCY (Aisance KALONJI).**
+>
+> Any use, copying, modification, distribution, or sale of this source code without explicit written authorization is **STRICTLY PROHIBITED** and will result in immediate legal action.
+> This repository is intended solely for internal use for backup and deployment on infrastructures authorized by MOA Digital Agency.
 
-Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants, malls) to monetize their screens via advertising. It offers a complete management interface for screen owners, a booking tunnel for advertisers, and a robust web player capable of broadcasting multimedia content and IPTV streams.
+---
 
-## 💻 Tech Stack
+### 🚀 Installation & Startup
 
-*   **Language:** Python 3.11+
-*   **Web Framework:** Flask 3.0+
-*   **Application Server:** Gunicorn (with Gevent Workers)
-*   **Database:** PostgreSQL (Prod) / SQLite (Dev)
-*   **Frontend:** Jinja2, Tailwind CSS, Vanilla JS
-*   **Video/Streaming:** FFmpeg, HLS.js
-*   **Security:** Flask-Login, PyJWT, Werkzeug Security, Bleach
-
-## 🚀 Installation & Start
-
-### Requirements
+#### Prerequisites
 *   Python 3.11 or higher
 *   `pip` and `virtualenv`
+*   PostgreSQL (Production) or SQLite (Dev)
 
-### Local Deployment
+#### Local Deployment
 
 1.  **Clone the repository:**
     ```bash
@@ -86,7 +81,7 @@ Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants,
     cd shabaka-adscreen
     ```
 
-2.  **Create virtual environment:**
+2.  **Create the virtual environment:**
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -98,7 +93,7 @@ Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants,
     ```
 
 4.  **Configuration:**
-    Create a `.env` file or set environment variables:
+    Create a `.env` file at the root:
     ```bash
     export FLASK_APP=app.py
     export FLASK_ENV=development
@@ -106,7 +101,7 @@ Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants,
     export DATABASE_URL="sqlite:///shabaka.db"
     ```
 
-5.  **Initialize Database:**
+5.  **Initialize the Database:**
     ```bash
     python init_db.py
     ```
@@ -118,17 +113,20 @@ Shabaka AdScreen is a centralized platform allowing venues (hotels, restaurants,
     # gunicorn -k gevent -w 4 -b 0.0.0.0:8080 app:app
     ```
 
-## 📚 Documentation
+---
 
-Complete documentation is available in the `docs/` folder:
+### 📚 Documentation Index
 
-*   **Features Bible:** [docs/Shabaka_AdScreen_features_full_list_en.md](docs/Shabaka_AdScreen_features_full_list_en.md)
-*   **Technical Manual:** [docs/Shabaka_AdScreen_Technical_Manual_en.md](docs/Shabaka_AdScreen_Technical_Manual_en.md)
-*   **User Guide:** [docs/Shabaka_AdScreen_User_Guide_en.md](docs/Shabaka_AdScreen_User_Guide_en.md)
+Comprehensive and detailed documentation is available in the `docs/` folder:
 
-*(Versions françaises disponibles sans suffixe `_en.md`)*
+1.  **The Features Bible:**
+    *   [Français](./docs/Shabaka_AdScreen_features_full_list.md) - Liste exhaustive des règles métier.
+    *   [English](./docs/Shabaka_AdScreen_features_full_list_en.md) - Comprehensive feature list.
 
-## 🔒 License
+2.  **Technical Manual:**
+    *   [Français](./docs/Shabaka_AdScreen_Technical_Manual.md) - Architecture, Sécurité, Déploiement.
+    *   [English](./docs/Shabaka_AdScreen_Technical_Manual_en.md) - Architecture, Security, Deployment.
 
-This project is under **Proprietary** license. See the [LICENSE](LICENSE) file for more details.
-Copyright © 2024 MOA Digital Agency.
+3.  **User Guide:**
+    *   [Français](./docs/Shabaka_AdScreen_User_Guide.md) - Pour les Propriétaires et Annonceurs.
+    *   [English](./docs/Shabaka_AdScreen_User_Guide_en.md) - For Owners and Advertisers.
