@@ -1,24 +1,20 @@
-MIT License (Modified for Proprietary Use)
+Copyright (c) 2024 MOA Digital Agency (myoneart.com) - Auteur : Aisance KALONJI
 
-Copyright (c) 2024 MOA Digital Agency & Aisance KALONJI
+LICENCE PROPRIÉTAIRE STRICTE - SHABAKA ADSCREEN
 
-*** PROPRIETARY LICENSE - STRICTLY PRIVATE & CONFIDENTIAL ***
+1. PROPRIÉTÉ
+Ce code source, incluant tous les fichiers, ressources, et documentations associés, est la propriété exclusive de MOA Digital Agency. Il constitue un actif commercial et intellectuel protégé par les lois internationales sur le droit d'auteur.
 
-This software is the exclusive property of MOA Digital Agency (www.myoneart.com) and its author, Aisance KALONJI.
-Unauthorized copying, cloning, modification, distribution, sub-licensing, or sale of this software, via any medium, is STRICTLY PROHIBITED.
+2. RESTRICTIONS D'USAGE
+Toute copie, modification, distribution, publication, ou vente de ce logiciel, en tout ou partie, est strictement interdite sans autorisation écrite préalable.
+Ce code est strictement réservé à un usage interne par le personnel autorisé de MOA Digital Agency et ses partenaires sous contrat direct.
+Le clonage sur des dépôts publics (GitHub, GitLab, etc.) est formellement interdit.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+3. CONFIDENTIALITÉ
+Ce code contient des informations confidentielles et des secrets commerciaux. Tout accès non autorisé constitue une violation de la propriété intellectuelle.
 
-PERMITTED USAGE:
-- Internal backup and archival purposes strictly within MOA Digital Agency infrastructure.
-- Deployment on authorized servers owned or managed by MOA Digital Agency.
+4. ABSENCE DE GARANTIE OPEN SOURCE
+Contrairement aux licences libres, ce logiciel ne fournit aucune permission tacite. Tout droit non explicitement accordé est réservé.
 
-RESTRICTIONS:
-- You may NOT use this software for any commercial purpose outside of MOA Digital Agency's direct operations.
-- You may NOT reverse engineer, decompile, or disassemble any portion of the code.
-- You may NOT remove or alter any copyright, trademark, or other proprietary rights notices.
-
-VIOLATION:
-Any violation of these terms will result in immediate legal action and prosecution to the fullest extent of the law.
-
-For licensing inquiries, please contact: legal@myoneart.com
+5. CONSÉQUENCES LÉGALES
+Tout contrevenant s'expose à des poursuites judiciaires immédiates pour contrefaçon et violation de propriété intellectuelle.

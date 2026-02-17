@@ -1,114 +1,102 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+© MOA Digital Agency (myoneart.com) - Auteur : Aisance KALONJI
+[ 🇫🇷 Français ] | [ 🇬🇧 English ](Shabaka_AdScreen_Technical_Manual_en.md)
 
-# Shabaka AdScreen - Manuel Technique
+# MANUEL TECHNIQUE - SHABAKA ADSCREEN
 
-Ce document regroupe l'architecture technique, l'audit de sécurité, le schéma de base de données, la référence API et le guide de déploiement de la plateforme Shabaka AdScreen.
+> **CONFIDENTIEL :** Ce document détaille l'architecture interne et la pile technologique de la solution propriétaire Shabaka AdScreen.
 
-### 1. Vue d'Ensemble de l'Architecture
+---
 
-Shabaka AdScreen est une application **Monolithique Modulaire** robuste construite sur le framework **Flask** (Python). Elle suit le modèle **MVC (Modèle-Vue-Contrôleur)** :
-*   **Modèles** : Définis avec **SQLAlchemy** (ORM).
-*   **Vues** : Templating **Jinja2** couplé à **Tailwind CSS**.
-*   **Contrôleurs** : Routes organisées en **Blueprints**.
+## 1. Architecture Globale
 
-#### Structure du Projet
-L'application est structurée autour de Blueprints pour isoler les domaines fonctionnels :
-```
-/
-├── app.py                 # Point d'entrée, config, init des extensions
-├── models/                # Définitions des schémas de BDD
-│   ├── user.py            # Gestion des utilisateurs et rôles
-│   ├── screen.py          # Configuration des écrans
-│   ├── booking.py         # Logique de réservation
-│   └── ...
-├── routes/                # Contrôleurs (Blueprints)
-│   ├── auth_routes.py     # Login, Register
-│   ├── admin_routes.py    # Back-office Superadmin
-│   ├── org_routes.py      # Dashboard Organisation
-│   ├── screen_routes.py   # Gestion technique des écrans
-│   ├── booking_routes.py  # Tunnel de réservation public
-│   ├── player_routes.py   # Logique d'affichage Player
-│   ├── mobile_api_routes.py # API JSON pour App Mobile
-│   └── ...
-├── services/              # Logique métier complexe
-│   ├── hls_converter.py   # Proxy et Conversion Vidéo (FFmpeg)
-│   ├── playlist_service.py # Algorithme de sélection de contenu
-│   └── billing_service.py # Génération de factures hebdo
-└── static/                # Assets (CSS, JS, Uploads)
-```
+### 1.1 Type d'Architecture
+Application **Monolithique Modulaire** basée sur le framework **Flask** (Python).
+L'application est structurée autour de **Blueprints** pour isoler les domaines fonctionnels et faciliter la maintenance.
 
-### 2. Stack Technologique
+### 1.2 Structure des Dossiers
+*   `app.py` : Point d'entrée, configuration, initialisation des extensions (DB, Login, CSRF).
+*   `models/` : Modèles de données SQLAlchemy (ORM).
+*   `routes/` : Contrôleurs (Blueprints) gérant les requêtes HTTP.
+*   `services/` : Logique métier complexe (Calculs, Traitements, I/O).
+*   `templates/` : Vues Jinja2 (Rendu serveur).
+*   `static/` : Assets frontend (JS, CSS, Images).
 
-*   **Backend** : Python 3.11+, Flask 3.0+, Gunicorn, Gevent.
-*   **Base de Données** : PostgreSQL 14+ (Production), SQLite (Dev). ORM : SQLAlchemy 2.0+.
-*   **Frontend** : Jinja2 (SSR), Tailwind CSS 3.4, Vanilla JS (ES6+), hls.js.
-*   **Média** : FFmpeg (Transcodage/Streaming), Pillow (Traitement d'images).
-*   **Sécurité** : Flask-Login (Session), PyJWT (Token API), Bleach (Assainissement), Flask-Limiter.
+### 1.3 Blueprints Principaux
+*   `auth_bp` : Authentification et gestion de session.
+*   `admin_bp` : Back-office Superadmin.
+*   `org_bp` : Gestion des Organisations (SaaS).
+*   `screen_bp` : Gestion technique des écrans.
+*   `player_bp` : Interface de diffusion pour les écrans physiques.
+*   `booking_bp` : Moteur de réservation de campagnes.
+*   `api_bp` / `mobile_api_bp` : Interfaces API pour intégrations et mobile.
 
-### 3. Schéma de Base de Données
+---
 
-#### Identité et Accès
-*   `User` : `id`, `email`, `password_hash`, `role` (superadmin, admin, manager), `organization_id`.
-*   `Organization` : `id`, `name`, `currency`, `commission_rate`, `vat_rate`.
+## 2. Stack Technologique
 
-#### Infrastructure
-*   `Screen` : `id`, `unique_code`, `resolution_width`, `resolution_height`, `orientation`, `current_mode` (playlist/iptv).
-*   `TimeSlot` : `duration_seconds` (10, 15, 30), `price_per_play`.
-*   `TimePeriod` : `start_hour`, `end_hour`, `price_multiplier`.
+### 2.1 Backend
+*   **Langage :** Python 3.x
+*   **Framework :** Flask
+*   **ORM :** SQLAlchemy (Supporte SQLite et PostgreSQL)
+*   **Auth :** Flask-Login, PyJWT (pour API Mobile)
 
-#### Contenu et Réservation
-*   `Content` : `filename`, `content_type` (image/video), `status`, `duration_seconds`.
-*   `Booking` : `num_plays` (quota acheté), `plays_completed`, `total_price`, `status`.
-*   `Invoice` : `week_start`, `gross_revenue`, `commission_amount`, `status` (pending/paid).
+### 2.2 Frontend
+*   **Template Engine :** Jinja2
+*   **CSS Framework :** Tailwind CSS (via CDN ou build process)
+*   **JavaScript :** Vanilla JS (ES6+), pas de framework lourd côté client pour le dashboard.
 
-#### Logs
-*   `StatLog` : Preuve de diffusion (`played_at`, `duration`).
-*   `HeartbeatLog` : Historique de connectivité du player.
+### 2.3 Base de Données
+*   **Système :** Compatible PostgreSQL (Prod) et SQLite (Dev).
+*   **Migrations :** Gérées via `init_db.py` (Script propriétaire d'initialisation).
 
-### 4. Audit de Sécurité
+---
 
-#### 4.1 Authentification
-*   **Hachage** : PBKDF2-SHA256 via `werkzeug.security`.
-*   **Sessions** : `HttpOnly`, `SameSite=Lax`, `Secure` (Prod).
-*   **JWT** : Utilisé pour l'API Mobile (Access Token 24h, Refresh Token 30j).
+## 3. Sécurité & Conformité
 
-#### 4.2 Mécanismes de Protection
-*   **CSRF** : Validation manuelle des tokens sur toutes les méthodes changeant l'état (`POST`, `PUT`, `DELETE`), sauf endpoints API.
-*   **Rate Limiting** :
-    *   Login : 5 req/min.
-    *   API Mobile : 60 req/min.
-    *   Player Heartbeat : 120 req/min.
-*   **En-têtes** : `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `HSTS`.
+### 3.1 Authentification
+*   Mots de passe hachés via `werkzeug.security` (PBKDF2 ou Scrypt).
+*   Protection des sessions via `HttpOnly` et `Secure` cookies.
 
-#### 4.3 Validation des Entrées
-*   **Uploads** : Vérification stricte du type MIME (Magic numbers) via Pillow/ffprobe. Fichiers renommés avec UUIDs.
-*   **SSRF** : Le proxy de streaming valide les IPs cibles pour empêcher le scan du réseau local.
+### 3.2 Protection CSRF
+*   Implémentation double : Token de session + Token formulaire/header.
+*   Validation stricte sur toutes les méthodes mutantes (POST, PUT, DELETE, PATCH).
+*   Exceptions configurées pour les endpoints critiques du Player (Heartbeat) pour éviter les interruptions de service, sécurisés par validation IP/Device.
 
-### 5. Référence API
+### 3.3 En-têtes de Sécurité (Security Headers)
+*   `X-Content-Type-Options: nosniff`
+*   `X-Frame-Options: SAMEORIGIN`
+*   `Strict-Transport-Security` (HSTS) en production.
 
-#### 5.1 Management API (`/mobile/api/v1`)
-*   **Auth** : Bearer Token (JWT).
-*   `POST /auth/login` : Obtention des tokens Access/Refresh.
-*   `GET /dashboard/summary` : Statistiques de l'organisation.
-*   `GET /dashboard/screens` : Liste des écrans et statut.
+---
 
-#### 5.2 Player API (`/player/api`)
-*   **Auth** : Cookie de Session.
-*   `GET /playlist` : Récupère la playlist JSON (Prochains éléments à jouer).
-*   `POST /heartbeat` : Envoie le signal de vie.
-*   `POST /log-play` : Signale la lecture d'un contenu (Décrémente le quota).
+## 4. Modèle de Données (Aperçu)
 
-### 6. Guide de Déploiement
+### 4.1 Entités Cœurs
+*   **User :** Utilisateur du système (Rôles : Superadmin, Org Admin, User).
+*   **Organization :** Entité juridique possédant des écrans.
+*   **Screen :** Dispositif d'affichage physique.
+*   **Booking :** Réservation d'espace publicitaire.
+*   **TimeSlot / TimePeriod :** Définition des créneaux et tarifs.
 
-#### 6.1 Prérequis
-*   VPS avec Ubuntu 20.04/22.04.
-*   Python 3.11+, PostgreSQL, Nginx, FFmpeg.
+### 4.2 Entités Contenu
+*   **AdContent :** Contenu publicitaire payant.
+*   **Broadcast :** Contenu prioritaire (Urgence).
+*   **InternalContent :** Contenu propre à l'organisation.
+*   **Filler :** Contenu de remplissage.
 
-#### 6.2 Étapes d'Installation
-1.  **Cloner** : `git clone <repo_url>`
-2.  **Env** : Créer un fichier `.env` avec `DATABASE_URL`, `SESSION_SECRET`, `FLASK_ENV=production`.
-3.  **Deps** : `pip install -r requirements.txt`.
-4.  **DB** : `python init_db.py`.
-5.  **Service** :
-    *   Utiliser **Gunicorn** avec des workers Gevent : `gunicorn -k gevent -w 4 -b 127.0.0.1:8000 app:app`
-    *   Configurer **Nginx** comme reverse proxy (Terminaison SSL via Certbot).
+### 4.3 Entités Facturation
+*   **AdContentInvoice :** Facture générée pour une campagne.
+*   **AdContentStat :** Preuve de diffusion (Logs journaliers).
+
+---
+
+## 5. Services Métier Clés
+
+### 5.1 Pricing Service (`services/pricing_service.py`)
+Calcule le coût des campagnes en temps réel en fonction de la grille tarifaire complexe (Durée x Période x Écran).
+
+### 5.2 Playlist Service (`services/playlist_service.py`)
+Génère la liste de lecture pour chaque écran en respectant la file de priorité et les quotas de diffusion achetés.
+
+### 5.3 Input Validator (`services/input_validator.py`)
+Assure la validation stricte des entrées utilisateur et des fichiers uploadés (MIME types, extensions) pour prévenir les injections.

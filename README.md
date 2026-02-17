@@ -1,134 +1,88 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status: Private/Internal](https://img.shields.io/badge/Status-Private%2FInternal-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
 
-# Shabaka AdScreen
+[ 🇫🇷 Français ] | [ 🇬🇧 English ](README_en.md)
 
-**La solution de Digital Signage "Enterprise-Grade" pour la gestion de flottes d'écrans publicitaires et l'optimisation des revenus.**
+# SHABAKA ADSCREEN
 
----
-
-### ⚠️ AVERTISSEMENT LÉGAL (LEGAL NOTICE)
-
-**CE LOGICIEL EST LA PROPRIÉTÉ EXCLUSIVE DE MOA DIGITAL AGENCY (Aisance KALONJI).**
-
-Tout usage, copie, modification, distribution ou vente de ce code source sans autorisation écrite explicite est **STRICTEMENT INTERDIT** et fera l'objet de poursuites judiciaires immédiates.
-Ce dépôt est destiné uniquement à un usage interne pour la sauvegarde et le déploiement sur les infrastructures autorisées par MOA Digital Agency.
+> **ATTENTION :** Ce projet est un logiciel **PROPRIÉTAIRE** et **PRIVÉ**.
+> **Propriétaire :** MOA Digital Agency (myoneart.com)
+> **Auteur :** Aisance KALONJI
+> **Licence :** Usage interne strict. Toute reproduction ou distribution interdite.
 
 ---
 
-## 🏛️ Architecture du Système
+## Description
+**Shabaka AdScreen** est une plateforme SaaS complète de gestion d'affichage dynamique (Digital Signage). Elle orchestre un réseau d'écrans connectés, gère la vente d'espaces publicitaires via un algorithme de pricing dynamique, et assure la diffusion fluide des contenus médias (Vidéos, Images).
+
+## Architecture Technique
 
 ```mermaid
 graph TD
-    User[Utilisateurs] -->|HTTPS| LB[Nginx / Load Balancer]
-    Mobile[App Mobile] -->|API JWT| LB
-    Screen[Écrans / Players] -->|HTTPS / Polling| LB
+    Client[Client / Annonceur] -->|HTTPS| Proxy[Nginx / Load Balancer]
+    Screen[Écran Physique] -->|HTTPS| Proxy
 
-    LB -->|Reverse Proxy| Gunicorn[Gunicorn WSGI]
+    Proxy -->|WSGI| App[Application Flask (Monolithique)]
 
-    subgraph "Shabaka AdScreen (Monolith)"
-        Gunicorn --> Flask[Flask App]
+    subgraph "Core Application"
+        App -->|Route| Blueprints{Blueprints}
+        Blueprints -->|Admin| AdminBP[Admin Panel]
+        Blueprints -->|SaaS| OrgBP[Org Dashboard]
+        Blueprints -->|Public| BookingBP[Booking Engine]
+        Blueprints -->|Device| PlayerBP[Player API]
 
-        subgraph "Blueprints (Modules)"
-            Flask --> Auth[Authentification]
-            Flask --> Admin[Super Admin]
-            Flask --> Org[Organisation Dashboard]
-            Flask --> Booking[Booking Engine]
-            Flask --> Player[Player Logic]
-            Flask --> API[Mobile API]
-        end
-
-        subgraph "Services"
-            Booking --> BillingService[Facturation]
-            Player --> PlaylistAlgo[Algo Priorisation]
-            API --> AuthJWT[JWT Service]
-        end
+        App -->|Auth| Security[Flask-Login / JWT]
+        App -->|Task| Services[Services Métier]
     end
 
-    Flask -->|SQLAlchemy| DB[(PostgreSQL / SQLite)]
-    Flask -->|File System| Storage[Stockage Média]
+    subgraph "Data & Storage"
+        Services -->|ORM| DB[(PostgreSQL)]
+        Services -->|I/O| Storage[File System / S3]
+        Services -->|Cache| Cache[Redis / Memcached]
+    end
 
-    BillingService -.->|Cron Job| Invoices[Génération Factures]
+    Services -->|Compute| Pricing[Pricing Service]
+    Services -->|Logic| Playlist[Playlist Generator]
+
+    PlayerBP -->|Heartbeat| Screen
+    PlayerBP -->|JSON| Screen
 ```
 
-## 📑 Table des Matières
+## Table des Matières
+1.  [Fonctionnalités Clés](#fonctionnalités-clés)
+2.  [Installation & Démarrage](#installation--démarrage)
+3.  [Documentation](#documentation)
 
-1.  [Description](#description)
-2.  [Stack Technique](#-stack-technique)
-3.  [Installation & Démarrage](#-installation--démarrage)
-4.  [Documentation](#-documentation)
-5.  [Licence](#-licence)
+## Fonctionnalités Clés
+*   **Gestion Multi-Tenants :** Organisations autonomes avec leurs propres écrans.
+*   **Pricing Dynamique :** Algorithme basé sur la durée, la période (Heure pleine/creuse) et la popularité de l'écran.
+*   **Player Intelligent :** Mise en cache locale, file de priorité (Urgence > Payant > Interne), et fonctionnement hors-ligne.
+*   **Facturation Automatisée :** Génération de factures, calcul de commissions, et preuves de diffusion.
 
-## 📝 Description
-
-Shabaka AdScreen est une plateforme centralisée permettant aux établissements (hôtels, restaurants, malls) de monétiser leurs écrans via la publicité. Elle offre une interface de gestion complète pour les propriétaires d'écrans, un tunnel de réservation pour les annonceurs, et un player web robuste capable de diffuser du contenu multimédia et des flux IPTV.
-
-## 💻 Stack Technique
-
-*   **Langage :** Python 3.11+
-*   **Framework Web :** Flask 3.0+
-*   **Serveur d'Application :** Gunicorn (avec Gevent Workers)
-*   **Base de Données :** PostgreSQL (Prod) / SQLite (Dev)
-*   **Frontend :** Jinja2, Tailwind CSS, Vanilla JS
-*   **Vidéo/Streaming :** FFmpeg, HLS.js
-*   **Sécurité :** Flask-Login, PyJWT, Werkzeug Security, Bleach
-
-## 🚀 Installation & Démarrage
+## Installation & Démarrage
 
 ### Prérequis
-*   Python 3.11 ou supérieur
-*   `pip` et `virtualenv`
+*   Python 3.11+
+*   PostgreSQL (ou SQLite pour dev)
+*   FFmpeg (pour le traitement vidéo)
 
-### Déploiement Local
+### Commandes
+```bash
+# 1. Cloner le dépôt (Interne uniquement)
+git clone <repo_url>
 
-1.  **Cloner le dépôt :**
-    ```bash
-    git clone <url_du_repo>
-    cd shabaka-adscreen
-    ```
+# 2. Installer les dépendances
+pip install -r requirements.txt
 
-2.  **Créer l'environnement virtuel :**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Sur Windows: venv\Scripts\activate
-    ```
+# 3. Initialiser la base de données
+python init_db.py
 
-3.  **Installer les dépendances :**
-    ```bash
-    pip install -r requirements.txt
-    ```
+# 4. Lancer le serveur de développement
+python main.py
+```
 
-4.  **Configuration :**
-    Créer un fichier `.env` ou définir les variables d'environnement :
-    ```bash
-    export FLASK_APP=app.py
-    export FLASK_ENV=development
-    export SESSION_SECRET="votre_secret_tres_long"
-    export DATABASE_URL="sqlite:///shabaka.db"
-    ```
+## Documentation
+Pour une compréhension approfondie du système, référez-vous aux documents officiels dans le dossier `docs/` :
 
-5.  **Initialiser la Base de Données :**
-    ```bash
-    python init_db.py
-    ```
-
-6.  **Lancer le serveur :**
-    ```bash
-    python main.py
-    # Ou via Gunicorn :
-    # gunicorn -k gevent -w 4 -b 0.0.0.0:8080 app:app
-    ```
-
-## 📚 Documentation
-
-La documentation complète est disponible dans le dossier `docs/` :
-
-*   **La Bible des Fonctionnalités :** [docs/Shabaka_AdScreen_features_full_list.md](docs/Shabaka_AdScreen_features_full_list.md)
-*   **Manuel Technique :** [docs/Shabaka_AdScreen_Technical_Manual.md](docs/Shabaka_AdScreen_Technical_Manual.md)
-*   **Guide Utilisateur :** [docs/Shabaka_AdScreen_User_Guide.md](docs/Shabaka_AdScreen_User_Guide.md)
-
-*(English versions available with suffix `_en.md`)*
-
-## 🔒 Licence
-
-Ce projet est sous licence **Propriétaire**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-Copyright © 2024 MOA Digital Agency.
+*   📖 **[Bible des Fonctionnalités](docs/Shabaka_AdScreen_features_full_list.md)** : Liste exhaustive des règles métier.
+*   ⚙️ **[Manuel Technique](docs/Shabaka_AdScreen_Technical_Manual.md)** : Stack, Architecture, Sécurité.
+*   🎓 **[Guide Utilisateur](docs/Shabaka_AdScreen_User_Guide.md)** : Tutoriels pour Admins et Clients.
