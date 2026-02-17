@@ -1,159 +1,95 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+© MOA Digital Agency (myoneart.com) - Auteur : Aisance KALONJI
+[ 🇫🇷 Français ] | [ 🇬🇧 English ](Shabaka_AdScreen_features_full_list_en.md)
 
-# Shabaka AdScreen - Liste Exhaustive des Fonctionnalités (La Bible)
+# BIBLE DES FONCTIONNALITÉS - SHABAKA ADSCREEN
 
-Ce document est la référence absolue de toutes les fonctionnalités, règles métier, validations et comportements système de la plateforme Shabaka AdScreen. Il sert de vérité terrain pour les développeurs, testeurs et auditeurs.
+> **STATUT :** CONFIDENTIEL & PROPRIÉTAIRE.
+> Ce document recense l'intégralité des règles métier, algorithmes et processus de l'application Shabaka AdScreen.
 
-### 1. Cœur du Système (Core)
+---
 
-#### 1.1 Authentification & Sécurité
-*   **Hashage Mot de Passe** : Utilisation de `werkzeug.security` (Scrypt par défaut, ou PBKDF2-SHA256 selon configuration) pour le stockage sécurisé.
-*   **Session Management** :
-    *   Cookies `HttpOnly`, `SameSite=Lax`.
-    *   `Secure` flag activé en production (via variable d'env `FLASK_ENV=production`).
-    *   Protection contre le vol de session via régénération d'ID.
-*   **Protection CSRF (Cross-Site Request Forgery)** :
-    *   Implémentation manuelle via `app.before_request`.
-    *   Token unique par session (`_csrf_token`).
-    *   Vérification sur toutes les méthodes `POST`, `PUT`, `DELETE`, `PATCH`.
-    *   **Exceptions** : Endpoints API (`api.*`, `mobile_api.*`) et Webhooks (`billing.cron_generate_invoices`).
-*   **En-têtes de Sécurité (Security Headers)** :
-    *   `X-Content-Type-Options: nosniff`
-    *   `X-Frame-Options: SAMEORIGIN`
-    *   `Referrer-Policy: strict-origin-when-cross-origin`
-    *   `Strict-Transport-Security: max-age=31536000; includeSubDomains` (si HTTPS).
-*   **Rate Limiting** :
-    *   Librairie : `Flask-Limiter`.
-    *   Stockage : Mémoire (Dev) ou Redis (Prod).
-    *   Règles par défaut :
-        *   Login : **5 requêtes / minute**.
-        *   API Mobile (Lecture) : **60 requêtes / minute**.
-        *   Player Heartbeat : **120 requêtes / minute**.
+## 1. Gestion des Utilisateurs et Organisations
 
-#### 1.2 Validation des Entrées (Input Validation)
-Toutes les données entrantes sont assainies via `services/input_validator.py`.
-*   **Chaînes de caractères** : Nettoyage HTML (suppression des balises `<script>`, etc.) et troncature à 255 caractères par défaut.
-*   **E-mails** : Validation via `email-validator` (vérification syntaxique RFC).
-*   **Téléphones** : Regex `^\+?[\d]{8,15}$` (Format international, 8 à 15 chiffres).
-*   **Codes Écrans** : Regex `^[A-Za-z0-9\-_]+$` (Alphanumérique, tirets, underscores uniquement).
-*   **URLs** :
-    *   Doit commencer par `http://` ou `https://`.
-    *   Protection **SSRF** (Server-Side Request Forgery) : Résolution DNS et vérification que l'IP cible n'est pas privée/locale (sauf exception).
-*   **Dates** : Format strict `YYYY-MM-DD`.
-*   **Entiers Positifs** : Vérification stricte des bornes (min/max).
+### 1.1 Rôles et Permissions
+*   **Superadmin :** Accès total. Gestion des organisations, validation des contenus globaux, configuration système.
+*   **Administrateur Organisation (Org Admin) :** Gestion de ses propres écrans, validation des contenus locaux, accès à la facturation de son entité.
+*   **Utilisateur Standard :** Création de campagnes, upload de contenu, paiement.
 
-### 2. Gestion des Écrans (Screen Management)
+### 1.2 Hiérarchie
+*   Un utilisateur appartient à une ou plusieurs **Organisations**.
+*   Les commissions sur les publicités sont reversées à l'Organisation propriétaire de l'écran.
 
-#### 2.1 Configuration
-*   **Identifiant Unique** : Code généré aléatoirement ou défini manuellement (validé par Regex).
-*   **Résolution** : Largeur et Hauteur en pixels (ex: 1920x1080). Utilisé pour valider les uploads.
-*   **Orientation** : 'landscape' (Paysage) ou 'portrait' (Portrait).
-*   **Modes de Fonctionnement** :
-    1.  **Playlist** : Boucle de contenus médias.
-    2.  **IPTV** : Diffusion de flux HLS/M3U8.
-        *   Support du Proxying pour contourner CORS.
-        *   Conversion MPEG-TS vers HLS à la volée via FFmpeg (si activé).
+---
 
-#### 2.2 Monitoring
-*   **Heartbeat** : Le player envoie un ping toutes les **30 secondes**.
-*   **Statuts** :
-    *   `Online` : Heartbeat reçu < 2 minutes.
-    *   `Playing` : En cours de lecture.
-    *   `Offline` : Aucun signal > 2 minutes.
-*   **Logs** : Historique conservé dans la table `heartbeat_log`.
+## 2. Gestion des Écrans (Screens)
 
-### 3. Moteur de Réservation (Booking Engine)
+### 2.1 Attributs Clés
+*   **Statut :** Online (Actif), Offline (Inactif > 5min), Maintenance (Désactivé manuellement).
+*   **Orientation :** Paysage (16:9) ou Portrait (9:16).
+*   **Configuration Technique :** Résolution, Code de jumelage (Pairing Code).
 
-#### 3.1 Modes de Réservation
-Le système supporte deux logiques de réservation distinctes :
-1.  **Par Nombre de Diffusions (Plays Mode)** :
-    *   Le client achète un nombre fixe de passages (ex: 100 diffusions).
-    *   Validité : Jusqu'à épuisement du quota.
-2.  **Par Date (Dates Mode)** :
-    *   Le client achète une période (ex: du 01/01 au 07/01).
-    *   Objectif : X diffusions par jour.
-    *   **Algorithme de Distribution Équitable** : Le système calcule la disponibilité journalière et lisse la diffusion sur la période.
+### 2.2 Heartbeat & Monitoring
+*   Chaque écran envoie un "Heartbeat" (battement de cœur) régulier au serveur (`/api/screen/heartbeat`).
+*   **Logique Offline :** Si aucun heartbeat n'est reçu pendant > 5 minutes, l'écran passe automatiquement en statut `Offline`.
+*   **Synchronisation :** Le heartbeat renvoie le hash de la playlist courante pour déclencher une mise à jour si nécessaire.
 
-#### 3.2 Calcul du Prix
-Formule exacte appliquée dans `booking_routes.py` :
-```python
-Prix_Base_Slot = Prix_Minute_Ecran * (Duree_Slot / 60)
-Prix_Unitaire  = Prix_Base_Slot * Multiplicateur_Periode
-Prix_Total_HT  = Prix_Unitaire * Nombre_Total_Diffusions
-Prix_TTC       = Prix_Total_HT * (1 + Taux_TVA / 100)
-```
-*   **TimeSlots** : Durées prédéfinies (10s, 15s, 20s, 30s).
-*   **TimePeriods** : Plages horaires avec multiplicateur (ex: 18h-23h = x1.5).
+---
 
-#### 3.3 Validation des Médias Uploadés
-*   **Images** :
-    *   Formats : JPG, PNG, GIF, WebP.
-    *   Dimensions : Doit correspondre **au pixel près** à la résolution de l'écran.
-    *   Poids : Max 100 Mo (config `MAX_CONTENT_LENGTH`).
-*   **Vidéos** :
-    *   Formats : MP4, WebM, MOV.
-    *   Durée : Doit être **inférieure ou égale** au slot réservé (tolérance 0).
-    *   Analyse : Utilisation de `ffprobe` pour extraire durée et dimensions.
+## 3. Gestion des Contenus (Content)
 
-### 4. Le Player (Logique d'Affichage)
+### 3.1 Types de Contenu & Priorité
+Le Player utilise une file de priorité stricte pour décider quel contenu afficher :
 
-#### 4.1 Priorisation des Contenus
-L'algorithme de génération de playlist (`mobile_api_routes.py`) classe les contenus par score de priorité décroissant :
-1.  **Broadcasts (200)** : Messages d'urgence/système (ex: "Fermeture exceptionnelle").
-2.  **Paid Content (100)** : Publicités payantes actives (Quota > 0).
-3.  **Internal Content (80)** : Auto-promotion de l'établissement.
-4.  **AdContent (50)** : Publicités régie (Réseau tiers).
-5.  **Fillers (20)** : Contenu de remplissage par défaut (ex: "Scannez ce QR Code").
+1.  **Broadcast (Priorité 200) :** Messages d'urgence ou annonces système critiques. Interrompt tout le reste.
+2.  **Paid Content (Priorité 100) :** Publicités payantes (AdContent) validées.
+3.  **Internal Content (Priorité 80) :** Contenu propre à l'organisation (promotions internes).
+4.  **AdContent (Priorité 50) :** Publicités réseau (si applicable).
+5.  **Filler (Priorité 20) :** Contenu de remplissage par défaut (Météo, News, Logo Agence) pour éviter l'écran noir.
 
-#### 4.2 Lecture & Tracking
-*   **Polling** : Récupération de la playlist JSON toutes les **60 secondes**.
-*   **Preloading** : Mise en cache navigateur des assets pour fluidifier les transitions.
-*   **Logging** : À chaque fin de lecture, le player appelle `/log-play`.
-    *   Décrémente le compteur `remaining_plays` du Booking.
-    *   Passe le statut à `completed` si le quota est atteint.
-    *   Enregistre une entrée dans `stat_log` pour les rapports.
+### 3.2 Validation Technique
+*   **Vidéos :** Format MP4 obligatoire. Conversion automatique en HLS pour le streaming adaptatif.
+*   **Images :** JPG, PNG. Durée d'affichage configurable (défaut : 10s).
+*   **Poids Max :** Limité par la configuration serveur (défaut 100MB).
 
-#### 4.3 Overlays (Superposition)
-*   **Tickers** : Textes défilants configurables (Vitesse, Couleur, Position).
-*   **Logique** : Peuvent être associés à une période spécifique ou être permanents.
-*   **Compatibilité** : Fonctionnent par-dessus le mode Vidéo ET le mode IPTV.
+---
 
-### 5. API Mobile (Management)
+## 4. Moteur de Réservation & Pricing (Booking)
 
-L'API `/mobile/api/v1` est dédiée aux applications de gestion (Flutter/React Native).
+### 4.1 Algorithme de Prix
+Le prix d'une campagne est calculé dynamiquement selon la formule :
 
-#### 5.1 Codes d'Erreur Spécifiques
-En plus des codes HTTP standards, l'API retourne des codes métier dans le JSON (`code`):
-*   `MISSING_PASSWORD` : Mot de passe non fourni.
-*   `INVALID_CREDENTIALS` : Email/Code ou mot de passe incorrect.
-*   `ACCOUNT_DISABLED` : L'utilisateur a été désactivé par un admin.
-*   `SCREEN_DISABLED` : L'écran a été désactivé.
-*   `REFRESH_FAILED` : Token de rafraîchissement invalide ou expiré.
-*   `SCREEN_NOT_FOUND` : ID d'écran inexistant ou hors périmètre organisation.
-*   `VALIDATION_ERROR` : Échec de validation des données (détails dans le champ `field`).
+`Prix Total = (Prix de Base du Slot) x (Multiplicateur Période) x (Nombre de Diffusions)`
 
-#### 5.2 Authentification JWT
-*   **Access Token** : Expiration 24 heures. Contient `user_id`, `role`, `organization_id`.
-*   **Refresh Token** : Expiration 30 jours. Permet d'obtenir un nouveau Access Token sans relogin.
+*   **Prix de Base (TimeSlot) :** Défini par l'écran pour une durée donnée (ex: 15s = 2€).
+*   **Multiplicateur (TimePeriod) :** Coefficient selon l'heure de la journée (ex: Heure de pointe 18h-20h = x1.5).
+*   **Nombre de Diffusions :** Quantité de passages achetés.
 
-### 6. Facturation & Finance
+### 4.2 Règles de Commission
+*   Chaque écran génère des revenus pour son Organisation propriétaire.
+*   Le système calcule automatiquement la part revenant à MOA Digital Agency (frais de service) et la part reversée à l'Organisation.
 
-#### 6.1 Cycle de Vie
-1.  **Génération** : Cron Job (`billing_routes.py`) exécuté le **Dimanche à 23h59**.
-2.  **Calcul** : Somme des `Booking` payés de la semaine passée.
-3.  **Commission** : Application du pourcentage plateforme (défini par Organisation).
-4.  **État** : `pending` -> `paid` (Preuve envoyée) -> `validated` (Argent reçu).
+---
 
-#### 6.2 Devises
-*   Support multi-devises (EUR, USD, TND, etc.).
-*   Le symbole monétaire est injecté globalement via le Context Processor `inject_currency`.
+## 5. Facturation & Paiements (Billing)
 
-### 7. Internationalisation (i18n)
+### 5.1 Workflow de Facture (AdContentInvoice)
+1.  **Pending (En attente) :** Facture générée, paiement non reçu.
+2.  **Paid (Payée) :** Paiement confirmé (Preuve uploadée ou transaction validée).
+3.  **Validated (Validée) :** Facture vérifiée par la comptabilité MOA, commission débloquée.
 
-*   **Mécanisme** : Service custom `services/translation_service.py`.
-*   **Stockage** : Fichiers JSON plats.
-*   **Détection** :
-    1.  URL `/set-language/<lang>`.
-    2.  Cookie de session.
-    3.  Header `Accept-Language` du navigateur.
-    4.  Langue par défaut (`fr`).
+### 5.2 Preuve de Paiement
+*   Les utilisateurs peuvent uploader une preuve de virement (PDF/JPG).
+*   La validation manuelle par un Admin change le statut en `Paid`.
+
+---
+
+## 6. Player & Diffusion
+
+### 6.1 Logique de Lecture
+*   Le Player est une application Web (HTML/JS) tournant sur le navigateur de l'écran.
+*   Il met en cache les contenus pour fonctionner hors-ligne (si supporté par le navigateur).
+*   Il interroge l'API `/player/api/playlist` pour obtenir l'ordre de diffusion.
+
+### 6.2 Sécurité Player
+*   Authentification par Token de Session.
+*   Protection CSRF désactivée pour les endpoints de lecture critiques (Heartbeat, Log Play) pour assurer la fluidité, mais sécurisée par validation d'IP/Device ID.

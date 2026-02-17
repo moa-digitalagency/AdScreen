@@ -1,81 +1,67 @@
-![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red) ![Owner: MOA Digital Agency](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+© MOA Digital Agency (myoneart.com) - Auteur : Aisance KALONJI
+[ 🇫🇷 Français ] | [ 🇬🇧 English ](Shabaka_AdScreen_User_Guide_en.md)
 
-# Shabaka AdScreen - Manuel Utilisateur
+# GUIDE UTILISATEUR - SHABAKA ADSCREEN
 
-Ce guide est destiné aux gestionnaires d'établissements (bars, restaurants, centres commerciaux) et aux annonceurs souhaitant diffuser du contenu.
+> **USAGE INTERNE :** Ce guide est destiné aux administrateurs de la plateforme et aux gestionnaires d'organisations partenaires.
 
-### 1. Pour les Propriétaires d'Écrans (Organisations)
+---
 
-Vous êtes gestionnaire d'un lieu accueillant du public et vous souhaitez monétiser vos écrans.
+## 1. Vue d'Ensemble
 
-#### 1.1 Accéder à votre Espace
-Connectez-vous sur `/login`. Vous arrivez sur votre **Tableau de Bord** qui affiche :
-*   Le nombre d'écrans actifs.
-*   Les revenus générés sur la semaine en cours.
-*   Les contenus en attente de validation.
+Shabaka AdScreen est une plateforme centralisée de gestion d'affichage dynamique (Digital Signage). Elle permet :
+*   Aux **Propriétaires d'écrans (Organisations)** de monétiser leur audience.
+*   Aux **Annonceurs** de diffuser des campagnes ciblées en quelques clics.
 
-#### 1.2 Ajouter un Nouvel Écran
-1.  Allez dans **Écrans** > **Ajouter**.
-2.  Donnez un nom (ex: "Entrée Principale").
-3.  Définissez la **résolution exacte** (ex: 1920x1080).
-4.  Choisissez l'**orientation** (Paysage ou Portrait).
-5.  Fixez le **Prix de base par minute** (ex: 1.00€). C'est ce tarif qui servira de base au calcul des créneaux.
+---
 
-#### 1.3 Configurer les Prix
-Une fois l'écran créé, configurez les options de vente :
-*   **Créneaux (Time Slots)** : Définissez les durées vendables (10s, 15s, 30s).
-*   **Périodes (Time Periods)** : Appliquez des majorations selon l'heure.
-    *   *Exemple : Créer une période "Happy Hour" de 18h à 21h avec un multiplicateur de x1.5.*
+## 2. Pour les Organisations (Propriétaires d'Écrans)
 
-#### 1.4 Gérer la Playlist
-*   **Validation** : Lorsqu'un client réserve un créneau, vous recevez une notification. Allez dans **Contenus** > **À Valider**. Vérifiez que le visuel respecte votre charte éthique.
-*   **Auto-Promo** : Vous pouvez diffuser vos propres publicités (Menu, Événements) gratuitement via l'onglet **Contenu Interne**. Ces contenus ont une priorité légèrement inférieure aux pubs payantes.
-*   **Overlays** : Ajoutez des messages défilants (tickers) en bas d'écran pour des annonces rapides.
+### 2.1 Tableau de Bord
+Dès la connexion, vous accédez aux indicateurs clés :
+*   **Revenu Total :** Cumul des campagnes vendues.
+*   **Écrans Actifs :** Nombre d'écrans connectés en temps réel.
+*   **Taux d'Occupation :** Pourcentage des slots vendus vs disponibles.
 
-#### 1.5 Facturation
-Chaque dimanche soir, une facture est générée calculant la commission due à la plateforme.
-1.  Allez dans **Facturation**.
-2.  Téléchargez la facture en attente.
-3.  Effectuez le virement du montant de la commission.
-4.  Uploadez la preuve de virement dans l'interface pour débloquer votre compte.
+### 2.2 Ajouter un Écran
+1.  Allez dans **Gestion des Écrans > Ajouter**.
+2.  Définissez le nom, l'orientation (Paysage/Portrait) et l'adresse.
+3.  Le système génère un **Code de Jumelage**.
+4.  Sur l'écran physique, ouvrez l'URL du Player et saisissez ce code.
 
-### 2. Pour les Annonceurs (Clients)
+### 2.3 Définir vos Tarifs
+Pour vendre de la publicité, vous devez configurer vos grilles :
+*   **Créneaux (Time Slots) :** Définissez le prix de base pour 15s, 30s, etc. (ex: 15s = 2€).
+*   **Périodes (Time Periods) :** Appliquez des multiplicateurs selon l'heure (ex: 18h-20h = x1.5).
 
-Vous souhaitez diffuser une publicité sur un écran du réseau Shabaka.
+### 2.4 Modération
+Lorsqu'un annonceur achète un slot, vous recevez une notification.
+*   Allez dans **Validations**.
+*   Vérifiez le contenu (Qualité, Légalité).
+*   Cliquez sur **Approuver** ou **Refuser** (avec motif).
 
-#### 2.1 Réserver un Espace
-1.  Scannez le **QR Code** affiché sur l'écran ou cliquez sur le lien de réservation fourni par l'établissement.
-2.  Vous accédez à la fiche de l'écran avec ses tarifs et disponibilités.
+---
 
-#### 2.2 Choisir son Mode de Réservation
-Le système vous propose deux options selon vos besoins :
+## 3. Pour les Annonceurs
 
-**Option A : Achat de Passages (Classique)**
-*   Vous achetez un stock de diffusions (ex: 100 passages).
-*   Votre publicité est diffusée jusqu'à épuisement du stock.
-*   *Idéal pour : Une promotion flash.*
+### 3.1 Créer une Campagne
+1.  Cliquez sur **Réserver une Campagne**.
+2.  Sélectionnez un ou plusieurs écrans sur la carte ou la liste.
+3.  Configurez la durée (ex: 15 secondes) et la période de diffusion.
+4.  Le prix est calculé automatiquement.
 
-**Option B : Campagne sur Période (Date à Date)**
-*   Vous choisissez une date de début et une date de fin.
-*   Vous définissez un nombre de passages **par jour** (ex: 20/jour pendant 7 jours).
-*   Le système calcule le tarif global et garantit une distribution équitable.
-*   *Idéal pour : Une notoriété de marque.*
+### 3.2 Spécifications Techniques
+*   **Vidéos :** MP4 uniquement. Max 100MB.
+*   **Images :** JPG ou PNG haute résolution (1920x1080 recommandé).
+*   **Format :** Respectez l'orientation de l'écran cible (Paysage vs Portrait).
 
-#### 2.3 Configuration de la Pub
-*   **Type de Média** : Image fixe ou Vidéo.
-*   **Durée** : Sélectionnez le temps d'affichage (ex: 15 secondes).
-*   **Période** : Choisissez le moment de la journée (Matin, Midi, Soir).
+### 3.3 Paiement et Facturation
+*   Une fois la campagne configurée, une facture **En Attente** est générée.
+*   Effectuez le virement bancaire selon les coordonnées indiquées.
+*   Uploadez la **Preuve de Paiement** dans l'onglet **Mes Factures**.
+*   Dès validation par la comptabilité, votre campagne est programmée.
 
-#### 2.4 Uploader le Contenu
-Respectez scrupuleusement les contraintes techniques :
-*   **Résolution** : Doit être identique à celle de l'écran (ex: 1920x1080).
-*   **Poids** : Max 100 Mo.
-*   **Format** : JPG/PNG pour les images, MP4 pour les vidéos.
-
-### 3. Foire Aux Questions (FAQ)
-
-**Q: Mon écran reste noir, que faire ?**
-R: Vérifiez la connexion internet du player. S'il est hors ligne depuis plus de 2 minutes, il apparaît "Offline" dans le dashboard. Redémarrez le navigateur du player.
-
-**Q: Puis-je diffuser de la TV en direct ?**
-R: Oui, si l'option est activée sur l'écran ("IPTV"). Fournissez une URL de flux (M3U8).
+### 3.4 Suivi des Stats
+Accédez à **Mes Statistiques** pour voir :
+*   Le nombre de diffusions réelles (Impressions).
+*   La durée totale d'affichage par jour.
