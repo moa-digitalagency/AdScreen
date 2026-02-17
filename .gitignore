@@ -14,3 +14,4 @@ static/uploads/
 tests/homepage.png
 tests/dashboard.png
 tests/login_page.png
+node_modules/

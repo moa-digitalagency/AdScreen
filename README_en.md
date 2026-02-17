@@ -21,7 +21,7 @@ graph TD
     Client[Client / Advertiser] -->|HTTPS| Proxy[Nginx / Load Balancer]
     Screen[Physical Screen] -->|HTTPS| Proxy
 
-    Proxy -->|WSGI| App[Flask Application (Monolithic)]
+    Proxy -->|WSGI| App["Flask Application (Monolithic)"]
 
     subgraph "Core Application"
         App -->|Route| Blueprints{Blueprints}
