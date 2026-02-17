@@ -1,29 +1,32 @@
+![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue) ![Framework](https://img.shields.io/badge/Framework-Flask-green) ![Database](https://img.shields.io/badge/Database-PostgreSQL-orange) ![Status](https://img.shields.io/badge/Status-Proprietary-red) ![License](https://img.shields.io/badge/License-MOA%20Private-red) ![Owner](https://img.shields.io/badge/Owner-MOA%20Digital%20Agency-purple)
+
 # Shabaka AdScreen 🚀
 
-![Python Version](https://img.shields.io/badge/python-3.11%2B-blue?style=for-the-badge&logo=python)
-![Framework](https://img.shields.io/badge/flask-3.0%2B-green?style=for-the-badge&logo=flask)
-![Database](https://img.shields.io/badge/postgres-14%2B-336791?style=for-the-badge&logo=postgresql)
-![Status](https://img.shields.io/badge/status-production_ready-success?style=for-the-badge)
+**Product of: MOA Digital Agency LLC (myoneart.com)**
+**Author: Aisance KALONJI**
 
-**Produit de : MOA Digital Agency LLC (myoneart.com)**
-**Auteur : Aisance KALONJI**
-
----
-
-### ⚠️ AVERTISSEMENT LÉGAL - PROPRIÉTÉ PRIVÉE
-
-**Copyright © 2024 MOA Digital Agency LLC (myoneart.com). Auteur : Aisance KALONJI. Tous droits réservés.**
-
-Ce code source est la propriété exclusive de **MOA Digital Agency LLC**. Toute copie, distribution, modification, réutilisation totale ou partielle, ou ingénierie inverse est **STRICTEMENT INTERDITE** et fera l'objet de poursuites judiciaires immédiates.
-L'accès à ce dépôt ne confère aucun droit d'utilisation commerciale ou personnelle sans une licence écrite et signée par les ayants droit.
+> **⚠️ LEGAL WARNING - PRIVATE PROPERTY / AVERTISSEMENT LÉGAL - PROPRIÉTÉ PRIVÉE**
+>
+> **Copyright © 2024 MOA Digital Agency LLC (myoneart.com). Author: Aisance KALONJI. All rights reserved.**
+>
+> This source code is the **exclusive property** of MOA Digital Agency LLC. Any copy, distribution, modification, total or partial reuse, or reverse engineering is **STRICTLY PROHIBITED** and will result in immediate legal action. Access to this repository does not confer any commercial or personal usage rights without a written license signed by the rights holders.
+>
+> ---
+>
+> Ce code source est la **propriété exclusive** de MOA Digital Agency LLC. Toute copie, distribution, modification, réutilisation totale ou partielle, ou ingénierie inverse est **STRICTEMENT INTERDITE** et fera l'objet de poursuites judiciaires immédiates. L'accès à ce dépôt ne confère aucun droit d'utilisation commerciale ou personnelle sans une licence écrite et signée par les ayants droit.
 
 ---
 
-## 💡 Le Pitch
+## 💡 Pitch
 
-**Shabaka AdScreen** est la solution SaaS ultime pour transformer n'importe quel écran en source de revenus autonome.
-Nous permettons aux établissements (Hôtels, Malls, Restaurants) de piloter leur affichage dynamique et de **vendre des espaces publicitaires en libre-service** via un simple QR Code.
+### 🇬🇧 English
+**Shabaka AdScreen** is the ultimate SaaS solution to transform any screen into an autonomous revenue source. We enable venues (Hotels, Malls, Restaurants) to manage their digital signage and **sell advertising slots self-service** via a simple QR Code.
+*   **Auto-Monetization**: Your screens generate cash while you sleep.
+*   **Total Control**: Ad validation, playlist management, and automated billing.
+*   **Universal**: Compatible with Web, Smart TV (Tizen/WebOS), Android, and IPTV boxes.
 
+### 🇫🇷 Français
+**Shabaka AdScreen** est la solution SaaS ultime pour transformer n'importe quel écran en source de revenus autonome. Nous permettons aux établissements (Hôtels, Malls, Restaurants) de piloter leur affichage dynamique et de **vendre des espaces publicitaires en libre-service** via un simple QR Code.
 *   **Monétisation Automatique :** Vos écrans génèrent du cash pendant que vous dormez.
 *   **Contrôle Total :** Validation des pubs, gestion des playlists, et facturation automatisée.
 *   **Universel :** Compatible Web, Smart TV (Tizen/WebOS), Android et boîtiers IPTV.
@@ -32,11 +35,12 @@ Nous permettons aux établissements (Hôtels, Malls, Restaurants) de piloter leu
 
 ## 🏗 Architecture
 
+The system relies on a robust **Monolithic Modular** architecture, designed for performance and security.
 Le système repose sur une architecture **Monolithique Modulaire** robuste, conçue pour la performance et la sécurité.
 
 ```mermaid
 graph TD
-    User[Utilisateur / Annonceur] -->|HTTPS| Nginx
+    User[User / Advertiser] -->|HTTPS| Nginx
     Nginx -->|Reverse Proxy| Gunicorn
     Gunicorn -->|WSGI| FlaskApp
 
@@ -44,88 +48,86 @@ graph TD
         FlaskApp -->|Auth| Security[CSRF / Rate Limit]
         Security -->|Route| Blueprints[Admin / Org / API / Booking]
         Blueprints -->|ORM| PostgreSQL
-        Blueprints -->|Task| FFmpeg[Transcodage Vidéo]
+        Blueprints -->|Task| FFmpeg[Video Transcoding]
     end
 
     FlaskApp -->|Serve| StaticFiles[Assets / Uploads]
-    Player[Écran / Player Web] -->|Polling JSON| FlaskApp
-    MobileApp[App Mobile] -->|JWT API| FlaskApp
+    Player[Screen / Web Player] -->|Polling JSON| FlaskApp
+    MobileApp[Mobile App] -->|JWT API| FlaskApp
 ```
 
 ---
 
-## 📑 Table des Matières
+## 📑 Table of Contents / Table des Matières
 
-1.  [Stack Technique](#-stack-technique)
-2.  [Installation & Démarrage](#-installation--démarrage)
-3.  [Documentation Complète](#-documentation-complète)
-
----
-
-## 🛠 Stack Technique
-
-*   **Backend :** Python 3.11, Flask, SQLAlchemy, Gunicorn.
-*   **Base de Données :** PostgreSQL (Prod), SQLite (Dev).
-*   **Frontend :** Jinja2, Tailwind CSS 3.4, Vanilla JS.
-*   **Média :** FFmpeg (HLS/Streaming), Pillow.
-*   **Sécurité :** Flask-Login, PyJWT, Bleach, CSRF Protection manuelle.
+1.  [Documentation](#-documentation)
+2.  [Installation & Start / Installation & Démarrage](#-installation--start--installation--démarrage)
+3.  [Tech Stack / Stack Technique](#-tech-stack--stack-technique)
 
 ---
 
-## 🚀 Installation & Démarrage
+## 📚 Documentation
 
-### Prérequis
+Detailed documentation is available in the `docs/` folder.
+La documentation détaillée est disponible dans le dossier `docs/`.
+
+| Document | Description (EN) | Description (FR) |
+| :--- | :--- | :--- |
+| [**Features List (The Bible)**](docs/Shabaka_AdScreen_features_full_list.md) | **THE REFERENCE.** Exhaustive list of business rules. | **LA RÉFÉRENCE.** Détail exhaustif des règles métier. |
+| [**Technical Manual**](docs/Shabaka_AdScreen_Technical_Manual.md) | Architecture, Security, Database, API, Deployment. | Architecture, Sécurité, BDD, API, Déploiement. |
+| [**User Guide**](docs/Shabaka_AdScreen_User_Guide.md) | User manual for Venues and Advertisers. | Manuel utilisateur pour Lieux et Annonceurs. |
+
+---
+
+## 🚀 Installation & Start / Installation & Démarrage
+
+### Prerequisites / Prérequis
 *   Python 3.11+
 *   PostgreSQL
 *   FFmpeg
 
-### Commandes
+### Commands / Commandes
 
 ```bash
-# 1. Cloner (Usage privé uniquement)
+# 1. Clone (Private usage only / Usage privé uniquement)
 git clone https://github.com/moa-digital/shabaka-adscreen.git
 cd shabaka-adscreen
 
-# 2. Environnement Virtuel
+# 2. Virtual Env / Environnement Virtuel
 python3 -m venv venv
 source venv/bin/activate
 
-# 3. Dépendances
+# 3. Dependencies / Dépendances
 pip install -r requirements.txt
 
-# 4. Configuration
+# 4. Config
 export FLASK_ENV=development
 export DATABASE_URL="sqlite:///shabaka.db"
-export SESSION_SECRET="votre_secret_key"
+export SESSION_SECRET="your_secret_key"
 
-# 5. Base de Données
+# 5. Database / Base de Données
 python init_db.py
 
-# 6. Lancer
+# 6. Run / Lancer
 python main.py
 ```
 
-Accédez à `http://localhost:5000`.
+Access: `http://localhost:5000`
 
 ---
 
-## 📚 Documentation Complète
+## 🛠 Tech Stack / Stack Technique
 
-L'ensemble de la documentation technique et fonctionnelle se trouve dans le dossier `docs/`.
-
-| Document | Description |
-| :--- | :--- |
-| [**Fonctionnalités & Bible (Features List)**](docs/Shabaka_AdScreen_features_full_list.md) | **LA RÉFÉRENCE.** Détail exhaustif des règles métier. |
-| [**Architecture Technique**](docs/Shabaka_AdScreen_Architecture_Technique.md) | Structure du code, flux de données et sécurité. |
-| [**Référence API**](docs/Shabaka_AdScreen_Reference_API.md) | Endpoints Player et Mobile (JWT). |
-| [**Schéma Base de Données**](docs/Shabaka_AdScreen_Schema_Base_De_Donnees.md) | Modèle de données relationnel. |
-| [**Guide de Déploiement**](docs/Shabaka_AdScreen_Guide_Deploiement.md) | Mise en production sur VPS. |
-| [**Manuel Utilisateur**](docs/Shabaka_AdScreen_Manuel_Utilisateur.md) | Guide d'utilisation pour les clients. |
-| [**Audit de Sécurité**](docs/Shabaka_AdScreen_Audit_Securite.md) | Rapport des mesures de sécurité implémentées. |
+*   **Backend:** Python 3.11, Flask, SQLAlchemy, Gunicorn.
+*   **Database:** PostgreSQL (Prod), SQLite (Dev).
+*   **Frontend:** Jinja2, Tailwind CSS 3.4, Vanilla JS.
+*   **Media:** FFmpeg (HLS/Streaming), Pillow.
+*   **Security:** Flask-Login, PyJWT, Bleach, Manual CSRF Protection.
 
 ---
 
 <p align="center">
+  <b>PROPRIETARY PROPERTY OF MOA DIGITAL AGENCY LLC.</b><br>
   <b>PROPRIÉTÉ EXCLUSIVE DE MOA DIGITAL AGENCY LLC.</b><br>
-  Toute infraction sera poursuivie.
+  Any infringement will be prosecuted. / Toute infraction sera poursuivie.
 </p>
