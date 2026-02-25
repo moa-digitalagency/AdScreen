@@ -6,11 +6,13 @@
  * Auditer par : La CyberConfiance, www.cyberconfiance.com
 """
 import math
+import subprocess
 from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
 from models import User, Organization, Screen, Booking, StatLog, Content, SiteSetting, RegistrationRequest, Invoice, PaymentProof, Broadcast
+from utils.video_utils import get_video_info
 from services.translation_service import t
 from datetime import datetime, timedelta
 from sqlalchemy import func
@@ -22,11 +24,35 @@ from services.currency_service import (
     refresh_rates
 )
 
+def get_mime_type(file_storage):
+    """
+    Returns the MIME type of a file using the 'file' command (libmagic-like).
+    """
+    try:
+        file_storage.seek(0)
+        header = file_storage.read(4096)
+        file_storage.seek(0)
+
+        process = subprocess.Popen(
+            ['file', '-b', '--mime-type', '-'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, _ = process.communicate(input=header)
+        return stdout.decode('utf-8').strip()
+    except Exception:
+        return None
+
 def validate_image_file(file_storage):
     """
-    Validates that the file is a valid image using Pillow.
+    Validates that the file is a valid image using Pillow and MIME type.
     Returns True if valid, False otherwise.
     """
+    mime_type = get_mime_type(file_storage)
+    if mime_type and not mime_type.startswith('image/'):
+        return False
+
     try:
         from PIL import Image
         # Check if file is empty
@@ -43,6 +69,25 @@ def validate_image_file(file_storage):
         return True
     except Exception:
         return False
+
+def validate_video_file(file_storage):
+    """
+    Validates that the file is a valid video format using MIME type.
+    Returns True if valid, False otherwise.
+    """
+    mime_type = get_mime_type(file_storage)
+    ext = file_storage.filename.rsplit('.', 1)[-1].lower() if '.' in file_storage.filename else ''
+    video_extensions = ['mp4', 'webm', 'mov', 'avi', 'mkv']
+
+    if mime_type:
+        if mime_type.startswith('video/'):
+            return True
+        if mime_type == 'application/octet-stream':
+            return ext in video_extensions
+        return False
+
+    # Fallback to extension check if MIME check fails
+    return ext in video_extensions
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -1340,26 +1385,41 @@ def broadcast_new():
             if 'content_file' in request.files:
                 file = request.files['content_file']
                 if file.filename:
-                    # Basic check for images vs video extensions, deeper validation requires ffmpeg/magic
+                    # Deep validation using MIME type and Pillow/ffprobe
                     ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
                     is_video = ext in ['mp4', 'webm', 'mov', 'avi']
 
-                    if not is_video and not validate_image_file(file):
-                        flash('Le fichier image est invalide.', 'error')
+                    is_valid = False
+                    if is_video:
+                        if validate_video_file(file):
+                            is_valid = True
+                        else:
+                            flash('Le fichier vidéo est invalide (format non reconnu).', 'error')
                     else:
+                        if validate_image_file(file):
+                            is_valid = True
+                        else:
+                            flash('Le fichier image est invalide.', 'error')
+
+                    if is_valid:
                         filename = secure_filename(file.filename)
                         new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
                         upload_path = os.path.join('static', 'uploads', 'broadcasts')
                         os.makedirs(upload_path, exist_ok=True)
                         file_path = os.path.join(upload_path, new_filename)
                         file.save(file_path)
-                        broadcast.content_file_path = file_path
-                    
-                    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-                    if ext in ['mp4', 'webm', 'mov', 'avi']:
-                        broadcast.content_type = 'video'
-                    else:
-                        broadcast.content_type = 'image'
+
+                        if is_video:
+                            if not get_video_info(file_path):
+                                if os.path.exists(file_path):
+                                    os.remove(file_path)
+                                flash('Le fichier vidéo est corrompu ou illisible.', 'error')
+                            else:
+                                broadcast.content_file_path = file_path
+                                broadcast.content_type = 'video'
+                        else:
+                            broadcast.content_file_path = file_path
+                            broadcast.content_type = 'image'
         
         broadcast.is_active = 'is_active' in request.form
         
@@ -1552,25 +1612,50 @@ def broadcast_edit(broadcast_id):
                     ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
                     is_video = ext in ['mp4', 'webm', 'mov', 'avi']
                     
-                    if not is_video and not validate_image_file(file):
-                         flash('Le fichier image est invalide.', 'error')
+                    is_valid = False
+                    if is_video:
+                        if validate_video_file(file):
+                            is_valid = True
+                        else:
+                            flash('Le fichier vidéo est invalide (format non reconnu).', 'error')
                     else:
-                        if broadcast.content_file_path and os.path.exists(broadcast.content_file_path):
-                            os.remove(broadcast.content_file_path)
+                        if validate_image_file(file):
+                            is_valid = True
+                        else:
+                            flash('Le fichier image est invalide.', 'error')
 
+                    if is_valid:
                         filename = secure_filename(file.filename)
                         new_filename = f"broadcast_{secrets.token_hex(8)}_{filename}"
                         upload_path = os.path.join('static', 'uploads', 'broadcasts')
                         os.makedirs(upload_path, exist_ok=True)
                         file_path = os.path.join(upload_path, new_filename)
+
+                        # Store old path to remove later if new one is valid
+                        old_path = broadcast.content_file_path
                         file.save(file_path)
-                        broadcast.content_file_path = file_path
-                    
-                    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-                    if ext in ['mp4', 'webm', 'mov', 'avi']:
-                        broadcast.content_type = 'video'
-                    else:
-                        broadcast.content_type = 'image'
+
+                        if is_video:
+                            if not get_video_info(file_path):
+                                if os.path.exists(file_path):
+                                    os.remove(file_path)
+                                flash('Le fichier vidéo est corrompu ou illisible.', 'error')
+                            else:
+                                if old_path and os.path.exists(old_path):
+                                    try:
+                                        os.remove(old_path)
+                                    except OSError:
+                                        pass
+                                broadcast.content_file_path = file_path
+                                broadcast.content_type = 'video'
+                        else:
+                            if old_path and os.path.exists(old_path):
+                                try:
+                                    os.remove(old_path)
+                                except OSError:
+                                    pass
+                            broadcast.content_file_path = file_path
+                            broadcast.content_type = 'image'
         
         broadcast.is_active = 'is_active' in request.form
         
