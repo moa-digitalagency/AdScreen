@@ -75,7 +75,7 @@ def build_playlist(screen_id):
         is_active=True
     ).all()
     
-    today = datetime.now().date()
+    today = datetime.utcnow().date()
     for internal in internal_contents:
         if internal.start_date and internal.start_date > today:
             continue
@@ -171,17 +171,14 @@ def get_scheduled_broadcasts_for_screen(screen):
     Returns:
         list: List of scheduled broadcast dicts sorted by priority and scheduled time
     """
-    all_broadcasts = Broadcast.query.filter(
-        Broadcast.is_active == True,
+    now = datetime.utcnow()
+    all_broadcasts = Broadcast.get_active_broadcasts_query(screen, now=now).filter(
         Broadcast.broadcast_type == Broadcast.BROADCAST_TYPE_CONTENT
     ).all()
     
     scheduled_broadcasts = []
-    now = datetime.now()
     
     for broadcast in all_broadcasts:
-        if not broadcast.applies_to_screen(screen):
-            continue
         
         if broadcast.schedule_mode == Broadcast.SCHEDULE_MODE_SCHEDULED:
             if broadcast.recurrence_type == Broadcast.RECURRENCE_NONE:
@@ -306,7 +303,7 @@ def build_timeline_with_overrides(base_playlist, override_broadcasts):
     if not override_broadcasts:
         return base_playlist
     
-    now = datetime.now()
+    now = datetime.utcnow()
     timeline = []
     current_time = now
     
@@ -371,20 +368,16 @@ def get_active_scheduled_broadcast(screen):
     Returns:
         Broadcast or None: The broadcast that should play now, if any
     """
-    all_broadcasts = Broadcast.query.filter(
-        Broadcast.is_active == True,
+    now = datetime.utcnow()
+    all_broadcasts = Broadcast.get_active_broadcasts_query(screen, now=now).filter(
         Broadcast.broadcast_type == Broadcast.BROADCAST_TYPE_CONTENT,
         Broadcast.schedule_mode == Broadcast.SCHEDULE_MODE_SCHEDULED,
         Broadcast.override_playlist == True
     ).all()
     
-    now = datetime.now()
-    
     for broadcast in all_broadcasts:
-        if not broadcast.applies_to_screen(screen):
-            continue
         
-        if broadcast.should_trigger_now():
+        if broadcast.should_trigger_now(now=now):
             return broadcast
     
     return None

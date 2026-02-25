@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime, timedelta
+from sqlalchemy import or_, and_, func
 import zoneinfo
 
 
@@ -174,6 +175,54 @@ class Broadcast(db.Model):
             return False
         
         return False
+
+    @classmethod
+    def get_active_broadcasts_query(cls, screen, now=None):
+        """
+        Get a SQLAlchemy query for all active broadcasts that apply to a given screen.
+        This replaces the in-memory filtering of applies_to_screen for better performance.
+        """
+        if not screen or not screen.is_active:
+            return cls.query.filter(db.false())
+
+        org = screen.organization
+        if now is None:
+            now = datetime.utcnow()
+
+        # Base activity filters
+        query = cls.query.filter(
+            cls.is_active == True,
+            or_(cls.start_datetime == None, cls.start_datetime <= now),
+            or_(cls.end_datetime == None, cls.end_datetime >= now)
+        )
+
+        # Organization type filters
+        if org:
+            if org.is_paid:
+                query = query.filter(cls.target_org_type.in_([cls.ORG_TYPE_ALL, cls.ORG_TYPE_PAID]))
+            else:
+                query = query.filter(cls.target_org_type.in_([cls.ORG_TYPE_ALL, cls.ORG_TYPE_FREE]))
+        else:
+            return cls.query.filter(db.false())
+
+        # Targeting filters
+        target_filters = [
+            and_(cls.target_type == cls.TARGET_SCREEN, cls.target_screen_id == screen.id),
+            and_(cls.target_type == cls.TARGET_ORGANIZATION, cls.target_organization_id == screen.organization_id)
+        ]
+
+        if org.country:
+            target_filters.append(and_(cls.target_type == cls.TARGET_COUNTRY, cls.target_country == org.country))
+
+            if org.city:
+                target_filters.append(and_(
+                    cls.target_type == cls.TARGET_CITY,
+                    cls.target_country == org.country,
+                    func.lower(cls.target_city) == org.city.lower()
+                ))
+
+        query = query.filter(or_(*target_filters))
+        return query
     
     def _apply_org_type_filter(self, query, Organization):
         if self.target_org_type == self.ORG_TYPE_PAID:
@@ -321,14 +370,15 @@ class Broadcast(db.Model):
             return "Personnalisée"
         return "Non définie"
     
-    def should_trigger_now(self):
+    def should_trigger_now(self, now=None):
         if self.schedule_mode == self.SCHEDULE_MODE_IMMEDIATE:
             return self.is_currently_active()
         
         if not self.scheduled_datetime:
             return False
         
-        now = datetime.now()
+        if now is None:
+            now = datetime.utcnow()
         
         if self.recurrence_type == self.RECURRENCE_NONE:
             time_diff = abs((now - self.scheduled_datetime).total_seconds())
@@ -377,7 +427,7 @@ class Broadcast(db.Model):
     
     def get_next_occurrence(self, from_datetime=None):
         if from_datetime is None:
-            from_datetime = datetime.now()
+            from_datetime = datetime.utcnow()
         
         if self.schedule_mode == self.SCHEDULE_MODE_IMMEDIATE:
             return None
