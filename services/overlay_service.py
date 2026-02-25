@@ -216,20 +216,18 @@ def sync_broadcast_overlays(screen):
     """
     from models.broadcast import Broadcast
     
-    active_broadcasts = Broadcast.query.filter_by(
-        is_active=True,
+    active_broadcasts = Broadcast.get_active_broadcasts_query(screen).filter_by(
         broadcast_type=Broadcast.BROADCAST_TYPE_OVERLAY
     ).all()
     
     for broadcast in active_broadcasts:
-        if broadcast.applies_to_screen(screen):
-            existing = ScreenOverlay.query.filter_by(
-                screen_id=screen.id,
-                source=ScreenOverlay.SOURCE_BROADCAST,
-                source_broadcast_id=broadcast.id
-            ).first()
-            
-            if not existing:
-                create_overlay_from_broadcast(broadcast, screen)
+        existing = ScreenOverlay.query.filter_by(
+            screen_id=screen.id,
+            source=ScreenOverlay.SOURCE_BROADCAST,
+            source_broadcast_id=broadcast.id
+        ).first()
+
+        if not existing:
+            create_overlay_from_broadcast(broadcast, screen)
     
     cleanup_expired_broadcast_overlays()

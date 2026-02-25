@@ -224,7 +224,7 @@ def get_playlist():
             in_playlist=True
         ).all()
 
-        today = datetime.now().date()
+        today = datetime.utcnow().date()
         for internal in internal_contents:
             if internal.start_date and internal.start_date > today:
                 continue
@@ -269,11 +269,10 @@ def get_playlist():
 
         active_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
 
-        active_broadcasts = Broadcast.query.filter_by(is_active=True).all()
+        active_broadcasts = Broadcast.get_active_broadcasts_query(screen, now=datetime.utcnow()).all()
         for broadcast in active_broadcasts:
-            if broadcast.applies_to_screen(screen):
-                if broadcast.broadcast_type == 'content':
-                    playlist.append(broadcast.to_content_dict())
+            if broadcast.broadcast_type == 'content':
+                playlist.append(broadcast.to_content_dict())
 
         # Optimization: Efficiently fetch relevant ads
         now = datetime.utcnow()
