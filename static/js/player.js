@@ -105,6 +105,7 @@ const player = {
   stateSaverInterval: null,
   networkRetryCount: 0,
   maxNetworkRetries: 10,
+  isFetchingPlaylist: false,
 
   CONTROLS_HIDE_DELAY: 10000,
   PLAYLIST_REFRESH_INTERVAL: 5000,
@@ -589,6 +590,9 @@ function updateInfoDisplay(item) {
 }
 
 async function fetchPlaylist() {
+  if (player.isFetchingPlaylist) return;
+  player.isFetchingPlaylist = true;
+
   try {
     const headers = {};
     if (player.lastEtag) {
@@ -598,7 +602,12 @@ async function fetchPlaylist() {
     const response = await fetch("/player/api/playlist", { headers });
 
     if (response.status === 304) {
+      player.isFetchingPlaylist = false;
       return;
+    }
+
+    if (!response.ok && response.status !== 200) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     if (response.ok && response.headers.has("ETag")) {
@@ -607,9 +616,35 @@ async function fetchPlaylist() {
 
     const data = await response.json();
 
-    if (data.error) {
+    // Reset network retries on success
+    resetNetworkRetries();
+
+    if (data.error && !data.offline) {
       debug("Playlist error: " + data.error);
+      player.isFetchingPlaylist = false;
       return;
+    }
+
+    // Handled in step 2: If offline fallback is triggered by the SW
+    if (data.offline) {
+      debug("Offline mode detected, using cache if available");
+      // Continue to use cached data or fall back to local filler loop
+      if (offlineManager.cachedPlaylist) {
+        Object.assign(data, offlineManager.cachedPlaylist);
+        data.offline = true;
+      } else {
+        // Fallback: If no cache, loop over available internal/filler items
+        // to prevent empty screen error.
+        debug("No offline cache found. Attempting to survive on existing playlist fillers.");
+        const fillers = player.playlist.filter(item => item.category === 'filler' || item.category === 'internal');
+        if (fillers.length > 0) {
+           data.playlist = fillers;
+           data.mode = "playlist";
+        }
+      }
+    } else {
+      // Save valid online playlist to cache
+      offlineManager.savePlaylistToCache(data);
     }
 
     const newMode = data.mode || "playlist";
@@ -704,6 +739,9 @@ async function fetchPlaylist() {
     }
   } catch (error) {
     debug("Fetch playlist error: " + error.message);
+    handleNetworkFailure();
+  } finally {
+    player.isFetchingPlaylist = false;
   }
 }
 
