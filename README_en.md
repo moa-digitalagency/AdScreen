@@ -81,8 +81,8 @@ python main.py
 ```
 
 ## Documentation
-For a deep understanding of the system, refer to the official documents in the `docs/` folder:
+For a deep understanding of the system, refer to the official documents (in English and French) in the `docs/` folder. This `README_en.md` file is the main entry point.
 
-*   📖 **[Feature Bible](docs/Shabaka_AdScreen_features_full_list_en.md)**: Exhaustive list of business rules.
-*   ⚙️ **[Technical Manual](docs/Shabaka_AdScreen_Technical_Manual_en.md)**: Stack, Architecture, Security.
+*   📖 **[Feature Bible](docs/Shabaka_AdScreen_features_full_list_en.md)**: Exhaustive list of business rules and algorithms.
+*   ⚙️ **[Technical Manual](docs/Shabaka_AdScreen_Technical_Manual_en.md)**: Stack, Architecture, High Availability, Security.
 *   🎓 **[User Guide](docs/Shabaka_AdScreen_User_Guide_en.md)**: Tutorials for Admins and Clients.

@@ -47,7 +47,7 @@ The Player uses a strict priority queue to decide which content to display:
 5.  **Filler (Priority 20):** Default filler content (Weather, News, Agency Logo) to avoid black screens.
 
 ### 3.2 Technical Validation
-*   **Videos:** Mandatory MP4 format. Automatic conversion to HLS for adaptive streaming.
+*   **Videos:** Mandatory MP4 format. Videos are processed via FFmpeg to generate HLS (HTTP Live Streaming) streams, allowing for adaptive and robust playback, even with fluctuating bandwidth.
 *   **Images:** JPG, PNG. Configurable display duration (default: 10s).
 *   **Max Size:** Limited by server configuration (default 100MB).
 
@@ -87,8 +87,9 @@ The price of a campaign is dynamically calculated according to the formula:
 
 ### 6.1 Playback Logic
 *   The Player is a Web application (HTML/JS) running on the screen's browser.
-*   It caches content for offline operation (if supported by the browser).
-*   It polls the `/player/api/playlist` API to get the playback order.
+*   It caches content via the `CacheStorage` API and a Service Worker for offline operation (Offline Fallback).
+*   It uses `hls.js` for playback of video streams, with a fallback to `mpegts.js` if necessary.
+*   It polls the `/player/api/playlist` API to get the playback order. In case of an error or empty screen, the backend returns a 200 status with "Filler" content to ensure the screen never goes black.
 
 ### 6.2 Player Security
 *   Session Token Authentication.

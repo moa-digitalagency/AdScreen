@@ -47,7 +47,7 @@ Le Player utilise une file de priorité stricte pour décider quel contenu affic
 5.  **Filler (Priorité 20) :** Contenu de remplissage par défaut (Météo, News, Logo Agence) pour éviter l'écran noir.
 
 ### 3.2 Validation Technique
-*   **Vidéos :** Format MP4 obligatoire. Conversion automatique en HLS pour le streaming adaptatif.
+*   **Vidéos :** Format MP4 obligatoire. Les vidéos sont traitées via FFmpeg pour générer des flux HLS (HTTP Live Streaming), permettant une lecture adaptative et robuste, même en cas de fluctuation de la bande passante.
 *   **Images :** JPG, PNG. Durée d'affichage configurable (défaut : 10s).
 *   **Poids Max :** Limité par la configuration serveur (défaut 100MB).
 
@@ -87,8 +87,9 @@ Le prix d'une campagne est calculé dynamiquement selon la formule :
 
 ### 6.1 Logique de Lecture
 *   Le Player est une application Web (HTML/JS) tournant sur le navigateur de l'écran.
-*   Il met en cache les contenus pour fonctionner hors-ligne (si supporté par le navigateur).
-*   Il interroge l'API `/player/api/playlist` pour obtenir l'ordre de diffusion.
+*   Il met en cache les contenus via l'API `CacheStorage` et un Service Worker pour fonctionner hors-ligne (Offline Fallback).
+*   Il utilise `hls.js` pour la lecture des flux vidéos avec un fallback vers `mpegts.js` si nécessaire.
+*   Il interroge l'API `/player/api/playlist` pour obtenir l'ordre de diffusion. En cas d'erreur ou d'écran vide, le backend renvoie un statut 200 avec des contenus "Filler" pour s'assurer que l'écran ne reste jamais noir.
 
 ### 6.2 Sécurité Player
 *   Authentification par Token de Session.
