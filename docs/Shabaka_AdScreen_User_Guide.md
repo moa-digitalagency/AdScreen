@@ -51,7 +51,7 @@ Lorsqu'un annonceur achète un slot, vous recevez une notification.
 4.  Le prix est calculé automatiquement.
 
 ### 3.2 Spécifications Techniques
-*   **Vidéos :** MP4 uniquement. Max 100MB.
+*   **Vidéos :** MP4 uniquement. Max 100MB. (Les vidéos sont converties automatiquement pour une diffusion optimale sans coupure).
 *   **Images :** JPG ou PNG haute résolution (1920x1080 recommandé).
 *   **Format :** Respectez l'orientation de l'écran cible (Paysage vs Portrait).
 

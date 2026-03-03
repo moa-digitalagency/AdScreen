@@ -46,32 +46,48 @@ The application is structured around **Blueprints** to isolate functional domain
 *   **JavaScript:** Vanilla JS (ES6+), no heavy client-side framework for the dashboard.
 
 ### 2.3 Database
-*   **System:** PostgreSQL Compatible (Prod) and SQLite (Dev).
-*   **Migrations:** Managed via `init_db.py` (Proprietary initialization script).
+*   **System:** PostgreSQL Compatible (Prod) and SQLite (Dev/Test).
+*   **Migrations:** Managed via `init_db.py` (Proprietary initialization script). The SQLAlchemy ORM handles dialect abstraction.
 
 ---
 
-## 3. Security & Compliance
+## 3. High Availability Architecture (24/7)
 
-### 3.1 Authentication
+To ensure uninterrupted content broadcasting on screens (fault tolerance), the Player integrates a robust high availability architecture:
+
+### 3.1 Caching and Service Worker (Offline Fallback)
+*   **Active Caching:** The Player utilizes the `CacheStorage` API and a **Service Worker** (`static/js/player-sw.js`) to cache the web application and multimedia content (videos, images) as they are played.
+*   **Network Fault Tolerance:** In the event of an internet connection loss, the Service Worker intercepts media requests and serves the cached versions. The Player continues to loop through the last valid playlist.
+*   **Automatic Recovery:** As soon as the connection is restored, the Player downloads new content in the background and updates its cache seamlessly.
+
+### 3.2 Smart Queue and LocalStorage
+*   **Local State Management:** The current playlist index, pending broadcast logs, and the last valid configuration are saved in the screen browser's `LocalStorage`.
+*   **Continuity After Restart:** In case of a power outage and physical screen restart, the Player retrieves its state from `LocalStorage` and resumes broadcasting immediately, without waiting for a distant server response if it's unreachable.
+*   **Deferred Synchronization:** Broadcast statistics (logs) generated during an offline period are stacked locally and sent to the server as a batch as soon as connectivity returns, guaranteeing that no billing data is lost.
+
+---
+
+## 4. Security & Compliance
+
+### 4.1 Authentication
 *   Passwords hashed via `werkzeug.security` (PBKDF2 or Scrypt).
 *   Session protection via `HttpOnly` and `Secure` cookies.
 
-### 3.2 CSRF Protection
+### 4.2 CSRF Protection
 *   Dual implementation: Session Token + Form/Header Token.
 *   Strict validation on all mutating methods (POST, PUT, DELETE, PATCH).
 *   Exceptions configured for critical Player endpoints (Heartbeat) to avoid service interruptions, secured by IP/Device validation.
 
-### 3.3 Security Headers
+### 4.3 Security Headers
 *   `X-Content-Type-Options: nosniff`
 *   `X-Frame-Options: SAMEORIGIN`
 *   `Strict-Transport-Security` (HSTS) in production.
 
 ---
 
-## 4. Data Model (Overview)
+## 5. Data Model (Overview)
 
-### 4.1 Core Entities
+### 5.1 Core Entities
 *   **User:** System user (Roles: Superadmin, Org Admin, User).
 *   **Organization:** Legal entity owning screens.
 *   **Screen:** Physical display device.
@@ -90,9 +106,9 @@ The application is structured around **Blueprints** to isolate functional domain
 
 ---
 
-## 5. Key Business Services
+## 6. Key Business Services
 
-### 5.1 Pricing Service (`services/pricing_service.py`)
+### 6.1 Pricing Service (`services/pricing_service.py`)
 Calculates campaign costs in real-time based on the complex pricing grid (Duration x Period x Screen).
 
 ### 5.2 Playlist Service (`services/playlist_service.py`)
