@@ -103,8 +103,6 @@ const player = {
   autoReloadTimer: null,
   recoveredState: null,
   stateSaverInterval: null,
-  recoveredState: null,
-  stateSaverInterval: null,
   networkRetryCount: 0,
   maxNetworkRetries: 10,
 
@@ -388,6 +386,7 @@ function playCurrentItem() {
 function playImage(item, duration, isResuming = false) {
   player.videoEl.pause();
   player.videoEl.removeAttribute("src");
+  player.videoEl.load(); // Cleanly close stream
   player.videoEl.style.display = "none";
 
   player.imageEl.style.display = "block";
@@ -406,7 +405,22 @@ function playImage(item, duration, isResuming = false) {
 
   player.imageEl.onerror = () => {
     debug("Image error: " + item.url);
-    scheduleNext(500);
+    advanceToNext();
+  };
+
+  player.imageEl.onstalled = () => {
+    debug("Image stalled: " + item.url);
+    advanceToNext();
+  };
+
+  player.imageEl.onwaiting = () => {
+    debug("Image waiting: " + item.url);
+    setTimeout(() => {
+        if (player.state === PlayerState.PLAYING && player.imageEl.src === item.url && !player.imageEl.complete) {
+            debug("Image waiting timeout: " + item.url);
+            advanceToNext();
+        }
+    }, 5000);
   };
 
   const slotDuration = duration * 1000;
@@ -418,11 +432,18 @@ function playImage(item, duration, isResuming = false) {
 }
 function playVideo(item, duration, isResuming = false) {
   player.imageEl.style.display = "none";
+  player.imageEl.removeAttribute("src"); // Clear previous image
+
+  player.videoEl.pause();
+  player.videoEl.removeAttribute("src"); // Clear previous video src
+  player.videoEl.load(); // Ensure old stream is dropped
 
   player.videoEl.onended = null;
   player.videoEl.onerror = null;
   player.videoEl.onloadeddata = null;
   player.videoEl.ontimeupdate = null;
+  player.videoEl.onstalled = null;
+  player.videoEl.onwaiting = null;
 
   player.videoEl.style.display = "block";
   player.videoEl.src = item.url;
@@ -494,7 +515,28 @@ function playVideo(item, duration, isResuming = false) {
 
   player.videoEl.onerror = (e) => {
     debug("Video error: " + (e.message || "unknown"));
-    scheduleNext(500);
+    advanceToNext();
+  };
+
+  player.videoEl.onstalled = () => {
+    debug("Video stalled: " + item.url);
+    // If stalled for too long, skip
+    setTimeout(() => {
+        if (player.state === PlayerState.PLAYING && player.videoEl.src === item.url && player.videoEl.readyState < 3) {
+            debug("Video stalled timeout, advancing: " + item.url);
+            advanceToNext();
+        }
+    }, 5000);
+  };
+
+  player.videoEl.onwaiting = () => {
+    debug("Video waiting: " + item.url);
+    setTimeout(() => {
+        if (player.state === PlayerState.PLAYING && player.videoEl.src === item.url && player.videoEl.readyState < 3) {
+            debug("Video waiting timeout, advancing: " + item.url);
+            advanceToNext();
+        }
+    }, 5000);
   };
 
   player.videoEl.ontimeupdate = () => {
@@ -1789,58 +1831,7 @@ function startStateSaver() {
   player.stateSaverInterval = setInterval(savePlayerState, 1000);
 }
 
-function savePlayerState() {
-  if (
-    player.state !== PlayerState.PLAYING ||
-    player.playlist.length === 0 ||
-    !player.currentItemStartTime
-  ) {
-    return;
-  }
 
-  const item = player.playlist[player.currentIndex];
-  if (!item) return;
-
-  const state = {
-    timestamp: Date.now(),
-    currentIndex: player.currentIndex,
-    itemId: item.id,
-    elapsedInSlot: Date.now() - player.currentItemStartTime,
-    videoTime:
-      player.videoEl && !player.videoEl.paused ? player.videoEl.currentTime : 0,
-  };
-
-  try {
-    localStorage.setItem("shabakaPlayerState", JSON.stringify(state));
-  } catch (e) {
-    debug("Error saving state: " + e.message);
-  }
-}
-
-function restorePlayerState() {
-  try {
-    const saved = localStorage.getItem("shabakaPlayerState");
-    if (!saved) return null;
-
-    const state = JSON.parse(saved);
-
-    // Only restore if less than 5 minutes old
-    if (Date.now() - state.timestamp > 300000) {
-      localStorage.removeItem("shabakaPlayerState");
-      return null;
-    }
-
-    return state;
-  } catch (e) {
-    return null;
-  }
-}
-
-// Add state saving interval
-function startStateSaver() {
-  if (player.stateSaverInterval) clearInterval(player.stateSaverInterval);
-  player.stateSaverInterval = setInterval(savePlayerState, 1000);
-}
 
 async function startPlayer() {
   document.getElementById("startScreen").classList.add("hidden");
@@ -1871,7 +1862,6 @@ async function startPlayer() {
   startWatchdog();
   startMemoryCleanup();
   scheduleAutoReload();
-  startStateSaver();
   startStateSaver();
 
   // Handle visibility changes (browser tab hidden/shown)
