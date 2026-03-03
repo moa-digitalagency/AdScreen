@@ -149,106 +149,223 @@ def get_playlist():
     
     response_data = {}
 
-    if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
-        from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
-        
-        sync_broadcast_overlays(screen)
-        
-        active_overlay_objects = get_active_overlays_for_screen(screen.id)
-        iptv_overlays = [o.to_dict() for o in active_overlay_objects]
-        
-        iptv_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
-        
-        response_data = {
-            'screen': {
-                'id': screen.id,
-                'name': screen.name,
-                'resolution': f'{screen.resolution_width}x{screen.resolution_height}',
-                'orientation': screen.orientation
-            },
-            'mode': 'iptv',
-            'iptv': {
-                'url': screen.get_iptv_url(),
-                'name': screen.current_iptv_channel_name
-            },
-            'playlist': [],
-            'overlays': iptv_overlays
-        }
-    else:
-        playlist = []
+    try:
+        if screen.current_mode == 'iptv' and screen.iptv_enabled and screen.current_iptv_channel:
+            from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
 
-        current_hour = datetime.now().hour
-        current_period = None
-        for period in screen.time_periods:
-            if period.start_hour <= period.end_hour:
-                if period.start_hour <= current_hour < period.end_hour:
-                    current_period = period
-                    break
-            else:
-                if current_hour >= period.start_hour or current_hour < period.end_hour:
-                    current_period = period
-                    break
+            sync_broadcast_overlays(screen)
 
-        # Optimized query with joinedload
-        paid_contents = Content.query.options(joinedload(Content.booking)).join(Booking).filter(
-            Content.screen_id == screen.id,
-            Content.status == 'approved',
-            Content.in_playlist == True,
-            Booking.status == 'active',
-            Booking.plays_completed < Booking.num_plays
-        ).all()
+            active_overlay_objects = get_active_overlays_for_screen(screen.id)
+            iptv_overlays = [o.to_dict() for o in active_overlay_objects]
 
-        for content in paid_contents:
-            if current_period and content.booking.time_period_id:
-                if content.booking.time_period_id != current_period.id:
+            iptv_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
+
+            response_data = {
+                'screen': {
+                    'id': screen.id,
+                    'name': screen.name,
+                    'resolution': f'{screen.resolution_width}x{screen.resolution_height}',
+                    'orientation': screen.orientation
+                },
+                'mode': 'iptv',
+                'iptv': {
+                    'url': screen.get_iptv_url(),
+                    'name': screen.current_iptv_channel_name
+                },
+                'playlist': [],
+                'overlays': iptv_overlays
+            }
+        else:
+            playlist = []
+
+            current_hour = datetime.now().hour
+            current_period = None
+            for period in screen.time_periods:
+                if period.start_hour <= period.end_hour:
+                    if period.start_hour <= current_hour < period.end_hour:
+                        current_period = period
+                        break
+                else:
+                    if current_hour >= period.start_hour or current_hour < period.end_hour:
+                        current_period = period
+                        break
+
+            # Optimized query with joinedload
+            paid_contents = Content.query.options(joinedload(Content.booking)).join(Booking).filter(
+                Content.screen_id == screen.id,
+                Content.status == 'approved',
+                Content.in_playlist == True,
+                Booking.status == 'active',
+                Booking.plays_completed < Booking.num_plays
+            ).all()
+
+            for content in paid_contents:
+                if current_period and content.booking.time_period_id:
+                    if content.booking.time_period_id != current_period.id:
+                        continue
+
+                duration = content.booking.slot_duration if content.booking else (content.duration_seconds or 10)
+                remaining = content.booking.num_plays - content.booking.plays_completed if content.booking else 0
+
+                playlist.append({
+                    'id': content.id,
+                    'type': content.content_type,
+                    'url': f'/{content.file_path}',
+                    'duration': duration,
+                    'priority': 100,
+                    'category': 'paid',
+                    'booking_id': content.booking.id if content.booking else None,
+                    'remaining_plays': remaining,
+                    'name': content.original_filename or content.filename
+                })
+
+            internal_contents = InternalContent.query.filter_by(
+                screen_id=screen.id,
+                is_active=True,
+                in_playlist=True
+            ).all()
+
+            today = datetime.utcnow().date()
+            for internal in internal_contents:
+                if internal.start_date and internal.start_date > today:
+                    continue
+                if internal.end_date and internal.end_date < today:
                     continue
 
-            duration = content.booking.slot_duration if content.booking else (content.duration_seconds or 10)
-            remaining = content.booking.num_plays - content.booking.plays_completed if content.booking else 0
+                playlist.append({
+                    'id': internal.id,
+                    'type': internal.content_type,
+                    'url': f'/{internal.file_path}',
+                    'duration': internal.duration_seconds or 10,
+                    'priority': internal.priority,
+                    'category': 'internal',
+                    'name': internal.name
+                })
 
-            playlist.append({
-                'id': content.id,
-                'type': content.content_type,
-                'url': f'/{content.file_path}',
-                'duration': duration,
-                'priority': 100,
-                'category': 'paid',
-                'booking_id': content.booking.id if content.booking else None,
-                'remaining_plays': remaining,
-                'name': content.original_filename or content.filename
-            })
+            fillers = Filler.query.filter_by(
+                screen_id=screen.id,
+                is_active=True,
+                in_playlist=True
+            ).all()
 
-        internal_contents = InternalContent.query.filter_by(
+            for filler in fillers:
+                playlist.append({
+                    'id': filler.id,
+                    'type': filler.content_type,
+                    'url': f'/{filler.file_path}',
+                    'duration': filler.duration_seconds or 10,
+                    'priority': 20,
+                    'category': 'filler',
+                    'name': filler.filename
+                })
+
+            playlist.sort(key=lambda x: x['priority'], reverse=True)
+
+            from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
+
+            sync_broadcast_overlays(screen)
+
+            active_overlay_objects = get_active_overlays_for_screen(screen.id)
+            active_overlays = [o.to_dict() for o in active_overlay_objects]
+
+            active_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
+
+            active_broadcasts = Broadcast.get_active_broadcasts_query(screen, now=datetime.utcnow()).all()
+            for broadcast in active_broadcasts:
+                if broadcast.broadcast_type == 'content':
+                    playlist.append(broadcast.to_content_dict())
+
+            # Optimization: Efficiently fetch relevant ads
+            now = datetime.utcnow()
+            is_paid_org = screen.organization.is_paid if screen.organization else False
+            org_id = screen.organization_id
+            org_city = screen.organization.city.lower() if screen.organization and screen.organization.city else ''
+            org_country = screen.organization.country if screen.organization else ''
+
+            # Build filter conditions
+            status_filter = AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
+
+            time_filter = or_(
+                AdContent.schedule_type == AdContent.SCHEDULE_IMMEDIATE,
+                and_(
+                    AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
+                    or_(AdContent.start_date == None, AdContent.start_date <= now),
+                    or_(AdContent.end_date == None, AdContent.end_date >= now)
+                )
+            )
+
+            org_type_filter = or_(
+                AdContent.target_org_type == AdContent.ORG_TYPE_ALL,
+                AdContent.target_org_type == (AdContent.ORG_TYPE_PAID if is_paid_org else AdContent.ORG_TYPE_FREE)
+            )
+
+            target_filter = or_(
+                and_(AdContent.target_type == AdContent.TARGET_SCREEN, AdContent.target_screen_id == screen.id),
+                and_(AdContent.target_type == AdContent.TARGET_ORGANIZATION, AdContent.target_organization_id == org_id),
+                and_(AdContent.target_type == AdContent.TARGET_CITY,
+                     func.lower(AdContent.target_city) == org_city,
+                     AdContent.target_country == org_country),
+                and_(AdContent.target_type == AdContent.TARGET_COUNTRY, AdContent.target_country == org_country),
+                and_(AdContent.target_type == AdContent.TARGET_SCREENS,
+                     AdContent.screens.any(id=screen.id)
+                )
+            )
+
+            active_ad_contents = AdContent.query.filter(
+                status_filter,
+                time_filter,
+                org_type_filter,
+                target_filter
+            ).all()
+
+            status_changed = False
+            for ad in active_ad_contents:
+                # Final check in Python (handles edge cases and logic not fully covered by SQL)
+                # We skip detailed targeting checks because the SQL query already filters by target.
+                # This avoids N+1 queries for TARGET_SCREENS.
+                if not ad.applies_to_screen(screen, check_targeting=False):
+                    continue
+
+                old_status = ad.status
+                ad.update_status()
+                if ad.status != old_status:
+                    status_changed = True
+
+                if ad.is_currently_active():
+                    ad_dict = ad.to_content_dict()
+                    ad_dict['priority'] = 50
+                    playlist.append(ad_dict)
+
+            if status_changed:
+                db.session.commit()
+
+            playlist.sort(key=lambda x: x['priority'], reverse=True)
+
+            response_data = {
+                'screen': {
+                    'id': screen.id,
+                    'name': screen.name,
+                    'resolution': f'{screen.resolution_width}x{screen.resolution_height}',
+                    'orientation': screen.orientation
+                },
+                'mode': 'playlist',
+                'playlist': playlist,
+                'overlays': active_overlays
+            }
+    except Exception as e:
+        logger.error(f"Error generating playlist for screen {screen.id}: {str(e)}")
+        # SEC/RESILIENCE: Never return a raw error or empty playlist. Ensure screen stays alive with Fillers.
+        db.session.rollback()
+
+        fallback_fillers = Filler.query.filter_by(
             screen_id=screen.id,
             is_active=True,
             in_playlist=True
         ).all()
 
-        today = datetime.utcnow().date()
-        for internal in internal_contents:
-            if internal.start_date and internal.start_date > today:
-                continue
-            if internal.end_date and internal.end_date < today:
-                continue
-
-            playlist.append({
-                'id': internal.id,
-                'type': internal.content_type,
-                'url': f'/{internal.file_path}',
-                'duration': internal.duration_seconds or 10,
-                'priority': internal.priority,
-                'category': 'internal',
-                'name': internal.name
-            })
-        
-        fillers = Filler.query.filter_by(
-            screen_id=screen.id,
-            is_active=True,
-            in_playlist=True
-        ).all()
-        
-        for filler in fillers:
-            playlist.append({
+        fallback_playlist = []
+        for filler in fallback_fillers:
+            fallback_playlist.append({
                 'id': filler.id,
                 'type': filler.content_type,
                 'url': f'/{filler.file_path}',
@@ -257,88 +374,6 @@ def get_playlist():
                 'category': 'filler',
                 'name': filler.filename
             })
-        
-        playlist.sort(key=lambda x: x['priority'], reverse=True)
-
-        from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
-
-        sync_broadcast_overlays(screen)
-
-        active_overlay_objects = get_active_overlays_for_screen(screen.id)
-        active_overlays = [o.to_dict() for o in active_overlay_objects]
-
-        active_overlays.sort(key=lambda x: x.get('priority', 50), reverse=True)
-
-        active_broadcasts = Broadcast.get_active_broadcasts_query(screen, now=datetime.utcnow()).all()
-        for broadcast in active_broadcasts:
-            if broadcast.broadcast_type == 'content':
-                playlist.append(broadcast.to_content_dict())
-
-        # Optimization: Efficiently fetch relevant ads
-        now = datetime.utcnow()
-        is_paid_org = screen.organization.is_paid if screen.organization else False
-        org_id = screen.organization_id
-        org_city = screen.organization.city.lower() if screen.organization and screen.organization.city else ''
-        org_country = screen.organization.country if screen.organization else ''
-
-        # Build filter conditions
-        status_filter = AdContent.status.in_([AdContent.STATUS_ACTIVE, AdContent.STATUS_SCHEDULED])
-
-        time_filter = or_(
-            AdContent.schedule_type == AdContent.SCHEDULE_IMMEDIATE,
-            and_(
-                AdContent.schedule_type == AdContent.SCHEDULE_PERIOD,
-                or_(AdContent.start_date == None, AdContent.start_date <= now),
-                or_(AdContent.end_date == None, AdContent.end_date >= now)
-            )
-        )
-
-        org_type_filter = or_(
-            AdContent.target_org_type == AdContent.ORG_TYPE_ALL,
-            AdContent.target_org_type == (AdContent.ORG_TYPE_PAID if is_paid_org else AdContent.ORG_TYPE_FREE)
-        )
-
-        target_filter = or_(
-            and_(AdContent.target_type == AdContent.TARGET_SCREEN, AdContent.target_screen_id == screen.id),
-            and_(AdContent.target_type == AdContent.TARGET_ORGANIZATION, AdContent.target_organization_id == org_id),
-            and_(AdContent.target_type == AdContent.TARGET_CITY,
-                 func.lower(AdContent.target_city) == org_city,
-                 AdContent.target_country == org_country),
-            and_(AdContent.target_type == AdContent.TARGET_COUNTRY, AdContent.target_country == org_country),
-            and_(AdContent.target_type == AdContent.TARGET_SCREENS,
-                 AdContent.screens.any(id=screen.id)
-            )
-        )
-
-        active_ad_contents = AdContent.query.filter(
-            status_filter,
-            time_filter,
-            org_type_filter,
-            target_filter
-        ).all()
-
-        status_changed = False
-        for ad in active_ad_contents:
-            # Final check in Python (handles edge cases and logic not fully covered by SQL)
-            # We skip detailed targeting checks because the SQL query already filters by target.
-            # This avoids N+1 queries for TARGET_SCREENS.
-            if not ad.applies_to_screen(screen, check_targeting=False):
-                continue
-
-            old_status = ad.status
-            ad.update_status()
-            if ad.status != old_status:
-                status_changed = True
-
-            if ad.is_currently_active():
-                ad_dict = ad.to_content_dict()
-                ad_dict['priority'] = 50
-                playlist.append(ad_dict)
-
-        if status_changed:
-            db.session.commit()
-
-        playlist.sort(key=lambda x: x['priority'], reverse=True)
 
         response_data = {
             'screen': {
@@ -348,8 +383,9 @@ def get_playlist():
                 'orientation': screen.orientation
             },
             'mode': 'playlist',
-            'playlist': playlist,
-            'overlays': active_overlays
+            'playlist': fallback_playlist,
+            'overlays': [],
+            'error_recovered': True
         }
 
     # ETag generation

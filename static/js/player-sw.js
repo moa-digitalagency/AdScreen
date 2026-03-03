@@ -101,17 +101,26 @@ async function handlePlaylistRequest(request) {
     const cache = await caches.open(API_CACHE_NAME);
     
     try {
-        const networkResponse = await fetch(request);
+        // We use an AbortController to implement a timeout on the fetch,
+        // so we can fall back to the cache if the network is too slow or dropping packets
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+        const networkResponse = await fetch(request, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (networkResponse.ok) {
             console.log('[SW] Caching playlist response');
             cache.put(request, networkResponse.clone());
             
             const playlistData = await networkResponse.clone().json();
             precachePlaylistMedia(playlistData);
+        } else if (networkResponse.status >= 500) {
+             throw new Error("Server error, trying cache fallback");
         }
         return networkResponse;
     } catch (error) {
-        console.log('[SW] Network failed, serving cached playlist');
+        console.log('[SW] Network failed (or timeout/5xx), serving cached playlist');
         const cachedResponse = await cache.match(request);
         if (cachedResponse) {
             return cachedResponse;
