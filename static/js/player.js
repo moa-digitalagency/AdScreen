@@ -121,13 +121,16 @@ const player = {
 };
 
 function debug(msg) {
-  console.log("[Player]", msg);
   player.lastActivityTime = Date.now();
-  if (player.debugEl) {
-    const time = new Date().toLocaleTimeString();
-    player.debugEl.innerHTML =
-      `[${time}] ${msg}<br>` +
-      (player.debugEl.innerHTML || "").split("<br>").slice(0, 10).join("<br>");
+  // Only show debug output when ?debug=1 is in the URL
+  if (window.location.search.includes('debug=1')) {
+    console.log("[Player]", msg);
+    if (player.debugEl) {
+      const time = new Date().toLocaleTimeString();
+      player.debugEl.innerHTML =
+        `[${time}] ${msg}<br>` +
+        (player.debugEl.innerHTML || "").split("<br>").slice(0, 10).join("<br>");
+    }
   }
 }
 
@@ -194,13 +197,26 @@ function startMemoryCleanup() {
         .join("<br>");
     }
 
-    // Release blob URLs for images
-    if (
-      player.imageEl &&
-      player.imageEl.src &&
-      player.imageEl.src.startsWith("blob:")
-    ) {
-      URL.revokeObjectURL(player.imageEl.src);
+    // Release blob URLs for images (only revoke actual blob: URLs)
+    if (player.imageEl && player.imageEl.src) {
+      try {
+        const src = player.imageEl.src;
+        if (src.startsWith("blob:")) {
+          URL.revokeObjectURL(src);
+          player.imageEl.removeAttribute("src");
+        }
+      } catch (e) {
+        // Ignore revocation errors
+      }
+    }
+    // Also clean up video element
+    if (player.videoEl && player.videoEl.src) {
+      try {
+        const src = player.videoEl.src;
+        if (src.startsWith("blob:")) {
+          URL.revokeObjectURL(src);
+        }
+      } catch (e) {}
     }
 
     // Force garbage collection hint
@@ -271,7 +287,18 @@ function handleNetworkFailure() {
       fetchPlaylist();
     }, backoffDelay);
   } else {
-    debug("Max network retries reached, waiting for connection...");
+    debug("Max network retries reached. Falling back to cached content...");
+    // Play cached fillers while waiting for network
+    if (player.playlist.length > 0) {
+      const fillers = player.playlist.filter(item => item.category === 'filler' || item.category === 'internal');
+      if (fillers.length > 0) {
+        player.playlist = fillers;
+        if (player.state === PlayerState.IDLE) {
+          player.currentIndex = 0;
+          playCurrentItem();
+        }
+      }
+    }
     // Reset retry count after a longer wait
     setTimeout(() => {
       player.networkRetryCount = 0;
@@ -349,6 +376,12 @@ function playCurrentItem() {
   }
 
   const item = player.playlist[player.currentIndex];
+  // Guard against stale paid content (booking may have expired between fetch and play)
+  if (item && item.category === 'paid' && item.remaining_plays !== undefined && item.remaining_plays <= 0) {
+    debug("Skipping exhausted paid content: " + (item.name || item.id));
+    scheduleNext(100);
+    return;
+  }
   if (!item) {
     debug("Invalid item at index " + player.currentIndex);
     player.currentIndex = 0;
@@ -380,8 +413,8 @@ function playCurrentItem() {
   } else if (item.type === "video") {
     playVideo(item, duration, isResuming);
   } else {
-    debug("Unknown content type: " + item.type);
-    scheduleNext(1000);
+    debug("Skipping unsupported content type: " + item.type + " (id: " + item.id + ")");
+    scheduleNext(500);
   }
 }
 function playImage(item, duration, isResuming = false) {
@@ -516,6 +549,12 @@ function playVideo(item, duration, isResuming = false) {
 
   player.videoEl.onerror = (e) => {
     debug("Video error: " + (e.message || "unknown"));
+    // Clean up video element before advancing
+    try {
+      player.videoEl.pause();
+      player.videoEl.removeAttribute("src");
+      player.videoEl.load();
+    } catch (cleanupErr) {}
     advanceToNext();
   };
 
@@ -702,8 +741,18 @@ async function fetchPlaylist() {
       );
     }
 
-    if (player.currentIndex >= newPlaylist.length && newPlaylist.length > 0) {
-      player.currentIndex = 0;
+    if (newPlaylist.length > 0) {
+      // Preserve current playback position if possible
+      const currentItem = player.playlist[player.currentIndex];
+      const newIndex = currentItem
+        ? newPlaylist.findIndex(item => item.id === currentItem.id && item.category === currentItem.category)
+        : -1;
+
+      if (newIndex >= 0) {
+        player.currentIndex = newIndex;
+      } else if (player.currentIndex >= newPlaylist.length) {
+        player.currentIndex = 0;
+      }
     }
 
     player.playlist = newPlaylist;

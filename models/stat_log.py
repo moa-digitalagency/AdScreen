@@ -4,7 +4,11 @@ from app import db
 
 class StatLog(db.Model):
     __tablename__ = 'stat_logs'
-    
+    __table_args__ = (
+        db.Index('idx_stat_logs_played_at', 'played_at'),
+        db.Index('idx_stat_logs_screen_played', 'screen_id', 'played_at'),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
     content_type = db.Column(db.String(20), nullable=False)
     content_id = db.Column(db.Integer)

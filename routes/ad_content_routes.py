@@ -219,21 +219,31 @@ def create():
                 file_path = os.path.join(upload_path, new_filename)
                 file.save(file_path)
                 ad.file_path = file_path
-                
+
                 ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
                 if ext in ['mp4', 'webm', 'mov']:
                     ad.content_type = 'video'
+                    # Extract real video duration using ffprobe
+                    try:
+                        from utils.video_utils import get_video_duration
+                        real_duration = get_video_duration(file_path)
+                        if real_duration:
+                            ad.duration = int(real_duration)
+                    except Exception:
+                        pass  # Fall back to manual duration input
                 else:
                     ad.content_type = 'image'
-                
+
                 ad.file_size = os.path.getsize(file_path)
         else:
             content_type = request.form.get('content_type', 'image')
             ad.content_type = content_type
-        
+
         slot_duration = request.form.get('slot_duration', '10')
-        ad.duration = int(slot_duration) if slot_duration else 10
-        
+        # Only set from form if not already extracted from video
+        if not hasattr(ad, 'duration') or not ad.duration or ad.content_type != 'video':
+            ad.duration = int(slot_duration) if slot_duration else 10
+
         db.session.add(ad)
         db.session.commit()
         

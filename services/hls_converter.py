@@ -187,11 +187,16 @@ class HLSConverter:
             str(manifest_path)
         ]
         
+        # Check if another process is already running for this screen
+        if HLSConverter.is_running(screen_code):
+            logger.info(f'[{screen_code}] FFmpeg already running, reusing existing process')
+            return str(manifest_path)
+
         try:
             logger.info(f'[{screen_code}] Starting FFmpeg conversion')
             # Mask URL in logs if needed, but logging source is usually fine if not containing credentials
             logger.info(f'[{screen_code}] Source: {source_url[:60]}...')
-            
+
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -207,18 +212,20 @@ class HLSConverter:
             
             def monitor_process():
                 try:
-                    stdout, stderr = process.communicate(timeout=3600)
+                    stdout, stderr = process.communicate(timeout=7200)  # 2h max per stream
                     if process.returncode != 0 and process.returncode != -15 and process.returncode != -9:
                         stderr_text = stderr.decode('utf-8', errors='ignore')[:500]
                         logger.error(f'[{screen_code}] FFmpeg error (code {process.returncode}): {stderr_text}')
                 except subprocess.TimeoutExpired:
-                    pass
+                    logger.warning(f'[{screen_code}] FFmpeg timeout after 2h, killing process')
+                    try:
+                        process.kill()
+                        process.communicate(timeout=5)
+                    except Exception:
+                        pass
                 except Exception as e:
                     logger.error(f'[{screen_code}] Process error: {e}')
                 finally:
-                    # Clean up is done by stop_existing_process or when a new process starts
-                    pass
-
                     logger.info(f'[{screen_code}] Process ended')
             
             thread = threading.Thread(target=monitor_process, daemon=True)
