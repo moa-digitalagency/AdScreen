@@ -663,8 +663,12 @@ def organization_edit(org_id):
 
             if password_to_set:
                 # Update organization manager's password
-                org.manager_user.set_password(password_to_set)
-                flash('Mot de passe mis à jour avec succès!', 'success')
+                manager_user = User.query.filter_by(organization_id=org_id, role='org').first()
+                if manager_user:
+                    manager_user.set_password(password_to_set)
+                    flash('Mot de passe mis à jour avec succès!', 'success')
+                else:
+                    flash('Aucun utilisateur gestionnaire trouvé pour cette organisation.', 'error')
 
         is_paid = request.form.get('is_paid', '1') == '1'
         has_iptv = 'has_iptv' in request.form
