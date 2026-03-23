@@ -84,8 +84,14 @@ def translate(key, lang=None):
     
     return value if value is not None else key
 
-def t(key, lang=None):
-    return translate(key, lang)
+def t(key, lang=None, **kwargs):
+    translation = translate(key, lang)
+    if kwargs:
+        try:
+            return translation.format(**kwargs)
+        except (KeyError, ValueError):
+            return translation
+    return translation
 
 def init_translations(app):
     load_translations()

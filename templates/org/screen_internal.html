@@ -429,6 +429,9 @@ function onDatesChange() {
 
         const contentType = document.getElementById('content_type').value || 'image';
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
         fetch(`/org/screen/${screenId}/internal/availability`, {
             method: 'POST',
             headers: {
@@ -442,10 +445,12 @@ function onDatesChange() {
                 end_time: endTime,
                 content_type: contentType,
                 slot_duration: 10
-            })
+            }),
+            signal: controller.signal
         })
         .then(response => response.json())
         .then(data => {
+            clearTimeout(timeout);
             document.getElementById('loading_indicator').classList.add('hidden');
 
             if (data.availability) {
@@ -469,8 +474,13 @@ function onDatesChange() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            clearTimeout(timeout);
             document.getElementById('loading_indicator').classList.add('hidden');
+            if (error.name === 'AbortError') {
+                console.error('Availability calculation timeout');
+            } else {
+                console.error('Error:', error);
+            }
         });
     }, 300);
 }
