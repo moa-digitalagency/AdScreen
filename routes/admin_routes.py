@@ -7,7 +7,7 @@
 """
 import math
 import subprocess
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
