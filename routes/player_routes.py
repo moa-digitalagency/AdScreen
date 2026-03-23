@@ -12,6 +12,7 @@ from models import Screen, Content, Booking, Filler, InternalContent, StatLog, H
 from models.ad_content import AdContent, AdContentStat
 from services.translation_service import t
 from services.input_validator import is_safe_url
+from services.rate_limiter import limiter, get_rate_limit
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 from sqlalchemy import or_, and_, func
@@ -25,15 +26,34 @@ import ipaddress
 import json
 import hashlib
 
+import os as _os
+
 urllib3.disable_warnings()
 
 logger = logging.getLogger(__name__)
+
+
+def safe_content_url(file_path):
+    """Sanitize file path for URL generation, preventing path traversal."""
+    if not file_path:
+        return '/static/img/placeholder.png'
+    # Normalize and remove any path traversal
+    clean = _os.path.normpath(file_path).replace('\\', '/')
+    if clean.startswith('/') or '..' in clean:
+        return '/static/img/placeholder.png'
+    return f'/{clean}'
+
 
 player_bp = Blueprint('player', __name__)
 
 # Cache setup
 SCREEN_MODE_CACHE = {}
 CACHE_TTL = 10  # seconds
+
+
+def invalidate_screen_mode_cache(screen_id):
+    """Invalidate the screen mode cache for a specific screen."""
+    SCREEN_MODE_CACHE.pop(screen_id, None)
 
 @player_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -134,6 +154,7 @@ def get_screen_mode():
 
 
 @player_bp.route('/api/playlist')
+@limiter.limit(get_rate_limit('player', 'playlist'))
 def get_playlist():
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
@@ -181,11 +202,17 @@ def get_playlist():
             current_hour = datetime.now().hour
             current_period = None
             for period in screen.time_periods:
-                if period.start_hour <= period.end_hour:
+                if period.start_hour == period.end_hour:
+                    # 24-hour period (e.g., 6h-6h means all day)
+                    current_period = period
+                    break
+                elif period.start_hour < period.end_hour:
+                    # Normal daytime period (e.g., 9h-17h)
                     if period.start_hour <= current_hour < period.end_hour:
                         current_period = period
                         break
                 else:
+                    # Overnight period (e.g., 22h-6h)
                     if current_hour >= period.start_hour or current_hour < period.end_hour:
                         current_period = period
                         break
@@ -200,21 +227,23 @@ def get_playlist():
             ).all()
 
             for content in paid_contents:
+                if not content.booking:
+                    continue  # Skip orphaned content (booking deleted without cascade)
                 if current_period and content.booking.time_period_id:
                     if content.booking.time_period_id != current_period.id:
                         continue
 
-                duration = content.booking.slot_duration if content.booking else (content.duration_seconds or 10)
-                remaining = content.booking.num_plays - content.booking.plays_completed if content.booking else 0
+                duration = content.booking.slot_duration if content.booking.slot_duration and content.booking.slot_duration > 0 else (content.duration_seconds or 10)
+                remaining = content.booking.num_plays - content.booking.plays_completed
 
                 playlist.append({
                     'id': content.id,
                     'type': content.content_type,
-                    'url': f'/{content.file_path}',
+                    'url': safe_content_url(content.file_path),
                     'duration': duration,
                     'priority': 100,
                     'category': 'paid',
-                    'booking_id': content.booking.id if content.booking else None,
+                    'booking_id': content.booking.id,
                     'remaining_plays': remaining,
                     'name': content.original_filename or content.filename
                 })
@@ -229,13 +258,14 @@ def get_playlist():
             for internal in internal_contents:
                 if internal.start_date and internal.start_date > today:
                     continue
+                # end_date is inclusive: content plays on end_date day, removed on end_date + 1
                 if internal.end_date and internal.end_date < today:
                     continue
 
                 playlist.append({
                     'id': internal.id,
                     'type': internal.content_type,
-                    'url': f'/{internal.file_path}',
+                    'url': safe_content_url(internal.file_path),
                     'duration': internal.duration_seconds or 10,
                     'priority': internal.priority,
                     'category': 'internal',
@@ -252,14 +282,14 @@ def get_playlist():
                 playlist.append({
                     'id': filler.id,
                     'type': filler.content_type,
-                    'url': f'/{filler.file_path}',
+                    'url': safe_content_url(filler.file_path),
                     'duration': filler.duration_seconds or 10,
                     'priority': 20,
                     'category': 'filler',
                     'name': filler.filename
                 })
 
-            playlist.sort(key=lambda x: x['priority'], reverse=True)
+            playlist.sort(key=lambda x: (-x['priority'], x.get('id', 0), x.get('name', '')))
 
             from services.overlay_service import sync_broadcast_overlays, get_active_overlays_for_screen
 
@@ -318,7 +348,7 @@ def get_playlist():
                 target_filter
             ).all()
 
-            status_changed = False
+            any_status_changed = False
             for ad in active_ad_contents:
                 # Final check in Python (handles edge cases and logic not fully covered by SQL)
                 # We skip detailed targeting checks because the SQL query already filters by target.
@@ -329,17 +359,22 @@ def get_playlist():
                 old_status = ad.status
                 ad.update_status()
                 if ad.status != old_status:
-                    status_changed = True
+                    any_status_changed = True
 
                 if ad.is_currently_active():
                     ad_dict = ad.to_content_dict()
                     ad_dict['priority'] = 50
                     playlist.append(ad_dict)
 
-            if status_changed:
-                db.session.commit()
+            # Always commit if any ad was processed, to ensure all in-memory
+            # changes (including the first status change) are persisted
+            if any_status_changed:
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
 
-            playlist.sort(key=lambda x: x['priority'], reverse=True)
+            playlist.sort(key=lambda x: (-x['priority'], x.get('id', 0), x.get('name', '')))
 
             response_data = {
                 'screen': {
@@ -368,12 +403,21 @@ def get_playlist():
             fallback_playlist.append({
                 'id': filler.id,
                 'type': filler.content_type,
-                'url': f'/{filler.file_path}',
+                'url': safe_content_url(filler.file_path),
                 'duration': filler.duration_seconds or 10,
                 'priority': 20,
                 'category': 'filler',
                 'name': filler.filename
             })
+
+        # Try to fetch overlays even in fallback mode
+        fallback_overlays = []
+        try:
+            from services.overlay_service import get_active_overlays_for_screen
+            fallback_overlay_objects = get_active_overlays_for_screen(screen.id)
+            fallback_overlays = [o.to_dict() for o in fallback_overlay_objects]
+        except Exception:
+            pass  # Overlays are non-critical in fallback mode
 
         response_data = {
             'screen': {
@@ -384,19 +428,19 @@ def get_playlist():
             },
             'mode': 'playlist',
             'playlist': fallback_playlist,
-            'overlays': [],
+            'overlays': fallback_overlays,
             'error_recovered': True
         }
 
-    # ETag generation
-    # Sort keys to ensure deterministic output for hashing
+    # ETag generation (timestamp excluded from hash to ensure stable ETags)
     content_str = json.dumps(response_data, sort_keys=True, default=str)
     etag = hashlib.md5(content_str.encode('utf-8')).hexdigest()
-    
+
     if etag in request.if_none_match:
         return Response(status=304)
-    
-    response_data['timestamp'] = datetime.utcnow().isoformat()
+
+    # Add timestamp AFTER ETag check (not part of the content hash)
+    response_data['server_time'] = datetime.utcnow().isoformat()
     
     response = make_response(jsonify(response_data))
     response.headers['ETag'] = f'"{etag}"'
@@ -405,6 +449,7 @@ def get_playlist():
 
 
 @player_bp.route('/api/heartbeat', methods=['POST'])
+@limiter.limit(get_rate_limit('player', 'heartbeat'))
 def heartbeat():
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
@@ -433,6 +478,7 @@ def heartbeat():
 
 
 @player_bp.route('/api/log-play', methods=['POST'])
+@limiter.limit(get_rate_limit('player', 'log_play'))
 def log_play():
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
@@ -459,10 +505,20 @@ def log_play():
     
     exhausted = False
     if category == 'paid' and booking_id:
-        booking = Booking.query.get(booking_id)
-        if booking:
-            booking.plays_completed += 1
-            if booking.plays_completed >= booking.num_plays:
+        # Atomic increment to prevent race conditions with concurrent screens
+        rows_updated = db.session.query(Booking).filter(
+            Booking.id == booking_id,
+            Booking.status == 'active'
+        ).update(
+            {
+                Booking.plays_completed: Booking.plays_completed + 1
+            },
+            synchronize_session='fetch'
+        )
+        if rows_updated > 0:
+            # Check if booking should be marked completed
+            booking = Booking.query.get(booking_id)
+            if booking and booking.plays_completed >= booking.num_plays:
                 booking.status = 'completed'
                 exhausted = True
     
@@ -476,9 +532,14 @@ def log_play():
                 organization_id=screen.organization_id,
                 duration=duration or 0
             )
-    
-    db.session.commit()
-    
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error committing play log: {str(e)}")
+        return jsonify({'success': False, 'error': 'Database error'}), 500
+
     return jsonify({'success': True, 'exhausted': exhausted})
 
 
@@ -544,6 +605,9 @@ def stream_proxy():
                         # Handle relative redirects
                         if not current_url.startswith(('http://', 'https://')):
                             current_url = urllib.parse.urljoin(url, current_url)
+                        # Re-validate the resolved URL to prevent SSRF via redirect
+                        if not is_safe_url(current_url):
+                            return jsonify({'error': 'Unsafe redirect target'}), 400
                         continue
                     break
                 except urllib3.exceptions.MaxRetryError:
@@ -674,7 +738,7 @@ def tv_stream(screen_code):
     """
     from services.hls_converter import HLSConverter
     
-    if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+    if not re.match(r'^[a-zA-Z0-9_-]{1,20}$', screen_code):
         return jsonify({'error': 'Invalid screen code'}), 400
 
     if 'screen_id' not in session:
@@ -803,7 +867,7 @@ def change_channel(screen_code):
     """Change la chaîne TV - attend que FFmpeg soit prêt"""
     from services.hls_converter import HLSConverter
     
-    if not re.match(r'^[a-zA-Z0-9_-]+$', screen_code):
+    if not re.match(r'^[a-zA-Z0-9_-]{1,20}$', screen_code):
         return jsonify({'error': 'Invalid screen code'}), 400
 
     if 'screen_id' not in session:
@@ -824,7 +888,7 @@ def change_channel(screen_code):
         if not channel_url:
             return jsonify({'error': 'No channel URL'}), 400
 
-        if not channel_url.startswith(('http://', 'https://', 'udp://', 'rtmp://', 'rtsp://')):
+        if not channel_url.startswith(('http://', 'https://', 'udp://', 'rtmp://', 'rtsp://', 'rtp://', 'tcp://')):
              return jsonify({'error': 'Invalid protocol'}), 400
 
         # SEC: Check for SSRF on ALL protocols (HTTP, HTTPS, RTMP, RTSP, UDP, etc.)
