@@ -167,6 +167,8 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
         for period in periods:
             # Check if period is in the past considering security buffer
             period_start_dt = datetime.combine(current_date, datetime.min.time().replace(hour=period.start_hour))
+            period_duration = get_period_duration_seconds(period)
+
             if period_start_dt < min_start_dt:
                 # If period is completely in the past (before buffer), it's not available
                 # If it's partially in the past, we could be more precise, but for now we skip or adjust
@@ -185,7 +187,6 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
                         # Period is partially after security buffer
                         effective_start = max(period_start_dt, min_start_dt)
                         available_duration = (period_end_dt - effective_start).total_seconds()
-                        period_duration = get_period_duration_seconds(period)
                         reserved = get_reserved_seconds_for_period(
                             screen.id, period.id, current_date, all_screen_periods, all_bookings
                         )
@@ -193,7 +194,6 @@ def calculate_availability(screen, start_date, end_date, period_id=None, slot_du
                 else:
                     available = 0
             else:
-                period_duration = get_period_duration_seconds(period)
                 reserved = get_reserved_seconds_for_period(
                     screen.id, period.id, current_date, all_screen_periods, all_bookings
                 )
