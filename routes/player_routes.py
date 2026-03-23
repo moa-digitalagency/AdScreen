@@ -55,6 +55,40 @@ def invalidate_screen_mode_cache(screen_id):
     """Invalidate the screen mode cache for a specific screen."""
     SCREEN_MODE_CACHE.pop(screen_id, None)
 
+
+def validate_session_screen_id(session_ttl_minutes=30):
+    """
+    Validate session screen_id with TTL enforcement.
+    Returns (is_valid, screen, error_message)
+    """
+    if 'screen_id' not in session:
+        return False, None, 'Screen ID not in session'
+
+    # Check session TTL (default 30 minutes)
+    if 'screen_session_time' in session:
+        session_age = time.time() - session['screen_session_time']
+        if session_age > (session_ttl_minutes * 60):
+            session.clear()
+            return False, None, 'Session expired'
+    else:
+        # Set initial session time if not present
+        session['screen_session_time'] = time.time()
+
+    # Validate screen exists and is active
+    screen = Screen.query.get(session['screen_id'])
+    if not screen:
+        session.clear()
+        return False, None, 'Screen not found'
+
+    if not screen.is_active:
+        session.clear()
+        return False, None, 'Screen is inactive'
+
+    # Refresh session timestamp on successful validation
+    session['screen_session_time'] = time.time()
+    return True, screen, None
+
+
 @player_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -67,9 +101,10 @@ def login():
             if not screen.is_active:
                 flash(t('flash.screen_disabled'), 'error')
                 return render_template('player/login.html')
-            
+
             session['screen_id'] = screen.id
             session['screen_code'] = screen.unique_code
+            session['screen_session_time'] = time.time()  # Set session creation time
             return redirect(url_for('player.display'))
         
         flash(t('flash.invalid_screen_credentials'), 'error')
@@ -79,14 +114,10 @@ def login():
 
 @player_bp.route('/display')
 def display():
-    if 'screen_id' not in session:
+    is_valid, screen, error = validate_session_screen_id()
+    if not is_valid:
         return redirect(url_for('player.login'))
-    
-    screen = Screen.query.get(session['screen_id'])
-    if not screen or not screen.is_active:
-        session.clear()
-        return redirect(url_for('player.login'))
-    
+
     return render_template('player/display.html', screen=screen)
 
 
@@ -105,21 +136,21 @@ def logout():
 
 @player_bp.route('/api/screen-mode')
 def get_screen_mode():
-    if 'screen_id' not in session:
+    is_valid, screen, error = validate_session_screen_id()
+    if not is_valid:
         return jsonify({'error': t('flash.not_authenticated')}), 401
-    
+
     screen_id = session['screen_id']
     now = time.time()
     data = None
-    
+
     # Check cache
     cache_entry = SCREEN_MODE_CACHE.get(screen_id)
     if cache_entry and now - cache_entry['timestamp'] < CACHE_TTL:
         data = cache_entry['data']
 
     if not data:
-        # Use standard SQLAlchemy query, no expire_all/rollback to keep cache
-        screen = Screen.query.get(screen_id)
+        # Screen already validated above, just reuse it
         if not screen:
             return jsonify({'error': t('flash.screen_not_found')}), 404
 
@@ -682,18 +713,40 @@ def stream_proxy():
             
             def generate_stream():
                 bytes_sent = 0
+                last_chunk_time = time.time()
+                chunk_timeout = 30  # 30s timeout per chunk read
+                keepalive_interval = 10  # Send keepalive every 10s of inactivity
+
+                try:
+                    upstream_response.socket.settimeout(chunk_timeout)
+                except:
+                    pass  # If socket timeout not available, continue without it
+
                 try:
                     while True:
-                        chunk = upstream_response.read(32768)
-                        if not chunk:
-                            logger.info(f"Stream ended after {bytes_sent} bytes")
+                        try:
+                            # Read with timeout
+                            chunk = upstream_response.read(32768)
+                            if not chunk:
+                                logger.info(f"Stream ended after {bytes_sent} bytes")
+                                break
+                            bytes_sent += len(chunk)
+                            last_chunk_time = time.time()
+                            yield chunk
+                        except socket.timeout:
+                            # Check if we should send keepalive or fail
+                            if time.time() - last_chunk_time > keepalive_interval:
+                                logger.warning(f"Stream timeout after {bytes_sent} bytes, no data for {chunk_timeout}s")
+                                break
+                            time.sleep(0.1)
+                            continue
+                        except Exception as e:
+                            logger.error(f"Stream read error after {bytes_sent} bytes: {str(e)}")
                             break
-                        bytes_sent += len(chunk)
-                        yield chunk
                 except GeneratorExit:
                     logger.info(f"Client disconnected after {bytes_sent} bytes")
                 except Exception as e:
-                    logger.error(f"Stream error after {bytes_sent} bytes: {str(e)}")
+                    logger.error(f"Stream generation error: {str(e)}")
                 finally:
                     try:
                         upstream_response.release_conn()
@@ -744,8 +797,6 @@ def tv_stream(screen_code):
     if 'screen_id' not in session:
         return jsonify({'error': t('flash.not_authenticated')}), 401
 
-    db.session.expire_all()
-    
     screen = Screen.query.filter_by(unique_code=screen_code).first()
     
     if not screen:
@@ -773,22 +824,48 @@ def tv_stream(screen_code):
         if not HLSConverter.is_running(screen_code):
             logger.info(f'[{screen_code}] Starting new HLS conversion for: {channel_name}')
             HLSConverter.start_conversion(source_url, screen_code, wait_for_manifest=False)
-        
+
         manifest_path = HLSConverter.get_manifest_path(screen_code)
-        
-        for _ in range(30):
+
+        # Poll with exponential backoff for up to 15 seconds
+        start_time = time.time()
+        poll_interval = 0.1
+        max_wait = 15
+
+        while time.time() - start_time < max_wait:
             if manifest_path.exists():
                 break
-            time.sleep(0.1)
-        
+            time.sleep(poll_interval)
+            # Exponential backoff but cap at 0.5s
+            poll_interval = min(0.5, poll_interval * 1.2)
+
         if not manifest_path.exists():
-            logger.info(f'[{screen_code}] Manifest not ready yet (processing)')
-            return jsonify({'status': 'processing', 'message': 'Stream conversion starting'}), 202
-        
+            # Watchdog: Check if FFmpeg process crashed
+            if not HLSConverter.is_running(screen_code):
+                logger.error(f'[{screen_code}] FFmpeg process crashed or failed to start. Falling back to Fillers.')
+                # Fallback to Fillers instead of endless 202
+                fillers = Content.query.filter_by(
+                    screen_id=screen.id,
+                    content_type='video',
+                    status='approved',
+                    in_playlist=True
+                ).filter(~Content.booking_id.isnot(None)).all()
+
+                if not fillers:
+                    return jsonify({'error': 'Stream conversion failed and no fallback content available'}), 500
+
+                # Return error status so player can fallback to playlist
+                return jsonify({'status': 'error', 'message': 'Stream conversion failed'}), 503
+
+            # Process still running but manifest not ready yet
+            logger.warning(f'[{screen_code}] Manifest not ready after {max_wait}s (still processing)')
+            return jsonify({'status': 'processing', 'message': 'Stream conversion in progress'}), 202
+
         manifest_content = HLSConverter.get_fresh_manifest(screen_code)
-        
+
         if not manifest_content:
-            return jsonify({'status': 'processing', 'message': 'Manifest empty'}), 202
+            logger.warning(f'[{screen_code}] Manifest exists but is empty')
+            return jsonify({'status': 'processing', 'message': 'Manifest generation in progress'}), 202
         
         manifest_content = HLSConverter.rewrite_manifest(manifest_content, screen_code)
         
