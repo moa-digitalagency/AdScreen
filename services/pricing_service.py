@@ -31,6 +31,9 @@ def calculate_booking_price(screen_id, content_type, duration, period_id, num_pl
         period = TimePeriod.query.get(period_id)
         if period:
             multiplier = period.price_multiplier
+            # Prevent zero or negative multipliers (free/negative bookings)
+            if multiplier is None or multiplier <= 0:
+                multiplier = 1.0
             period_name = period.name
     
     base_price = slot.price_per_play
