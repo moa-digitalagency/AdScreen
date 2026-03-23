@@ -2,6 +2,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import request
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,14 @@ def get_client_ip():
     return get_remote_address()
 
 
+# Use Redis for distributed rate limiting across workers
+# Falls back to memory if Redis unavailable (non-critical)
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
 limiter = Limiter(
     key_func=get_client_ip,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",
+    storage_uri=redis_url,
     strategy="fixed-window"
 )
 

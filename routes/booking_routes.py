@@ -82,7 +82,12 @@ def screen_booking(screen_code):
 
 @booking_bp.route('/<screen_code>/submit', methods=['POST'])
 def submit_booking(screen_code):
-    screen = Screen.query.filter_by(unique_code=screen_code, is_active=True).first_or_404()
+    # Acquire exclusive lock on Screen row to prevent concurrent overbooking
+    # This ensures only one booking can be processed at a time for this screen
+    screen = db.session.query(Screen).filter(
+        Screen.unique_code == screen_code,
+        Screen.is_active == True
+    ).with_for_update(nowait=False).first_or_404()
     
     client_name = request.form.get('client_name')
     client_email = request.form.get('client_email')
@@ -116,18 +121,24 @@ def submit_booking(screen_code):
     if not allowed_file(file.filename, content_type):
         flash(t('flash.file_format_not_supported'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
-    
-    slot = TimeSlot.query.filter_by(
-        screen_id=screen.id,
-        content_type=content_type,
-        duration_seconds=slot_duration
-    ).first()
+
+    # Lock TimeSlot row to prevent concurrent bookings from exceeding slot capacity
+    slot = db.session.query(TimeSlot).filter(
+        TimeSlot.screen_id == screen.id,
+        TimeSlot.content_type == content_type,
+        TimeSlot.duration_seconds == slot_duration
+    ).with_for_update(nowait=False).first()
     
     if not slot:
         flash(t('flash.slot_not_available'), 'error')
         return redirect(url_for('booking.screen_booking', screen_code=screen_code))
-    
-    period = TimePeriod.query.get(period_id) if period_id else None
+
+    # Lock period row if specified to prevent concurrent period overbooking
+    period = None
+    if period_id:
+        period = db.session.query(TimePeriod).filter(
+            TimePeriod.id == period_id
+        ).with_for_update(nowait=False).first()
     multiplier = period.price_multiplier if period else 1.0
     
     price_per_play = slot.price_per_play * multiplier
