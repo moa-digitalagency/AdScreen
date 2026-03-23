@@ -629,11 +629,14 @@ def organization_edit(org_id):
         country = request.form.get('country', org.country or 'FR')
         city = request.form.get('city', '').strip()
         currency = request.form.get('currency', org.currency or 'EUR')
-        
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        reset_password = request.form.get('reset_password', '').strip()
+
         if not name or not email:
             flash(t('flash.name_email_required'), 'error')
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
-        
+
         existing = Organization.query.filter(
             Organization.email == email,
             Organization.id != org_id
@@ -641,11 +644,32 @@ def organization_edit(org_id):
         if existing:
             flash(t('flash.org_email_exists'), 'error')
             return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
-        
+
+        # Handle password change
+        if new_password or reset_password:
+            password_to_set = None
+            if reset_password:
+                # Password was generated via API
+                password_to_set = reset_password
+            elif new_password:
+                # Manual password entry
+                if len(new_password) < 6:
+                    flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+                    return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
+                if new_password != confirm_password:
+                    flash('Les mots de passe ne correspondent pas.', 'error')
+                    return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
+                password_to_set = new_password
+
+            if password_to_set:
+                # Update organization manager's password
+                org.manager_user.set_password(password_to_set)
+                flash('Mot de passe mis à jour avec succès!', 'success')
+
         is_paid = request.form.get('is_paid', '1') == '1'
         has_iptv = 'has_iptv' in request.form
         iptv_m3u_url = request.form.get('iptv_m3u_url', '').strip() if has_iptv else None
-        
+
         org.name = name
         org.email = email
         org.phone = phone
@@ -659,11 +683,32 @@ def organization_edit(org_id):
         if not is_paid:
             org.commission_rate = 0
         db.session.commit()
-        
+
         flash(f'Établissement "{name}" mis à jour!', 'success')
         return redirect(url_for('admin.organization_detail', org_id=org_id))
     
     return render_template('admin/organization_form.html', org=org, currencies=currencies, countries=countries)
+
+
+@admin_bp.route('/organization/<int:org_id>/reset-password', methods=['POST'])
+@login_required
+@admin_required('organizations')
+def organization_reset_password(org_id):
+    """Generate and return a random password for organization manager."""
+    import secrets
+    import string
+
+    org = Organization.query.get_or_404(org_id)
+
+    # Generate secure random password (16 characters)
+    chars = string.ascii_letters + string.digits + string.punctuation.replace('"', '').replace("'", '')
+    new_password = ''.join(secrets.choice(chars) for _ in range(16))
+
+    return jsonify({
+        'success': True,
+        'new_password': new_password,
+        'org_id': org_id
+    })
 
 
 @admin_bp.route('/organization/<int:org_id>/delete', methods=['POST'])
