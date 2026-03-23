@@ -13,15 +13,20 @@ def get_current_period(screen):
         TimePeriod instance or None
     """
     current_hour = datetime.now().hour
-    
+
     for period in screen.time_periods:
-        if period.start_hour <= period.end_hour:
+        if period.start_hour == period.end_hour:
+            # 24-hour period (e.g., 6h-6h means all day)
+            return period
+        elif period.start_hour < period.end_hour:
+            # Normal daytime period (e.g., 9h-17h)
             if period.start_hour <= current_hour < period.end_hour:
                 return period
         else:
+            # Overnight period (e.g., 22h-6h)
             if current_hour >= period.start_hour or current_hour < period.end_hour:
                 return period
-    
+
     return None
 
 
@@ -138,7 +143,9 @@ def calculate_daily_capacity(screen):
     capacity = {}
     
     for period in screen.time_periods:
-        if period.start_hour <= period.end_hour:
+        if period.start_hour == period.end_hour:
+            hours = 24  # Full 24-hour period
+        elif period.start_hour < period.end_hour:
             hours = period.end_hour - period.start_hour
         else:
             hours = (24 - period.start_hour) + period.end_hour
@@ -184,7 +191,10 @@ def get_scheduled_broadcasts_for_screen(screen):
             if broadcast.recurrence_type == Broadcast.RECURRENCE_NONE:
                 if broadcast.scheduled_datetime:
                     time_until_trigger = (broadcast.scheduled_datetime - now).total_seconds()
-                    if time_until_trigger >= -broadcast.content_duration and time_until_trigger <= 300:
+                    # Allow broadcast to be active for 2x its duration after scheduled time
+                    # (accounts for playlist refresh delay)
+                    grace_period = max(broadcast.content_duration * 2, 120)
+                    if time_until_trigger >= -grace_period and time_until_trigger <= 300:
                         scheduled_broadcasts.append({
                             'broadcast': broadcast,
                             'trigger_time': broadcast.scheduled_datetime,
