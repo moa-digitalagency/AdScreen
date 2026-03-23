@@ -93,12 +93,19 @@ class Screen(db.Model):
     
     def get_iptv_url(self):
         """Return the IPTV channel URL as-is for playback.
-        
+
         The player JavaScript will detect the stream type and use:
         - hls.js for .m3u8 streams
         - mpegts.js for MPEG-TS streams (direct or via proxy)
-        
+
         We no longer try to transform URLs since external IPTV servers
         may not support the m3u8 output format.
         """
         return self.current_iptv_channel
+
+    def get_iptv_url_safe_log(self):
+        """Return IPTV URL with credentials masked for logging."""
+        if not self.current_iptv_channel:
+            return None
+        import re
+        return re.sub(r'://([^:]+):([^@]+)@', '://***:***@', self.current_iptv_channel)
