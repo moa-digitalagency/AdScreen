@@ -249,6 +249,7 @@ function resetPassword(orgId) {
 
     fetch(`/admin/organization/${orgId}/reset-password`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken
