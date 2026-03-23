@@ -8,6 +8,7 @@
 import os
 import logging
 import secrets
+from logging.handlers import RotatingFileHandler
 
 from flask import Flask, request, session, abort, redirect, g, render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +17,22 @@ import config
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging with rotation (10MB files, keep 7 days of logs)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] [%(levelname)s] %(message)s'
+)
+
+# Add rotating file handler for persistent logs (10MB per file, 10 backups)
+log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+file_handler = RotatingFileHandler(
+    os.path.join(log_dir, 'gunicorn.log'),
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=7  # 7 days of logs
+)
+file_handler.setFormatter(logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s'))
+logging.getLogger().addHandler(file_handler)
 
 class Base(DeclarativeBase):
     pass

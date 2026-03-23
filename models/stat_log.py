@@ -1,5 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class StatLog(db.Model):
@@ -18,3 +21,17 @@ class StatLog(db.Model):
     
     screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=False)
     screen = db.relationship('Screen', back_populates='stat_logs')
+
+    @classmethod
+    def cleanup_old_logs(cls, days_to_keep=30):
+        """Delete StatLog entries older than specified days (default: 30 days)"""
+        try:
+            cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+            deleted_count = cls.query.filter(cls.played_at < cutoff_date).delete()
+            db.session.commit()
+            logger.info(f"Cleaned up {deleted_count} old StatLog entries (older than {days_to_keep} days)")
+            return deleted_count
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error cleaning up StatLog: {e}")
+            return 0

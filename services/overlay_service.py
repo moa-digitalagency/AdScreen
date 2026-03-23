@@ -21,66 +21,84 @@ def create_overlay_from_broadcast(broadcast, screen):
     Crée un overlay local à partir d'une diffusion broadcast.
     Met en pause les overlays existants sur la même position.
     """
-    existing_overlays = ScreenOverlay.query.filter_by(
-        screen_id=screen.id,
-        position=broadcast.overlay_position,
-        is_active=True,
-        is_paused=False
-    ).all()
-    
-    for overlay in existing_overlays:
-        overlay.pause(by_broadcast_id=broadcast.id)
-        logger.info(f"Overlay {overlay.id} mis en pause par broadcast {broadcast.id}")
-    
-    new_overlay = ScreenOverlay(
-        screen_id=screen.id,
-        overlay_type=broadcast.overlay_type,
-        message=broadcast.overlay_message,
-        image_path=broadcast.overlay_image_path,
-        position=broadcast.overlay_position,
-        corner_position=broadcast.overlay_corner_position,
-        background_color=broadcast.overlay_background_color,
-        text_color=broadcast.overlay_text_color,
-        font_size=broadcast.overlay_font_size,
-        scroll_speed=broadcast.overlay_scroll_speed,
-        corner_size=broadcast.overlay_corner_size,
-        position_mode=broadcast.overlay_position_mode,
-        image_width_percent=broadcast.overlay_image_width_percent,
-        image_pos_x=broadcast.overlay_image_pos_x,
-        image_pos_y=broadcast.overlay_image_pos_y,
-        image_opacity=broadcast.overlay_image_opacity,
-        priority=PRIORITY_BROADCAST,
-        source=ScreenOverlay.SOURCE_BROADCAST,
-        source_broadcast_id=broadcast.id,
-        start_time=broadcast.start_datetime,
-        end_time=broadcast.end_datetime,
-        is_active=True
-    )
-    
-    db.session.add(new_overlay)
-    db.session.commit()
-    
-    logger.info(f"Overlay créé depuis broadcast {broadcast.id} pour écran {screen.id}")
-    return new_overlay
+    try:
+        existing_overlays = ScreenOverlay.query.filter_by(
+            screen_id=screen.id,
+            position=broadcast.overlay_position,
+            is_active=True,
+            is_paused=False
+        ).all()
+
+        for overlay in existing_overlays:
+            try:
+                overlay.pause(by_broadcast_id=broadcast.id)
+                logger.info(f"Overlay {overlay.id} mis en pause par broadcast {broadcast.id}")
+            except Exception as e:
+                logger.error(f"Erreur lors de la mise en pause de l'overlay {overlay.id}: {e}")
+
+        new_overlay = ScreenOverlay(
+            screen_id=screen.id,
+            overlay_type=broadcast.overlay_type,
+            message=broadcast.overlay_message,
+            image_path=broadcast.overlay_image_path,
+            position=broadcast.overlay_position,
+            corner_position=broadcast.overlay_corner_position,
+            background_color=broadcast.overlay_background_color,
+            text_color=broadcast.overlay_text_color,
+            font_size=broadcast.overlay_font_size,
+            scroll_speed=broadcast.overlay_scroll_speed,
+            corner_size=broadcast.overlay_corner_size,
+            position_mode=broadcast.overlay_position_mode,
+            image_width_percent=broadcast.overlay_image_width_percent,
+            image_pos_x=broadcast.overlay_image_pos_x,
+            image_pos_y=broadcast.overlay_image_pos_y,
+            image_opacity=broadcast.overlay_image_opacity,
+            priority=PRIORITY_BROADCAST,
+            source=ScreenOverlay.SOURCE_BROADCAST,
+            source_broadcast_id=broadcast.id,
+            start_time=broadcast.start_datetime,
+            end_time=broadcast.end_datetime,
+            is_active=True
+        )
+
+        db.session.add(new_overlay)
+        db.session.commit()
+
+        logger.info(f"Overlay créé depuis broadcast {broadcast.id} pour écran {screen.id}")
+        return new_overlay
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur lors de la création d'overlay depuis broadcast {broadcast.id}: {e}")
+        return None
 
 
 def get_active_overlays_for_screen(screen_id, include_paused=False):
     """
     Récupère les overlays actifs pour un écran, triés par priorité.
     """
-    query = ScreenOverlay.query.filter_by(
-        screen_id=screen_id,
-        is_active=True
-    )
-    
-    if not include_paused:
-        query = query.filter_by(is_paused=False)
-    
-    overlays = query.order_by(ScreenOverlay.priority.desc()).all()
-    
-    active_overlays = [o for o in overlays if o.is_currently_active()]
-    
-    return active_overlays
+    try:
+        query = ScreenOverlay.query.filter_by(
+            screen_id=screen_id,
+            is_active=True
+        )
+
+        if not include_paused:
+            query = query.filter_by(is_paused=False)
+
+        overlays = query.order_by(ScreenOverlay.priority.desc()).all()
+
+        active_overlays = []
+        for o in overlays:
+            try:
+                if o.is_currently_active():
+                    active_overlays.append(o)
+            except Exception as e:
+                logger.error(f"Erreur lors de la vérification de l'overlay {o.id}: {e}")
+
+        return active_overlays
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des overlays pour écran {screen_id}: {e}")
+        return []
 
 
 def get_overlays_by_position(screen_id, position=None):
@@ -115,11 +133,15 @@ def pause_overlay(overlay_id, by_broadcast_id=None):
     """
     Met en pause un overlay.
     """
-    overlay = ScreenOverlay.query.get(overlay_id)
-    if overlay:
-        overlay.pause(by_broadcast_id)
-        db.session.commit()
-        return True
+    try:
+        overlay = ScreenOverlay.query.get(overlay_id)
+        if overlay:
+            overlay.pause(by_broadcast_id)
+            db.session.commit()
+            return True
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur lors de la mise en pause de l'overlay {overlay_id}: {e}")
     return False
 
 
@@ -127,11 +149,15 @@ def resume_overlay(overlay_id):
     """
     Reprend un overlay en pause.
     """
-    overlay = ScreenOverlay.query.get(overlay_id)
-    if overlay and overlay.is_paused:
-        overlay.resume()
-        db.session.commit()
-        return True
+    try:
+        overlay = ScreenOverlay.query.get(overlay_id)
+        if overlay and overlay.is_paused:
+            overlay.resume()
+            db.session.commit()
+            return True
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur lors de la reprise de l'overlay {overlay_id}: {e}")
     return False
 
 
@@ -139,11 +165,15 @@ def suspend_overlay(overlay_id):
     """
     Suspend un overlay (désactive temporairement).
     """
-    overlay = ScreenOverlay.query.get(overlay_id)
-    if overlay:
-        overlay.is_active = False
-        db.session.commit()
-        return True
+    try:
+        overlay = ScreenOverlay.query.get(overlay_id)
+        if overlay:
+            overlay.is_active = False
+            db.session.commit()
+            return True
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erreur lors de la suspension de l'overlay {overlay_id}: {e}")
     return False
 
 

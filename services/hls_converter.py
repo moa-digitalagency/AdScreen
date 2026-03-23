@@ -15,13 +15,46 @@ import time
 import shutil
 from pathlib import Path
 import re
+from collections import OrderedDict
 from services.input_validator import is_safe_url
 
 logger = logging.getLogger(__name__)
 
+
+class LRUCache:
+    """Simple LRU cache to prevent memory leaks from old stream URIs"""
+    def __init__(self, max_size=100):
+        self.max_size = max_size
+        self.cache = OrderedDict()
+        self.lock = threading.Lock()
+
+    def get(self, key):
+        with self.lock:
+            if key in self.cache:
+                self.cache.move_to_end(key)
+                return self.cache[key]
+            return None
+
+    def set(self, key, value):
+        with self.lock:
+            if key in self.cache:
+                self.cache.move_to_end(key)
+            self.cache[key] = value
+            if len(self.cache) > self.max_size:
+                self.cache.popitem(last=False)  # Remove oldest
+
+    def delete(self, key):
+        with self.lock:
+            self.cache.pop(key, None)
+
+    def clear(self):
+        with self.lock:
+            self.cache.clear()
+
+
 class HLSConverter:
     HLS_TEMP_DIR = Path(tempfile.gettempdir()) / 'adscreen_hls'
-    _current_urls = {}
+    _current_urls = LRUCache(max_size=100)  # LRU cache: prevent memory leak from old URIs
     _lock = threading.Lock()
     
     def __init__(self):
@@ -115,8 +148,7 @@ class HLSConverter:
                 except Exception as e:
                     logger.error(f'[{screen_code}] Unexpected error killing process: {e}')
             
-            if screen_code in HLSConverter._current_urls:
-                del HLSConverter._current_urls[screen_code]
+            HLSConverter._current_urls.delete(screen_code)
         
         output_dir = HLSConverter.HLS_TEMP_DIR / screen_code
         if output_dir.exists():
@@ -206,7 +238,7 @@ class HLSConverter:
             
             with HLSConverter._lock:
                 HLSConverter._save_pid(screen_code, process.pid)
-                HLSConverter._current_urls[screen_code] = source_url
+                HLSConverter._current_urls.set(screen_code, source_url)
             
             logger.info(f'[{screen_code}] FFmpeg PID: {process.pid}')
             
