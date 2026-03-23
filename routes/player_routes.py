@@ -27,6 +27,7 @@ import json
 import hashlib
 
 import os as _os
+import threading
 
 urllib3.disable_warnings()
 
@@ -45,6 +46,17 @@ def safe_content_url(file_path):
 
 
 player_bp = Blueprint('player', __name__)
+
+# Channel change locks per screen to prevent concurrent channel switches
+_channel_change_locks = {}
+_locks_lock = threading.Lock()
+
+def _get_channel_change_lock(screen_id):
+    """Get or create a lock for this screen's channel changes"""
+    with _locks_lock:
+        if screen_id not in _channel_change_locks:
+            _channel_change_locks[screen_id] = threading.Lock()
+        return _channel_change_locks[screen_id]
 
 # Cache setup
 SCREEN_MODE_CACHE = {}
@@ -943,7 +955,7 @@ def stop_tv_stream(screen_code):
 def change_channel(screen_code):
     """Change la chaîne TV - attend que FFmpeg soit prêt"""
     from services.hls_converter import HLSConverter
-    
+
     if not re.match(r'^[a-zA-Z0-9_-]{1,20}$', screen_code):
         return jsonify({'error': 'Invalid screen code'}), 400
 
@@ -956,6 +968,11 @@ def change_channel(screen_code):
 
     if screen.id != session['screen_id']:
         return jsonify({'error': t('flash.not_authenticated')}), 403
+
+    # Acquire lock to prevent concurrent channel changes on the same screen
+    channel_lock = _get_channel_change_lock(screen.id)
+    if not channel_lock.acquire(timeout=30):
+        return jsonify({'error': 'Channel change in progress, please wait'}), 409
 
     try:
         data = request.get_json()
@@ -1005,8 +1022,11 @@ def change_channel(screen_code):
             'channel': channel_name,
             'message': 'New channel ready'
         }), 200
-    
+
     except Exception as e:
         db.session.rollback()
         logger.error(f'[{screen_code}] Error: {e}')
         return jsonify({'error': str(e)}), 500
+    finally:
+        # Always release the lock
+        channel_lock.release()

@@ -44,8 +44,10 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
+    "pool_size": 20,  # Default is 5, increase for concurrent IPTV streams
+    "max_overflow": 40,  # Allow overflow for burst traffic
+    "pool_recycle": 300,  # Recycle connections every 5min to prevent stale connections
+    "pool_pre_ping": True,  # Test connection before use to detect dropped connections
 }
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = "static/uploads"
