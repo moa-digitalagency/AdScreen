@@ -245,11 +245,13 @@ function resetPassword(orgId) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Chargement...';
 
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+
     fetch(`/admin/organization/${orgId}/reset-password`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            'X-CSRF-Token': csrfToken
         }
     })
     .then(response => response.json())
