@@ -17,15 +17,31 @@ def get_client_ip():
 
 
 # Use Redis for distributed rate limiting across workers
-# Falls back to memory if Redis unavailable (non-critical)
+# Falls back to memory if Redis unavailable (non-critical, reduces functionality)
 redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
-limiter = Limiter(
-    key_func=get_client_ip,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri=redis_url,
-    strategy="fixed-window"
-)
+try:
+    # Try to initialize with Redis
+    limiter = Limiter(
+        key_func=get_client_ip,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri=redis_url,
+        strategy="fixed-window"
+    )
+    # Test Redis connection
+    import redis as redis_lib
+    redis_client = redis_lib.from_url(redis_url, socket_connect_timeout=2)
+    redis_client.ping()
+    logger.info("Rate limiter using Redis backend")
+except Exception as e:
+    # Fallback to memory-based rate limiting
+    logger.warning(f"Redis unavailable, falling back to memory-based rate limiting: {e}")
+    limiter = Limiter(
+        key_func=get_client_ip,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",
+        strategy="fixed-window"
+    )
 
 
 RATE_LIMITS = {

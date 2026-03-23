@@ -1,26 +1,49 @@
 from PIL import Image
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Maximum file size for images (100MB)
+MAX_IMAGE_SIZE_BYTES = 100 * 1024 * 1024
 
 
 def validate_image(file_path, target_width, target_height, tolerance=1):
     """
     Validate an image file.
-    
+
     Args:
         file_path: Path to the image file
         target_width: Expected width (screen resolution) - not enforced, content adapts
         target_height: Expected height (screen resolution) - not enforced, content adapts
         tolerance: Pixel tolerance for ratio comparison
-    
+
     Returns:
         tuple: (is_valid, width, height, error_message)
     """
     try:
+        # Check file exists and size
+        if not os.path.exists(file_path):
+            return False, None, None, "Fichier image introuvable"
+
+        file_size = os.path.getsize(file_path)
+        if file_size > MAX_IMAGE_SIZE_BYTES:
+            return False, None, None, f"Image trop volumineuse ({file_size/1024/1024:.1f}MB > 100MB)"
+
+        if file_size == 0:
+            return False, None, None, "Fichier image vide"
+
         with Image.open(file_path) as img:
             width, height = img.size
+
+            # Validate minimum dimensions (at least 100x100)
+            if width < 100 or height < 100:
+                return False, None, None, f"Image trop petite ({width}x{height}, minimum 100x100)"
+
             return True, width, height, None
-            
+
     except Exception as e:
+        logger.error(f"Image validation error: {str(e)}")
         return False, None, None, f"Erreur lors de la lecture de l'image: {str(e)}"
 
 

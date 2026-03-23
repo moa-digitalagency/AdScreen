@@ -1,6 +1,12 @@
 import subprocess
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Maximum file size for videos (1GB)
+MAX_VIDEO_SIZE_BYTES = 1 * 1024 * 1024 * 1024
 
 
 def get_video_info(file_path):
@@ -88,35 +94,51 @@ def get_video_duration(file_path):
 def validate_video(file_path, target_width, target_height, max_duration):
     """
     Validate a video file against screen resolution and duration requirements.
-    
+
     Args:
         file_path: Path to the video file
         target_width: Expected width (screen resolution)
         target_height: Expected height (screen resolution)
         max_duration: Maximum allowed duration in seconds
-    
+
     Returns:
         tuple: (is_valid, width, height, duration, error_message)
     """
-    info = get_video_info(file_path)
-    
-    if not info:
-        return False, None, None, None, "Impossible de lire les informations de la vidéo"
-    
-    width = info.get('width')
-    height = info.get('height')
-    duration = info.get('duration')
-    
-    if not width or not height:
-        return False, None, None, duration, "Impossible de déterminer la résolution de la vidéo"
-    
-    if duration is None:
-        return False, width, height, None, "Impossible de déterminer la durée de la vidéo"
-    
-    if duration > max_duration + 1:
-        return False, width, height, duration, f"La vidéo est trop longue ({duration:.1f}s). Maximum autorisé: {max_duration}s"
-    
-    return True, width, height, duration, None
+    try:
+        # Check file exists and size
+        if not os.path.exists(file_path):
+            return False, None, None, None, "Fichier vidéo introuvable"
+
+        file_size = os.path.getsize(file_path)
+        if file_size > MAX_VIDEO_SIZE_BYTES:
+            return False, None, None, None, f"Vidéo trop volumineuse ({file_size/1024/1024/1024:.1f}GB > 1GB)"
+
+        if file_size == 0:
+            return False, None, None, None, "Fichier vidéo vide"
+
+        info = get_video_info(file_path)
+
+        if not info:
+            return False, None, None, None, "Impossible de lire les informations de la vidéo"
+
+        width = info.get('width')
+        height = info.get('height')
+        duration = info.get('duration')
+
+        if not width or not height:
+            return False, None, None, duration, "Impossible de déterminer la résolution de la vidéo"
+
+        if duration is None:
+            return False, width, height, None, "Impossible de déterminer la durée de la vidéo"
+
+        if duration > max_duration + 1:
+            return False, width, height, duration, f"La vidéo est trop longue ({duration:.1f}s). Maximum autorisé: {max_duration}s"
+
+        return True, width, height, duration, None
+
+    except Exception as e:
+        logger.error(f"Video validation error: {str(e)}")
+        return False, None, None, None, f"Erreur lors de la validation de la vidéo: {str(e)}"
 
 
 def extract_thumbnail(video_path, output_path, timestamp=1):
