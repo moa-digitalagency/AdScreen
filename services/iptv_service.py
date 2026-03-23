@@ -108,36 +108,61 @@ def parse_extinf_line(line: str) -> Dict[str, Optional[str]]:
     return info
 
 
-def fetch_m3u_from_url(url: str, timeout: int = 30) -> Optional[str]:
+def fetch_m3u_from_url(url: str, timeout: int = 30, max_retries: int = 3) -> Optional[str]:
     """
-    Telecharge le contenu M3U depuis une URL.
-    
+    Telecharge le contenu M3U depuis une URL avec exponential backoff retry.
+
     Args:
         url: URL du fichier M3U
         timeout: Timeout en secondes
-        
+        max_retries: Nombre maximum de tentatives (0 = pas de retry)
+
     Returns:
         Contenu du fichier M3U ou None en cas d'erreur
     """
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        request = urllib.request.Request(url, headers=headers)
-        
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            content = response.read()
-            try:
-                return content.decode('utf-8')
-            except UnicodeDecodeError:
-                return content.decode('latin-1')
-                
-    except urllib.error.URLError as e:
-        logger.error(f"Erreur URL M3U: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Erreur telechargement M3U: {e}")
-        return None
+    import time
+
+    retry_count = 0
+    backoff_delay = 1  # Start at 1 second
+
+    while retry_count <= max_retries:
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            request = urllib.request.Request(url, headers=headers)
+
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                content = response.read()
+                try:
+                    return content.decode('utf-8')
+                except UnicodeDecodeError:
+                    return content.decode('latin-1')
+
+        except urllib.error.HTTPError as e:
+            # HTTP 401/403/429: auth/rate limit error - retry with backoff
+            if e.code in [401, 403, 429]:
+                retry_count += 1
+                if retry_count > max_retries:
+                    logger.error(f"IPTV M3U auth/rate limit after {max_retries} retries: {e.code}")
+                    return None
+                logger.warning(f"IPTV M3U auth error {e.code}, retry {retry_count}/{max_retries} in {backoff_delay}s")
+                time.sleep(backoff_delay)
+                backoff_delay = min(30, backoff_delay * 2)  # Exponential backoff, max 30s
+                continue
+            else:
+                # Other HTTP errors: don't retry
+                logger.error(f"Erreur HTTP M3U: {e.code}")
+                return None
+
+        except urllib.error.URLError as e:
+            logger.error(f"Erreur URL M3U: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Erreur telechargement M3U: {e}")
+            return None
+
+    return None
 
 
 def get_channels_from_organization(organization, limit: Optional[int] = None) -> List[IPTVChannel]:

@@ -212,12 +212,12 @@ class HLSConverter:
             
             def monitor_process():
                 try:
-                    stdout, stderr = process.communicate(timeout=7200)  # 2h max per stream
+                    stdout, stderr = process.communicate(timeout=1800)  # 30min max per stream for 24/7 stability
                     if process.returncode != 0 and process.returncode != -15 and process.returncode != -9:
                         stderr_text = stderr.decode('utf-8', errors='ignore')[:500]
                         logger.error(f'[{screen_code}] FFmpeg error (code {process.returncode}): {stderr_text}')
                 except subprocess.TimeoutExpired:
-                    logger.warning(f'[{screen_code}] FFmpeg timeout after 2h, killing process')
+                    logger.warning(f'[{screen_code}] FFmpeg timeout after 30min, killing process')
                     try:
                         process.kill()
                         process.communicate(timeout=5)
@@ -233,25 +233,28 @@ class HLSConverter:
             
             if wait_for_manifest:
                 logger.info(f'[{screen_code}] Waiting for manifest...')
-                
+
                 max_wait = 15
                 start_time = time.time()
                 manifest_ready = False
-                
+                poll_interval = 0.1  # Start at 100ms
+
                 while time.time() - start_time < max_wait:
                     if manifest_path.exists():
                         try:
                             with open(manifest_path, 'r') as f:
                                 content = f.read()
-                            
+
                             if '.ts' in content and '#EXTINF' in content:
                                 logger.info(f'[{screen_code}] Manifest ready with segments')
                                 manifest_ready = True
                                 break
                         except:
                             pass
-                    
-                    time.sleep(0.2)
+
+                    # Exponential backoff: 100ms → 200ms → 400ms → 800ms (max)
+                    time.sleep(poll_interval)
+                    poll_interval = min(0.8, poll_interval * 2)
                 
                 if not manifest_ready:
                     elapsed = time.time() - start_time
