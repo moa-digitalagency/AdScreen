@@ -264,10 +264,9 @@
             <div class="w-24 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
                  onclick="openPreviewModal('{{ internal.file_path }}', '{{ internal.content_type }}', {{ screen.resolution_width }}, {{ screen.resolution_height }})">
                 {% if internal.content_type == 'image' %}
-                <img src="/{{ internal.file_path }}" alt="{{ internal.name }}" class="w-full h-full object-cover">
+                <img loading="lazy" src="/{{ internal.file_path }}" alt="{{ internal.name }}" class="w-full h-full object-cover">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center bg-blue-100 relative">
-                    <video src="/{{ internal.file_path }}" class="w-full h-full object-cover" muted></video>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <i class="fas fa-play text-blue-600"></i>
                     </div>
@@ -350,6 +349,7 @@
 const screenId = {{ screen.id }};
 let maxAvailablePlays = 0;
 let currentNumDays = 0;
+let debounceTimer = null;
 
 function onFileChange() {
     const fileInput = document.getElementById('fileInput');
@@ -402,74 +402,77 @@ function changeFile() {
 }
 
 function onDatesChange() {
-    const startDate = document.getElementById('start_date').value;
-    const endDate = document.getElementById('end_date').value;
-    const startTime = document.getElementById('start_time').value || '08:00';
-    const endTime = document.getElementById('end_time').value || '22:00';
-    
-    if (!startDate || !endDate) {
-        document.getElementById('availability_section').classList.add('hidden');
-        document.getElementById('plays_section').classList.add('hidden');
-        return;
-    }
-    
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    if (end < start) {
-        document.getElementById('availability_section').classList.add('hidden');
-        document.getElementById('plays_section').classList.add('hidden');
-        return;
-    }
-    
-    document.getElementById('availability_section').classList.remove('hidden');
-    document.getElementById('loading_indicator').classList.remove('hidden');
-    
-    const contentType = document.getElementById('content_type').value || 'image';
-    
-    fetch(`/org/screen/${screenId}/internal/availability`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            start_date: startDate,
-            end_date: endDate,
-            start_time: startTime,
-            end_time: endTime,
-            content_type: contentType,
-            slot_duration: 10
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('loading_indicator').classList.add('hidden');
-        
-        if (data.availability) {
-            const avail = data.availability;
-            currentNumDays = avail.num_days;
-            maxAvailablePlays = avail.available_plays;
-            
-            document.getElementById('num_days_display').textContent = avail.num_days;
-            document.getElementById('available_plays_display').textContent = avail.available_plays.toLocaleString();
-            document.getElementById('total_seconds_display').textContent = Math.round(avail.total_available_seconds).toLocaleString();
-            
-            document.getElementById('max_plays_text').textContent = avail.available_plays.toLocaleString();
-            
-            document.getElementById('plays_section').classList.remove('hidden');
-            
-            const recommendedPlays = data.recommended_plays || Math.min(avail.available_plays, 50);
-            document.getElementById('total_plays').value = recommendedPlays;
-            document.getElementById('total_plays').max = avail.available_plays;
-            
-            updatePlaysPerDay();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const startTime = document.getElementById('start_time').value || '08:00';
+        const endTime = document.getElementById('end_time').value || '22:00';
+
+        if (!startDate || !endDate) {
+            document.getElementById('availability_section').classList.add('hidden');
+            document.getElementById('plays_section').classList.add('hidden');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('loading_indicator').classList.add('hidden');
-    });
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (end < start) {
+            document.getElementById('availability_section').classList.add('hidden');
+            document.getElementById('plays_section').classList.add('hidden');
+            return;
+        }
+
+        document.getElementById('availability_section').classList.remove('hidden');
+        document.getElementById('loading_indicator').classList.remove('hidden');
+
+        const contentType = document.getElementById('content_type').value || 'image';
+
+        fetch(`/org/screen/${screenId}/internal/availability`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate,
+                start_time: startTime,
+                end_time: endTime,
+                content_type: contentType,
+                slot_duration: 10
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading_indicator').classList.add('hidden');
+
+            if (data.availability) {
+                const avail = data.availability;
+                currentNumDays = avail.num_days;
+                maxAvailablePlays = avail.available_plays;
+
+                document.getElementById('num_days_display').textContent = avail.num_days;
+                document.getElementById('available_plays_display').textContent = avail.available_plays.toLocaleString();
+                document.getElementById('total_seconds_display').textContent = Math.round(avail.total_available_seconds).toLocaleString();
+
+                document.getElementById('max_plays_text').textContent = avail.available_plays.toLocaleString();
+
+                document.getElementById('plays_section').classList.remove('hidden');
+
+                const recommendedPlays = data.recommended_plays || Math.min(avail.available_plays, 50);
+                document.getElementById('total_plays').value = recommendedPlays;
+                document.getElementById('total_plays').max = avail.available_plays;
+
+                updatePlaysPerDay();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loading_indicator').classList.add('hidden');
+        });
+    }, 300);
 }
 
 function changePlayCount(delta) {

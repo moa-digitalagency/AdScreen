@@ -746,12 +746,17 @@ def screen_internal(screen_id):
                 os.makedirs(upload_path, exist_ok=True)
                 file_path = os.path.join(upload_path, new_filename)
                 file.save(file_path)
-                
+
                 duration = None
                 if content_type == 'video':
-                    from utils.video_utils import get_video_duration
-                    duration = get_video_duration(file_path)
-                
+                    from utils.video_utils import get_video_info
+                    try:
+                        info = get_video_info(file_path)
+                        duration = info.get('duration') if info else None
+                    except Exception:
+                        # If duration extraction fails or times out, set None and let player handle it
+                        duration = None
+
                 internal = InternalContent(
                     screen_id=screen_id,
                     name=name,
