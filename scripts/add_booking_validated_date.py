@@ -28,9 +28,9 @@ def add_validated_date_column():
             return True
 
         try:
-            # Add the column
+            # Add the column (use TIMESTAMP for PostgreSQL)
             with db.engine.connect() as conn:
-                conn.execute(text("ALTER TABLE bookings ADD COLUMN validated_date DATETIME"))
+                conn.execute(text("ALTER TABLE bookings ADD COLUMN validated_date TIMESTAMP"))
                 conn.commit()
             print("✓ Successfully added 'validated_date' column to 'bookings' table")
             return True
