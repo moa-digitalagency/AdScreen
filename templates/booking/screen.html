@@ -32,13 +32,13 @@
                     <i class="fas fa-arrows-alt-h"></i>
                     {% if screen.orientation == 'portrait' %}{{ t('common.portrait') }}{% else %}{{ t('common.landscape') }}{% endif %}
                 </span>
-                {% if screen.accepts_images %}
+                {% if accepts_images %}
                 <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-image"></i>
                     {{ t('contents.image') }}
                 </span>
                 {% endif %}
-                {% if screen.accepts_videos %}
+                {% if accepts_videos %}
                 <span class="inline-flex items-center gap-1 sm:gap-2 bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                     <i class="fas fa-video"></i>
                     {{ t('contents.video') }}
@@ -85,7 +85,7 @@
                     <h2 class="text-base sm:text-lg font-semibold text-gray-800">{{ t('booking.content_type') }}</h2>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {% if screen.accepts_images %}
+                    {% if accepts_images %}
                     <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
                         <input type="radio" name="content_type" value="image" checked
                             class="sr-only">
@@ -101,9 +101,9 @@
                         <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
                     </label>
                     {% endif %}
-                    {% if screen.accepts_videos %}
+                    {% if accepts_videos %}
                     <label class="relative flex items-center p-3 sm:p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition">
-                        <input type="radio" name="content_type" value="video" {% if not screen.accepts_images %}checked{% endif %}
+                        <input type="radio" name="content_type" value="video" {% if not accepts_images %}checked{% endif %}
                             class="sr-only">
                         <div class="flex items-center gap-3 sm:gap-4">
                             <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -116,6 +116,12 @@
                         </div>
                         <div class="absolute top-2 sm:top-3 right-2 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded-full content-type-indicator"></div>
                     </label>
+                    {% endif %}
+                    {% if 'image' not in available_content_types and 'video' not in available_content_types %}
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        {{ t('errors.no_content_types') }}
+                    </div>
                     {% endif %}
                 </div>
             </div>

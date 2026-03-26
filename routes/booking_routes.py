@@ -65,18 +65,38 @@ def screen_booking(screen_code):
         }
         for slot in screen.time_slots
     ]
-    
+
+    # Dynamically determine available content types from time_slots (more reliable than screen flags)
+    available_content_types = set()
+    for slot in screen.time_slots:
+        if slot.content_type:
+            available_content_types.add(slot.content_type.lower())
+
+    # Fallback: if no content types found in slots, try screen flags (backward compatibility)
+    if not available_content_types:
+        if screen.accepts_images:
+            available_content_types.add('image')
+        if screen.accepts_videos:
+            available_content_types.add('video')
+
+    # Final fallback: assume both if nothing is set (allow user to try)
+    if not available_content_types:
+        available_content_types = {'image', 'video'}
+
     org_currency = screen.organization.currency if screen.organization else 'EUR'
     currency_info = get_currency_by_code(org_currency)
     currency_symbol = currency_info.get('symbol', org_currency)
-    
+
     return render_template('booking/screen.html',
         screen=screen,
         current_period=current_period,
         slots_json=slots_json,
         currency_symbol=currency_symbol,
         currency_code=org_currency,
-        price_per_minute=screen.price_per_minute or 2.0
+        price_per_minute=screen.price_per_minute or 2.0,
+        accepts_images='image' in available_content_types,
+        accepts_videos='video' in available_content_types,
+        available_content_types=available_content_types
     )
 
 
