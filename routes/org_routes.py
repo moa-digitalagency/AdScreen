@@ -808,9 +808,10 @@ def approve_content(content_id):
     content.status = 'approved'
     content.validated_at = datetime.utcnow()
     content.in_playlist = True
-    
+
     if content.booking:
         content.booking.status = 'active'
+        content.booking.validated_date = datetime.utcnow()  # Track validation time for late-approval recalculation
     
     db.session.commit()
     
@@ -1241,11 +1242,13 @@ def activate_content(content_id):
     ).first_or_404()
     
     content.status = 'approved'
+    content.validated_at = datetime.utcnow()
     if content.booking:
         content.booking.status = 'active'
-    
+        content.booking.validated_date = datetime.utcnow()  # Track validation time for late-approval recalculation
+
     db.session.commit()
-    
+
     flash('Contenu activé!', 'success')
 
     referrer = request.referrer

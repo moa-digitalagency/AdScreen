@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import secrets
 from app import db
 
@@ -32,6 +32,7 @@ class Booking(db.Model):
     payment_status = db.Column(db.String(20), default='pending')
     payment_reference = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    validated_date = db.Column(db.DateTime, nullable=True)  # When ad was approved/validated
     
     screen_id = db.Column(db.Integer, db.ForeignKey('screens.id'), nullable=False)
     screen = db.relationship('Screen', back_populates='bookings')
@@ -59,3 +60,68 @@ class Booking(db.Model):
         if self.total_price_with_vat is not None:
             return self.total_price_with_vat
         return self.total_price + (self.vat_amount or 0)
+
+    def is_playable_now(self):
+        """Check if this booking's content should be displayed now based on start_date/start_time"""
+        now = datetime.utcnow()
+        today = now.date()
+
+        # Must be approved and active
+        if self.status != 'active':
+            return False
+
+        # Check start_date: content should not display before scheduled start
+        if self.start_date and today < self.start_date:
+            return False
+
+        # Check start_time: if we're on start_date, verify start_time
+        if self.start_date and today == self.start_date:
+            if self.start_time and now.time() < self.start_time:
+                return False
+
+        # Check end_date: inclusive, so plays on end_date
+        if self.end_date and today > self.end_date:
+            return False
+
+        return True
+
+    def calculate_dynamic_plays(self):
+        """
+        Recalculate num_plays if validation happened after scheduled start.
+        If ad was validated after start_date, adjust plays to respect contract
+        by increasing frequency over remaining time window.
+
+        Returns: adjusted play count (or original if no adjustment needed)
+        """
+        if not self.validated_date or not self.start_date:
+            return self.num_plays
+
+        # Convert validated_date to date for comparison
+        validated_dt = self.validated_date if isinstance(self.validated_date, datetime) else datetime.combine(self.validated_date, time.min)
+        validated_date = validated_dt.date()
+
+        # If validated before or on start_date, no adjustment needed
+        if validated_date <= self.start_date:
+            return self.num_plays
+
+        # Validation was late - recalculate plays per day
+        end_date = self.end_date if self.end_date else validated_date + timedelta(days=30)  # 30-day fallback
+
+        # Original intended days
+        total_days = (end_date - self.start_date).days + 1
+        if total_days <= 0:
+            return self.num_plays
+
+        # Remaining days from validation onwards
+        remaining_days = (end_date - validated_date).days + 1
+        if remaining_days <= 0:
+            return self.num_plays
+
+        # Plays per day: original num_plays / original days
+        plays_per_day = self.num_plays / total_days if total_days > 0 else 1
+
+        # Adjusted plays for remaining period: plays_per_day * remaining_days
+        adjusted_plays = int(plays_per_day * remaining_days)
+
+        # Ensure at least the original minimum
+        return max(adjusted_plays, self.num_plays)

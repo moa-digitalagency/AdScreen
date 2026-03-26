@@ -272,12 +272,20 @@ def get_playlist():
             for content in paid_contents:
                 if not content.booking:
                     continue  # Skip orphaned content (booking deleted without cascade)
+
+                # Respect scheduled start_date/start_time - don't show before reservation period starts
+                if not content.booking.is_playable_now():
+                    continue
+
                 if current_period and content.booking.time_period_id:
                     if content.booking.time_period_id != current_period.id:
                         continue
 
                 duration = content.booking.slot_duration if content.booking.slot_duration and content.booking.slot_duration > 0 else (content.duration_seconds or 10)
-                remaining = content.booking.num_plays - content.booking.plays_completed
+
+                # Calculate dynamic plays if validation was late
+                target_plays = content.booking.calculate_dynamic_plays()
+                remaining = target_plays - content.booking.plays_completed
 
                 playlist.append({
                     'id': content.id,
