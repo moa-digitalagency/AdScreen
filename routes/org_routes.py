@@ -17,7 +17,10 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 import os
 import secrets
+import logging
 from werkzeug.utils import secure_filename
+
+logger = logging.getLogger(__name__)
 
 org_bp = Blueprint('org', __name__)
 
@@ -358,7 +361,37 @@ def new_screen():
                 price_multiplier=mult
             )
             db.session.add(period)
-        
+
+        # Auto-generate QR code filler with booking link
+        try:
+            from services.qr_service import generate_qr_code
+            from flask import url_for
+
+            booking_url = url_for('booking.screen_booking', screen_code=screen.unique_code, _external=True)
+            qr_image_data = generate_qr_code(booking_url, box_size=8, border=2)
+
+            # Save QR code as filler image
+            qr_filename = f"qr_{secrets.token_hex(4)}.png"
+            upload_path = os.path.join('static', 'uploads', 'fillers', str(screen.id))
+            os.makedirs(upload_path, exist_ok=True)
+            qr_file_path = os.path.join(upload_path, qr_filename)
+
+            with open(qr_file_path, 'wb') as f:
+                f.write(qr_image_data)
+
+            qr_filler = Filler(
+                screen_id=screen.id,
+                filename=qr_filename,
+                content_type='image',
+                file_path=qr_file_path,
+                duration_seconds=10,  # 10 seconds default display time
+                is_active=True,
+                in_playlist=True
+            )
+            db.session.add(qr_filler)
+        except Exception as e:
+            logger.warning(f"Failed to create QR code filler for screen {screen.id}: {e}")
+
         db.session.commit()
         
         flash(t('flash.screen_created'), 'success')
@@ -779,7 +812,52 @@ def screen_internal(screen_id):
         return redirect(url_for('org.screen_internal', screen_id=screen_id))
     
     internals = InternalContent.query.filter_by(screen_id=screen_id).order_by(InternalContent.priority.desc()).all()
-    return render_template('org/screen_internal.html', screen=screen, internals=internals)
+
+    # Calculate current availability window based on configured time_periods
+    current_hour = datetime.now().hour
+    current_date = datetime.now().date()
+    available_periods = []
+
+    for period in screen.time_periods:
+        if period.start_hour <= period.end_hour:
+            # Normal daytime period (e.g., 9h-17h)
+            if period.start_hour <= current_hour < period.end_hour:
+                available_periods.append({
+                    'name': period.name,
+                    'hours': f'{period.start_hour}h - {period.end_hour}h',
+                    'is_active': True,
+                    'multiplier': period.price_multiplier
+                })
+            else:
+                available_periods.append({
+                    'name': period.name,
+                    'hours': f'{period.start_hour}h - {period.end_hour}h',
+                    'is_active': False,
+                    'multiplier': period.price_multiplier
+                })
+        else:
+            # Overnight period (e.g., 22h-6h)
+            if current_hour >= period.start_hour or current_hour < period.end_hour:
+                available_periods.append({
+                    'name': period.name,
+                    'hours': f'{period.start_hour}h - {period.end_hour}h',
+                    'is_active': True,
+                    'multiplier': period.price_multiplier
+                })
+            else:
+                available_periods.append({
+                    'name': period.name,
+                    'hours': f'{period.start_hour}h - {period.end_hour}h',
+                    'is_active': False,
+                    'multiplier': period.price_multiplier
+                })
+
+    return render_template('org/screen_internal.html',
+                         screen=screen,
+                         internals=internals,
+                         available_periods=available_periods,
+                         current_date=current_date,
+                         current_hour=current_hour)
 
 
 @org_bp.route('/validations')
