@@ -66,20 +66,21 @@ def screen_booking(screen_code):
         for slot in screen.time_slots
     ]
 
-    # Dynamically determine available content types from time_slots (more reliable than screen flags)
+    # Dynamically determine available content types from time_slots
     available_content_types = set()
-    for slot in screen.time_slots:
-        if slot.content_type:
-            available_content_types.add(slot.content_type.lower())
+    if screen.time_slots:
+        for slot in screen.time_slots:
+            if slot.content_type:
+                available_content_types.add(slot.content_type.lower())
 
-    # Fallback: if no content types found in slots, try screen flags (backward compatibility)
+    # Fallback 1: if no content types found in slots, try screen flags (backward compatibility)
     if not available_content_types:
-        if screen.accepts_images:
+        if hasattr(screen, 'accepts_images') and screen.accepts_images:
             available_content_types.add('image')
-        if screen.accepts_videos:
+        if hasattr(screen, 'accepts_videos') and screen.accepts_videos:
             available_content_types.add('video')
 
-    # Final fallback: assume both if nothing is set (allow user to try)
+    # Fallback 2: if screen has no time_slots, assume it accepts both (new screens)
     if not available_content_types:
         available_content_types = {'image', 'video'}
 
